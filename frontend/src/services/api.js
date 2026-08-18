@@ -10,7 +10,7 @@
 export { normalizeStatus } from '../utils/status';
 export { DEPARTMENTS } from '../constants';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://hostelcare-9od3.onrender.com/api/v1' : '/api/v1');
 
 /**
  * Generic request helper with automatic JWT injection and 401 handling.
