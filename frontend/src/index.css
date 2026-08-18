@@ -1351,9 +1351,10 @@ html.dark-theme .sidebar-theme-btn.active {
 
 .auth-role-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
   margin-bottom: 14px;
+  width: 100%;
 }
 
 .auth-role-btn {
@@ -1361,6 +1362,7 @@ html.dark-theme .sidebar-theme-btn.active {
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-width: 0;
   padding: 10px 12px;
   border-radius: 14px;
   cursor: pointer;
@@ -1368,6 +1370,7 @@ html.dark-theme .sidebar-theme-btn.active {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
   position: relative;
+  box-sizing: border-box;
 }
 
 .auth-role-btn-icon {
@@ -1386,6 +1389,8 @@ html.dark-theme .sidebar-theme-btn.active {
   display: flex; 
   flex-direction: column; 
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .auth-role-btn-title { 
@@ -1407,6 +1412,41 @@ html.dark-theme .sidebar-theme-btn.active {
   margin-left: auto;
   font-size: 0.95rem;
   font-weight: 800;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .auth-body {
+    padding: 22px 16px 20px;
+  }
+
+  .auth-role-grid {
+    gap: 8px;
+  }
+
+  .auth-role-btn {
+    padding: 8px 8px;
+    gap: 6px;
+  }
+
+  .auth-role-btn-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+    border-radius: 7px;
+  }
+
+  .auth-role-btn-title {
+    font-size: 0.8rem;
+  }
+
+  .auth-role-btn-sub {
+    font-size: 0.65rem;
+  }
+
+  .auth-role-check {
+    font-size: 0.85rem;
+  }
 }
 
 .auth-page-container .form-group {
