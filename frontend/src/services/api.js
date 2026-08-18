@@ -10,7 +10,7 @@
 export { normalizeStatus } from '../utils/status';
 export { DEPARTMENTS } from '../constants';
 
-const API_BASE = '/api/v1';
+const API_BASE = 'https://hostelcare-9od3.onrender.com';
 
 /**
  * Generic request helper with automatic JWT injection and 401 handling.
