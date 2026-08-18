@@ -14,6 +14,7 @@
     "argon2": "^0.44.0",
     "bottleneck": "^2.19.5",
     "compression": "^1.8.1",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.2",
