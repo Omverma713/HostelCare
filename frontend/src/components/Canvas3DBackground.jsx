@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-export default function Canvas3DBackground({ role = null, theme = 'dark' }) {
+export default function Canvas3DBackground({ role = null, theme = 'dark', concept = 'concept1' }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function Canvas3DBackground({ role = null, theme = 'dark' }) {
     const PARTICLE_COUNT = 120;
     const particles = [];
 
-    // Colors tailored by role & theme
+    // Colors tailored by role, concept & theme
     const getColors = () => {
       if (role === 'admin') {
         return ['#f59e0b', '#d97706', '#fbbf24', '#f43f5e', '#6366f1'];
@@ -45,8 +45,11 @@ export default function Canvas3DBackground({ role = null, theme = 'dark' }) {
       if (role === 'student') {
         return ['#38bdf8', '#0284c7', '#818cf8', '#34d399', '#a855f7'];
       }
+      if (concept === 'concept1' && theme === 'dark') {
+        return ['#d946ef', '#c084fc', '#ec4899', '#a855f7', '#f472b6'];
+      }
       return theme === 'dark'
-        ? ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#60a5fa']
+        ? ['#38bdf8', '#818cf8', '#06b6d4', '#3b82f6', '#60a5fa']
         : ['#6366f1', '#ec4899', '#f97316', '#0ea5e9', '#8b5cf6'];
     };
 

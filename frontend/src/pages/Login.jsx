@@ -154,7 +154,7 @@ export default function Login() {
 
       {/* 3D Floating Particle Nebula Background (Active for Option 1 Classic and Option 2 3D Room Pod) */}
       {(activeConcept === 'concept1' || activeConcept === 'concept2') && (
-        <Canvas3DBackground role={selectedRole} theme={theme} />
+        <Canvas3DBackground role={selectedRole} theme={theme} concept={activeConcept} />
       )}
 
       {/* Top Header Control Bar: Concept Switcher (3 Options) & Theme Switcher */}
