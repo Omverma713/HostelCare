@@ -163,8 +163,19 @@ export default function Login() {
         </div>
       )}
 
-      {/* 3D Floating Particle Nebula Background (Active ONLY for Option 2, 4, and Concept 1 Light) */}
-      {(activeConcept === 'concept2' || activeConcept === 'concept4' || (activeConcept === 'concept1' && theme === 'light')) && (
+      {/* Option 1 Unique Light Theme: 3D Solar Quartz Horizon & Prismatic Grid (Zero Floating Particles) */}
+      {activeConcept === 'concept1' && theme === 'light' && (
+        <div className="classic-light-horizon-stage" aria-hidden="true">
+          <div className="solar-aurora-glow" />
+          <div className="solar-horizon-line" />
+          <div className="solar-horizon-sun" />
+          <div className="solar-grid-plane" />
+          <div className="solar-light-beams" />
+        </div>
+      )}
+
+      {/* 3D Floating Particle Nebula Background (Active ONLY for Option 2 and Option 4) */}
+      {(activeConcept === 'concept2' || activeConcept === 'concept4') && (
         <Canvas3DBackground role={selectedRole} theme={theme} concept={activeConcept} />
       )}
 
