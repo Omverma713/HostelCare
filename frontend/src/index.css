@@ -1514,12 +1514,24 @@ html.dark-theme .sidebar-theme-btn.active {
   border-radius: 14px;
   cursor: pointer;
   text-align: left;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
   position: relative;
   box-sizing: border-box;
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  touch-action: manipulation !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, box-shadow;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1), background 0.22s ease, border-color 0.22s ease !important;
+}
+
+.auth-role-btn:active {
+  transform: scale(0.96) translateY(2px) translateZ(0) !important;
+  transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 .auth-role-btn:focus,
@@ -1672,8 +1684,11 @@ html.dark-theme .sidebar-theme-btn.active {
   -webkit-user-select: none !important;
   touch-action: manipulation !important;
   -webkit-tap-highlight-color: transparent !important;
-  will-change: transform;
-  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.15s ease, background 0.15s ease !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, box-shadow;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1), background 0.22s ease, border-color 0.22s ease, color 0.22s ease !important;
 }
 
 .auth-theme-btn * {
@@ -1689,7 +1704,7 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 .auth-theme-btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.3);
   color: #ffffff;
@@ -1702,8 +1717,8 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 .auth-theme-btn:active {
-  transform: translateY(2.5px) scale(0.97) !important;
-  transition: transform 0.04s ease-out !important;
+  transform: scale(0.93) translateY(2px) translateZ(0) !important;
+  transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 .auth-theme-btn.theme-btn-light.active {
@@ -2233,8 +2248,11 @@ html.dark-theme .sidebar-theme-btn.active {
   -webkit-user-select: none !important;
   touch-action: manipulation !important;
   -webkit-tap-highlight-color: transparent !important;
-  will-change: transform;
-  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.15s ease, background 0.15s ease !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, box-shadow;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1), background 0.22s ease, border-color 0.22s ease, color 0.22s ease !important;
 }
 
 /* Ensure full clickable button surface without child interference */
@@ -2251,7 +2269,7 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 .auth-concept-btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.3);
   color: #ffffff;
@@ -2264,8 +2282,8 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 .auth-concept-btn:active {
-  transform: translateY(2.5px) scale(0.97) !important;
-  transition: transform 0.04s ease-out !important;
+  transform: scale(0.93) translateY(2px) translateZ(0) !important;
+  transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 /* Active 3D Physical Extruded Keycaps for each Concept */
