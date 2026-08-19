@@ -2167,21 +2167,73 @@ html.dark-theme .sidebar-theme-btn.active {
   }
 }
 
-/* ==========================================================================
-   Concept 2: Split 3D Isometric Room Pod & Cyber-Glass Layout
-   ========================================================================== */
-
 .auth-top-controls {
   position: absolute;
-  top: 24px;
+  top: 0;
   left: 28px;
   right: 28px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   z-index: 9999 !important;
   pointer-events: none;
   box-sizing: border-box;
+  gap: 16px;
+}
+
+.auth-concept-switcher,
+.auth-theme-toggle {
+  margin-top: 20px;
+}
+
+/* Seamless Hanging Beta Badge in Top Control Bar */
+.auth-top-beta-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  flex-shrink: 0;
+  z-index: 10000;
+}
+
+.auth-top-beta-badge .beta-banner-cords {
+  position: relative;
+  width: 50px;
+  height: 20px;
+}
+
+.auth-top-beta-badge .beta-banner-cord {
+  width: 0;
+  height: 100%;
+  border-left: 1.5px dashed rgba(255, 255, 255, 0.7);
+  position: absolute;
+  top: 0;
+}
+
+.light-theme .auth-top-beta-badge .beta-banner-cord {
+  border-left-color: rgba(15, 23, 42, 0.4);
+}
+
+.auth-top-beta-badge .beta-banner-sign {
+  margin-top: -1px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+  color: #ffffff;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transform: rotate(2.5deg);
+  transform-origin: top center;
+  white-space: nowrap;
+}
+
+.auth-top-beta-badge .beta-banner-text {
+  font-family: var(--font-family);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .auth-concept-switcher,
@@ -2615,18 +2667,37 @@ html.dark-theme .sidebar-theme-btn.active {
 @media (max-width: 768px) {
   .auth-top-controls {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    right: 12px;
+    top: 0;
+    left: 8px;
+    right: 8px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     width: auto;
     margin: 0;
     padding: 0;
-    gap: 6px;
+    gap: 4px;
     box-sizing: border-box;
+  }
+
+  .auth-concept-switcher,
+  .auth-theme-toggle {
+    margin-top: 10px;
+  }
+
+  .auth-top-beta-badge .beta-banner-cords {
+    height: 10px;
+    width: 36px;
+  }
+
+  .auth-top-beta-badge .beta-banner-sign {
+    padding: 3px 6px;
+    transform: rotate(2deg);
+  }
+
+  .auth-top-beta-badge .beta-banner-text {
+    font-size: 0.54rem;
   }
 
   .auth-concept-switcher {
@@ -4285,8 +4356,9 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 .beta-banner-container.on-login {
-  left: 50% !important;
-  transform: translateX(-50%) !important;
+  left: auto !important;
+  right: calc(28px + 175px) !important;
+  transform: none !important;
 }
 
 @media (min-width: 1025px) {

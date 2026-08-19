@@ -10,9 +10,12 @@ export default function BetaBanner() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
 
+  // On Login page, the banner is rendered natively inside the top header flex bar
+  if (isLoginPage) return null;
+
   return (
     <div 
-      className={`beta-banner-container ${isLoginPage ? 'on-login' : 'on-dashboard'}`} 
+      className="beta-banner-container on-dashboard" 
       aria-hidden="true"
     >
       <div className="beta-banner-cords">

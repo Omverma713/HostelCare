@@ -221,6 +221,17 @@ export default function Login() {
           </button>
         </div>
 
+        {/* Seamless Centered Hanging Beta Banner in Top Bar */}
+        <div className="auth-top-beta-badge" aria-hidden="true">
+          <div className="beta-banner-cords">
+            <div className="beta-banner-cord cord-left"></div>
+            <div className="beta-banner-cord cord-right"></div>
+          </div>
+          <div className="beta-banner-sign">
+            <span className="beta-banner-text">BETA VERSION</span>
+          </div>
+        </div>
+
         {/* Theme Switcher (2 Independent 3D Tactile Object Buttons with 8px Gap) */}
         <div className="auth-theme-toggle">
           <button
