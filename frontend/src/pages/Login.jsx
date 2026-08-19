@@ -152,8 +152,19 @@ export default function Login() {
       <div className="auth-theme-backdrop auth-backdrop-dark" />
       <div className="auth-theme-backdrop auth-backdrop-light" />
 
-      {/* 3D Floating Particle Nebula Background (Active for Option 1, 2, and 4) */}
-      {(activeConcept === 'concept1' || activeConcept === 'concept2' || activeConcept === 'concept4') && (
+      {/* Option 1 Unique Dark Theme: 3D Cyber Horizon & Neon Wireframe Grid (Zero Floating Particles) */}
+      {activeConcept === 'concept1' && theme === 'dark' && (
+        <div className="classic-dark-cyber-stage" aria-hidden="true">
+          <div className="cyber-aurora-glow" />
+          <div className="cyber-horizon-line" />
+          <div className="cyber-horizon-sun" />
+          <div className="cyber-grid-plane" />
+          <div className="cyber-light-beams" />
+        </div>
+      )}
+
+      {/* 3D Floating Particle Nebula Background (Active ONLY for Option 2, 4, and Concept 1 Light) */}
+      {(activeConcept === 'concept2' || activeConcept === 'concept4' || (activeConcept === 'concept1' && theme === 'light')) && (
         <Canvas3DBackground role={selectedRole} theme={theme} concept={activeConcept} />
       )}
 

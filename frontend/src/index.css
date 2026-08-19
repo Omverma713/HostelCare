@@ -2803,16 +2803,12 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 /* ================================================================
-   Concept 1 (Option 1: Classic) — DEEP OCEAN BIOLUMINESCENCE DARK
-   Animated glowing aurora ribbons in teal/emerald/cyan on deep midnight
+   Concept 1 (Option 1: Classic) — 3D CYBER HORIZON & NEON MATRIX
+   Zero floating particles — 3D Infinite Perspective Grid & Laser Horizon
    ================================================================ */
 .concept1-mode .auth-backdrop-dark {
   background: 
-    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.35) 0%, transparent 55%),
-    radial-gradient(ellipse at 10% 60%, rgba(6, 182, 212, 0.28) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 40%, rgba(52, 211, 153, 0.22) 0%, transparent 48%),
-    radial-gradient(ellipse at 60% 85%, rgba(5, 150, 105, 0.18) 0%, transparent 50%),
-    linear-gradient(180deg, #000d0f 0%, #01130e 30%, #010c12 65%, #000608 100%) !important;
+    radial-gradient(circle at 50% 30%, #0c182f 0%, #050b17 55%, #020409 100%) !important;
   opacity: 1;
 }
 
@@ -2828,84 +2824,221 @@ html.dark-theme .sidebar-theme-btn.active {
 .concept1-mode.light-theme .auth-backdrop-dark { opacity: 0; }
 .concept1-mode.light-theme .auth-backdrop-light { opacity: 1; }
 
-/* Bioluminescent animated aurora ribbons on top of backdrop */
-.concept1-mode.dark-theme .auth-main-layout::before {
-  content: '';
+/* 3D Cyber Stage Container (Option 1 Dark) */
+.classic-dark-cyber-stage {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(125deg, transparent 30%, rgba(16, 185, 129, 0.12) 45%, transparent 60%),
-    linear-gradient(55deg,  transparent 35%, rgba(6, 182, 212, 0.1) 50%, transparent 65%);
-  animation: auroraShift 8s ease-in-out infinite alternate;
-  z-index: 0;
+  overflow: hidden;
+  z-index: 1;
 }
 
-@keyframes auroraShift {
-  0%   { opacity: 0.6; filter: hue-rotate(0deg); }
-  50%  { opacity: 1;   filter: hue-rotate(20deg); }
-  100% { opacity: 0.7; filter: hue-rotate(-15deg); }
+/* Ambient Cyber Atmosphere Pulse */
+.cyber-aurora-glow {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 50% 48%, rgba(6, 182, 212, 0.35) 0%, rgba(59, 130, 246, 0.2) 35%, transparent 70%),
+    radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+  animation: cyberPulseGlow 5s ease-in-out infinite alternate;
 }
 
-/* Emerald bioluminescent glass card */
+@keyframes cyberPulseGlow {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.04); }
+}
+
+/* Retro-Futuristic Cyber Horizon Sun Disc */
+.cyber-horizon-sun {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  height: 160px;
+  border-radius: 320px 320px 0 0;
+  background: linear-gradient(180deg, #67e8f9 0%, #06b6d4 35%, #3b82f6 75%, #1d4ed8 100%);
+  box-shadow: 
+    0 0 60px rgba(6, 182, 212, 0.8),
+    0 0 120px rgba(59, 130, 246, 0.5),
+    0 0 200px rgba(99, 102, 241, 0.3);
+  opacity: 0.85;
+  z-index: 1;
+  mask-image: linear-gradient(to bottom, 
+    rgba(0,0,0,1) 0%, rgba(0,0,0,1) 35%,
+    transparent 35%, transparent 40%,
+    rgba(0,0,0,1) 40%, rgba(0,0,0,1) 55%,
+    transparent 55%, transparent 62%,
+    rgba(0,0,0,1) 62%, rgba(0,0,0,1) 75%,
+    transparent 75%, transparent 84%,
+    rgba(0,0,0,1) 84%, rgba(0,0,0,1) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, 
+    rgba(0,0,0,1) 0%, rgba(0,0,0,1) 35%,
+    transparent 35%, transparent 40%,
+    rgba(0,0,0,1) 40%, rgba(0,0,0,1) 55%,
+    transparent 55%, transparent 62%,
+    rgba(0,0,0,1) 62%, rgba(0,0,0,1) 75%,
+    transparent 75%, transparent 84%,
+    rgba(0,0,0,1) 84%, rgba(0,0,0,1) 100%);
+}
+
+/* Glowing Neon Laser Horizon Line */
+.cyber-horizon-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48%;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(6, 182, 212, 0.4) 15%, 
+    #38bdf8 35%, 
+    #ffffff 50%, 
+    #38bdf8 65%, 
+    rgba(6, 182, 212, 0.4) 85%, 
+    transparent 100%
+  );
+  box-shadow: 
+    0 0 12px #38bdf8,
+    0 0 28px #06b6d4,
+    0 0 55px #2563eb;
+  z-index: 3;
+}
+
+/* 3D Infinite Perspective Cyber Grid Plane */
+.cyber-grid-plane {
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  top: 48%;
+  height: 56%;
+  transform-origin: 50% 0%;
+  transform: perspective(320px) rotateX(72deg);
+  background-image: 
+    linear-gradient(to right, rgba(6, 182, 212, 0.5) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(6, 182, 212, 0.5) 1.5px, transparent 1.5px);
+  background-size: 55px 55px;
+  animation: cyberGridTravel 2s linear infinite;
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.9) 20%, rgba(0, 0, 0, 1) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.9) 20%, rgba(0, 0, 0, 1) 100%);
+  z-index: 2;
+}
+
+@keyframes cyberGridTravel {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 55px;
+  }
+}
+
+/* Vertical Cyber Laser Light Beams */
+.cyber-light-beams {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: 
+    radial-gradient(ellipse at 25% 48%, rgba(6, 182, 212, 0.15) 0%, transparent 40%),
+    radial-gradient(ellipse at 75% 48%, rgba(99, 102, 241, 0.15) 0%, transparent 40%);
+  z-index: 2;
+}
+
+/* High-Tech Cyber Glass Card (Option 1 Dark) */
 .concept1-mode.dark-theme .auth-card {
+  position: relative;
   background: linear-gradient(
-    160deg,
-    rgba(6, 28, 24, 0.88) 0%,
-    rgba(4, 22, 20, 0.92) 100%
+    145deg,
+    rgba(8, 17, 34, 0.88) 0%,
+    rgba(3, 8, 20, 0.94) 100%
   ) !important;
-  border: 1.5px solid rgba(16, 185, 129, 0.45) !important;
+  border: 1.5px solid rgba(6, 182, 212, 0.5) !important;
   box-shadow:
-    inset 0 1.5px 1.5px rgba(52, 211, 153, 0.35),
-    0 24px 60px rgba(0, 0, 0, 0.85),
-    0 0 60px rgba(16, 185, 129, 0.22),
-    0 0 120px rgba(6, 182, 212, 0.1) !important;
-  backdrop-filter: blur(40px) saturate(200%) !important;
+    inset 0 1.5px 1.5px rgba(103, 232, 249, 0.4),
+    0 24px 65px rgba(0, 0, 0, 0.9),
+    0 0 50px rgba(6, 182, 212, 0.25),
+    0 0 90px rgba(59, 130, 246, 0.15) !important;
+  backdrop-filter: blur(36px) saturate(180%) !important;
 }
 
-/* Teal glowing tab underline */
+/* High-Tech Cyber HUD Corner Accents on Card */
+.concept1-mode.dark-theme .auth-card::before,
+.concept1-mode.dark-theme .auth-card::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.concept1-mode.dark-theme .auth-card::before {
+  top: -2px;
+  left: -2px;
+  border-top: 3px solid #38bdf8;
+  border-left: 3px solid #38bdf8;
+  border-top-left-radius: 20px;
+  box-shadow: -2px -2px 10px rgba(56, 189, 248, 0.8);
+}
+
+.concept1-mode.dark-theme .auth-card::after {
+  bottom: -2px;
+  right: -2px;
+  border-bottom: 3px solid #38bdf8;
+  border-right: 3px solid #38bdf8;
+  border-bottom-right-radius: 20px;
+  box-shadow: 2px 2px 10px rgba(56, 189, 248, 0.8);
+}
+
+/* Cyber Laser Glowing Tabs */
 .concept1-mode.dark-theme .auth-tab.active {
-  border-bottom-color: #10b981 !important;
+  border-bottom-color: #06b6d4 !important;
   color: #ffffff !important;
+  text-shadow: 0 0 12px rgba(6, 182, 212, 0.7);
 }
 
-/* Emerald & Cyan role button selected state */
+/* Cyber Role Button Selected State */
 .concept1-mode.dark-theme .auth-role-btn.active {
-  background: rgba(16, 185, 129, 0.15) !important;
-  border-color: rgba(16, 185, 129, 0.65) !important;
-  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.3) !important;
+  background: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.75) !important;
+  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.35) !important;
   outline: none !important;
 }
 
-/* Deep Bioluminescent Teal Submit Button */
+/* High-Energy Cyber Laser Button */
 .concept1-mode.dark-theme .btn-primary {
-  background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%) !important;
+  background: linear-gradient(135deg, #06b6d4 0%, #2563eb 50%, #4f46e5 100%) !important;
   color: #ffffff !important;
   border: none !important;
-  box-shadow: 0 8px 28px rgba(5, 150, 105, 0.55) !important;
+  box-shadow: 
+    0 8px 28px rgba(6, 182, 212, 0.55),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6) !important;
 }
 
 .concept1-mode.dark-theme .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #0ea5e9 100%) !important;
-  box-shadow: 0 12px 36px rgba(16, 185, 129, 0.7) !important;
+  background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #6366f1 100%) !important;
+  box-shadow: 
+    0 12px 36px rgba(6, 182, 212, 0.75),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
   transform: translateY(-2px);
 }
 
-/* Title and subtitle teal tint in dark mode */
+/* Cyber Holographic Title & Subtitle */
 .concept1-mode.dark-theme .auth-title {
-  color: #ecfdf5 !important;
-  text-shadow: 0 0 20px rgba(16, 185, 129, 0.5), 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+  color: #f0fdf4 !important;
+  text-shadow: 0 0 24px rgba(6, 182, 212, 0.6), 0 2px 8px rgba(0, 0, 0, 0.6) !important;
 }
 
 .concept1-mode.dark-theme .auth-subtitle {
-  color: #6ee7b7 !important;
+  color: #7dd3fc !important;
 }
 
-/* Logo circle with bioluminescent glow */
+/* Cyber Holographic Logo Ring */
 .concept1-mode.dark-theme .auth-logo {
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(6, 182, 212, 0.15) 60%, transparent 100%) !important;
-  border: 2px solid rgba(16, 185, 129, 0.4) !important;
-  box-shadow: 0 0 30px rgba(16, 185, 129, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.28) 0%, rgba(37, 99, 235, 0.15) 60%, transparent 100%) !important;
+  border: 2px solid rgba(6, 182, 212, 0.5) !important;
+  box-shadow: 0 0 35px rgba(6, 182, 212, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
 }
 
 /* Concept 4 (Option 4: Cyber Velvet) Background Layers - Electric Amethyst & Velvet Rose Cosmos */
