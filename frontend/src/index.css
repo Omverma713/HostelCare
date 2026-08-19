@@ -1076,108 +1076,133 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 .auth-page-container.light-theme .auth-card {
-  backdrop-filter: blur(36px) saturate(220%) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(220%) !important;
+  backdrop-filter: blur(36px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(200%) !important;
   border-radius: 24px !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 100%),
-              rgba(255, 255, 255, 0.14) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
   box-shadow: 
-    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.6),
-    0 24px 60px rgba(16, 28, 61, 0.35) !important;
+    inset 0 1.5px 2px #ffffff,
+    0 24px 60px rgba(15, 23, 42, 0.14),
+    0 4px 16px rgba(15, 23, 42, 0.06) !important;
 }
 
 .auth-page-container.light-theme .auth-tabs {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background: rgba(241, 245, 249, 0.8) !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
 }
 
 .auth-page-container.light-theme .auth-tab {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: #64748b !important;
+  font-weight: 700 !important;
 }
 
 .auth-page-container.light-theme .auth-tab:hover {
-  color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 .auth-page-container.light-theme .auth-tab.active {
-  color: #ffffff !important;
-  border-bottom-color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.2) !important;
+  color: #0f172a !important;
+  border-bottom-color: #ea580c !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   font-weight: 800 !important;
 }
 
 .auth-page-container.light-theme .auth-title {
-  color: #ffffff !important;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+  color: #0f172a !important;
+  font-weight: 900 !important;
+  text-shadow: none !important;
 }
 
 .auth-page-container.light-theme .auth-subtitle {
-  color: rgba(255, 255, 255, 0.9) !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
 }
 
 .auth-page-container.light-theme .auth-role-btn {
-  background: rgba(255, 255, 255, 0.14) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
-  color: #ffffff !important;
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
 }
 
 .auth-page-container.light-theme .auth-role-btn:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
 }
 
 .auth-page-container.light-theme .auth-role-btn.active {
-  background: rgba(255, 255, 255, 0.32) !important;
-  border-color: rgba(255, 255, 255, 0.8) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+  background: #fff7ed !important;
+  border-color: #ea580c !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.22) !important;
   outline: none !important;
 }
 
 .auth-page-container.light-theme .auth-role-btn-title {
-  color: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn.active .auth-role-btn-title {
+  color: #9a3412 !important;
 }
 
 .auth-page-container.light-theme .auth-role-btn-sub {
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn.active .auth-role-btn-sub {
+  color: #c2410c !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn-icon {
+  background: #f1f5f9 !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn.active .auth-role-btn-icon {
+  background: #ffedd5 !important;
 }
 
 .auth-page-container.light-theme .form-label {
-  color: rgba(255, 255, 255, 0.95) !important;
-  font-weight: 700 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  color: #334155 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-shadow: none !important;
 }
 
-/* Translucent Rose/Pink to Purple inputs (Somi signature) */
+/* Crisp, High-Contrast Light Inputs */
 .auth-page-container.light-theme .form-input {
-  color: #ffffff !important;
-  background: linear-gradient(90deg, rgba(244, 63, 94, 0.45) 0%, rgba(147, 51, 234, 0.45) 100%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+  color: #0f172a !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+  font-weight: 600 !important;
 }
 
 .auth-page-container.light-theme .form-input:focus {
-  background: linear-gradient(90deg, rgba(244, 63, 94, 0.6) 0%, rgba(147, 51, 234, 0.6) 100%) !important;
-  border-color: #ffffff !important;
+  background: #ffffff !important;
+  border-color: #ea580c !important;
   box-shadow: 
-    0 0 16px rgba(244, 63, 94, 0.45),
-    0 0 0 3px rgba(255, 255, 255, 0.3) !important;
+    0 0 0 3px rgba(234, 88, 12, 0.22),
+    inset 0 1px 2px rgba(15, 23, 42, 0.05) !important;
 }
 
 .auth-page-container.light-theme .form-input::placeholder {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
 }
 
 .auth-page-container.light-theme .btn-primary {
-  background: linear-gradient(135deg, #ff6b35 0%, #ea580c 100%) !important;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #e11d48 100%) !important;
   color: #ffffff !important;
   border: none !important;
   box-shadow: 0 8px 24px rgba(234, 88, 12, 0.45) !important;
 }
 
 .auth-page-container.light-theme .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #f97316 0%, #c2410c 100%) !important;
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 50%, #f43f5e 100%) !important;
   box-shadow: 0 12px 30px rgba(234, 88, 12, 0.6) !important;
 }
 
@@ -3166,8 +3191,9 @@ html.dark-theme .sidebar-theme-btn.active {
 /* Crystal Frosted Quartz Card (Option 1 Light) */
 .concept1-mode.light-theme .auth-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.86) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1.5px solid #ffffff !important;
+  border-radius: 24px !important;
   box-shadow:
     inset 0 2px 2px #ffffff,
     0 24px 60px rgba(15, 23, 42, 0.14),
@@ -3175,49 +3201,31 @@ html.dark-theme .sidebar-theme-btn.active {
   backdrop-filter: blur(36px) saturate(180%) !important;
 }
 
-/* Crystal Quartz Corner Accents (Option 1 Light) */
-.concept1-mode.light-theme .auth-card::before,
-.concept1-mode.light-theme .auth-card::after {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.concept1-mode.light-theme .auth-card::before {
-  top: -2px;
-  left: -2px;
-  border-top: 3px solid #f97316;
-  border-left: 3px solid #f97316;
-  border-top-left-radius: 20px;
-  box-shadow: -2px -2px 10px rgba(249, 115, 22, 0.6);
-}
-
-.concept1-mode.light-theme .auth-card::after {
-  bottom: -2px;
-  right: -2px;
-  border-bottom: 3px solid #f97316;
-  border-right: 3px solid #f97316;
-  border-bottom-right-radius: 20px;
-  box-shadow: 2px 2px 10px rgba(249, 115, 22, 0.6);
-}
-
 /* Crystal Tabs & Typography (Option 1 Light) */
+.concept1-mode.light-theme .auth-tab {
+  color: #64748b !important;
+}
+
 .concept1-mode.light-theme .auth-tab.active {
   border-bottom-color: #ea580c !important;
   color: #0f172a !important;
+  background: rgba(234, 88, 12, 0.08) !important;
   font-weight: 800;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  text-shadow: none !important;
+}
+
+.concept1-mode.light-theme .auth-role-btn {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
 .concept1-mode.light-theme .auth-role-btn.active {
-  background: rgba(249, 115, 22, 0.14) !important;
-  border-color: rgba(249, 115, 22, 0.85) !important;
-  color: #0f172a !important;
+  background: #fff7ed !important;
+  border-color: #ea580c !important;
+  color: #9a3412 !important;
   font-weight: 800;
-  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.25) !important;
 }
 
 .concept1-mode.light-theme .btn-primary {
