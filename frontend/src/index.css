@@ -4463,15 +4463,6 @@ body.dark .beta-banner-cord {
     font-size: 0.88rem;
   }
 
-  .theme-icon {
-    font-size: 0.88rem;
-  }
-
-  /* Hide hanging beta banner on mobile so it never covers buttons */
-  .beta-banner-container.on-login {
-    display: none !important;
-  }
-
   /* Concept 1: Classic Portal Mobile */
   .auth-main-layout.centered-layout {
     padding: 72px 14px 30px;
@@ -4564,21 +4555,32 @@ body.dark .beta-banner-cord {
   }
 
   .beta-banner-container.on-login {
-    right: 20px !important;
+    display: flex !important;
+    position: absolute !important;
+    top: 48px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    z-index: 999 !important;
+    pointer-events: none !important;
   }
 
-  .beta-banner-cords {
-    height: 18px;
-    width: 48px;
+  .beta-banner-container.on-login .beta-banner-cords {
+    height: 10px !important;
+    width: 40px !important;
   }
-  .beta-banner-sign {
-    padding: 4px 10px;
-    border-radius: 4px;
-    transform: rotate(2.5deg);
+
+  .beta-banner-container.on-login .beta-banner-sign {
+    padding: 3px 8px !important;
+    border-radius: 4px !important;
+    transform: rotate(2deg) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
   }
-  .beta-banner-text {
-    font-size: 0.6rem;
-    letter-spacing: 0.06em;
+
+  .beta-banner-container.on-login .beta-banner-text {
+    font-size: 0.58rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.06em !important;
   }
 }
 
