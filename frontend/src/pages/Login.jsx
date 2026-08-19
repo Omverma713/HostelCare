@@ -152,14 +152,14 @@ export default function Login() {
       <div className="auth-theme-backdrop auth-backdrop-dark" />
       <div className="auth-theme-backdrop auth-backdrop-light" />
 
-      {/* 3D Floating Particle Nebula Background (Active for Option 1 Classic and Option 2 3D Room Pod) */}
-      {(activeConcept === 'concept1' || activeConcept === 'concept2') && (
+      {/* 3D Floating Particle Nebula Background (Active for Option 1, 2, and 4) */}
+      {(activeConcept === 'concept1' || activeConcept === 'concept2' || activeConcept === 'concept4') && (
         <Canvas3DBackground role={selectedRole} theme={theme} concept={activeConcept} />
       )}
 
-      {/* Top Header Control Bar: Concept Switcher (3 Options) & Theme Switcher */}
+      {/* Top Header Control Bar: Concept Switcher (4 Options) & Theme Switcher */}
       <div className="auth-top-controls">
-        {/* Concept Switcher (3 Independent 3D Tactile Object Buttons with 8px Gap) */}
+        {/* Concept Switcher (4 Independent 3D Tactile Object Buttons with 8px Gap) */}
         <div className="auth-concept-switcher">
           <button
             type="button"
@@ -188,6 +188,15 @@ export default function Login() {
             <span className="concept-icon">💡</span>
             <span className="concept-label">Cute Lamp</span>
           </button>
+          <button
+            type="button"
+            className={`auth-concept-btn concept-btn-4 ${activeConcept === 'concept4' ? 'active' : ''}`}
+            onClick={() => setActiveConcept('concept4')}
+          >
+            <span className="concept-badge">4</span>
+            <span className="concept-icon">🔮</span>
+            <span className="concept-label">Cyber Velvet</span>
+          </button>
         </div>
 
         {/* Theme Switcher (2 Independent 3D Tactile Object Buttons with 8px Gap) */}
@@ -212,10 +221,10 @@ export default function Login() {
       </div>
 
       {/* ===================================================================
-          OPTION 1: CLASSIC PORTAL (ORIGINAL AMBIENT BLOBS & CENTERED CARD)
+          OPTION 1 & 4: CENTERED CARD LAYOUT (CLASSIC & CYBER VELVET)
           =================================================================== */}
-      {activeConcept === 'concept1' && (
-        <div className="auth-main-layout centered-layout concept1-layout">
+      {(activeConcept === 'concept1' || activeConcept === 'concept4') && (
+        <div className={`auth-main-layout centered-layout ${activeConcept}-layout`}>
           {/* Original Background Animated Glow Blobs */}
           <div className="auth-bg-blob auth-bg-blob-1" />
           <div className="auth-bg-blob auth-bg-blob-2" />
