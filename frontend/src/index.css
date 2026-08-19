@@ -1473,16 +1473,16 @@ html.dark-theme .sidebar-theme-btn.active {
   letter-spacing: 0.05em;
 }
 
-/* Top Theme Switcher Pill Group - Physical 3D Object Enclosure */
+/* Top Theme Switcher Pill Group - Physical 3D Object Enclosure with 8px Gap */
 .auth-theme-toggle,
 .auth-theme-switcher {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(88px, auto));
-  gap: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 6px;
   border-radius: 40px;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(10, 15, 30, 0.95) 100%);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(10, 15, 30, 0.96) 100%);
   border: 2px solid rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(30px) saturate(190%);
   -webkit-backdrop-filter: blur(30px) saturate(190%);
@@ -1498,81 +1498,80 @@ html.dark-theme .sidebar-theme-btn.active {
 
 .light-theme .auth-theme-toggle,
 .light-theme .auth-theme-switcher {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(241, 245, 249, 0.9) 100%);
-  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(241, 245, 249, 0.95) 100%);
+  border: 2px solid #ffffff;
   box-shadow: 
-    inset 0 3px 6px rgba(0, 0, 0, 0.12),
-    inset 0 -1px 2px rgba(255, 255, 255, 0.9),
-    0 18px 40px rgba(15, 23, 42, 0.2),
-    0 4px 12px rgba(15, 23, 42, 0.1);
-}
-
-.auth-theme-slider-thumb {
-  position: absolute;
-  top: 6px;
-  bottom: 6px;
-  left: 6px;
-  width: calc(50% - 6px);
-  border-radius: 30px;
-  background: linear-gradient(180deg, #fbbf24 0%, #f97316 50%, #c2410c 100%);
-  box-shadow: 
-    inset 0 2px 2px rgba(255, 255, 255, 0.95),
-    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
-    0 4px 0 #9a3412,
-    0 10px 24px rgba(234, 88, 12, 0.55);
-  transition: transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease, box-shadow 0.35s ease;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.theme-dark .auth-theme-slider-thumb {
-  transform: translateX(100%);
-  background: linear-gradient(180deg, #818cf8 0%, #4f46e5 50%, #3730a3 100%);
-  box-shadow: 
-    inset 0 2px 2px rgba(255, 255, 255, 0.9),
-    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
-    0 4px 0 #312e81,
-    0 10px 24px rgba(79, 70, 229, 0.55);
+    inset 0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 -1px 2px #ffffff,
+    0 18px 40px rgba(15, 23, 42, 0.18),
+    0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .auth-theme-btn {
   position: relative;
-  z-index: 2;
   border: none;
-  background: transparent !important;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   font-size: 0.82rem;
   font-weight: 700;
   padding: 8px 16px;
   border-radius: 30px;
   cursor: pointer;
-  color: #e2e8f0;
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease, opacity 0.25s ease;
+  color: #cbd5e1;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
   gap: 6px;
-  opacity: 0.85;
 }
 
 .light-theme .auth-theme-btn {
-  color: #1e293b;
-  opacity: 0.88;
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a !important;
 }
 
 .auth-theme-btn:hover {
-  opacity: 1;
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.light-theme .auth-theme-btn:hover {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #0f172a;
 }
 
 .auth-theme-btn:active {
   transform: translateY(2px) scale(0.96);
 }
 
-.auth-theme-btn.active {
+.auth-theme-btn.theme-btn-light.active {
+  background: linear-gradient(180deg, #fbbf24 0%, #f97316 50%, #c2410c 100%) !important;
   color: #ffffff !important;
   font-weight: 800;
-  opacity: 1;
+  border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 
+    inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
+    0 4px 0 #9a3412,
+    0 10px 24px rgba(234, 88, 12, 0.55) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.auth-theme-btn.theme-btn-dark.active {
+  background: linear-gradient(180deg, #818cf8 0%, #4f46e5 50%, #3730a3 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
+    0 4px 0 #312e81,
+    0 10px 24px rgba(79, 70, 229, 0.55) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
@@ -2023,12 +2022,12 @@ html.dark-theme .sidebar-theme-btn.active {
   z-index: 10000 !important;
 }
 
-/* Top Concept Selector Pill Group - Physical 3D Object Enclosure & Keycaps */
+/* Top Concept Selector Pill Group - Physical 3D Object Enclosure with 8px Gap */
 .auth-concept-switcher {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(130px, 1fr));
-  gap: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 6px;
   border-radius: 40px;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(10, 15, 30, 0.96) 100%);
@@ -2055,90 +2054,85 @@ html.dark-theme .sidebar-theme-btn.active {
     0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
-.auth-concept-slider-thumb {
-  position: absolute;
-  top: 6px;
-  bottom: 6px;
-  left: 6px;
-  width: calc((100% - 12px) / 3);
-  border-radius: 30px;
-  transition: transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease, box-shadow 0.35s ease;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.concept-concept1 .auth-concept-slider-thumb {
-  transform: translateX(0%);
-  background: linear-gradient(180deg, #38bdf8 0%, #2563eb 50%, #1d4ed8 100%);
-  box-shadow: 
-    inset 0 2px 2px rgba(255, 255, 255, 0.9),
-    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
-    0 4px 0 #1e3a8a,
-    0 10px 24px rgba(37, 99, 235, 0.5);
-}
-
-.concept-concept2 .auth-concept-slider-thumb {
-  transform: translateX(100%);
-  background: linear-gradient(180deg, #c084fc 0%, #9333ea 50%, #7e22ce 100%);
-  box-shadow: 
-    inset 0 2px 2px rgba(255, 255, 255, 0.9),
-    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
-    0 4px 0 #581c87,
-    0 10px 24px rgba(147, 51, 234, 0.5);
-}
-
-.concept-concept3 .auth-concept-slider-thumb {
-  transform: translateX(200%);
-  background: linear-gradient(180deg, #fbbf24 0%, #f97316 50%, #c2410c 100%);
-  box-shadow: 
-    inset 0 2px 2px rgba(255, 255, 255, 0.95),
-    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
-    0 4px 0 #9a3412,
-    0 10px 24px rgba(234, 88, 12, 0.55);
-}
-
 .auth-concept-btn {
   position: relative;
-  z-index: 2;
   border: none;
-  background: transparent !important;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   font-size: 0.82rem;
   font-weight: 700;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border-radius: 30px;
   cursor: pointer;
-  color: #e2e8f0;
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease, opacity 0.25s ease;
+  color: #cbd5e1;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  gap: 6px;
-  opacity: 1;
+  gap: 7px;
 }
 
 .light-theme .auth-concept-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.08);
   color: #0f172a !important;
-  font-weight: 800;
 }
 
 .auth-concept-btn:hover {
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.light-theme .auth-concept-btn:hover {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #0f172a;
 }
 
 .auth-concept-btn:active {
   transform: translateY(2px) scale(0.96);
 }
 
-.auth-concept-btn.active {
+/* Active 3D Physical Extruded Keycaps for each Concept */
+.auth-concept-btn.concept-btn-1.active {
+  background: linear-gradient(180deg, #38bdf8 0%, #2563eb 50%, #1d4ed8 100%) !important;
   color: #ffffff !important;
   font-weight: 800;
+  border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
+    0 4px 0 #1e3a8a,
+    0 10px 24px rgba(37, 99, 235, 0.55) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-.light-theme .auth-concept-btn.active {
+.auth-concept-btn.concept-btn-2.active {
+  background: linear-gradient(180deg, #c084fc 0%, #9333ea 50%, #7e22ce 100%) !important;
   color: #ffffff !important;
   font-weight: 800;
+  border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
+    0 4px 0 #581c87,
+    0 10px 24px rgba(147, 51, 234, 0.55) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.auth-concept-btn.concept-btn-3.active {
+  background: linear-gradient(180deg, #fbbf24 0%, #f97316 50%, #c2410c 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 
+    inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 0 -3px 2px rgba(0, 0, 0, 0.35),
+    0 4px 0 #9a3412,
+    0 10px 24px rgba(234, 88, 12, 0.55) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
@@ -2177,7 +2171,6 @@ html.dark-theme .sidebar-theme-btn.active {
     0 3px 6px rgba(0, 0, 0, 0.4),
     0 0 10px rgba(255, 255, 255, 0.6),
     inset 0 1px 1px #ffffff;
-  transform: scale(1.08);
 }
 
 /* Floating 3D Icon with Holographic Depth */

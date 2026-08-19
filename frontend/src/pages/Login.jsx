@@ -159,12 +159,11 @@ export default function Login() {
 
       {/* Top Header Control Bar: Concept Switcher (3 Options) & Theme Switcher */}
       <div className="auth-top-controls">
-        {/* Concept Switcher with Smooth 3D Sliding Indicator */}
-        <div className={`auth-concept-switcher concept-${activeConcept}`}>
-          <div className="auth-concept-slider-thumb" />
+        {/* Concept Switcher (3 Independent 3D Tactile Object Buttons with 8px Gap) */}
+        <div className="auth-concept-switcher">
           <button
             type="button"
-            className={`auth-concept-btn ${activeConcept === 'concept1' ? 'active' : ''}`}
+            className={`auth-concept-btn concept-btn-1 ${activeConcept === 'concept1' ? 'active' : ''}`}
             onClick={() => setActiveConcept('concept1')}
           >
             <span className="concept-badge">1</span>
@@ -173,7 +172,7 @@ export default function Login() {
           </button>
           <button
             type="button"
-            className={`auth-concept-btn ${activeConcept === 'concept2' ? 'active' : ''}`}
+            className={`auth-concept-btn concept-btn-2 ${activeConcept === 'concept2' ? 'active' : ''}`}
             onClick={() => setActiveConcept('concept2')}
           >
             <span className="concept-badge">2</span>
@@ -182,7 +181,7 @@ export default function Login() {
           </button>
           <button
             type="button"
-            className={`auth-concept-btn ${activeConcept === 'concept3' ? 'active' : ''}`}
+            className={`auth-concept-btn concept-btn-3 ${activeConcept === 'concept3' ? 'active' : ''}`}
             onClick={() => setActiveConcept('concept3')}
           >
             <span className="concept-badge">3</span>
@@ -191,12 +190,11 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Theme Switcher Toggle with Smooth 3D Sliding Indicator */}
-        <div className={`auth-theme-toggle theme-${theme}`}>
-          <div className="auth-theme-slider-thumb" />
+        {/* Theme Switcher (2 Independent 3D Tactile Object Buttons with 8px Gap) */}
+        <div className="auth-theme-toggle">
           <button
             type="button"
-            className={`auth-theme-btn ${theme === 'light' ? 'active' : ''}`}
+            className={`auth-theme-btn theme-btn-light ${theme === 'light' ? 'active' : ''}`}
             onClick={() => setTheme('light')}
           >
             <span className="theme-icon">☀️</span>
@@ -204,7 +202,7 @@ export default function Login() {
           </button>
           <button
             type="button"
-            className={`auth-theme-btn ${theme === 'dark' ? 'active' : ''}`}
+            className={`auth-theme-btn theme-btn-dark ${theme === 'dark' ? 'active' : ''}`}
             onClick={() => setTheme('dark')}
           >
             <span className="theme-icon">🌙</span>
