@@ -2802,12 +2802,17 @@ html.dark-theme .sidebar-theme-btn.active {
   transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Concept 1 (Option 1: Classic) Background Layers - Classic Midnight Noir Dark & Sunset Aurora Light */
+/* ================================================================
+   Concept 1 (Option 1: Classic) — DEEP OCEAN BIOLUMINESCENCE DARK
+   Animated glowing aurora ribbons in teal/emerald/cyan on deep midnight
+   ================================================================ */
 .concept1-mode .auth-backdrop-dark {
   background: 
-    radial-gradient(circle at 50% 18%, rgba(99, 102, 241, 0.22) 0%, transparent 50%),
-    radial-gradient(circle at 18% 75%, rgba(56, 189, 248, 0.18) 0%, transparent 55%),
-    linear-gradient(180deg, #030712 0%, #070d24 45%, #030712 100%) !important;
+    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 10% 60%, rgba(6, 182, 212, 0.28) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 40%, rgba(52, 211, 153, 0.22) 0%, transparent 48%),
+    radial-gradient(ellipse at 60% 85%, rgba(5, 150, 105, 0.18) 0%, transparent 50%),
+    linear-gradient(180deg, #000d0f 0%, #01130e 30%, #010c12 65%, #000608 100%) !important;
   opacity: 1;
 }
 
@@ -2820,25 +2825,87 @@ html.dark-theme .sidebar-theme-btn.active {
   opacity: 0;
 }
 
-.concept1-mode.light-theme .auth-backdrop-dark {
-  opacity: 0;
+.concept1-mode.light-theme .auth-backdrop-dark { opacity: 0; }
+.concept1-mode.light-theme .auth-backdrop-light { opacity: 1; }
+
+/* Bioluminescent animated aurora ribbons on top of backdrop */
+.concept1-mode.dark-theme .auth-main-layout::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(125deg, transparent 30%, rgba(16, 185, 129, 0.12) 45%, transparent 60%),
+    linear-gradient(55deg,  transparent 35%, rgba(6, 182, 212, 0.1) 50%, transparent 65%);
+  animation: auroraShift 8s ease-in-out infinite alternate;
+  z-index: 0;
 }
 
-.concept1-mode.light-theme .auth-backdrop-light {
-  opacity: 1;
+@keyframes auroraShift {
+  0%   { opacity: 0.6; filter: hue-rotate(0deg); }
+  50%  { opacity: 1;   filter: hue-rotate(20deg); }
+  100% { opacity: 0.7; filter: hue-rotate(-15deg); }
 }
 
-/* Concept 1 Classic Buttons */
+/* Emerald bioluminescent glass card */
+.concept1-mode.dark-theme .auth-card {
+  background: linear-gradient(
+    160deg,
+    rgba(6, 28, 24, 0.88) 0%,
+    rgba(4, 22, 20, 0.92) 100%
+  ) !important;
+  border: 1.5px solid rgba(16, 185, 129, 0.45) !important;
+  box-shadow:
+    inset 0 1.5px 1.5px rgba(52, 211, 153, 0.35),
+    0 24px 60px rgba(0, 0, 0, 0.85),
+    0 0 60px rgba(16, 185, 129, 0.22),
+    0 0 120px rgba(6, 182, 212, 0.1) !important;
+  backdrop-filter: blur(40px) saturate(200%) !important;
+}
+
+/* Teal glowing tab underline */
+.concept1-mode.dark-theme .auth-tab.active {
+  border-bottom-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+/* Emerald & Cyan role button selected state */
+.concept1-mode.dark-theme .auth-role-btn.active {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.65) !important;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.3) !important;
+  outline: none !important;
+}
+
+/* Deep Bioluminescent Teal Submit Button */
 .concept1-mode.dark-theme .btn-primary {
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%) !important;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%) !important;
   color: #ffffff !important;
   border: none !important;
-  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.5) !important;
+  box-shadow: 0 8px 28px rgba(5, 150, 105, 0.55) !important;
 }
 
 .concept1-mode.dark-theme .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%) !important;
-  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.65) !important;
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #0ea5e9 100%) !important;
+  box-shadow: 0 12px 36px rgba(16, 185, 129, 0.7) !important;
+  transform: translateY(-2px);
+}
+
+/* Title and subtitle teal tint in dark mode */
+.concept1-mode.dark-theme .auth-title {
+  color: #ecfdf5 !important;
+  text-shadow: 0 0 20px rgba(16, 185, 129, 0.5), 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+.concept1-mode.dark-theme .auth-subtitle {
+  color: #6ee7b7 !important;
+}
+
+/* Logo circle with bioluminescent glow */
+.concept1-mode.dark-theme .auth-logo {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(6, 182, 212, 0.15) 60%, transparent 100%) !important;
+  border: 2px solid rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Concept 4 (Option 4: Cyber Velvet) Background Layers - Electric Amethyst & Velvet Rose Cosmos */

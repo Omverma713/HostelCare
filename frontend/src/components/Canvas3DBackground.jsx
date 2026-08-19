@@ -46,7 +46,8 @@ export default function Canvas3DBackground({ role = null, theme = 'dark', concep
         return ['#38bdf8', '#0284c7', '#818cf8', '#34d399', '#a855f7'];
       }
       if (concept === 'concept1' && theme === 'dark') {
-        return ['#d946ef', '#c084fc', '#ec4899', '#a855f7', '#f472b6'];
+        // Deep Ocean Bioluminescence — teal, emerald, cyan glow
+        return ['#10b981', '#34d399', '#06b6d4', '#14b8a6', '#6ee7b7'];
       }
       return theme === 'dark'
         ? ['#38bdf8', '#818cf8', '#06b6d4', '#3b82f6', '#60a5fa']
