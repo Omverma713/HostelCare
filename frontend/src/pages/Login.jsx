@@ -159,7 +159,7 @@ export default function Login() {
 
       {/* Top Header Control Bar: Concept Switcher (3 Options) & Theme Switcher */}
       <div className="auth-top-controls">
-        {/* Concept Switcher with Smooth Sliding Indicator */}
+        {/* Concept Switcher with Smooth 3D Sliding Indicator */}
         <div className={`auth-concept-switcher concept-${activeConcept}`}>
           <div className="auth-concept-slider-thumb" />
           <button
@@ -167,25 +167,31 @@ export default function Login() {
             className={`auth-concept-btn ${activeConcept === 'concept1' ? 'active' : ''}`}
             onClick={() => setActiveConcept('concept1')}
           >
-            1. 🌌 Classic
+            <span className="concept-badge">1</span>
+            <span className="concept-icon">🌌</span>
+            <span className="concept-label">Classic</span>
           </button>
           <button
             type="button"
             className={`auth-concept-btn ${activeConcept === 'concept2' ? 'active' : ''}`}
             onClick={() => setActiveConcept('concept2')}
           >
-            2. 🏠 3D Room Pod
+            <span className="concept-badge">2</span>
+            <span className="concept-icon">🏠</span>
+            <span className="concept-label">3D Room Pod</span>
           </button>
           <button
             type="button"
             className={`auth-concept-btn ${activeConcept === 'concept3' ? 'active' : ''}`}
             onClick={() => setActiveConcept('concept3')}
           >
-            3. 💡 Cute Lamp
+            <span className="concept-badge">3</span>
+            <span className="concept-icon">💡</span>
+            <span className="concept-label">Cute Lamp</span>
           </button>
         </div>
 
-        {/* Theme Switcher Toggle with Smooth Sliding Indicator */}
+        {/* Theme Switcher Toggle with Smooth 3D Sliding Indicator */}
         <div className={`auth-theme-toggle theme-${theme}`}>
           <div className="auth-theme-slider-thumb" />
           <button
@@ -193,14 +199,16 @@ export default function Login() {
             className={`auth-theme-btn ${theme === 'light' ? 'active' : ''}`}
             onClick={() => setTheme('light')}
           >
-            ☀️ Light
+            <span className="theme-icon">☀️</span>
+            <span className="theme-label">Light</span>
           </button>
           <button
             type="button"
             className={`auth-theme-btn ${theme === 'dark' ? 'active' : ''}`}
             onClick={() => setTheme('dark')}
           >
-            🌙 Dark
+            <span className="theme-icon">🌙</span>
+            <span className="theme-label">Dark</span>
           </button>
         </div>
       </div>

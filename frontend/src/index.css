@@ -1473,6 +1473,115 @@ html.dark-theme .sidebar-theme-btn.active {
   letter-spacing: 0.05em;
 }
 
+/* Top Theme Switcher Pill Group with Smooth 3D Sliding Indicator */
+.auth-theme-toggle,
+.auth-theme-switcher {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(84px, auto));
+  gap: 0;
+  padding: 5px;
+  border-radius: 36px;
+  background: rgba(15, 23, 42, 0.62);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: 
+    inset 0 2px 3px rgba(255, 255, 255, 0.2),
+    0 16px 36px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  user-select: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.light-theme .auth-theme-toggle,
+.light-theme .auth-theme-switcher {
+  background: rgba(255, 255, 255, 0.38);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    0 16px 36px rgba(15, 23, 42, 0.18),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.auth-theme-slider-thumb {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc(50% - 5px);
+  border-radius: 28px;
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  box-shadow: 
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.25),
+    0 6px 18px rgba(234, 88, 12, 0.45);
+  transition: transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease, box-shadow 0.35s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.theme-dark .auth-theme-slider-thumb {
+  transform: translateX(100%);
+  background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+  box-shadow: 
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.25),
+    0 6px 18px rgba(59, 130, 246, 0.45);
+}
+
+.auth-theme-btn {
+  position: relative;
+  z-index: 2;
+  border: none;
+  background: transparent !important;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 28px;
+  cursor: pointer;
+  color: #e2e8f0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease, opacity 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  gap: 6px;
+  opacity: 0.82;
+}
+
+.light-theme .auth-theme-btn {
+  color: #1e293b;
+  opacity: 0.85;
+}
+
+.auth-theme-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px) scale(1.03);
+}
+
+.auth-theme-btn:active {
+  transform: scale(0.96);
+}
+
+.auth-theme-btn.active {
+  color: #ffffff !important;
+  font-weight: 800;
+  opacity: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.theme-icon {
+  font-size: 0.95rem;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+}
+
+.auth-theme-btn:hover .theme-icon {
+  transform: rotate(15deg) scale(1.2);
+}
+
 .auth-page-container .form-input {
   width: 100%;
   padding: 11px 16px;
@@ -1909,52 +2018,73 @@ html.dark-theme .sidebar-theme-btn.active {
   z-index: 10000 !important;
 }
 
-/* Top Concept Selector Pill Group with Smooth Sliding Indicator (3 Options) */
+/* Top Concept Selector Pill Group with Smooth 3D Volumetric Indicator (3 Options) */
 .auth-concept-switcher {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(3, minmax(112px, auto));
+  grid-template-columns: repeat(3, minmax(122px, auto));
   gap: 0;
-  padding: 4px;
-  border-radius: 30px;
-  background: rgba(15, 23, 42, 0.65);
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  padding: 5px;
+  border-radius: 36px;
+  background: rgba(15, 23, 42, 0.62);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: 
+    inset 0 2px 3px rgba(255, 255, 255, 0.2),
+    0 16px 36px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   user-select: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .light-theme .auth-concept-switcher {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.38);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    0 16px 36px rgba(15, 23, 42, 0.18),
+    0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .auth-concept-slider-thumb {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  width: calc(33.333% - 2.67px);
-  border-radius: 20px;
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
-  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc(33.333% - 3.33px);
+  border-radius: 28px;
+  transition: transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease, box-shadow 0.35s ease;
   pointer-events: none;
   z-index: 1;
 }
 
 .concept-concept1 .auth-concept-slider-thumb {
   transform: translateX(0%);
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #6366f1 100%);
+  box-shadow: 
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.25),
+    0 6px 18px rgba(37, 99, 235, 0.45);
 }
 
 .concept-concept2 .auth-concept-slider-thumb {
   transform: translateX(100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #db2777 100%);
+  box-shadow: 
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.25),
+    0 6px 18px rgba(147, 51, 234, 0.45);
 }
 
 .concept-concept3 .auth-concept-slider-thumb {
   transform: translateX(200%);
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #ea580c 100%);
+  box-shadow: 
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.85),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.25),
+    0 6px 18px rgba(234, 88, 12, 0.5);
 }
 
 .auth-concept-btn {
@@ -1962,32 +2092,86 @@ html.dark-theme .sidebar-theme-btn.active {
   z-index: 2;
   border: none;
   background: transparent !important;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 7px 18px;
-  border-radius: 20px;
+  padding: 8px 16px;
+  border-radius: 28px;
   cursor: pointer;
-  color: #94a3b8;
-  transition: color 0.25s ease;
+  color: #e2e8f0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease, opacity 0.25s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
   gap: 6px;
+  opacity: 0.82;
 }
 
 .light-theme .auth-concept-btn {
-  color: #475569;
+  color: #1e293b;
+  opacity: 0.85;
+}
+
+.auth-concept-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px) scale(1.02);
+}
+
+.auth-concept-btn:active {
+  transform: scale(0.96);
 }
 
 .auth-concept-btn.active {
   color: #ffffff !important;
   font-weight: 800;
+  opacity: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .light-theme .auth-concept-btn.active {
   color: #ffffff !important;
   font-weight: 800;
+  opacity: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Numeric Badge on Concept Buttons */
+.concept-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  transition: all 0.25s ease;
+}
+
+.light-theme .auth-concept-btn:not(.active) .concept-badge {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1e293b;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.auth-concept-btn.active .concept-badge {
+  background: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+
+/* Animated Icon */
+.concept-icon {
+  font-size: 0.92rem;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+}
+
+.auth-concept-btn:hover .concept-icon {
+  transform: translateY(-2px) scale(1.18);
 }
 
 /* Main Layout Structure */
