@@ -152,8 +152,8 @@ export default function Login() {
       <div className="auth-theme-backdrop auth-backdrop-dark" />
       <div className="auth-theme-backdrop auth-backdrop-light" />
 
-      {/* 3D Floating Particle Nebula Background (Active for Option 2: 3D Room Pod) */}
-      {activeConcept === 'concept2' && (
+      {/* 3D Floating Particle Nebula Background (Active for Option 1 Classic and Option 2 3D Room Pod) */}
+      {(activeConcept === 'concept1' || activeConcept === 'concept2') && (
         <Canvas3DBackground role={selectedRole} theme={theme} />
       )}
 
