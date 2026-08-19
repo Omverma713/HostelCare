@@ -1130,8 +1130,9 @@ html.dark-theme .sidebar-theme-btn.active {
 
 .auth-page-container.light-theme .auth-role-btn.active {
   background: rgba(255, 255, 255, 0.32) !important;
-  border-color: #ffffff !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+  outline: none !important;
 }
 
 .auth-page-container.light-theme .auth-role-btn-title {
@@ -1251,9 +1252,10 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 .auth-page-container.dark-theme .auth-role-btn.active {
-  background: rgba(129, 140, 248, 0.16) !important;
-  border-color: #818cf8 !important;
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.35) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+  outline: none !important;
 }
 
 .auth-page-container.dark-theme .form-label {
@@ -1382,6 +1384,14 @@ html.dark-theme .sidebar-theme-btn.active {
   font-family: inherit;
   position: relative;
   box-sizing: border-box;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.auth-role-btn:focus,
+.auth-role-btn:focus-visible {
+  outline: none !important;
+  box-shadow: none;
 }
 
 .auth-role-btn-icon {
