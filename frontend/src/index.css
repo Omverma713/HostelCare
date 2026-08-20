@@ -2667,62 +2667,92 @@ html.dark-theme .sidebar-theme-btn.active {
 @media (max-width: 768px) {
   .auth-top-controls {
     position: absolute;
-    top: 0;
+    top: 10px;
     left: 8px;
     right: 8px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     width: auto;
+    max-width: calc(100vw - 16px);
     margin: 0;
     padding: 0;
     gap: 4px;
     box-sizing: border-box;
+    z-index: 9999 !important;
   }
 
   .auth-concept-switcher,
   .auth-theme-toggle {
-    margin-top: 10px;
+    margin-top: 0 !important;
+  }
+
+  .auth-top-beta-badge {
+    position: absolute !important;
+    top: -8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+    z-index: 9998 !important;
+    flex-shrink: 0 !important;
   }
 
   .auth-top-beta-badge .beta-banner-cords {
-    height: 10px;
-    width: 36px;
+    height: 8px !important;
+    width: 32px !important;
   }
 
   .auth-top-beta-badge .beta-banner-sign {
-    padding: 3px 6px;
-    transform: rotate(2deg);
+    padding: 2px 6px !important;
+    transform: rotate(2deg) !important;
   }
 
   .auth-top-beta-badge .beta-banner-text {
-    font-size: 0.54rem;
+    font-size: 0.52rem !important;
+    letter-spacing: 0.05em !important;
   }
 
   .auth-concept-switcher {
-    padding: 3px 5px;
-    gap: 4px;
-    flex-shrink: 0;
+    padding: 3px 4px !important;
+    gap: 3px !important;
+    flex-shrink: 0 !important;
   }
 
   .auth-concept-btn {
-    padding: 5px 8px;
-    font-size: 0.75rem;
-    gap: 3px;
+    padding: 4px 6px !important;
+    font-size: 0.72rem !important;
+    min-width: 26px !important;
+    gap: 2px !important;
+  }
+
+  .auth-concept-btn .concept-label {
+    display: none !important;
   }
 
   .auth-theme-toggle,
   .auth-theme-switcher {
-    padding: 3px 5px;
-    gap: 4px;
-    flex-shrink: 0;
+    padding: 3px 4px !important;
+    gap: 3px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
   .auth-theme-btn {
-    padding: 5px 8px;
-    font-size: 0.75rem;
-    gap: 3px;
+    padding: 4px 7px !important;
+    font-size: 0.72rem !important;
+    min-width: 26px !important;
+    gap: 2px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .auth-theme-btn .theme-label {
+    display: none !important;
   }
 
   .auth-hero-3d-column {
@@ -2742,45 +2772,18 @@ html.dark-theme .sidebar-theme-btn.active {
 }
 
 @media (max-width: 640px) {
-  .auth-concept-btn .concept-label,
-  .auth-theme-btn .theme-label {
-    display: none !important;
-  }
-
-  .auth-concept-switcher {
-    padding: 3px 4px !important;
-    gap: 3px !important;
-  }
-
-  .auth-concept-btn {
-    padding: 5px 6px !important;
-    min-width: 32px !important;
-    gap: 2px !important;
-  }
-
   .concept-badge {
-    width: 16px !important;
-    height: 16px !important;
-    font-size: 0.62rem !important;
+    width: 15px !important;
+    height: 15px !important;
+    font-size: 0.58rem !important;
   }
 
   .concept-icon {
-    font-size: 0.85rem !important;
-  }
-
-  .auth-theme-toggle,
-  .auth-theme-switcher {
-    padding: 3px 4px !important;
-    gap: 3px !important;
-  }
-
-  .auth-theme-btn {
-    padding: 5px 7px !important;
-    min-width: 30px !important;
+    font-size: 0.8rem !important;
   }
 
   .theme-icon {
-    font-size: 0.85rem !important;
+    font-size: 0.82rem !important;
   }
 }
 
@@ -4464,27 +4467,45 @@ body.dark .beta-banner-cord {
 /* Tablets & Large Mobile (<= 768px) */
 @media (max-width: 768px) {
   .auth-top-controls {
-    top: 14px;
-    left: 12px;
-    right: 12px;
-    gap: 8px;
+    top: 10px;
+    left: 8px;
+    right: 8px;
+    max-width: calc(100vw - 16px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    box-sizing: border-box;
   }
 
   .auth-concept-switcher,
   .auth-theme-toggle {
-    padding: 5px;
-    gap: 6px;
+    margin-top: 0 !important;
+    padding: 3px 4px !important;
+    gap: 3px !important;
+    flex-shrink: 0 !important;
   }
 
   .auth-concept-btn {
-    padding: 6px 12px;
-    font-size: 0.76rem;
-    gap: 5px;
+    padding: 4px 6px !important;
+    font-size: 0.72rem !important;
+    min-width: 26px !important;
+    gap: 2px !important;
+  }
+
+  .auth-concept-btn .concept-label {
+    display: none !important;
   }
 
   .auth-theme-btn {
-    padding: 6px 12px;
-    font-size: 0.76rem;
+    padding: 4px 7px !important;
+    font-size: 0.72rem !important;
+    min-width: 26px !important;
+    box-sizing: border-box !important;
+  }
+
+  .auth-theme-btn .theme-label {
+    display: none !important;
   }
 }
 
@@ -4494,45 +4515,54 @@ body.dark .beta-banner-cord {
     top: 10px;
     left: 8px;
     right: 8px;
+    max-width: calc(100vw - 16px);
     justify-content: space-between;
   }
 
   /* Compact button text on mobile to prevent overflow */
   .auth-concept-btn .concept-label {
-    display: none;
+    display: none !important;
   }
 
   .auth-theme-btn .theme-label {
-    display: none;
+    display: none !important;
   }
 
   .auth-concept-switcher {
-    gap: 5px;
-    padding: 4px 6px;
+    gap: 3px !important;
+    padding: 3px 4px !important;
+    flex-shrink: 0 !important;
   }
 
   .auth-theme-toggle {
-    gap: 5px;
-    padding: 4px 6px;
+    gap: 3px !important;
+    padding: 3px 4px !important;
+    flex-shrink: 0 !important;
   }
 
   .auth-concept-btn {
-    padding: 6px 10px;
-    gap: 4px;
+    padding: 4px 6px !important;
+    min-width: 26px !important;
+    gap: 2px !important;
   }
 
   .auth-theme-btn {
-    padding: 6px 10px;
+    padding: 4px 7px !important;
+    min-width: 26px !important;
   }
 
   .concept-badge {
-    width: 17px;
-    height: 17px;
-    font-size: 0.62rem;
+    width: 15px !important;
+    height: 15px !important;
+    font-size: 0.58rem !important;
   }
 
   .concept-icon {
-    font-size: 0.88rem;
+    font-size: 0.8rem !important;
+  }
+
+  .theme-icon {
+    font-size: 0.82rem !important;
   }
 
   /* Concept 1: Classic Portal Mobile */
@@ -4603,19 +4633,44 @@ body.dark .beta-banner-cord {
 
 /* Extra Small Phones (<= 380px) */
 @media (max-width: 380px) {
+  .auth-top-controls {
+    left: 4px !important;
+    right: 4px !important;
+    max-width: calc(100vw - 8px) !important;
+  }
+
   .auth-concept-switcher {
-    gap: 3px;
-    padding: 4px 4px;
+    gap: 2px !important;
+    padding: 2px 3px !important;
   }
 
   .auth-theme-toggle {
-    gap: 3px;
-    padding: 4px 4px;
+    gap: 2px !important;
+    padding: 2px 3px !important;
   }
 
-  .auth-concept-btn,
+  .auth-concept-btn {
+    padding: 3px 4px !important;
+    min-width: 22px !important;
+  }
+
   .auth-theme-btn {
-    padding: 5px 7px;
+    padding: 3px 5px !important;
+    min-width: 22px !important;
+  }
+
+  .auth-top-beta-badge {
+    transform: translateX(-50%) scale(0.8) !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .auth-concept-btn .concept-badge {
+    display: none !important;
+  }
+
+  .auth-top-beta-badge {
+    display: none !important;
   }
 }
 
