@@ -18,7 +18,8 @@ export default function Login() {
   // 'concept1' -> 1. 🌌 Classic Portal (Original GitHub theme - Default)
   // 'concept2' -> 2. 🏠 3D Room Pod (Split 3D Isometric Hostel Room & Floating Particles)
   // 'concept3' -> 3. 💡 Cute Lamp (Interactive Lamp Pull-Cord Experience)
-  const [activeConcept, setActiveConcept] = useState('concept1');
+  // 'concept4' -> 4. 🔮 Cyber Velvet
+  const [activeConcept, setActiveConcept] = useState('concept2');
 
   // Lamp State for Concept 3 (Cute Lamp)
   const [isLampOn, setIsLampOn] = useState(false);
@@ -152,7 +153,7 @@ export default function Login() {
       <div className="auth-theme-backdrop auth-backdrop-dark" />
       <div className="auth-theme-backdrop auth-backdrop-light" />
 
-      {/* Option 1 Unique Dark Theme: 3D Cyber Horizon & Neon Wireframe Grid (Zero Floating Particles) */}
+      {/* Option 1 Unique Dark Theme */}
       {activeConcept === 'concept1' && theme === 'dark' && (
         <div className="classic-dark-cyber-stage" aria-hidden="true">
           <div className="cyber-aurora-glow" />
@@ -163,7 +164,7 @@ export default function Login() {
         </div>
       )}
 
-      {/* Option 1 Unique Light Theme: 3D Solar Quartz Horizon & Prismatic Grid (Zero Floating Particles) */}
+      {/* Option 1 Unique Light Theme */}
       {activeConcept === 'concept1' && theme === 'light' && (
         <div className="classic-light-horizon-stage" aria-hidden="true">
           <div className="solar-aurora-glow" />
@@ -174,14 +175,13 @@ export default function Login() {
         </div>
       )}
 
-      {/* 3D Floating Particle Nebula Background (Active ONLY for Option 2 and Option 4) */}
+      {/* 3D Floating Particle Nebula Background (Active for Option 2 & 4) */}
       {(activeConcept === 'concept2' || activeConcept === 'concept4') && (
         <Canvas3DBackground role={selectedRole} theme={theme} concept={activeConcept} />
       )}
 
-      {/* Top Header Control Bar: Concept Switcher (4 Options) & Theme Switcher */}
+      {/* Top Header Control Bar: Concept Switcher & Theme Switcher */}
       <div className="auth-top-controls">
-        {/* Concept Switcher (4 Independent 3D Tactile Object Buttons with 8px Gap) */}
         <div className="auth-concept-switcher">
           <button
             type="button"
@@ -221,7 +221,7 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Seamless Centered Hanging Beta Banner in Top Bar */}
+        {/* Hanging Beta Banner in Top Bar */}
         <div className="auth-top-beta-badge" aria-hidden="true">
           <div className="beta-banner-cords">
             <div className="beta-banner-cord cord-left"></div>
@@ -232,7 +232,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Theme Switcher (2 Independent 3D Tactile Object Buttons with 8px Gap) */}
+        {/* Theme Switcher */}
         <div className="auth-theme-toggle">
           <button
             type="button"
@@ -258,13 +258,11 @@ export default function Login() {
           =================================================================== */}
       {(activeConcept === 'concept1' || activeConcept === 'concept4') && (
         <div className={`auth-main-layout centered-layout ${activeConcept}-layout`}>
-          {/* Original Background Animated Glow Blobs */}
           <div className="auth-bg-blob auth-bg-blob-1" />
           <div className="auth-bg-blob auth-bg-blob-2" />
           <div className="auth-bg-blob auth-bg-blob-3" />
 
           <div className="auth-card auth-card-classic">
-            {/* Tabs */}
             <div className="auth-tabs">
               <button
                 className={`auth-tab ${activeTab === 'login' ? 'active' : ''}`}
@@ -283,7 +281,6 @@ export default function Login() {
             </div>
 
             <div className="auth-body">
-              {/* Logo */}
               <div className="auth-logo">👥</div>
 
               <h2 className="auth-title">HostelCare Portal</h2>
@@ -295,7 +292,6 @@ export default function Login() {
 
               {activeTab === 'login' ? (
                 <form onSubmit={handleLoginSubmit}>
-                  {/* Role Selector Grid */}
                   <div className="auth-role-grid">
                     <button
                       type="button"
@@ -366,7 +362,6 @@ export default function Login() {
                   </button>
                 </form>
               ) : (
-                /* Activate Account Form */
                 <form onSubmit={handleActivateSubmit}>
                   <div className="form-group">
                     <label className="form-label" htmlFor="actRegNum1">Registration Number</label>
@@ -681,7 +676,6 @@ export default function Login() {
           =================================================================== */}
       {activeConcept === 'concept3' && (
         <div className="concept4-lamp-layout concept3-mode">
-          {/* Left: Cute Interactive Lamp with Pull Cord */}
           <div className="concept4-lamp-column">
             <InteractiveLamp
               isOn={isLampOn}
@@ -690,7 +684,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Right: The Login Card */}
           <div className="concept4-card-column">
             <div
               ref={cardRef}
@@ -703,7 +696,6 @@ export default function Login() {
                   : 'perspective(1000px) scale(0.2) translateY(40px)',
               }}
             >
-              {/* Warm Light Glow Sheen when ON */}
               {isLampOn && <div className="concept4-card-warm-halo" />}
 
               <div className="concept4-card-header">
@@ -730,7 +722,6 @@ export default function Login() {
                 </p>
               </div>
 
-              {/* Concept 3 Tabs */}
               <div className="concept4-auth-tabs">
                 <button
                   type="button"
@@ -752,7 +743,6 @@ export default function Login() {
 
               {activeTab === 'login' ? (
                 <form onSubmit={handleLoginSubmit} className="concept4-form">
-                  {/* Role Selector Grid */}
                   <div className="auth-role-grid">
                     <button
                       type="button"
@@ -827,7 +817,6 @@ export default function Login() {
                   </button>
                 </form>
               ) : (
-                /* Activate Account Form */
                 <form onSubmit={handleActivateSubmit} className="concept4-form">
                   <div className="form-group">
                     <label className="form-label" htmlFor="actRegNum3">Registration Number</label>
