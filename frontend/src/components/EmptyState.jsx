@@ -1,4 +1,5 @@
 import React from 'react';
+import FuturisticLoader from './login/FuturisticLoader';
 
 /**
  * Reusable loading / error / empty state wrapper.
@@ -20,7 +21,7 @@ export default function EmptyState({
   if (loading) {
     return (
       <div className="loading-spinner-container">
-        <div className="loading-spinner" />
+        <FuturisticLoader size="md" />
       </div>
     );
   }

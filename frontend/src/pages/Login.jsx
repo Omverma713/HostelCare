@@ -8,6 +8,7 @@ import { ADMIN_ROLES } from '../constants';
 import IsometricHostelRoom3D from '../components/IsometricHostelRoom3D';
 import InteractiveLamp from '../components/InteractiveLamp';
 import Canvas3DBackground from '../components/Canvas3DBackground';
+import FuturisticLoader from '../components/login/FuturisticLoader';
 
 export default function Login() {
   const { login, logout } = useAuth();
@@ -68,6 +69,7 @@ export default function Login() {
 
   const doLogin = async (reg, pass) => {
     setLoading(true);
+    const startTime = Date.now();
     try {
       const decodedUser = await login(reg, pass);
 
@@ -75,14 +77,12 @@ export default function Login() {
       if (selectedRole === 'admin' && !ADMIN_ROLES.includes(decodedUser.role)) {
         logout();
         triggerToast('error', '⛔ Access denied. This account is a Student account, not an Admin account.');
-        setLoading(false);
         return;
       }
 
       if (selectedRole === 'student' && decodedUser.role !== 'student') {
         logout();
         triggerToast('error', `⛔ Access denied. This is a ${decodedUser.role} account, not a Student account.`);
-        setLoading(false);
         return;
       }
 
@@ -102,6 +102,11 @@ export default function Login() {
         setActRegNum(reg);
       }
     } finally {
+      // Provide smooth identity scanner verification transition
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 650) {
+        await new Promise((r) => setTimeout(r, 650 - elapsed));
+      }
       setLoading(false);
     }
   };
@@ -126,6 +131,7 @@ export default function Login() {
       return;
     }
     setLoading(true);
+    const startTime = Date.now();
     try {
       const res = await api.activate(actRegNum, actHostel, actRoom, newPassword, confirmPassword);
       if (res.success) {
@@ -139,6 +145,10 @@ export default function Login() {
     } catch (error) {
       triggerToast('error', error.data?.message || error.message || 'Failed to activate account.');
     } finally {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 650) {
+        await new Promise((r) => setTimeout(r, 650 - elapsed));
+      }
       setLoading(false);
     }
   };
@@ -355,10 +365,10 @@ export default function Login() {
                   <button
                     type="submit"
                     className="btn btn-primary"
-                    style={{ width: '100%', marginTop: '6px' }}
+                    style={{ width: '100%', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
                     disabled={loading}
                   >
-                    {loading ? 'Signing In...' : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
+                    {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
                   </button>
                 </form>
               ) : (
@@ -437,10 +447,10 @@ export default function Login() {
                   <button
                     type="submit"
                     className="btn btn-primary"
-                    style={{ width: '100%', marginTop: '8px', padding: '12px' }}
+                    style={{ width: '100%', marginTop: '8px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
                     disabled={loading}
                   >
-                    {loading ? 'Activating...' : 'Activate Account'}
+                    {loading ? <FuturisticLoader size="sm" /> : 'Activate Account'}
                   </button>
                 </form>
               )}
@@ -576,10 +586,10 @@ export default function Login() {
                     <button
                       type="submit"
                       className="btn btn-primary"
-                      style={{ width: '100%', marginTop: '6px' }}
+                      style={{ width: '100%', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
                       disabled={loading}
                     >
-                      {loading ? 'Signing In...' : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
+                      {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
                     </button>
                   </form>
                 ) : (
@@ -658,10 +668,10 @@ export default function Login() {
                     <button
                       type="submit"
                       className="btn btn-primary"
-                      style={{ width: '100%', marginTop: '8px', padding: '12px' }}
+                      style={{ width: '100%', marginTop: '8px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
                       disabled={loading}
                     >
-                      {loading ? 'Activating...' : 'Activate Account'}
+                      {loading ? <FuturisticLoader size="sm" /> : 'Activate Account'}
                     </button>
                   </form>
                 )}
@@ -811,9 +821,10 @@ export default function Login() {
                   <button
                     type="submit"
                     className="concept4-login-btn"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
                     disabled={loading || !isLampOn}
                   >
-                    {loading ? 'Signing In...' : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'} →` : 'Sign In →'}
+                    {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'} →` : 'Sign In →'}
                   </button>
                 </form>
               ) : (
@@ -892,9 +903,10 @@ export default function Login() {
                   <button
                     type="submit"
                     className="concept4-login-btn"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
                     disabled={loading || !isLampOn}
                   >
-                    {loading ? 'Activating Account...' : 'Activate Account →'}
+                    {loading ? <FuturisticLoader size="sm" /> : 'Activate Account →'}
                   </button>
                 </form>
               )}

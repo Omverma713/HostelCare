@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import FuturisticLoader from './login/FuturisticLoader';
 
 /**
  * Route protection wrapper based on authentication status and user roles.
@@ -10,8 +11,8 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
 
   if (loading) {
     return (
-      <div className="loading-spinner-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="loading-spinner"></div>
+      <div className="loading-spinner-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+        <FuturisticLoader size="lg" />
       </div>
     );
   }

@@ -1,0 +1,84 @@
+/* ==========================================================================
+   FuturisticLoader - Minimal Holographic Scanner Ring
+   ========================================================================== */
+
+.futuristic-loader-root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  vertical-align: middle;
+  flex-shrink: 0;
+  user-select: none;
+  pointer-events: none;
+}
+
+.futuristic-loader-svg {
+  display: block;
+  overflow: visible;
+  animation: futuristicRotate 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: center center;
+}
+
+/* Rotating glowing ring */
+.futuristic-ring {
+  transform-origin: center center;
+  filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.75))
+          drop-shadow(0 0 8px rgba(0, 242, 254, 0.45));
+}
+
+/* Subtle glowing guide track */
+.futuristic-track {
+  opacity: 0.6;
+}
+
+/* Pulsing scanner core */
+.futuristic-core-dot {
+  animation: futuristicCorePulse 1.2s ease-in-out infinite alternate;
+  transform-origin: center center;
+  filter: drop-shadow(0 0 3px #38bdf8);
+}
+
+/* Smooth high-precision continuous rotation */
+@keyframes futuristicRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Scanner identity verification core pulse */
+@keyframes futuristicCorePulse {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+/* Scanner Beam Variant */
+.futuristic-loader-scanner .futuristic-loader-svg {
+  animation: futuristicRotate 0.95s linear infinite;
+}
+
+.futuristic-loader-pulse .futuristic-ring {
+  animation: futuristicRingPulse 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes futuristicRingPulse {
+  0% {
+    stroke-opacity: 0.4;
+  }
+  100% {
+    stroke-opacity: 1;
+  }
+}
