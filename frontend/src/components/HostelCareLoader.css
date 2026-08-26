@@ -382,7 +382,8 @@
 .xp-loader-inline {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   vertical-align: middle;
   line-height: 1;
 }
@@ -392,32 +393,51 @@
   display: inline-block;
   vertical-align: middle;
   overflow: visible;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
 }
 
-.xp-loader-inline .xp-tail {
-  transform-origin: 10px 20px;
-  animation: xpTailWag 0.38s ease-in-out infinite alternate;
+.xp-loader-inline .xp-tail-group {
+  transform-origin: 42px 90px;
+  animation: xpTailWag 0.45s ease-in-out infinite alternate;
 }
 
 .xp-loader-inline .xp-head-group {
-  transform-origin: 30px 18px;
-  animation: xpHeadBob 2.2s ease-in-out infinite;
+  transform-origin: 96px 68px;
+  animation: xpHeadBob 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
 
-.xp-loader-inline .xp-bone {
-  transform-origin: 36px 19px;
-  animation: xpBoneRock 1.2s ease-in-out infinite alternate;
+.xp-loader-inline .xp-front-ear {
+  transform-origin: 92px 40px;
+  animation: xpEarBounce 2.8s ease-in-out infinite;
 }
 
-.xp-loader-inline .xp-paw-front {
-  transform-origin: 26px 28px;
-  animation: xpPawTap 1s ease-in-out infinite;
+.xp-loader-inline .xp-eyelid-path {
+  transform-origin: center 42px;
+  transform: scaleY(0);
+  animation: xpBlink 4.2s infinite;
+}
+
+.xp-loader-inline .xp-bone-interactive {
+  transform-origin: 120px 69px;
+  animation: xpBoneRock 1.6s ease-in-out infinite alternate;
+}
+
+.xp-loader-inline .xp-front-paw-group {
+  transform-origin: 96px 96px;
+  animation: xpPawTap 1.4s ease-in-out infinite;
+}
+
+.xp-loader-inline .xp-ground-shadow-el {
+  transform-origin: 80px 120px;
+  animation: xpShadowPulse 2.8s ease-in-out infinite;
 }
 
 .xp-inline-text {
-  font-size: inherit;
-  font-weight: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
   white-space: nowrap;
+  letter-spacing: 0.01em;
+  color: inherit;
 }
 
 /* ==========================================================================

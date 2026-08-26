@@ -27,6 +27,7 @@ export default function SuperintendentDashboard() {
     setLoading(true);
     setPerformanceLoading(true);
     setError(null);
+    const startTime = Date.now();
 
     // 1. Fetch Superintendent Overview Stats
     try {
@@ -53,6 +54,10 @@ export default function SuperintendentDashboard() {
         triggerToast('error', 'Failed to load superintendent stats.');
       }
     } finally {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 2500) {
+        await new Promise((r) => setTimeout(r, 2500 - elapsed));
+      }
       setLoading(false);
     }
 
@@ -69,6 +74,10 @@ export default function SuperintendentDashboard() {
         triggerToast('error', 'Failed to load staff performance metrics.');
       }
     } finally {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 2500) {
+        await new Promise((r) => setTimeout(r, 2500 - elapsed));
+      }
       setPerformanceLoading(false);
     }
   };

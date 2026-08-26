@@ -104,8 +104,8 @@ export default function Login() {
     } finally {
       // Provide smooth identity scanner verification transition
       const elapsed = Date.now() - startTime;
-      if (elapsed < 650) {
-        await new Promise((r) => setTimeout(r, 650 - elapsed));
+      if (elapsed < 2500) {
+        await new Promise((r) => setTimeout(r, 2500 - elapsed));
       }
       setLoading(false);
     }
@@ -146,8 +146,8 @@ export default function Login() {
       triggerToast('error', error.data?.message || error.message || 'Failed to activate account.');
     } finally {
       const elapsed = Date.now() - startTime;
-      if (elapsed < 650) {
-        await new Promise((r) => setTimeout(r, 650 - elapsed));
+      if (elapsed < 2500) {
+        await new Promise((r) => setTimeout(r, 2500 - elapsed));
       }
       setLoading(false);
     }

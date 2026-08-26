@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import HostelCareLoader from './HostelCareLoader';
 
 /**
@@ -12,6 +12,7 @@ import HostelCareLoader from './HostelCareLoader';
 export default function EmptyState({
   loading,
   loadingMessage = 'Searching hostel records…',
+  minDuration = 2500, // Keeps the dog loader visible for ~2.5s for a smooth, enjoyable animation experience
   error,
   onRetry,
   emptyIcon = '📦',
@@ -19,7 +20,36 @@ export default function EmptyState({
   emptyMessage = '',
   children,
 }) {
-  if (loading) {
+  const [showLoader, setShowLoader] = useState(loading);
+  const startTimeRef = useRef(loading ? Date.now() : null);
+
+  useEffect(() => {
+    let timeoutId;
+    if (loading) {
+      startTimeRef.current = Date.now();
+      setShowLoader(true);
+    } else {
+      if (startTimeRef.current !== null && minDuration > 0) {
+        const elapsed = Date.now() - startTimeRef.current;
+        const remaining = Math.max(0, minDuration - elapsed);
+        if (remaining > 0) {
+          timeoutId = setTimeout(() => {
+            setShowLoader(false);
+          }, remaining);
+        } else {
+          setShowLoader(false);
+        }
+      } else {
+        setShowLoader(false);
+      }
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [loading, minDuration]);
+
+  if (showLoader) {
     return <HostelCareLoader size="md" message={loadingMessage} />;
   }
 

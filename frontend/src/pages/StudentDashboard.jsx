@@ -69,6 +69,7 @@ export default function StudentDashboard() {
     }
 
     setSubmitLoading(true);
+    const startTime = Date.now();
     try {
       const res = await api.createComplaint(department, description);
       if (res.success) {
@@ -83,6 +84,10 @@ export default function StudentDashboard() {
     } catch (err) {
       triggerToast('error', err.data?.message || err.message || 'Failed to file complaint.');
     } finally {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 2000) {
+        await new Promise((r) => setTimeout(r, 2000 - elapsed));
+      }
       setSubmitLoading(false);
     }
   };
@@ -193,7 +198,7 @@ export default function StudentDashboard() {
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitLoading}>
-              {submitLoading ? <HostelCareLoader size="xs" inline message="Filing…" /> : 'Submit Complaint'}
+              {submitLoading ? <HostelCareLoader size="sm" inline message="Filing…" /> : 'Submit Complaint'}
             </button>
           </div>
         </form>
