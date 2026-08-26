@@ -1,0 +1,488 @@
+/* ==========================================================================
+   HostelCareLoader - Windows XP-Style Nostalgic Dog Assistant & Loader
+   ========================================================================== */
+
+.xp-loader-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  width: 100%;
+  box-sizing: border-box;
+  animation: xpFadeIn 0.2s ease-out;
+}
+
+/* Fullscreen Backdrop Mode */
+.xp-loader-container.xp-loader-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  min-height: 100vh;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.xp-loader-window {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 380px;
+  width: 100%;
+  position: relative;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Speech Bubble (Windows XP Balloon Tip Style)
+   ========================================================================== */
+
+.xp-speech-bubble {
+  position: relative;
+  background: #ffffea;
+  border: 1px solid #d4c58e;
+  border-radius: 12px;
+  padding: 10px 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+  max-width: 280px;
+  z-index: 2;
+  transition: all 0.25s ease;
+  animation: xpBubbleFloat 2.4s ease-in-out infinite alternate;
+}
+
+/* Dark theme speech bubble */
+:root.dark-theme .xp-speech-bubble,
+.dark-theme .xp-speech-bubble,
+.login-dark-theme .xp-speech-bubble {
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(56, 189, 248, 0.15);
+}
+
+.xp-bubble-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.xp-bubble-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+}
+
+:root.dark-theme .xp-bubble-title,
+.dark-theme .xp-bubble-title,
+.login-dark-theme .xp-bubble-title {
+  color: #f1f5f9;
+}
+
+.xp-bubble-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+:root.dark-theme .xp-bubble-sub,
+.dark-theme .xp-bubble-sub,
+.login-dark-theme .xp-bubble-sub {
+  color: #94a3b8;
+}
+
+/* Speech Bubble Beak / Pointer pointing down towards dog */
+.xp-bubble-beak {
+  position: absolute;
+  bottom: -8px;
+  right: 50px;
+  width: 14px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.xp-bubble-beak::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  background: #ffffea;
+  border-bottom: 1px solid #d4c58e;
+  border-right: 1px solid #d4c58e;
+  transform: rotate(45deg);
+}
+
+:root.dark-theme .xp-bubble-beak::after,
+.dark-theme .xp-bubble-beak::after,
+.login-dark-theme .xp-bubble-beak::after {
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+/* ==========================================================================
+   Dog Character Stage & Vector Sizing
+   ========================================================================== */
+
+.xp-dog-stage {
+  position: relative;
+  width: 140px;
+  height: 122px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.xp-dog-svg {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.08));
+}
+
+/* Size Variants for Container */
+.xp-loader-container.size-sm .xp-dog-stage {
+  width: 90px;
+  height: 78px;
+}
+.xp-loader-container.size-sm .xp-speech-bubble {
+  padding: 6px 12px;
+  max-width: 210px;
+}
+.xp-loader-container.size-sm .xp-bubble-title {
+  font-size: 0.78rem;
+}
+
+.xp-loader-container.size-md .xp-dog-stage {
+  width: 130px;
+  height: 114px;
+}
+
+.xp-loader-container.size-lg .xp-dog-stage,
+.xp-loader-container.size-xl .xp-dog-stage {
+  width: 155px;
+  height: 135px;
+}
+.xp-loader-container.size-lg .xp-speech-bubble,
+.xp-loader-container.size-xl .xp-speech-bubble {
+  max-width: 320px;
+  padding: 12px 22px;
+}
+.xp-loader-container.size-lg .xp-bubble-title,
+.xp-loader-container.size-xl .xp-bubble-title {
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Dog Vector Animations (Transforms & Keyframes)
+   ========================================================================== */
+
+/* 1. Tail Wagging */
+.xp-tail-group {
+  transform-origin: 42px 90px;
+  animation: xpTailWag 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes xpTailWag {
+  0% {
+    transform: rotate(-12deg);
+  }
+  100% {
+    transform: rotate(24deg);
+  }
+}
+
+/* 2. Head Movement (Bobbing, Tilting & Looking) */
+.xp-head-group {
+  transform-origin: 96px 68px;
+  animation: xpHeadBob 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+@keyframes xpHeadBob {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  20% {
+    transform: translateY(-2.5px) rotate(-3.5deg);
+  }
+  45% {
+    transform: translateY(1px) rotate(2deg);
+  }
+  70% {
+    transform: translateY(-3.5px) rotate(-1.5deg);
+  }
+  85% {
+    transform: translateY(0.5px) rotate(1deg);
+  }
+}
+
+/* 3. Floppy Ear Bounce */
+.xp-front-ear {
+  transform-origin: 92px 40px;
+  animation: xpEarBounce 2.8s ease-in-out infinite;
+}
+
+@keyframes xpEarBounce {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  22% {
+    transform: rotate(6deg);
+  }
+  48% {
+    transform: rotate(-4deg);
+  }
+  72% {
+    transform: rotate(7deg);
+  }
+}
+
+/* 4. Blinking Eyelids */
+.xp-eyelid-path {
+  transform-origin: center 42px;
+  transform: scaleY(0);
+  animation: xpBlink 4.2s infinite;
+}
+
+@keyframes xpBlink {
+  0%, 92%, 96%, 100% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  94% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  98% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* 5. Playful Bone Movement */
+.xp-bone-interactive {
+  transform-origin: 120px 69px;
+  animation: xpBoneRock 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes xpBoneRock {
+  0% {
+    transform: rotate(-4deg) translateY(0.5px);
+  }
+  100% {
+    transform: rotate(5deg) translateY(-1px);
+  }
+}
+
+/* 6. Front Paw Tapping */
+.xp-front-paw-group {
+  transform-origin: 96px 96px;
+  animation: xpPawTap 1.4s ease-in-out infinite;
+}
+
+@keyframes xpPawTap {
+  0%, 100%, 40% {
+    transform: translateY(0);
+  }
+  15% {
+    transform: translateY(-2px);
+  }
+  25% {
+    transform: translateY(0);
+  }
+}
+
+/* 7. Ground Shadow Pulse */
+.xp-ground-shadow-el {
+  transform-origin: 80px 126px;
+  animation: xpShadowPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes xpShadowPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  20%, 70% {
+    transform: scale(0.94);
+    opacity: 0.75;
+  }
+}
+
+/* ==========================================================================
+   Windows XP Segmented Progress Bar
+   ========================================================================== */
+
+.xp-progress-wrapper {
+  margin-top: 14px;
+  width: 100%;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.xp-progress-track {
+  width: 100%;
+  height: 16px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  border: 1px solid #94a3b8;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18), inset 0 0 2px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  padding: 1.5px;
+  box-sizing: border-box;
+}
+
+:root.dark-theme .xp-progress-track,
+.dark-theme .xp-progress-track,
+.login-dark-theme .xp-progress-track {
+  background: #0f172a;
+  border-color: #334155;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* The iconic 3-block segmented group bouncing across the track */
+.xp-progress-block-group {
+  display: flex;
+  gap: 2.5px;
+  position: absolute;
+  top: 1.5px;
+  bottom: 1.5px;
+  left: 0;
+  width: 48px;
+  animation: xpProgressBlocks 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.xp-block {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #5eead4 0%, #10b981 50%, #047857 100%);
+  box-shadow: 0 0 4px rgba(16, 185, 129, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes xpProgressBlocks {
+  0% {
+    transform: translateX(-48px);
+  }
+  100% {
+    transform: translateX(220px);
+  }
+}
+
+/* ==========================================================================
+   Inline / Compact Mode (Buttons, Table cells, Badges)
+   ========================================================================== */
+
+.xp-loader-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.xp-dog-inline-svg {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  overflow: visible;
+}
+
+.xp-loader-inline .xp-tail {
+  transform-origin: 10px 20px;
+  animation: xpTailWag 0.38s ease-in-out infinite alternate;
+}
+
+.xp-loader-inline .xp-head-group {
+  transform-origin: 30px 18px;
+  animation: xpHeadBob 2.2s ease-in-out infinite;
+}
+
+.xp-loader-inline .xp-bone {
+  transform-origin: 36px 19px;
+  animation: xpBoneRock 1.2s ease-in-out infinite alternate;
+}
+
+.xp-loader-inline .xp-paw-front {
+  transform-origin: 26px 28px;
+  animation: xpPawTap 1s ease-in-out infinite;
+}
+
+.xp-inline-text {
+  font-size: inherit;
+  font-weight: inherit;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Fade In & Responsive & Accessibility
+   ========================================================================== */
+
+@keyframes xpFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes xpBubbleFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .xp-loader-container {
+    padding: 24px 12px;
+  }
+  .xp-dog-stage {
+    width: 110px;
+    height: 96px;
+  }
+  .xp-speech-bubble {
+    max-width: 230px;
+    padding: 8px 14px;
+  }
+  .xp-bubble-title {
+    font-size: 0.8125rem;
+  }
+  .xp-progress-wrapper {
+    max-width: 180px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .xp-tail-group,
+  .xp-head-group,
+  .xp-front-ear,
+  .xp-eyelid-path,
+  .xp-bone-interactive,
+  .xp-front-paw-group,
+  .xp-ground-shadow-el,
+  .xp-speech-bubble,
+  .xp-loader-inline .xp-tail,
+  .xp-loader-inline .xp-head-group,
+  .xp-loader-inline .xp-bone,
+  .xp-loader-inline .xp-paw-front {
+    animation: none !important;
+  }
+
+  .xp-progress-block-group {
+    animation-duration: 3s !important;
+  }
+}

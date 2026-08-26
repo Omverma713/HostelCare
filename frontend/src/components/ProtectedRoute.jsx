@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import FuturisticLoader from './login/FuturisticLoader';
+import HostelCareLoader from './HostelCareLoader';
 
 /**
  * Route protection wrapper based on authentication status and user roles.
@@ -11,9 +11,12 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
 
   if (loading) {
     return (
-      <div className="loading-spinner-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
-        <FuturisticLoader size="lg" />
-      </div>
+      <HostelCareLoader
+        size="lg"
+        fullscreen
+        message="Verifying session & credentials…"
+        submessage="Looking through hostel authority records"
+      />
     );
   }
 

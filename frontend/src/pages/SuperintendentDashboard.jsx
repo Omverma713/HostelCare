@@ -4,6 +4,7 @@ import { normalizeStatus, isEmptyDataError } from '../utils/status';
 import Badge from '../components/Badge';
 import StatsGrid from '../components/StatsGrid';
 import EmptyState from '../components/EmptyState';
+import HostelCareLoader from '../components/HostelCareLoader';
 import { triggerToast } from '../components/Toast';
 
 export default function SuperintendentDashboard() {
@@ -130,9 +131,7 @@ export default function SuperintendentDashboard() {
           <h3 style={{ fontSize: '1rem', alignSelf: 'flex-start', marginBottom: '20px' }}>Complaint Status Breakdown</h3>
           
           {loading ? (
-            <div className="loading-spinner-container" style={{ padding: '40px' }}>
-              <div className="loading-spinner"></div>
-            </div>
+            <HostelCareLoader size="sm" message="Analyzing status breakdown…" showProgress={false} />
           ) : stats.total === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
               No complaints recorded in this hostel yet.
@@ -203,9 +202,7 @@ export default function SuperintendentDashboard() {
           <h3 style={{ fontSize: '1rem', marginBottom: '20px' }}>Staff Resolution Rate</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', justifyContent: 'center' }}>
             {loading ? (
-              <div className="loading-spinner-container" style={{ padding: '40px' }}>
-                <div className="loading-spinner"></div>
-              </div>
+              <HostelCareLoader size="sm" message="Calculating performance index…" showProgress={false} />
             ) : stats.total === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
                 No active complaints metrics.
@@ -269,9 +266,7 @@ export default function SuperintendentDashboard() {
       <h2 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>Staff Activity & Performance Analytics</h2>
       
       {performanceLoading ? (
-        <div className="loading-spinner-container">
-          <div className="loading-spinner"></div>
-        </div>
+        <HostelCareLoader size="md" message="Fetching staff performance analytics…" />
       ) : performance.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">👥</div>

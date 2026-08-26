@@ -7,6 +7,7 @@ import Modal from '../components/Modal';
 import ActionHistory from '../components/ActionHistory';
 import StatsGrid from '../components/StatsGrid';
 import EmptyState from '../components/EmptyState';
+import HostelCareLoader from '../components/HostelCareLoader';
 import { triggerToast } from '../components/Toast';
 
 const buildStudentStats = (complaints) => [
@@ -192,7 +193,7 @@ export default function StudentDashboard() {
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitLoading}>
-              {submitLoading ? 'Filing…' : 'Submit Complaint'}
+              {submitLoading ? <HostelCareLoader size="xs" inline message="Filing…" /> : 'Submit Complaint'}
             </button>
           </div>
         </form>

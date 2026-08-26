@@ -1,16 +1,17 @@
 import React from 'react';
-import FuturisticLoader from './login/FuturisticLoader';
+import HostelCareLoader from './HostelCareLoader';
 
 /**
  * Reusable loading / error / empty state wrapper.
  *
  * Usage:
  *   wrap your data-rendering children in this component.
- *   It renders a spinner when loading, an error panel when error is set,
- *   or the children when data is present.
+ *   It renders the Windows XP nostalgic dog loader when loading,
+ *   an error panel when error is set, or the children when data is present.
  */
 export default function EmptyState({
   loading,
+  loadingMessage = 'Searching hostel records…',
   error,
   onRetry,
   emptyIcon = '📦',
@@ -19,11 +20,7 @@ export default function EmptyState({
   children,
 }) {
   if (loading) {
-    return (
-      <div className="loading-spinner-container">
-        <FuturisticLoader size="md" />
-      </div>
-    );
+    return <HostelCareLoader size="md" message={loadingMessage} />;
   }
 
   if (error) {

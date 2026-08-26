@@ -3,6 +3,7 @@ import Modal from './Modal';
 import { api } from '../services/api';
 import { triggerToast } from './Toast';
 import { STATUS_OPTIONS } from '../constants';
+import HostelCareLoader from './HostelCareLoader';
 
 /**
  * Shared update-complaint modal.
@@ -96,7 +97,7 @@ export default function UpdateComplaintModal({ complaint, title = 'Update Compla
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving…' : 'Save Changes'}
+              {loading ? <HostelCareLoader size="xs" inline message="Saving…" /> : 'Save Changes'}
             </button>
           </div>
         </form>
