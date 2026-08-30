@@ -107,7 +107,7 @@ export default function FeedbackPage() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '28px', alignItems: 'start' }}>
+      <div className="feedback-page-grid">
         {/* Left column: Feedback Form Card */}
         <div
           className="card"
@@ -115,7 +115,7 @@ export default function FeedbackPage() {
             background: 'var(--bg-card)',
             border: '1px solid var(--border-color)',
             borderRadius: '20px',
-            padding: '28px',
+            padding: '24px',
             boxShadow: 'var(--shadow-md)',
           }}
         >
@@ -197,7 +197,7 @@ export default function FeedbackPage() {
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-primary)' }}>
                   How would you rate your experience? *
                 </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                   {[1, 2, 3, 4, 5].map((star) => {
                     const active = (hoverRating || rating) >= star;
                     return (
@@ -207,15 +207,10 @@ export default function FeedbackPage() {
                         onClick={() => setRating(star)}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
+                        className="feedback-star-btn"
                         style={{
-                          background: 'transparent',
-                          border: 'none',
-                          fontSize: '32px',
-                          cursor: 'pointer',
                           color: active ? '#f59e0b' : 'var(--text-muted)',
                           transform: active ? 'scale(1.15)' : 'scale(1)',
-                          transition: 'transform 0.15s ease, color 0.15s ease',
-                          padding: '2px',
                         }}
                         aria-label={`${star} star`}
                       >
@@ -223,7 +218,7 @@ export default function FeedbackPage() {
                       </button>
                     );
                   })}
-                  <span style={{ marginLeft: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  <span style={{ marginLeft: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     {RATING_LABELS[hoverRating || rating]}
                   </span>
                 </div>
@@ -242,13 +237,8 @@ export default function FeedbackPage() {
                         key={cat.id}
                         type="button"
                         onClick={() => setCategory(cat.id)}
+                        className="feedback-category-btn"
                         style={{
-                          padding: '8px 14px',
-                          borderRadius: '9999px',
-                          fontSize: '13px',
-                          fontWeight: isSelected ? 700 : 500,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
                           border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                           background: isSelected ? 'var(--primary)' : 'var(--bg-tertiary)',
                           color: isSelected ? '#ffffff' : 'var(--text-secondary)',
@@ -262,7 +252,7 @@ export default function FeedbackPage() {
               </div>
 
               {/* Name & Email grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="feedback-form-grid">
                 <div>
                   <label htmlFor="p-name" style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
                     Your Name *

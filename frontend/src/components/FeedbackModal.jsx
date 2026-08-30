@@ -121,29 +121,13 @@ export default function FeedbackModal({ isOpen, onClose }) {
   return (
     <div className="modal-backdrop" onClick={handleBackdropClick} style={{ zIndex: 1100 }}>
       <div
-        className="modal-content feedback-modal-content"
+        className="modal-content feedback-modal-wrapper"
         role="dialog"
         aria-modal="true"
-        style={{
-          maxWidth: '560px',
-          width: '94%',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          borderRadius: '20px',
-          padding: '0',
-          border: '1px solid rgba(99, 102, 241, 0.25)',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.45)',
-        }}
+        style={{ padding: 0 }}
       >
         {/* Header with gradient */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #7c3aed 100%)',
-            padding: '24px 28px',
-            color: '#ffffff',
-            position: 'relative',
-          }}
-        >
+        <div className="feedback-modal-header">
           <button
             onClick={onClose}
             aria-label="Close"
@@ -180,7 +164,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
           </p>
         </div>
 
-        <div style={{ padding: '24px 28px' }}>
+        <div className="feedback-modal-body">
           {submitted ? (
             /* Success confirmation card */
             <div style={{ textAlign: 'center', padding: '20px 10px' }}>
@@ -269,7 +253,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 >
                   Overall Experience Rating
                 </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                   {[1, 2, 3, 4, 5].map((star) => {
                     const active = (hoverRating || rating) >= star;
                     return (
@@ -279,15 +263,10 @@ export default function FeedbackModal({ isOpen, onClose }) {
                         onClick={() => setRating(star)}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
+                        className="feedback-star-btn"
                         style={{
-                          background: 'transparent',
-                          border: 'none',
-                          fontSize: '28px',
-                          cursor: 'pointer',
                           color: active ? '#f59e0b' : 'var(--text-muted)',
                           transform: active ? 'scale(1.15)' : 'scale(1)',
-                          transition: 'transform 0.15s ease, color 0.15s ease',
-                          padding: '2px',
                         }}
                         aria-label={`${star} star`}
                       >
@@ -297,7 +276,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                   })}
                   <span
                     style={{
-                      marginLeft: '8px',
+                      marginLeft: '6px',
                       fontSize: '12px',
                       fontWeight: 600,
                       color: 'var(--text-secondary)',
@@ -329,13 +308,8 @@ export default function FeedbackModal({ isOpen, onClose }) {
                         key={cat.id}
                         type="button"
                         onClick={() => setCategory(cat.id)}
+                        className="feedback-category-btn"
                         style={{
-                          padding: '6px 12px',
-                          borderRadius: '9999px',
-                          fontSize: '12px',
-                          fontWeight: isSelected ? 700 : 500,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
                           border: isSelected
                             ? '1px solid var(--primary)'
                             : '1px solid var(--border-color)',
@@ -351,7 +325,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
               </div>
 
               {/* Name and Email */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="feedback-form-grid">
                 <div>
                   <label
                     htmlFor="feedback-name"

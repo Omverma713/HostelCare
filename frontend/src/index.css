@@ -5224,3 +5224,110 @@ body.dark .beta-banner-cord {
     max-width: 100% !important;
   }
 }
+
+/* ==========================================================================
+   Feedback System Mobile Optimizations
+   ========================================================================== */
+.feedback-modal-wrapper {
+  max-width: 560px;
+  width: 94%;
+  max-height: 90vh;
+  border-radius: 20px;
+  overflow-y: auto;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
+  background: var(--bg-card);
+}
+
+.feedback-modal-header {
+  background: linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #7c3aed 100%);
+  padding: 24px 28px;
+  color: #ffffff;
+  position: relative;
+}
+
+.feedback-modal-body {
+  padding: 24px 28px;
+}
+
+.feedback-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.feedback-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.feedback-category-btn {
+  padding: 7px 13px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.feedback-star-btn {
+  background: transparent;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+  padding: 4px 6px;
+  min-width: 42px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, color 0.15s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+  .feedback-modal-wrapper {
+    width: 96%;
+    max-height: 94vh;
+    border-radius: 16px;
+  }
+
+  .feedback-modal-header {
+    padding: 18px 20px;
+  }
+
+  .feedback-modal-body {
+    padding: 18px 18px;
+  }
+
+  .feedback-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .feedback-page-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .feedback-star-btn {
+    font-size: 26px;
+    padding: 2px 4px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .auth-top-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
