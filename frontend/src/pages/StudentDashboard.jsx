@@ -127,26 +127,35 @@ export default function StudentDashboard() {
           </div>
         ) : (
           <div className="table-container">
-            <table className="custom-table">
+            <table className="custom-table" style={{ tableLayout: 'fixed', width: '100%' }}>
               <thead>
                 <tr>
-                  <th>Category</th>
-                  <th>Description</th>
-                  <th>Logged Date</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th style={{ width: '16%' }}>Category</th>
+                  <th style={{ width: '32%' }}>Description</th>
+                  <th style={{ width: '15%', whiteSpace: 'nowrap' }}>Logged Date</th>
+                  <th style={{ width: '15%', textAlign: 'center', whiteSpace: 'nowrap' }}>Status</th>
+                  <th style={{ width: '22%', textAlign: 'center', whiteSpace: 'nowrap' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {complaints.map((c) => (
                   <tr key={c._id}>
-                    <td data-label="Category" style={{ fontWeight: 700 }}>{c.department}</td>
-                    <td data-label="Description">{c.description}</td>
-                    <td data-label="Logged Date">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td>
-                    <td data-label="Status"><Badge status={c.status} /></td>
-                    <td data-label="Actions">
+                    <td data-label="Category" style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {c.department}
+                    </td>
+                    <td data-label="Description" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.description}>
+                      {c.description}
+                    </td>
+                    <td data-label="Logged Date" style={{ whiteSpace: 'nowrap' }}>
+                      {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td data-label="Status" style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <Badge status={c.status} />
+                    </td>
+                    <td data-label="Actions" style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       <button
                         className="btn btn-secondary btn-sm"
+                        style={{ whiteSpace: 'nowrap' }}
                         onClick={() => setSelectedComplaint(c)}
                       >
                         👁️ View Details

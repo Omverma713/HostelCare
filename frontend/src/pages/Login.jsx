@@ -9,6 +9,7 @@ import IsometricHostelRoom3D from '../components/IsometricHostelRoom3D';
 import InteractiveLamp from '../components/InteractiveLamp';
 import Canvas3DBackground from '../components/Canvas3DBackground';
 import FuturisticLoader from '../components/login/FuturisticLoader';
+import FeedbackModal from '../components/FeedbackModal';
 
 export default function Login() {
   const { login, logout } = useAuth();
@@ -29,6 +30,7 @@ export default function Login() {
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'activate'
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null); // 'admin' | 'student' | null
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   // Login Fields State
   const [regNum, setRegNum] = useState('');
@@ -241,6 +243,31 @@ export default function Login() {
             <span className="beta-banner-text">BETA VERSION</span>
           </div>
         </div>
+
+        {/* Feedback Button for Visitors and Users */}
+        <button
+          type="button"
+          className="auth-theme-btn"
+          style={{
+            background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(124, 58, 237, 0.25) 100%)',
+            border: '1px solid rgba(99, 102, 241, 0.4)',
+            color: 'var(--text-primary)',
+            padding: '6px 14px',
+            borderRadius: '9999px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            fontWeight: 700,
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFeedbackModalOpen(true)}
+          title="Send Feedback as a Visitor or User & Get Confirmation"
+        >
+          <span style={{ fontSize: '14px' }}>💬</span>
+          <span>Feedback</span>
+        </button>
 
         {/* Theme Switcher */}
         <div className="auth-theme-toggle">
@@ -914,6 +941,12 @@ export default function Login() {
           </div>
         </div>
       )}
+
+      {/* Visitor / User Feedback Modal */}
+      <FeedbackModal
+        isOpen={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
+      />
     </div>
   );
 }

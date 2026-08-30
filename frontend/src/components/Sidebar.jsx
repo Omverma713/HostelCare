@@ -52,6 +52,14 @@ export default function Sidebar({ isOpen, onClose }) {
             {userRole === 'warden' && <span>📊 Warden Dashboard</span>}
             {userRole === 'superintendent' && <span>📈 Superintendent Overview</span>}
           </NavLink>
+
+          <NavLink
+            to="/feedback"
+            onClick={onClose}
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+          >
+            <span>💬 Feedback & Suggestions</span>
+          </NavLink>
         </nav>
 
         {/* User profile card */}

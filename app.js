@@ -5,6 +5,7 @@ const rateLimit      = require("express-rate-limit");
 
 const complaintRouter = require("./src/routes/complaints.router");
 const UserRouters     = require("./src/routes/user.route");
+const feedbackRouter  = require("./src/routes/feedback.route");
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.get("/health", (req, res) => {
 // ─── 6. Routes ────────────────────────────────────────────────────────────────
 app.use("/api/v1/complaints", complaintRouter);
 app.use("/api/v1/users", loginLimiter, UserRouters);
+app.use("/api/v1/feedback", feedbackRouter);
 
 // ─── 7. Centralized Error Handler ────────────────────────────────────────────
 // Express 5 propagates async errors automatically — this handler catches them

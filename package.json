@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@getbrevo/brevo": "^6.0.3",
     "argon2": "^0.44.0",
     "bottleneck": "^2.19.5",
     "compression": "^1.8.1",
@@ -19,7 +20,8 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.7.4"
+    "mongoose": "^9.7.4",
+    "nodemailer": "^9.0.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

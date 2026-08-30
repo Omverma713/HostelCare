@@ -122,4 +122,16 @@ export const api = {
   getAllComplaints() {
     return request('/complaints/Allcomplaints');
   },
+
+  // --- FEEDBACK ---
+  submitFeedback(feedbackData) {
+    return request('/feedback', {
+      method: 'POST',
+      body: JSON.stringify(feedbackData),
+    });
+  },
+
+  getAllFeedback() {
+    return request('/feedback');
+  },
 };

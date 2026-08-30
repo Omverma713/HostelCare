@@ -16,6 +16,7 @@ import WardenDashboard from './pages/WardenDashboard';
 import SuperintendentDashboard from './pages/SuperintendentDashboard';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
+import FeedbackPage from './pages/FeedbackPage';
 
 /**
  * Dashboard Shell Layout containing top mobile nav and sidebar navigation drawer
@@ -105,6 +106,7 @@ export default function App() {
                 </Route>
 
                 {/* Shared Protected Pages */}
+                <Route path="/feedback" element={<FeedbackPage />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
               </Route>
             </Route>

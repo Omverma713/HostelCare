@@ -117,9 +117,9 @@ export default function WardenDashboard() {
                   <th>Room</th>
                   <th>Category</th>
                   <th>Description</th>
-                  <th>Logged Date</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th style={{ whiteSpace: 'nowrap' }}>Logged Date</th>
+                  <th style={{ textAlign: 'center', whiteSpace: 'nowrap', width: '130px' }}>Status</th>
+                  <th style={{ textAlign: 'center', whiteSpace: 'nowrap', width: '190px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,10 +134,10 @@ export default function WardenDashboard() {
                     <td data-label="Description" style={{ maxWidth: '240px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {c.description}
                     </td>
-                    <td data-label="Logged Date">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td>
-                    <td data-label="Status"><Badge status={c.status} /></td>
-                    <td data-label="Actions" style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '8px' }}>
+                    <td data-label="Logged Date" style={{ whiteSpace: 'nowrap' }}>{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td>
+                    <td data-label="Status" style={{ textAlign: 'center', whiteSpace: 'nowrap' }}><Badge status={c.status} /></td>
+                    <td data-label="Actions" style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', gap: '8px', justifyContent: 'center' }}>
                         <button className="btn btn-secondary btn-sm" onClick={() => setDetailComplaint(c)}>
                           👁️ View
                         </button>
