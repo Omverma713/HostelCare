@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   X,
   Sparkles,
@@ -87,9 +87,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const errors = {};
     if (!name.trim()) {
       errors.name = 'Please provide your name.';
@@ -102,17 +100,15 @@ export default function FeedbackModal({ isOpen, onClose }) {
     }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [name, email, message]);
 
-  const handleQuickTopic = (topic) => {
+  const handleQuickTopic = useCallback((topic) => {
     const clean = topic.replace(/^[^\s]+\s/, '');
-    if (!subject) {
-      setSubject(`${clean} Feedback`);
-    }
+    setSubject((prev) => prev || `${clean} Feedback`);
     setMessage((prev) => (prev ? `${prev} [Topic: ${topic}] ` : `[Topic: ${topic}] `));
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (!validateForm()) {
       triggerToast('error', 'Please fill in all required fields.');
@@ -143,24 +139,26 @@ export default function FeedbackModal({ isOpen, onClose }) {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [name, email, user, rating, category, subject, message, validateForm]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setMessage('');
     setSubject('');
     setSubmitted(false);
     setFieldErrors({});
     onClose();
-  };
+  }, [onClose]);
 
-  const handleBackdropClick = (e) => {
+  const handleBackdropClick = useCallback((e) => {
     if (e.target === e.currentTarget && !submitting) {
       onClose();
     }
-  };
+  }, [submitting, onClose]);
 
   const activeRating = hoverRating || rating;
-  const ratingDetails = RATING_CONFIG[activeRating] || RATING_CONFIG[5];
+  const ratingDetails = useMemo(() => RATING_CONFIG[activeRating] || RATING_CONFIG[5], [activeRating]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal-backdrop" onClick={handleBackdropClick} style={{ zIndex: 1100, backdropFilter: 'blur(6px)' }}>
@@ -378,7 +376,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-primary)' }}>
                   Feedback Category <span style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <div className="feedback-category-group" style={{ gap: '8px' }}>
+                <div className="feedback-category-group" role="radiogroup" aria-label="Feedback Categories" style={{ gap: '8px' }}>
                   {CATEGORIES.map((cat) => {
                     const isSelected = category === cat.id;
                     const IconComponent = cat.icon;
@@ -386,6 +384,9 @@ export default function FeedbackModal({ isOpen, onClose }) {
                       <button
                         key={cat.id}
                         type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        aria-label={cat.label}
                         onClick={() => setCategory(cat.id)}
                         className={`feedback-category-btn ${isSelected ? 'active' : ''}`}
                         style={{ padding: '7px 14px', fontSize: '12.5px' }}

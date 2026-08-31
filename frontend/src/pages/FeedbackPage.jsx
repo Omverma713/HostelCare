@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
@@ -81,7 +81,7 @@ export default function FeedbackPage() {
     }
   }, [user]);
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const errors = {};
     if (!name.trim()) {
       errors.name = 'Please provide your full name.';
@@ -98,17 +98,15 @@ export default function FeedbackPage() {
     }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [name, email, message]);
 
-  const handleQuickTopic = (topic) => {
-    const cleanTopic = topic.replace(/^[^\s]+\s/, ''); // Remove emoji prefix for insertion
-    if (!subject) {
-      setSubject(`${cleanTopic} Feedback`);
-    }
+  const handleQuickTopic = useCallback((topic) => {
+    const cleanTopic = topic.replace(/^[^\s]+\s/, '');
+    setSubject((prev) => prev || `${cleanTopic} Feedback`);
     setMessage((prev) => (prev ? `${prev}\n\n[Topic: ${topic}] ` : `[Topic: ${topic}] `));
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (!validateForm()) {
       triggerToast('error', 'Please fill in all required fields accurately.');
@@ -129,7 +127,6 @@ export default function FeedbackPage() {
 
       await api.submitFeedback(payload);
       
-      // Generate client-side visual ref ID
       const randomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
       setReferenceId(`HC-FB-${new Date().getFullYear()}-${randomCode}`);
       setSubmitted(true);
@@ -141,18 +138,19 @@ export default function FeedbackPage() {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [name, email, user, rating, category, subject, message, validateForm]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setMessage('');
     setSubject('');
     setSubmitted(false);
     setFieldErrors({});
     setReferenceId('');
-  };
+  }, []);
 
   const activeRating = hoverRating || rating;
-  const ratingDetails = RATING_CONFIG[activeRating] || RATING_CONFIG[5];
+  const ratingDetails = useMemo(() => RATING_CONFIG[activeRating] || RATING_CONFIG[5], [activeRating]);
+  const selectedCategoryObj = useMemo(() => CATEGORIES.find((c) => c.id === category), [category]);
 
   return (
     <div className="feedback-page-wrapper">
@@ -440,14 +438,14 @@ export default function FeedbackPage() {
                   <label style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                     Select Category <span style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  {CATEGORIES.find((c) => c.id === category) && (
+                  {selectedCategoryObj && (
                     <span className="feedback-cat-desc-badge">
                       <Sparkles size={12} style={{ marginRight: '5px' }} />
-                      {CATEGORIES.find((c) => c.id === category).desc}
+                      {selectedCategoryObj.desc}
                     </span>
                   )}
                 </div>
-                <div className="feedback-category-group">
+                <div className="feedback-category-group" role="radiogroup" aria-label="Feedback Categories">
                   {CATEGORIES.map((cat) => {
                     const isSelected = category === cat.id;
                     const IconComponent = cat.icon;
@@ -455,6 +453,9 @@ export default function FeedbackPage() {
                       <button
                         key={cat.id}
                         type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        aria-label={`${cat.label} - ${cat.desc}`}
                         onClick={() => setCategory(cat.id)}
                         className={`feedback-category-btn ${isSelected ? 'active' : ''}`}
                       >
