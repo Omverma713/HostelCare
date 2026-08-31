@@ -1,24 +1,52 @@
 import React, { useState, useEffect } from 'react';
+import {
+  X,
+  Sparkles,
+  Star,
+  Send,
+  CheckCircle2,
+  Mail,
+  User,
+  Tag,
+  MessageSquare,
+  ShieldCheck,
+  RotateCcw,
+  Lightbulb,
+  Bug,
+  Building2,
+  Palette,
+  MessageCircle,
+  AlertCircle,
+} from 'lucide-react';
 import { api } from '../services/api';
 import { triggerToast } from './Toast';
 import { useAuth } from '../hooks/useAuth';
 
 const CATEGORIES = [
-  { id: 'Suggestion', label: '💡 Suggestion', desc: 'Ideas to improve the hostel portal' },
-  { id: 'Bug Report', label: '🐛 Bug Report', desc: 'Something not working as expected' },
-  { id: 'Feature Request', label: '✨ Feature Request', desc: 'New functionality you would love' },
-  { id: 'Hostel Experience', label: '🏢 Hostel Experience', desc: 'Feedback on hostel facilities/life' },
-  { id: 'App UI/UX', label: '🎨 Design & UI', desc: 'Visuals, layout, and usability feedback' },
-  { id: 'Other', label: '💬 Other', desc: 'General thoughts or questions' },
+  { id: 'Suggestion', label: 'Suggestion', icon: Lightbulb },
+  { id: 'Bug Report', label: 'Bug Report', icon: Bug },
+  { id: 'Feature Request', label: 'Feature Request', icon: Sparkles },
+  { id: 'Hostel Experience', label: 'Hostel Life', icon: Building2 },
+  { id: 'App UI/UX', label: 'Design & UI', icon: Palette },
+  { id: 'Other', label: 'Other', icon: MessageCircle },
 ];
 
-const RATING_LABELS = {
-  1: '⭐ Needs Major Improvement',
-  2: '⭐⭐ Below Average',
-  3: '⭐⭐⭐ Good / Average',
-  4: '⭐⭐⭐⭐ Very Good',
-  5: '⭐⭐⭐⭐⭐ Outstanding Experience',
+const RATING_CONFIG = {
+  1: { emoji: '😡', label: 'Major Issues', badgeBg: 'rgba(239, 68, 68, 0.12)', badgeColor: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' },
+  2: { emoji: '🙁', label: 'Needs Work', badgeBg: 'rgba(249, 115, 22, 0.12)', badgeColor: '#f97316', border: 'rgba(249, 115, 22, 0.3)' },
+  3: { emoji: '😐', label: 'Satisfactory', badgeBg: 'rgba(234, 179, 8, 0.12)', badgeColor: '#eab308', border: 'rgba(234, 179, 8, 0.3)' },
+  4: { emoji: '😊', label: 'Very Good', badgeBg: 'rgba(16, 185, 129, 0.12)', badgeColor: '#10b981', border: 'rgba(16, 185, 129, 0.3)' },
+  5: { emoji: '🤩', label: 'Outstanding!', badgeBg: 'rgba(99, 102, 241, 0.12)', badgeColor: '#6366f1', border: 'rgba(99, 102, 241, 0.3)' },
 };
+
+const QUICK_TOPICS = [
+  '📶 Wi-Fi',
+  '🍲 Mess',
+  '🧹 Cleaning',
+  '🚰 Water',
+  '⚡ Power',
+  '📱 App UI',
+];
 
 export default function FeedbackModal({ isOpen, onClose }) {
   const { user } = useAuth();
@@ -32,25 +60,24 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [referenceId, setReferenceId] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
-  // Prefill for authenticated users
   useEffect(() => {
     if (user) {
       setName(user.name || user.registrationNumber || '');
-      // If user has registrationNumber, default subject
+      setEmail(user.email || '');
       if (!subject) {
         setSubject(`Feedback from ${user.hostel || 'Hostel'} (${user.role || 'User'})`);
       }
     }
   }, [user, isOpen]);
 
-  // Lock scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setSubmitted(false);
-      setErrorMsg('');
+      setFieldErrors({});
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -61,22 +88,33 @@ export default function FeedbackModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
+  const validateForm = () => {
+    const errors = {};
+    if (!name.trim()) {
+      errors.name = 'Please provide your name.';
+    }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errors.email = 'Please provide a valid email address.';
+    }
+    if (!message.trim() || message.trim().length < 10) {
+      errors.message = `Please enter at least 10 characters (${10 - (message.trim().length || 0)} more needed).`;
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleQuickTopic = (topic) => {
+    const clean = topic.replace(/^[^\s]+\s/, '');
+    if (!subject) {
+      setSubject(`${clean} Feedback`);
+    }
+    setMessage((prev) => (prev ? `${prev} [Topic: ${topic}] ` : `[Topic: ${topic}] `));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg('');
-
-    if (!name.trim()) {
-      setErrorMsg('Please provide your name.');
-      return;
-    }
-
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setErrorMsg('Please enter a valid email address so we can confirm your submission.');
-      return;
-    }
-
-    if (!message.trim() || message.trim().length < 10) {
-      setErrorMsg('Please write at least 10 characters in your feedback message.');
+    if (!validateForm()) {
+      triggerToast('error', 'Please fill in all required fields.');
       return;
     }
 
@@ -84,7 +122,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
     try {
       const payload = {
         name: name.trim(),
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         role: user ? user.role : 'visitor',
         rating,
         category,
@@ -92,12 +130,14 @@ export default function FeedbackModal({ isOpen, onClose }) {
         message: message.trim(),
       };
 
-      const res = await api.submitFeedback(payload);
+      await api.submitFeedback(payload);
+      const randomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+      setReferenceId(`HC-FB-${new Date().getFullYear()}-${randomCode}`);
       setSubmitted(true);
       triggerToast('success', '✨ Feedback sent! Check your inbox for confirmation.');
     } catch (err) {
       const msg = err.data?.message || err.message || 'Failed to submit feedback. Please try again.';
-      setErrorMsg(msg);
+      setFieldErrors({ form: msg });
       triggerToast('error', msg);
     } finally {
       setSubmitting(false);
@@ -108,7 +148,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
     setMessage('');
     setSubject('');
     setSubmitted(false);
-    setErrorMsg('');
+    setFieldErrors({});
     onClose();
   };
 
@@ -118,15 +158,13 @@ export default function FeedbackModal({ isOpen, onClose }) {
     }
   };
 
+  const activeRating = hoverRating || rating;
+  const ratingDetails = RATING_CONFIG[activeRating] || RATING_CONFIG[5];
+
   return (
-    <div className="modal-backdrop" onClick={handleBackdropClick} style={{ zIndex: 1100 }}>
-      <div
-        className="modal-content feedback-modal-wrapper"
-        role="dialog"
-        aria-modal="true"
-        style={{ padding: 0 }}
-      >
-        {/* Header with gradient */}
+    <div className="modal-backdrop" onClick={handleBackdropClick} style={{ zIndex: 1100, backdropFilter: 'blur(6px)' }}>
+      <div className="modal-content feedback-modal-wrapper" role="dialog" aria-modal="true" style={{ padding: 0 }}>
+        {/* Header with modern gradient */}
         <div className="feedback-modal-header">
           <button
             onClick={onClose}
@@ -141,7 +179,6 @@ export default function FeedbackModal({ isOpen, onClose }) {
               width: '32px',
               height: '32px',
               color: '#ffffff',
-              fontSize: '18px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -149,62 +186,91 @@ export default function FeedbackModal({ isOpen, onClose }) {
               transition: 'all 0.2s ease',
             }}
           >
-            &times;
+            <X size={18} />
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-            <span style={{ fontSize: '26px' }}>🛡️</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+            <div
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '10px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Sparkles size={18} />
+            </div>
             <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, letterSpacing: '-0.3px' }}>
-              HostelCare Feedback
+              HostelCare Feedback Hub
             </h3>
           </div>
           <p style={{ margin: 0, fontSize: '13px', color: '#e0e7ff', opacity: 0.9 }}>
             {user
               ? `Logged in as ${user.name || user.registrationNumber} (${user.role})`
-              : 'Visitor & Community Feedback Channel — We value your voice!'}
+              : 'Community Voice Channel — We read and act on every response.'}
           </p>
         </div>
 
         <div className="feedback-modal-body">
           {submitted ? (
             /* Success confirmation card */
-            <div style={{ textAlign: 'center', padding: '20px 10px' }}>
+            <div style={{ textAlign: 'center', padding: '20px 8px' }}>
               <div
                 style={{
-                  width: '70px',
-                  height: '70px',
+                  width: '72px',
+                  height: '72px',
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#ffffff',
-                  fontSize: '32px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 18px auto',
-                  boxShadow: '0 10px 25px rgba(16, 185, 129, 0.35)',
+                  margin: '0 auto 16px auto',
+                  boxShadow: '0 10px 28px rgba(16, 185, 129, 0.35)',
                 }}
               >
-                ✓
+                <CheckCircle2 size={40} />
               </div>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: 800 }}>
+
+              <div
+                style={{
+                  display: 'inline-block',
+                  background: 'var(--primary-light)',
+                  color: 'var(--primary)',
+                  padding: '3px 10px',
+                  borderRadius: '9999px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  marginBottom: '10px',
+                }}
+              >
+                REF #{referenceId}
+              </div>
+
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
                 Thank You, {name}!
               </h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.6, marginBottom: '20px' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.5, marginBottom: '20px' }}>
                 Your feedback has been forwarded directly to the HostelCare administration team.
               </p>
 
               <div
                 style={{
-                  background: 'var(--primary-light)',
-                  border: '1px solid var(--border-color)',
+                  background: 'linear-gradient(135deg, rgba(67, 97, 238, 0.06) 0%, rgba(124, 58, 237, 0.08) 100%)',
+                  border: '1px solid rgba(67, 97, 238, 0.2)',
                   borderRadius: '14px',
                   padding: '16px',
                   textAlign: 'left',
                   fontSize: '13px',
-                  marginBottom: '24px',
+                  marginBottom: '22px',
                 }}
               >
-                <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: '4px' }}>
-                  📬 Confirmation Dispatched
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--primary)', marginBottom: '4px' }}>
+                  <Mail size={16} />
+                  <span>Confirmation Dispatched</span>
                 </div>
                 <div style={{ color: 'var(--text-secondary)' }}>
                   A verification receipt with your submission details has been emailed to{' '}
@@ -215,16 +281,16 @@ export default function FeedbackModal({ isOpen, onClose }) {
               <button
                 type="button"
                 onClick={resetForm}
-                className="btn btn-primary"
-                style={{ width: '100%', padding: '12px', fontWeight: 700, borderRadius: '12px' }}
+                className="feedback-submit-btn"
+                style={{ width: '100%', padding: '12px' }}
               >
                 Close & Return
               </button>
             </div>
           ) : (
             /* Feedback Form */
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              {errorMsg && (
+            <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {fieldErrors.form && (
                 <div
                   style={{
                     background: 'var(--danger-bg)',
@@ -233,91 +299,98 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     borderRadius: '10px',
                     padding: '10px 14px',
                     fontSize: '13px',
-                    fontWeight: 500,
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
                   }}
                 >
-                  ⚠️ {errorMsg}
+                  <AlertCircle size={15} />
+                  <span>{fieldErrors.form}</span>
                 </div>
               )}
 
               {/* Star Rating Section */}
               <div>
-                <label
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-primary)' }}>
+                  Overall Experience Rating <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <div
                   style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    marginBottom: '8px',
-                    color: 'var(--text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    padding: '10px 14px',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: '14px',
+                    border: '1px solid var(--border-color)',
                   }}
                 >
-                  Overall Experience Rating
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                  {[1, 2, 3, 4, 5].map((star) => {
-                    const active = (hoverRating || rating) >= star;
-                    return (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className="feedback-star-btn"
-                        style={{
-                          color: active ? '#f59e0b' : 'var(--text-muted)',
-                          transform: active ? 'scale(1.15)' : 'scale(1)',
-                        }}
-                        aria-label={`${star} star`}
-                      >
-                        ★
-                      </button>
-                    );
-                  })}
-                  <span
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const isActive = (hoverRating || rating) >= star;
+                      return (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className={`feedback-star-btn ${isActive ? 'active' : ''}`}
+                          aria-label={`${star} star`}
+                        >
+                          <Star
+                            size={24}
+                            fill={isActive ? '#f59e0b' : 'transparent'}
+                            color={isActive ? '#f59e0b' : 'var(--text-muted)'}
+                            strokeWidth={isActive ? 0 : 2}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div
                     style={{
-                      marginLeft: '6px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '4px 10px',
+                      borderRadius: '9999px',
+                      background: ratingDetails.badgeBg,
+                      border: `1px solid ${ratingDetails.border}`,
+                      color: ratingDetails.badgeColor,
                       fontSize: '12px',
-                      fontWeight: 600,
-                      color: 'var(--text-secondary)',
+                      fontWeight: 700,
                     }}
                   >
-                    {RATING_LABELS[hoverRating || rating]}
-                  </span>
+                    <span>{ratingDetails.emoji}</span>
+                    <span>{ratingDetails.label}</span>
+                  </div>
                 </div>
               </div>
 
               {/* Category Pill Tags */}
               <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    marginBottom: '8px',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  Feedback Category
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-primary)' }}>
+                  Feedback Category <span style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {CATEGORIES.map((cat) => {
                     const isSelected = category === cat.id;
+                    const IconComponent = cat.icon;
                     return (
                       <button
                         key={cat.id}
                         type="button"
                         onClick={() => setCategory(cat.id)}
-                        className="feedback-category-btn"
-                        style={{
-                          border: isSelected
-                            ? '1px solid var(--primary)'
-                            : '1px solid var(--border-color)',
-                          background: isSelected ? 'var(--primary)' : 'var(--bg-tertiary)',
-                          color: isSelected ? '#ffffff' : 'var(--text-secondary)',
-                        }}
+                        className={`feedback-category-btn ${isSelected ? 'active' : ''}`}
+                        style={{ padding: '6px 12px', fontSize: '12px' }}
                       >
-                        {cat.label}
+                        <IconComponent size={14} />
+                        <span>{cat.label}</span>
                       </button>
                     );
                   })}
@@ -327,145 +400,118 @@ export default function FeedbackModal({ isOpen, onClose }) {
               {/* Name and Email */}
               <div className="feedback-form-grid">
                 <div>
-                  <label
-                    htmlFor="feedback-name"
-                    style={{
-                      display: 'block',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      marginBottom: '6px',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    Your Name *
+                  <label htmlFor="m-name" style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '5px', color: 'var(--text-primary)' }}>
+                    Your Name <span style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <input
-                    id="feedback-name"
-                    type="text"
-                    required
-                    placeholder="e.g. Rahul Sharma"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="form-input"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '10px',
-                      fontSize: '13px',
-                      background: 'var(--bg-tertiary)',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--border-color)',
-                    }}
-                  />
+                  <div className="feedback-input-container">
+                    <span className="feedback-input-icon">
+                      <User size={15} />
+                    </span>
+                    <input
+                      id="m-name"
+                      type="text"
+                      placeholder="e.g. Rahul Sharma"
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: null }));
+                      }}
+                      className="feedback-input-field"
+                      style={fieldErrors.name ? { borderColor: '#ef4444' } : {}}
+                    />
+                  </div>
+                  {fieldErrors.name && (
+                    <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '3px' }}>{fieldErrors.name}</div>
+                  )}
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="feedback-email"
-                    style={{
-                      display: 'block',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      marginBottom: '6px',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    Your Email (For Confirmation) *
+                  <label htmlFor="m-email" style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '5px', color: 'var(--text-primary)' }}>
+                    Your Email (Confirmation) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <input
-                    id="feedback-email"
-                    type="email"
-                    required
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="form-input"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '10px',
-                      fontSize: '13px',
-                      background: 'var(--bg-tertiary)',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--border-color)',
-                    }}
-                  />
+                  <div className="feedback-input-container">
+                    <span className="feedback-input-icon">
+                      <Mail size={15} />
+                    </span>
+                    <input
+                      id="m-email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: null }));
+                      }}
+                      className="feedback-input-field"
+                      style={fieldErrors.email ? { borderColor: '#ef4444' } : {}}
+                    />
+                  </div>
+                  {fieldErrors.email && (
+                    <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '3px' }}>{fieldErrors.email}</div>
+                  )}
                 </div>
               </div>
 
               {/* Subject */}
               <div>
-                <label
-                  htmlFor="feedback-subject"
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    marginBottom: '6px',
-                    color: 'var(--text-primary)',
-                  }}
-                >
+                <label htmlFor="m-subject" style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '5px', color: 'var(--text-primary)' }}>
                   Subject
                 </label>
-                <input
-                  id="feedback-subject"
-                  type="text"
-                  placeholder="Short summary of your feedback"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="form-input"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    fontSize: '13px',
-                    background: 'var(--bg-tertiary)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border-color)',
-                  }}
-                />
+                <div className="feedback-input-container">
+                  <span className="feedback-input-icon">
+                    <Tag size={15} />
+                  </span>
+                  <input
+                    id="m-subject"
+                    type="text"
+                    placeholder="Short summary of your feedback"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="feedback-input-field"
+                  />
+                </div>
               </div>
 
               {/* Message */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label
-                    htmlFor="feedback-msg"
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    Feedback Message *
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <label htmlFor="m-msg" style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Detailed Feedback <span style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    {message.length} characters
+                  <span style={{ fontSize: '11px', color: message.length >= 10 ? 'var(--text-muted)' : '#ef4444' }}>
+                    {message.length} / 10 min chars
                   </span>
                 </div>
-                <textarea
-                  id="feedback-msg"
-                  rows={4}
-                  required
-                  placeholder="Tell us what you liked, what can be improved, or any issue you encountered..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="form-input"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    fontSize: '13px',
-                    lineHeight: 1.5,
-                    resize: 'vertical',
-                    background: 'var(--bg-tertiary)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border-color)',
-                  }}
-                />
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', alignSelf: 'center' }}>Quick tags:</span>
+                  {QUICK_TOPICS.map((topic, idx) => (
+                    <button key={idx} type="button" onClick={() => handleQuickTopic(topic)} className="quick-tag-chip" style={{ fontSize: '11px', padding: '2px 8px' }}>
+                      {topic}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="feedback-textarea-container">
+                  <textarea
+                    id="m-msg"
+                    rows={4}
+                    placeholder="Tell us what you liked, what can be improved, or any issue you encountered..."
+                    value={message}
+                    onChange={(e) => {
+                      setMessage(e.target.value);
+                      if (fieldErrors.message) setFieldErrors((prev) => ({ ...prev, message: null }));
+                    }}
+                    className="feedback-textarea-field"
+                    style={fieldErrors.message ? { borderColor: '#ef4444' } : {}}
+                  />
+                </div>
+                {fieldErrors.message && (
+                  <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '3px' }}>{fieldErrors.message}</div>
+                )}
               </div>
 
-              {/* Notice pill */}
+              {/* Notice Pill */}
               <div
                 style={{
                   fontSize: '11px',
@@ -476,12 +522,11 @@ export default function FeedbackModal({ isOpen, onClose }) {
                   background: 'var(--bg-tertiary)',
                   padding: '8px 12px',
                   borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
                 }}
               >
-                <span>📬</span>
-                <span>
-                  You will automatically receive a confirmation copy in your email inbox as a visitor/user.
-                </span>
+                <ShieldCheck size={14} style={{ color: '#10b981', flexShrink: 0 }} />
+                <span>You will automatically receive an email confirmation copy of this feedback.</span>
               </div>
 
               {/* Action Buttons */}
@@ -507,28 +552,29 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="btn btn-primary"
-                  style={{
-                    flex: 2,
-                    padding: '12px',
-                    borderRadius: '12px',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
-                  }}
+                  className="feedback-submit-btn"
+                  style={{ flex: 2, padding: '12px' }}
                 >
                   {submitting ? (
                     <>
-                      <span className="spinner-border" style={{ width: '14px', height: '14px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }}></span>
-                      <span>Dispatching Feedback...</span>
+                      <span
+                        className="spinner-border"
+                        style={{
+                          width: '14px',
+                          height: '14px',
+                          border: '2px solid #fff',
+                          borderTopColor: 'transparent',
+                          borderRadius: '50%',
+                          display: 'inline-block',
+                          animation: 'spin 0.8s linear infinite',
+                        }}
+                      />
+                      <span>Dispatching...</span>
                     </>
                   ) : (
                     <>
-                      <span>✉️ Send Feedback</span>
+                      <Send size={15} />
+                      <span>Send Feedback</span>
                     </>
                   )}
                 </button>
