@@ -5833,3 +5833,125 @@ body.dark .beta-banner-cord {
   }
 }
 
+/* =========================================================
+   Custom Modern HTML5 Validation Floating Tooltip
+   ========================================================= */
+.custom-validation-tooltip {
+  position: absolute;
+  z-index: 999999;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 9px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(249, 115, 22, 0.45);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  box-shadow: 
+    0 0 0 1px rgba(249, 115, 22, 0.25),
+    0 12px 32px -4px rgba(0, 0, 0, 0.65),
+    0 4px 18px rgba(249, 115, 22, 0.35);
+  pointer-events: auto;
+  cursor: default;
+  user-select: none;
+  transform-origin: top left;
+  animation: customTooltipPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.custom-validation-tooltip.closing {
+  animation: customTooltipFadeOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+/* Upward Caret Arrow */
+.custom-validation-caret {
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  width: 10px;
+  height: 10px;
+  background: rgba(15, 23, 42, 0.95);
+  border-left: 1px solid rgba(249, 115, 22, 0.45);
+  border-top: 1px solid rgba(249, 115, 22, 0.45);
+  transform: rotate(45deg);
+}
+
+/* When tooltip is placed above the input */
+.custom-validation-tooltip.placement-top {
+  transform-origin: bottom left;
+}
+
+.custom-validation-tooltip.placement-top .custom-validation-caret {
+  top: auto;
+  bottom: -6px;
+  border-left: none;
+  border-top: none;
+  border-right: 1px solid rgba(249, 115, 22, 0.45);
+  border-bottom: 1px solid rgba(249, 115, 22, 0.45);
+}
+
+/* Glowing Warning Icon */
+.custom-validation-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45);
+}
+
+.custom-validation-msg {
+  line-height: 1.35;
+  color: #f8fafc;
+  white-space: nowrap;
+}
+
+/* Glowing Shake for Invalid Input */
+.custom-input-invalid-shake {
+  animation: customInputShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
+  border-color: rgba(249, 115, 22, 0.85) !important;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.28), 0 0 18px rgba(249, 115, 22, 0.3) !important;
+}
+
+@keyframes customTooltipPop {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.92);
+  }
+  60% {
+    transform: translateY(2px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes customTooltipFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.94);
+  }
+}
+
+@keyframes customInputShake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(3px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
