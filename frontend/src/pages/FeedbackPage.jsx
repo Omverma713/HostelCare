@@ -436,10 +436,18 @@ export default function FeedbackPage() {
 
               {/* 2. Category Selector */}
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '10px', color: 'var(--text-primary)' }}>
-                  Select Category <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                    Select Category <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  {CATEGORIES.find((c) => c.id === category) && (
+                    <span className="feedback-cat-desc-badge">
+                      <Sparkles size={12} style={{ marginRight: '5px' }} />
+                      {CATEGORIES.find((c) => c.id === category).desc}
+                    </span>
+                  )}
+                </div>
+                <div className="feedback-category-group">
                   {CATEGORIES.map((cat) => {
                     const isSelected = category === cat.id;
                     const IconComponent = cat.icon;
@@ -450,8 +458,15 @@ export default function FeedbackPage() {
                         onClick={() => setCategory(cat.id)}
                         className={`feedback-category-btn ${isSelected ? 'active' : ''}`}
                       >
-                        <IconComponent size={15} />
+                        <span className="feedback-category-icon-wrap">
+                          <IconComponent size={15} />
+                        </span>
                         <span>{cat.label}</span>
+                        {isSelected && (
+                          <span className="feedback-category-check">
+                            <Check size={11} strokeWidth={3} />
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -541,18 +556,23 @@ export default function FeedbackPage() {
 
               {/* 5. Detailed Feedback & Quick Tags */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label htmlFor="user-feedback" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label htmlFor="user-feedback" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                     Your Detailed Feedback <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: message.length >= 10 ? 'var(--text-secondary)' : '#ef4444',
-                    }}
+                    className={`feedback-char-badge ${message.trim().length >= 10 ? 'valid' : 'invalid'}`}
                   >
-                    {message.length} / 10 min chars
+                    {message.trim().length >= 10 ? (
+                      <>
+                        <Check size={12} strokeWidth={3} />
+                        <span>{message.trim().length} chars (Ready)</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{message.trim().length} / 10 min chars ({10 - message.trim().length} more)</span>
+                      </>
+                    )}
                   </span>
                 </div>
 

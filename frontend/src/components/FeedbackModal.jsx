@@ -17,6 +17,7 @@ import {
   Palette,
   MessageCircle,
   AlertCircle,
+  Check,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { triggerToast } from './Toast';
@@ -377,7 +378,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-primary)' }}>
                   Feedback Category <span style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                <div className="feedback-category-group" style={{ gap: '8px' }}>
                   {CATEGORIES.map((cat) => {
                     const isSelected = category === cat.id;
                     const IconComponent = cat.icon;
@@ -387,10 +388,17 @@ export default function FeedbackModal({ isOpen, onClose }) {
                         type="button"
                         onClick={() => setCategory(cat.id)}
                         className={`feedback-category-btn ${isSelected ? 'active' : ''}`}
-                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                        style={{ padding: '7px 14px', fontSize: '12.5px' }}
                       >
-                        <IconComponent size={14} />
+                        <span className="feedback-category-icon-wrap">
+                          <IconComponent size={14} />
+                        </span>
                         <span>{cat.label}</span>
+                        {isSelected && (
+                          <span className="feedback-category-check">
+                            <Check size={10} strokeWidth={3} />
+                          </span>
+                        )}
                       </button>
                     );
                   })}
