@@ -23,7 +23,12 @@ jobs:
         run: |
           echo ">>> Setting up SSH key..."
           mkdir -p ~/.ssh
-          echo "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          if echo "$EC2_SSH_KEY" | grep -q "BEGIN"; then
+            printf "%s\n" "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          else
+            echo "$EC2_SSH_KEY" | tr -d ' \r\n' | base64 -d > ~/.ssh/id_rsa
+          fi
+          printf "\n" >> ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
           echo ">>> Connecting to EC2 ($EC2_USER@$EC2_HOST)..."
