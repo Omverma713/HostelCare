@@ -23,13 +23,21 @@ jobs:
         run: |
           echo ">>> Setting up SSH key..."
           mkdir -p ~/.ssh
-          if echo "$EC2_SSH_KEY" | grep -q "BEGIN"; then
-            printf "%s\n" "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-          else
+          if echo "$EC2_SSH_KEY" | base64 -d 2>/dev/null | grep -q "PRIVATE KEY"; then
+            echo ">>> Detected Base64-encoded key. Decoding..."
             echo "$EC2_SSH_KEY" | tr -d ' \r\n' | base64 -d > ~/.ssh/id_rsa
+          else
+            echo ">>> Detected raw PEM key. Writing..."
+            printf "%s\n" "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           fi
           printf "\n" >> ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+
+          echo ">>> Verifying SSH key format..."
+          ssh-keygen -l -f ~/.ssh/id_rsa || {
+            echo "ERROR: The key in EC2_SSH_KEY is invalid."
+            exit 1
+          }
 
           echo ">>> Connecting to EC2 ($EC2_USER@$EC2_HOST)..."
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$EC2_USER@$EC2_HOST" << 'EOF'
