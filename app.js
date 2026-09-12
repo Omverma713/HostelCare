@@ -21,7 +21,11 @@ const app = express();
 const corsOptions = {
     origin: [
         "https://hostelcare.omverma-dev.workers.dev", // Cloudflare production
+        "https://hostelcare-api.duckdns.org",          // AWS EC2 via DuckDNS HTTPS
         "http://localhost:5173",                       // Vite dev server
+        "https://localhost",                           // Capacitor Android webview
+        "http://localhost",
+        "capacitor://localhost",
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
