@@ -1,0 +1,44 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Backend to AWS EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH and Deploy to AWS EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            echo ">>> Navigating to application directory..."
+            cd /home/${{ secrets.EC2_USER }}/hostelcare
+
+            echo ">>> Pulling latest commit from GitHub..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo ">>> Rebuilding and restarting Docker container..."
+            docker compose down --remove-orphans || true
+            docker compose up -d --build
+
+            echo ">>> Waiting for container to initialize..."
+            sleep 6
+
+            echo ">>> Performing health check..."
+            curl --fail --retry 5 --retry-delay 3 http://localhost:3000/health || {
+              echo "Health check failed! Showing container logs:"
+              docker compose logs --tail=50
+              exit 1
+            }
+
+            echo ">>> Deployment successfully completed!"
