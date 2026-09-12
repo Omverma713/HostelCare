@@ -15,20 +15,69 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: SSH and Deploy to AWS EC2
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            set -e
-            cd /home/ubuntu/hostelcare
-            git fetch origin main
-            git reset --hard origin/main
-            sudo docker compose down --remove-orphans || true
-            sudo docker compose up -d --build
-            sleep 6
-            curl --fail --retry 5 --retry-delay 3 http://localhost:3000/health
-            echo "Deployment successful!"
+      - name: Write SSH key and deploy
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          # Write key using Python to avoid all shell escaping issues
+          python3 << 'PYEOF'
+          import os, sys
+
+          key = os.environ["EC2_SSH_KEY"]
+
+          # Fix common GitHub Secrets corruption patterns:
+          # 1. Literal \n strings instead of actual newlines
+          if "\\n" in key and "\n" not in key:
+              key = key.replace("\\n", "\n")
+
+          # 2. Windows carriage returns
+          key = key.replace("\r", "")
+
+          # 3. Ensure trailing newline
+          key = key.strip() + "\n"
+
+          os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
+          key_path = os.path.expanduser("~/.ssh/deploy_key")
+          with open(key_path, "w") as f:
+              f.write(key)
+          os.chmod(key_path, 0o600)
+
+          # Print first and last line to confirm key format
+          lines = key.strip().split("\n")
+          print(f"Key lines: {len(lines)}")
+          print(f"First: {lines[0]}")
+          print(f"Last:  {lines[-1]}")
+          sys.stdout.flush()
+          PYEOF
+
+          # Verify key is parseable
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null && echo ">>> Key is valid!" || {
+            echo "ERROR: Key is not valid. Please update EC2_SSH_KEY secret."
+            exit 1
+          }
+
+          # Disable strict host checking
+          cat >> ~/.ssh/config << EOF
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
+
+          # Deploy via SSH
+          ssh -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" << 'SSHEOF'
+          set -e
+          cd /home/ubuntu/hostelcare
+          echo ">>> Pulling latest code..."
+          git fetch origin main
+          git reset --hard origin/main
+          echo ">>> Restarting Docker container..."
+          sudo docker compose down --remove-orphans || true
+          sudo docker compose up -d --build
+          sleep 6
+          echo ">>> Health check..."
+          curl --fail --retry 5 --retry-delay 3 http://localhost:3000/health
+          echo ""
+          echo ">>> Deployment successful!"
+          SSHEOF
