@@ -21,23 +21,40 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo ">>> Setting up SSH key..."
+          echo ">>> Setting up SSH key directory..."
           mkdir -p ~/.ssh
-          if echo "$EC2_SSH_KEY" | base64 -d 2>/dev/null | grep -q "PRIVATE KEY"; then
-            echo ">>> Detected Base64-encoded key. Decoding..."
-            echo "$EC2_SSH_KEY" | tr -d ' \r\n' | base64 -d > ~/.ssh/id_rsa
-          else
-            echo ">>> Detected raw PEM key. Writing..."
-            printf "%s\n" "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-          fi
-          printf "\n" >> ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+
+          python3 -c "
+          import os, base64
+
+          raw = os.environ.get('EC2_SSH_KEY', '').strip()
+
+          # Try base64 decoding in case it is base64 encoded
+          try:
+              decoded = base64.b64decode(raw).decode('utf-8', errors='ignore')
+              if 'PRIVATE KEY' in decoded:
+                  raw = decoded
+          except Exception:
+              pass
+
+          # Replace literal '\n' characters with real newlines if needed
+          if '\\n' in raw and '\n' not in raw:
+              raw = raw.replace('\\n', '\n')
+
+          # Strip Windows carriage returns and ensure trailing newline
+          raw = raw.replace('\r', '').strip() + '\n'
+
+          key_path = os.path.expanduser('~/.ssh/id_rsa')
+          with open(key_path, 'w') as f:
+              f.write(raw)
+          "
+
           chmod 600 ~/.ssh/id_rsa
 
-          echo ">>> Verifying SSH key format..."
-          ssh-keygen -l -f ~/.ssh/id_rsa || {
-            echo "ERROR: The key in EC2_SSH_KEY is invalid."
-            exit 1
-          }
+          echo ">>> Verifying private key with ssh-keygen..."
+          ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+          echo ">>> Key verified successfully!"
 
           echo ">>> Connecting to EC2 ($EC2_USER@$EC2_HOST)..."
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$EC2_USER@$EC2_HOST" << 'EOF'
