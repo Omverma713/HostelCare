@@ -12,3 +12,5 @@ mobile-app/www/
 *.apk
 *.keystore
 *.jks
+*firebase-adminsdk*.json
+**/google-services.json

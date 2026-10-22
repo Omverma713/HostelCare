@@ -10,6 +10,8 @@ try {
 let fcmInitialized = false;
 let webPushInitialized = false;
 
+let messagingInstance = null;
+
 /**
  * Initialize Firebase Admin SDK if service account credentials exist
  */
@@ -21,20 +23,26 @@ function initFirebase() {
   const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   try {
+    let credential = null;
     if (serviceAccountJson) {
       const creds = JSON.parse(serviceAccountJson);
-      admin.initializeApp({
-        credential: admin.credential.cert(creds),
-      });
+      credential = admin.cert ? admin.cert(creds) : admin.credential.cert(creds);
+    } else if (serviceAccountPath) {
+      credential = admin.applicationDefault
+        ? admin.applicationDefault()
+        : admin.credential.applicationDefault();
+    }
+
+    if (credential) {
+      const app = admin.initializeApp({ credential });
+      try {
+        const { getMessaging } = require("firebase-admin/messaging");
+        messagingInstance = getMessaging(app);
+      } catch {
+        messagingInstance = typeof admin.messaging === "function" ? admin.messaging() : null;
+      }
       fcmInitialized = true;
       console.log("✅ Firebase Cloud Messaging (FCM) initialized successfully.");
-      return true;
-    } else if (serviceAccountPath) {
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      });
-      fcmInitialized = true;
-      console.log("✅ Firebase Cloud Messaging initialized via GOOGLE_APPLICATION_CREDENTIALS.");
       return true;
     }
   } catch (err) {
@@ -141,7 +149,13 @@ async function sendPushToSessions(sessions, payload) {
           },
         };
 
-        await admin.messaging().send(message);
+        if (messagingInstance) {
+          await messagingInstance.send(message);
+        } else if (typeof admin.messaging === "function") {
+          await admin.messaging().send(message);
+        } else {
+          throw new Error("FCM messaging instance not available");
+        }
         report.accepted++;
         report.fcm.accepted++;
       } catch (err) {

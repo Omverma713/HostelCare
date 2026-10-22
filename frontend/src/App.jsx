@@ -12,6 +12,7 @@ import AppFooter from './components/AppFooter';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import { api } from './services/api';
 import { MobileBackHandler } from './hooks/useMobileBackHandler';
+import { initPushNotifications } from './services/notificationService';
 
 // Immediate Load
 import Login from './pages/Login';
@@ -47,6 +48,13 @@ function PageFallback() {
 function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme } = useTheme();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      initPushNotifications();
+    }
+  }, [user]);
 
   return (
     <div className="app-container">

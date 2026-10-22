@@ -142,4 +142,12 @@ export const api = {
   getMaintenanceStatus() {
     return request('/maintenance/status');
   },
+
+  // --- PUSH NOTIFICATIONS ---
+  registerPushToken(pushToken, provider = 'fcm') {
+    return request('/users/register-push-token', {
+      method: 'POST',
+      body: JSON.stringify({ pushToken, provider }),
+    });
+  },
 };

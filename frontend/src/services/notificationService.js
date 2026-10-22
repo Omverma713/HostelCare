@@ -1,8 +1,82 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { api } from './api';
 
 const CHANNEL_ID = 'hostelcare_custom_channel';
 let channelInitialized = false;
+let pushRegistered = false;
+
+/**
+ * Initializes FCM Push Notifications inside the Android Capacitor wrapper.
+ * Registers the device token with the backend and handles foreground alerts.
+ */
+export async function initPushNotifications() {
+  if (!Capacitor.isNativePlatform()) return;
+  if (pushRegistered) return;
+
+  try {
+    await initializeNotificationChannel();
+
+    let permStatus = await PushNotifications.checkPermissions();
+    if (permStatus.receive === 'prompt') {
+      permStatus = await PushNotifications.requestPermissions();
+    }
+
+    if (permStatus.receive !== 'granted') {
+      console.warn('Push notification permission not granted');
+      return;
+    }
+
+    await PushNotifications.register();
+
+    PushNotifications.addListener('registration', async (token) => {
+      console.log('FCM Device Token registered:', token.value);
+      try {
+        await api.registerPushToken(token.value, 'fcm');
+        pushRegistered = true;
+      } catch (err) {
+        console.warn('Failed to send push token to backend:', err);
+      }
+    });
+
+    PushNotifications.addListener('registrationError', (err) => {
+      console.error('FCM registration error:', err);
+    });
+
+    PushNotifications.addListener('pushNotificationReceived', async (notification) => {
+      console.log('Push received in foreground:', notification);
+      try {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              id: Math.floor(Math.random() * 2000000000) + 1,
+              title: notification.title || 'HostelCare',
+              body: notification.body || '',
+              channelId: CHANNEL_ID,
+              smallIcon: 'ic_launcher_round',
+              iconColor: '#4361EE',
+              extra: notification.data || {},
+            },
+          ],
+        });
+      } catch (e) {
+        console.warn('Local dispatch failed:', e);
+      }
+    });
+
+    PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+      const route = notification.notification.data?.route;
+      if (route && window.location.pathname !== route) {
+        window.location.href = route;
+      }
+    });
+
+    pushRegistered = true;
+  } catch (err) {
+    console.warn('Push notifications initialization notice:', err);
+  }
+}
 
 /**
  * Initializes the Android Notification Channel with High Importance.
