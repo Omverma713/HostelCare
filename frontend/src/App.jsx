@@ -215,6 +215,7 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
+                  <Route path="/superadmin" element={<SuperAdminPortal />} />
                   <Route path="/superadmin/*" element={<SuperAdminPortal />} />
                 </Route>
 
