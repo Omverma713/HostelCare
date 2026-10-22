@@ -145,6 +145,10 @@ async function sendPushToSessions(sessions, payload) {
             notification: {
               channelId: "hostelcare_custom_channel",
               sound: "default",
+              icon: "ic_stat_hostelcare",
+              color: "#4361EE",
+              defaultSound: true,
+              defaultVibrateTimings: true,
             },
           },
         };
