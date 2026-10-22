@@ -3,11 +3,15 @@ const cors           = require("cors");
 const compression    = require("compression");
 const rateLimit      = require("express-rate-limit");
 
-const complaintRouter = require("./src/routes/complaints.router");
-const UserRouters     = require("./src/routes/user.route");
-const feedbackRouter  = require("./src/routes/feedback.route");
+const complaintRouter   = require("./src/routes/complaints.router");
+const UserRouters       = require("./src/routes/user.route");
+const feedbackRouter    = require("./src/routes/feedback.route");
+const superAdminRouter  = require("./src/routes/superAdmin.route");
 
 const app = express();
+
+// Enable trusted reverse proxy header (Cloudflare, AWS ALB, Nginx) for accurate client IP detection
+app.set("trust proxy", 1);
 
 // ─── 1. CORS ──────────────────────────────────────────────────────────────────
 // Must be the first middleware so CORS headers are set on every response,
@@ -59,17 +63,69 @@ const loginLimiter = rateLimit({
     skipSuccessfulRequests: false,
 });
 
-// ─── 5. Health Endpoint ───────────────────────────────────────────────────────
+// ─── 5. Health & Public Maintenance Endpoints ───────────────────────────────
 // Required for load balancers, container orchestrators (Docker healthcheck,
-// K8s liveness/readiness probes), and monitoring systems.
+// K8s liveness/readiness probes), and client status checks.
 app.get("/health", (req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// ─── 6. Routes ────────────────────────────────────────────────────────────────
+// Public endpoint for clients (web app, mobile app) to query maintenance status
+app.get("/api/v1/maintenance/status", async (req, res) => {
+    try {
+        const SystemConfig = require("./src/models/systemConfig.model");
+        const config = await SystemConfig.getEffectiveConfig();
+        const maintenance = config.maintenance || {};
+        const globalMaint = maintenance.global || { enabled: false };
+        const selectiveMaint = maintenance.selective || { enabled: false };
+
+        let activeMode = null;
+        if (globalMaint.enabled) {
+            activeMode = "global";
+        } else if (selectiveMaint.enabled) {
+            activeMode = "selective";
+        }
+
+        return res.status(200).json({
+            success: true,
+            activeMode,
+            maintenance: {
+                global: {
+                    enabled: Boolean(globalMaint.enabled),
+                    title: globalMaint.title,
+                    message: globalMaint.message,
+                    plannedStart: globalMaint.plannedStart,
+                    plannedEnd: globalMaint.plannedEnd,
+                },
+                selective: {
+                    enabled: Boolean(selectiveMaint.enabled),
+                    title: selectiveMaint.title,
+                    message: selectiveMaint.message,
+                    affectedRoles: selectiveMaint.affectedRoles || [],
+                    affectedRegistrationNumbers: selectiveMaint.affectedRegistrationNumbers || [],
+                    plannedStart: selectiveMaint.plannedStart,
+                    plannedEnd: selectiveMaint.plannedEnd,
+                },
+            },
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Failed to retrieve maintenance status",
+            error: err.message,
+        });
+    }
+});
+
+// ─── 6. Global Maintenance Enforcer Middleware ────────────────────────────────
+const maintenanceMiddleware = require("./src/middleware/maintenance.middleware");
+app.use(maintenanceMiddleware);
+
+// ─── 7. Application Routes ───────────────────────────────────────────────────
 app.use("/api/v1/complaints", complaintRouter);
-app.use("/api/v1/users", loginLimiter, UserRouters);
+app.use("/api/v1/users", UserRouters);
 app.use("/api/v1/feedback", feedbackRouter);
+app.use("/api/v1/superadmin", superAdminRouter);
 
 // ─── 7. Centralized Error Handler ────────────────────────────────────────────
 // Express 5 propagates async errors automatically — this handler catches them

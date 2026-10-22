@@ -43,32 +43,29 @@ export default function InteractiveLamp({
     }
   }, []);
 
-  // Hover floating motion loop
+  // Hover floating motion loop (only active on user hover)
   useEffect(() => {
-    if (isDragging) return;
+    if (isDragging || !isHovered) {
+      if (!isDragging) {
+        setCordOffset({ x: 0, y: 0 });
+        setSpringAnimation({ x: 0, y: 0, angle: 0 });
+      }
+      return;
+    }
 
     let startTime = performance.now();
 
     const animateHover = (currentTime) => {
-      if (!isDragging) {
+      if (!isDragging && isHovered) {
         const time = (currentTime - startTime) * 0.003;
-        
-        if (isHovered) {
-          // Gentle lively hover sway motion
-          const swayX = Math.sin(time * 2.8) * 8.5;
-          const bounceY = (Math.sin(time * 5.6) + 1) * 2.5;
-          const tiltAngle = Math.sin(time * 2.8) * 14;
+        const swayX = Math.sin(time * 2.8) * 8.5;
+        const bounceY = (Math.sin(time * 5.6) + 1) * 2.5;
+        const tiltAngle = Math.sin(time * 2.8) * 14;
 
-          setCordOffset({ x: swayX, y: bounceY });
-          setSpringAnimation({ x: swayX, y: bounceY, angle: tiltAngle });
-        } else {
-          // Subtle resting breathing sway (very gentle)
-          const subtleSway = Math.sin(time * 1.5) * 1.2;
-          setCordOffset({ x: subtleSway, y: 0 });
-          setSpringAnimation({ x: subtleSway, y: 0, angle: subtleSway * 2 });
-        }
+        setCordOffset({ x: swayX, y: bounceY });
+        setSpringAnimation({ x: swayX, y: bounceY, angle: tiltAngle });
+        hoverAnimFrameRef.current = requestAnimationFrame(animateHover);
       }
-      hoverAnimFrameRef.current = requestAnimationFrame(animateHover);
     };
 
     hoverAnimFrameRef.current = requestAnimationFrame(animateHover);

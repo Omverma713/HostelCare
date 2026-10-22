@@ -1,0 +1,3 @@
+registrationNumber,name,role,hostel,roomNumber,email,password
+SA_SAMPLE_01,Fictional SuperAdmin One,superadmin,ADMIN_HQ,,admin.sample1@example.com,
+SA_SAMPLE_02,Fictional SuperAdmin Two,superadmin,ADMIN_HQ,,admin.sample2@example.com,

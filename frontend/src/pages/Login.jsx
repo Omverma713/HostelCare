@@ -38,38 +38,50 @@ export default function Login() {
   const [actRegNum, setActRegNum] = useState('');
   const [actHostel, setActHostel] = useState('');
   const [actRoom, setActRoom] = useState('');
+  const [actToken, setActToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // 3D Card Tilt & Specular Glare State
   const cardRef = useRef(null);
   const [cardTilt, setCardTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+  const tiltRafRef = useRef(null);
 
   const handleCardMouseMove = (e) => {
     if (!cardRef.current || (activeConcept === 'concept3' && !isLampOn)) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    if (tiltRafRef.current) cancelAnimationFrame(tiltRafRef.current);
 
-    const rotateX = ((y - centerY) / centerY) * -7;
-    const rotateY = ((x - centerX) / centerX) * 7;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
 
-    const glareX = (x / rect.width) * 100;
-    const glareY = (y / rect.height) * 100;
+    tiltRafRef.current = requestAnimationFrame(() => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
 
-    setCardTilt({ rotateX, rotateY, glareX, glareY });
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = ((y - centerY) / centerY) * -7;
+      const rotateY = ((x - centerX) / centerX) * 7;
+
+      const glareX = (x / rect.width) * 100;
+      const glareY = (y / rect.height) * 100;
+
+      setCardTilt({ rotateX, rotateY, glareX, glareY });
+    });
   };
 
   const handleCardMouseLeave = () => {
+    if (tiltRafRef.current) cancelAnimationFrame(tiltRafRef.current);
     setCardTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
   };
 
   const doLogin = async (reg, pass) => {
     setLoading(true);
-    const startTime = Date.now();
     try {
       const decodedUser = await login(reg, pass);
 
@@ -92,6 +104,7 @@ export default function Login() {
         case 'caretaker':      navigate('/caretaker', { replace: true }); break;
         case 'warden':         navigate('/warden', { replace: true }); break;
         case 'superintendent': navigate('/superintendent', { replace: true }); break;
+        case 'superadmin':     navigate('/superadmin', { replace: true }); break;
         default:               navigate('/', { replace: true });
       }
     } catch (error) {
@@ -102,11 +115,6 @@ export default function Login() {
         setActRegNum(reg);
       }
     } finally {
-      // Provide smooth identity scanner verification transition
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 2500) {
-        await new Promise((r) => setTimeout(r, 2500 - elapsed));
-      }
       setLoading(false);
     }
   };
@@ -131,13 +139,13 @@ export default function Login() {
       return;
     }
     setLoading(true);
-    const startTime = Date.now();
     try {
-      const res = await api.activate(actRegNum, actHostel, actRoom, newPassword, confirmPassword);
+      const res = await api.activate(actRegNum, actHostel, actRoom, newPassword, confirmPassword, actToken.trim() || undefined);
       if (res.success) {
         triggerToast('success', 'Account activated successfully! You can now log in.');
         setRegNum(actRegNum);
         setPassword('');
+        setActToken('');
         setActiveTab('login');
       } else {
         triggerToast('error', res.message || 'Activation failed.');
@@ -145,10 +153,6 @@ export default function Login() {
     } catch (error) {
       triggerToast('error', error.data?.message || error.message || 'Failed to activate account.');
     } finally {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 2500) {
-        await new Promise((r) => setTimeout(r, 2500 - elapsed));
-      }
       setLoading(false);
     }
   };
@@ -163,26 +167,24 @@ export default function Login() {
       <div className="auth-theme-backdrop auth-backdrop-dark" />
       <div className="auth-theme-backdrop auth-backdrop-light" />
 
-      {/* Option 1 Unique Dark Theme */}
-      {activeConcept === 'concept1' && theme === 'dark' && (
-        <div className="classic-dark-cyber-stage" aria-hidden="true">
-          <div className="cyber-aurora-glow" />
-          <div className="cyber-horizon-line" />
-          <div className="cyber-horizon-sun" />
-          <div className="cyber-grid-plane" />
-          <div className="cyber-light-beams" />
-        </div>
-      )}
-
-      {/* Option 1 Unique Light Theme */}
-      {activeConcept === 'concept1' && theme === 'light' && (
-        <div className="classic-light-horizon-stage" aria-hidden="true">
-          <div className="solar-aurora-glow" />
-          <div className="solar-horizon-line" />
-          <div className="solar-horizon-sun" />
-          <div className="solar-grid-plane" />
-          <div className="solar-light-beams" />
-        </div>
+      {/* Option 1 Unique Dark & Light Cyber/Solar Stage (Smooth Opacity Cross-Fade) */}
+      {activeConcept === 'concept1' && (
+        <>
+          <div className="classic-dark-cyber-stage" aria-hidden="true">
+            <div className="cyber-aurora-glow" />
+            <div className="cyber-horizon-line" />
+            <div className="cyber-horizon-sun" />
+            <div className="cyber-grid-plane" />
+            <div className="cyber-light-beams" />
+          </div>
+          <div className="classic-light-horizon-stage" aria-hidden="true">
+            <div className="solar-aurora-glow" />
+            <div className="solar-horizon-line" />
+            <div className="solar-horizon-sun" />
+            <div className="solar-grid-plane" />
+            <div className="solar-light-beams" />
+          </div>
+        </>
       )}
 
       {/* 3D Floating Particle Nebula Background (Active for Option 2 & 4) */}
@@ -229,6 +231,16 @@ export default function Login() {
             <span className="concept-icon">🔮</span>
             <span className="concept-label">Cyber Velvet</span>
           </button>
+          <button
+            type="button"
+            className="auth-concept-btn"
+            onClick={() => navigate('/custom-notifications')}
+            title="Test Custom Android Notification"
+            style={{ borderColor: 'rgba(67, 97, 238, 0.4)', background: 'rgba(67, 97, 238, 0.12)' }}
+          >
+            <span className="concept-icon">🔔</span>
+            <span className="concept-label">Notify Test</span>
+          </button>
         </div>
 
         {/* Hanging Beta Banner in Top Bar */}
@@ -243,11 +255,14 @@ export default function Login() {
         </div>
 
         {/* Theme Switcher */}
-        <div className="auth-theme-toggle">
+        <div className="auth-theme-toggle" role="radiogroup" aria-label="Theme selector">
           <button
             type="button"
             className={`auth-theme-btn theme-btn-light ${theme === 'light' ? 'active' : ''}`}
-            onClick={() => setTheme('light')}
+            onClick={() => theme !== 'light' && setTheme('light')}
+            aria-label="Switch to light mode"
+            aria-checked={theme === 'light'}
+            role="radio"
           >
             <span className="theme-icon">☀️</span>
             <span className="theme-label">Light</span>
@@ -255,7 +270,10 @@ export default function Login() {
           <button
             type="button"
             className={`auth-theme-btn theme-btn-dark ${theme === 'dark' ? 'active' : ''}`}
-            onClick={() => setTheme('dark')}
+            onClick={() => theme !== 'dark' && setTheme('dark')}
+            aria-label="Switch to dark mode"
+            aria-checked={theme === 'dark'}
+            role="radio"
           >
             <span className="theme-icon">🌙</span>
             <span className="theme-label">Dark</span>
@@ -662,6 +680,21 @@ export default function Login() {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         disabled={loading}
                         required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="actToken2">
+                        Setup / Activation Token <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Optional / Required for Super Admin)</span>
+                      </label>
+                      <input
+                        id="actToken2"
+                        type="text"
+                        className="form-input"
+                        placeholder="Paste single-use token if provisioned"
+                        value={actToken}
+                        onChange={(e) => setActToken(e.target.value.trim())}
+                        disabled={loading}
                       />
                     </div>
 

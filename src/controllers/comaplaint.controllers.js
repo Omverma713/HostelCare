@@ -262,32 +262,51 @@ const findingcomplaint = async (req, res) => {
 
 // ─── savingComplaint ──────────────────────────────────────────────────────────
 // POST /api/v1/users/complaints  (user route — has authMiddleware)
-// POST /api/v1/complaints/        (complaints route — now has authMiddleware)
-// Uses JWT payload directly — no redundant User.findById call
 const savingComplaint = async (req, res) => {
     try {
-        // All required fields are in the JWT payload — no extra DB round-trip needed.
-        // req.user is populated by authMiddleware with: id, name, registrationNumber,
-        // role, hostel — all of which were set at account activation.
+        if (!req.body.department || !req.body.description) {
+            return res.status(400).json({
+                success: false,
+                message: "Department and description are required",
+            });
+        }
+
+        let studentName = req.user.name;
+        let registrationNo = req.user.registrationNumber;
+        let hostelNo = req.user.hostel;
+        let roomNo = parseInt(req.user.roomNumber) || 0;
+
+        // If any required field is missing from JWT, fetch from DB
+        if (!studentName || !registrationNo || !hostelNo || !roomNo) {
+            const userDoc = await User.findById(req.user.id || req.user._id).lean();
+            if (userDoc) {
+                studentName = studentName || userDoc.name;
+                registrationNo = registrationNo || userDoc.registrationNumber;
+                hostelNo = hostelNo || userDoc.hostel;
+                roomNo = roomNo || parseInt(userDoc.roomNumber) || 302;
+            }
+        }
+
         const complaintData = {
-            studentName:    req.user.name,
-            registrationNo: req.user.registrationNumber,
-            hostelNo:       req.user.hostel,
-            roomNo:         parseInt(req.user.roomNumber) || 0,
+            studentName:    studentName || req.user.registrationNumber || "Student",
+            registrationNo: registrationNo || req.user.registrationNumber || "N/A",
+            hostelNo:       hostelNo || "Hostel BH-1",
+            roomNo:         roomNo || 302,
             department:     req.body.department,
             description:    req.body.description,
         };
 
-        await Complaint.create(complaintData);
+        const newComplaint = await Complaint.create(complaintData);
 
         return res.status(201).json({
             success: true,
             message: "Complaint saved successfully",
+            complaint: newComplaint,
         });
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: "failled to save complaint",
+            message: error.message || "Failed to save complaint",
         });
     }
 };

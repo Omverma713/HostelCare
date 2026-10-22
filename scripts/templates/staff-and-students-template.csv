@@ -1,0 +1,5 @@
+registrationNumber,name,role,hostel,roomNumber,email,password
+WD_SAMPLE_01,Fictional Warden One,warden,BH-1,,warden.sample@example.com,WardenPass!Placeholder#1
+CT_SAMPLE_01,Fictional Caretaker One,caretaker,BH-1,,caretaker.sample@example.com,CaretakerPass!Placeholder#1
+SUP_SAMPLE_01,Fictional Superintendent,superintendent,BH-1,,superintendent.sample@example.com,SuperPass!Placeholder#1
+STU_SAMPLE_01,Fictional Student One,student,BH-1,101,student.sample@example.com,

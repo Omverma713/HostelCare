@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import { normalizeStatus, isEmptyDataError } from '../utils/status';
 import Badge from '../components/Badge';
@@ -19,74 +19,63 @@ export default function SuperintendentDashboard() {
   const [performanceLoading, setPerformanceLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     setPerformanceLoading(true);
     setError(null);
-    const startTime = Date.now();
 
-    // 1. Fetch Superintendent Overview Stats
     try {
-      const statsRes = await api.getSuperintendentDashboard();
-      if (statsRes.success && statsRes.totalComplaints) {
-        const rawData = statsRes.totalComplaints[0] || {};
+      const [statsResult, perfResult] = await Promise.allSettled([
+        api.getSuperintendentDashboard(),
+        api.getStaffPerformance(),
+      ]);
+
+      // 1. Process Superintendent Overview Stats
+      if (statsResult.status === 'fulfilled' && statsResult.value?.success && statsResult.value?.totalComplaints) {
+        const rawData = statsResult.value.totalComplaints[0] || {};
         const totalCount = rawData.totalComplaints?.[0]?.total || 0;
         let pending = 0, inprogress = 0, resolved = 0;
 
         const breakdown = rawData.complaintsByStatus || [];
         breakdown.forEach((statusObj) => {
           const norm = normalizeStatus(statusObj._id);
-          if (norm === 'pending')    pending    += statusObj.count;
+          if (norm === 'pending')         pending    += statusObj.count;
           else if (norm === 'inprogress') inprogress += statusObj.count;
           else if (norm === 'resolved')   resolved   += statusObj.count;
         });
 
         setStats({ total: totalCount, pending, inprogress, resolved });
-      }
-    } catch (err) {
-      if (isEmptyDataError(err)) {
+      } else if (statsResult.status === 'rejected' && isEmptyDataError(statsResult.reason)) {
         setStats({ total: 0, pending: 0, inprogress: 0, resolved: 0 });
-      } else {
+      } else if (statsResult.status === 'rejected') {
         triggerToast('error', 'Failed to load superintendent stats.');
       }
-    } finally {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 2500) {
-        await new Promise((r) => setTimeout(r, 2500 - elapsed));
-      }
-      setLoading(false);
-    }
 
-    // 2. Fetch Staff Performance
-    try {
-      const perfRes = await api.getStaffPerformance();
-      if (perfRes.success && perfRes.performance) {
-        setPerformance(perfRes.performance);
-      }
-    } catch (err) {
-      if (isEmptyDataError(err)) {
+      // 2. Process Staff Performance
+      if (perfResult.status === 'fulfilled' && perfResult.value?.success && perfResult.value?.performance) {
+        setPerformance(perfResult.value.performance);
+      } else if (perfResult.status === 'rejected' && isEmptyDataError(perfResult.reason)) {
         setPerformance([]);
-      } else {
+      } else if (perfResult.status === 'rejected') {
         triggerToast('error', 'Failed to load staff performance metrics.');
       }
+    } catch (err) {
+      setError(err.message || 'Failed to load superintendent overview.');
     } finally {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 2500) {
-        await new Promise((r) => setTimeout(r, 2500 - elapsed));
-      }
+      setLoading(false);
       setPerformanceLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   // SVG Donut Chart Constants
   const donutRadius = 50;
   const donutCircumference = 2 * Math.PI * donutRadius; // ~314.16
   
-  const getDonutSegments = () => {
+  const donutSegments = useMemo(() => {
     const { pending, inprogress, resolved, total } = stats;
     if (total === 0) return [];
 
@@ -111,9 +100,7 @@ export default function SuperintendentDashboard() {
           percentage: (percentage * 100).toFixed(1)
         };
       });
-  };
-
-  const donutSegments = getDonutSegments();
+  }, [stats]);
 
   return (
     <div>

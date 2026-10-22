@@ -36,7 +36,6 @@ export default function UpdateComplaintModal({ complaint, title = 'Update Compla
     }
 
     setLoading(true);
-    const startTime = Date.now();
     try {
       const res = await api.updateComplaint(complaint._id, updateStatus, updateDesc);
       if (res.success) {
@@ -49,10 +48,6 @@ export default function UpdateComplaintModal({ complaint, title = 'Update Compla
     } catch (err) {
       triggerToast('error', err.data?.message || err.message || 'Failed to update complaint.');
     } finally {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 2000) {
-        await new Promise((r) => setTimeout(r, 2000 - elapsed));
-      }
       setLoading(false);
     }
   };

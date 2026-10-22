@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
- * Reusable Modal component with Backdrop click closure and animations
+ * Reusable Modal component with Backdrop click closure and animations.
+ * Uses createPortal to mount directly to document.body, ensuring it is always
+ * perfectly centered in the active viewport regardless of parent scroll position or CSS transforms.
  */
 export default function Modal({ isOpen, onClose, title, children, footer }) {
   // Prevent body scrolling when modal is open
@@ -24,7 +27,7 @@ export default function Modal({ isOpen, onClose, title, children, footer }) {
     }
   };
 
-  return (
+  const modalNode = (
     <div className="modal-backdrop" onClick={handleBackdropClick}>
       <div className="modal-content" role="dialog" aria-modal="true">
         <div className="modal-header">
@@ -38,4 +41,6 @@ export default function Modal({ isOpen, onClose, title, children, footer }) {
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalNode, document.body) : modalNode;
 }

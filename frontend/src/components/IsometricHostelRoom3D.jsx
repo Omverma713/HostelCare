@@ -1,17 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function IsometricHostelRoom3D({ role = null }) {
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  const rafRef = useRef(null);
 
   useEffect(() => {
+    // Skip continuous pointer tracking on touch devices for battery and rendering efficiency
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+      return;
+    }
+
     const handleMouseMove = (e) => {
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-      setMouseOffset({ x: nx, y: ny });
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+
+      rafRef.current = requestAnimationFrame(() => {
+        const nx = (clientX / window.innerWidth - 0.5) * 2;
+        const ny = (clientY / window.innerHeight - 0.5) * 2;
+        setMouseOffset({ x: nx, y: ny });
+      });
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   const podTilt = `perspective(1000px) rotateX(${10 - mouseOffset.y * 12}deg) rotateY(${-12 + mouseOffset.x * 14}deg) translateZ(10px)`;

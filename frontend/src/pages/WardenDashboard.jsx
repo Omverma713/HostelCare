@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import { triggerToast } from '../components/Toast';
 import { normalizeStatus, sortByDateDesc, isEmptyDataError } from '../utils/status';
@@ -10,7 +10,7 @@ import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
 
 /** Build stats array from the warden dashboard API response */
-const buildWardenStats = (stats, loading) => [
+const buildWardenStats = (stats) => [
   { label: 'Total Logs',   value: stats.totaComplaints,       icon: '📁', bgColor: 'var(--primary-light)', textColor: 'var(--primary)' },
   { label: 'Pending',      value: stats.pendingComplaints,    icon: '⏳', bgColor: '#fffbeb', textColor: '#b45309' },
   { label: 'In Progress',  value: stats.inProgressComplaints, icon: '⚙️', bgColor: '#eff6ff', textColor: '#1d4ed8' },
@@ -33,9 +33,7 @@ export default function WardenDashboard() {
   const [detailComplaint, setDetailComplaint]       = useState(null);
   const [selectedComplaint, setSelectedComplaint]   = useState(null);
 
-  useEffect(() => { fetchDashboardData(); }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     setStatsLoading(true);
     setError(null);
@@ -70,17 +68,23 @@ export default function WardenDashboard() {
       }
     }
     setLoading(false);
-  };
+  }, []);
 
-  const filteredComplaints = complaints.filter((c) => {
-    const statusMatch = !statusFilter || normalizeStatus(c.status) === statusFilter;
-    const deptMatch   = !deptFilter   || c.department === deptFilter;
-    const searchMatch = !searchTerm
-      || c.studentName?.toLowerCase().includes(searchTerm.toLowerCase())
-      || c.roomNo?.toString().includes(searchTerm)
-      || c.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    return statusMatch && deptMatch && searchMatch;
-  });
+  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
+
+  const wardenStats = useMemo(() => buildWardenStats(stats), [stats]);
+
+  const filteredComplaints = useMemo(() => {
+    return complaints.filter((c) => {
+      const statusMatch = !statusFilter || normalizeStatus(c.status) === statusFilter;
+      const deptMatch   = !deptFilter   || c.department === deptFilter;
+      const searchMatch = !searchTerm
+        || c.studentName?.toLowerCase().includes(searchTerm.toLowerCase())
+        || c.roomNo?.toString().includes(searchTerm)
+        || c.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      return statusMatch && deptMatch && searchMatch;
+    });
+  }, [complaints, statusFilter, deptFilter, searchTerm]);
 
   return (
     <div>
@@ -89,7 +93,7 @@ export default function WardenDashboard() {
         <p className="page-subtitle">Oversee hostel maintenance, view performance statistics, and approve resolutions</p>
       </div>
 
-      <StatsGrid stats={buildWardenStats(stats)} loading={statsLoading} />
+      <StatsGrid stats={wardenStats} loading={statsLoading} />
 
       <ComplaintFilters
         statusFilter={statusFilter}

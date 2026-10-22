@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import { triggerToast } from '../components/Toast';
 import { normalizeStatus, sortByDateDesc, isEmptyDataError } from '../utils/status';
@@ -32,9 +32,7 @@ export default function CaretakerDashboard() {
   const [detailComplaint, setDetailComplaint]   = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
 
-  useEffect(() => { fetchComplaints(); }, []);
-
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -52,17 +50,23 @@ export default function CaretakerDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filteredComplaints = complaints.filter((c) => {
-    const statusMatch  = !statusFilter || normalizeStatus(c.status) === statusFilter;
-    const deptMatch    = !deptFilter   || c.department === deptFilter;
-    const searchMatch  = !searchTerm
-      || c.studentName?.toLowerCase().includes(searchTerm.toLowerCase())
-      || c.roomNo?.toString().includes(searchTerm)
-      || c.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    return statusMatch && deptMatch && searchMatch;
-  });
+  useEffect(() => { fetchComplaints(); }, [fetchComplaints]);
+
+  const stats = useMemo(() => CARETAKER_STATS(complaints), [complaints]);
+
+  const filteredComplaints = useMemo(() => {
+    return complaints.filter((c) => {
+      const statusMatch  = !statusFilter || normalizeStatus(c.status) === statusFilter;
+      const deptMatch    = !deptFilter   || c.department === deptFilter;
+      const searchMatch  = !searchTerm
+        || c.studentName?.toLowerCase().includes(searchTerm.toLowerCase())
+        || c.roomNo?.toString().includes(searchTerm)
+        || c.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      return statusMatch && deptMatch && searchMatch;
+    });
+  }, [complaints, statusFilter, deptFilter, searchTerm]);
 
   return (
     <div>
@@ -71,7 +75,7 @@ export default function CaretakerDashboard() {
         <p className="page-subtitle">Manage maintenance requests and log resolutions</p>
       </div>
 
-      <StatsGrid stats={CARETAKER_STATS(complaints)} loading={loading} />
+      <StatsGrid stats={stats} loading={loading} />
 
       <ComplaintFilters
         statusFilter={statusFilter}

@@ -40,6 +40,9 @@ async function request(endpoint, options = {}) {
         localStorage.removeItem('token');
         window.dispatchEvent(new CustomEvent('auth-session-expired'));
       }
+      if (response.status === 503 && data.code === 'MAINTENANCE_MODE_ACTIVE') {
+        window.dispatchEvent(new CustomEvent('maintenance-mode-active', { detail: data.maintenance }));
+      }
       const error = new Error(data.message || `HTTP error ${response.status}`);
       error.status = response.status;
       error.data = data;
@@ -65,10 +68,10 @@ export const api = {
     });
   },
 
-  activate(registrationNumber, hostel, roomNumber, newPassword, confirmPassword) {
+  activate(registrationNumber, hostel, roomNumber, newPassword, confirmPassword, activationToken) {
     return request('/users/activate', {
       method: 'POST',
-      body: JSON.stringify({ registrationNumber, hostel, roomNumber, newPassword, confirmPassword }),
+      body: JSON.stringify({ registrationNumber, hostel, roomNumber, newPassword, confirmPassword, activationToken }),
     });
   },
 
@@ -133,5 +136,10 @@ export const api = {
 
   getAllFeedback() {
     return request('/feedback');
+  },
+
+  // --- SYSTEM MAINTENANCE ---
+  getMaintenanceStatus() {
+    return request('/maintenance/status');
   },
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { DEPARTMENTS, STATUS_OPTIONS } from '../constants';
 
 /**
@@ -13,7 +13,7 @@ import { DEPARTMENTS, STATUS_OPTIONS } from '../constants';
  * @param {Function} onSearchChange  - Called with new search term
  * @param {string}   title           - Optional heading above filters
  */
-export default function ComplaintFilters({
+function ComplaintFilters({
   statusFilter,
   deptFilter,
   searchTerm,
@@ -71,3 +71,5 @@ export default function ComplaintFilters({
     </div>
   );
 }
+
+export default memo(ComplaintFilters);

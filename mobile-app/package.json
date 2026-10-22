@@ -1,0 +1,24 @@
+{
+  "name": "hostelcare-mobile",
+  "version": "1.0.0",
+  "description": "HostelCare Android Mobile App Wrapper using Capacitor",
+  "private": true,
+  "scripts": {
+    "sync:web": "node scripts/sync-web.js",
+    "cap:sync": "npx cap sync android",
+    "build:mobile": "node scripts/sync-web.js && npx cap sync android",
+    "open:android": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/keyboard": "^6.0.3",
+    "@capacitor/local-notifications": "^6.1.3",
+    "@capacitor/splash-screen": "^6.0.3",
+    "@capacitor/status-bar": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}

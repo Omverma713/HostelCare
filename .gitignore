@@ -6,3 +6,9 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 scratch/
+mobile-app/node_modules/
+mobile-app/www/
+*.pem
+*.apk
+*.keystore
+*.jks

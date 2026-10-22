@@ -1,29 +1,59 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useLayoutEffect, useCallback } from 'react';
 
 const ThemeContext = createContext(null);
 
+function applyThemeClasses(targetTheme) {
+  if (typeof document === 'undefined') return;
+
+  // Signal canvas animations to pause BEFORE the class change triggers style recalc.
+  // This prevents the rAF draw call from colliding with the browser's cascade recalculation.
+  window.dispatchEvent(new CustomEvent('theme-switching-start'));
+
+  const root = document.documentElement;
+  if (targetTheme === 'dark') {
+    root.classList.add('dark-theme');
+    root.classList.remove('light-theme');
+    document.body.classList.add('login-dark-theme');
+  } else {
+    root.classList.add('light-theme');
+    root.classList.remove('dark-theme');
+    document.body.classList.remove('login-dark-theme');
+  }
+}
+
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'light';
+  const [theme, setThemeState] = useState(() => {
+    const initial = (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) || 'light';
+    applyThemeClasses(initial);
+    return initial;
   });
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark-theme');
-      root.classList.remove('light-theme');
-      document.body.classList.add('login-dark-theme'); // Keep beta banner cords aligned
-    } else {
-      root.classList.add('light-theme');
-      root.classList.remove('dark-theme');
-      document.body.classList.remove('login-dark-theme');
+  const setTheme = useCallback((newTheme) => {
+    setThemeState((prev) => {
+      const nextTheme = typeof newTheme === 'function' ? newTheme(prev) : newTheme;
+      if (nextTheme === prev) return prev;
+      applyThemeClasses(nextTheme);
+      try {
+        localStorage.setItem('theme', nextTheme);
+      } catch (e) {
+        // ignore quota error
+      }
+      return nextTheme;
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    applyThemeClasses(theme);
+    try {
+      localStorage.setItem('theme', theme);
+    } catch (e) {
+      // ignore quota error
     }
-    localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+  }, [setTheme]);
 
   const value = {
     theme,

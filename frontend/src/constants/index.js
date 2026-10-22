@@ -22,10 +22,10 @@ export const STATUS_OPTIONS = [
 ];
 
 /** Roles that have administrative access (non-student) */
-export const ADMIN_ROLES = ['caretaker', 'warden', 'superintendent', 'chiefHostelWarden'];
+export const ADMIN_ROLES = ['caretaker', 'warden', 'superintendent', 'chiefHostelWarden', 'superadmin'];
 
 /** All supported application roles */
-export const ALL_ROLES = ['student', 'caretaker', 'warden', 'superintendent'];
+export const ALL_ROLES = ['student', 'caretaker', 'warden', 'superintendent', 'superadmin'];
 
 /** Role display names for UI labels */
 export const ROLE_LABELS = {
@@ -33,4 +33,5 @@ export const ROLE_LABELS = {
   caretaker:      'Caretaker',
   warden:         'Warden',
   superintendent: 'Superintendent',
+  superadmin:     'Super Admin',
 };

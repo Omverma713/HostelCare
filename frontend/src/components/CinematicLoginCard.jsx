@@ -12,26 +12,37 @@ export default function CinematicLoginCard({
 }) {
   const cardRef = useRef(null);
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+  const tiltRafRef = useRef(null);
 
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    if (tiltRafRef.current) cancelAnimationFrame(tiltRafRef.current);
+    const clientX = e.clientX;
+    const clientY = e.clientY;
 
-    const rotateX = ((y - centerY) / centerY) * -5;
-    const rotateY = ((x - centerX) / centerX) * 5;
+    tiltRafRef.current = requestAnimationFrame(() => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
 
-    const glareX = (x / rect.width) * 100;
-    const glareY = (y / rect.height) * 100;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
 
-    setTilt({ rotateX, rotateY, glareX, glareY });
+      const rotateX = ((y - centerY) / centerY) * -5;
+      const rotateY = ((x - centerX) / centerX) * 5;
+
+      const glareX = (x / rect.width) * 100;
+      const glareY = (y / rect.height) * 100;
+
+      setTilt({ rotateX, rotateY, glareX, glareY });
+    });
   };
 
   const handleMouseLeave = () => {
+    if (tiltRafRef.current) cancelAnimationFrame(tiltRafRef.current);
     setTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
   };
 
