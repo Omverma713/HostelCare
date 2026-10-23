@@ -281,3 +281,88 @@ test("Audit Trail: Privileged admin actions write immutable audit records", asyn
   assert.equal(sampleLog.details?.password, undefined);
   assert.equal(sampleLog.details?.hashedPassword, undefined);
 });
+
+test("Super Admin Unlock: Unlocks account locked by multiple wrong passwords", async () => {
+  // 1. Ensure student account is active but locked out due to failed attempts
+  await User.findByIdAndUpdate(studentUserId, {
+    accountStatus: "active",
+    failedLoginAttempts: 5,
+    lockUntil: new Date(Date.now() + 15 * 60 * 1000), // locked for 15 minutes
+  });
+
+  // 2. Student login attempt must be rejected with 429 ACCOUNT_LOCKED
+  const lockedLoginRes = await fetch(`${baseUrl}/api/v1/users/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      registrationNumber: TEST_STUDENT.registrationNumber,
+      password: TEST_STUDENT.password,
+    }),
+  });
+  assert.equal(lockedLoginRes.status, 429);
+  const lockedLoginData = await lockedLoginRes.json();
+  assert.equal(lockedLoginData.code, "ACCOUNT_LOCKED");
+
+  // 3. Super Admin queries user details - must report isLocked: true
+  const detailsRes = await fetch(`${baseUrl}/api/v1/superadmin/users/${studentUserId}`, {
+    headers: { Authorization: `Bearer ${superAdminToken}` },
+  });
+  assert.equal(detailsRes.status, 200);
+  const detailsData = await detailsRes.json();
+  assert.equal(detailsData.user.isLocked, true);
+  assert.ok(detailsData.user.lockMinutesRemaining > 0);
+
+  // 4. Query user directory with status=locked filter - must include this user
+  const directoryRes = await fetch(`${baseUrl}/api/v1/superadmin/users?status=locked`, {
+    headers: { Authorization: `Bearer ${superAdminToken}` },
+  });
+  assert.equal(directoryRes.status, 200);
+  const directoryData = await directoryRes.json();
+  const foundInLocked = directoryData.users.some((u) => u._id.toString() === studentUserId.toString());
+  assert.ok(foundInLocked, "Locked user must appear in status=locked query");
+
+  // 5. Unauthenticated request to unlock must be rejected with 401
+  const unauthUnlockRes = await fetch(`${baseUrl}/api/v1/superadmin/users/${studentUserId}/unlock`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  assert.equal(unauthUnlockRes.status, 401);
+
+  // 6. Super Admin unlocks account
+  const unlockRes = await fetch(`${baseUrl}/api/v1/superadmin/users/${studentUserId}/unlock`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${superAdminToken}`,
+    },
+  });
+  assert.equal(unlockRes.status, 200);
+  const unlockData = await unlockRes.json();
+  assert.equal(unlockData.success, true);
+  assert.equal(unlockData.user.isLocked, false);
+  assert.equal(unlockData.user.failedLoginAttempts, 0);
+
+  // 7. Student can now immediately log in with their password
+  const successfulLoginRes = await fetch(`${baseUrl}/api/v1/users/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      registrationNumber: TEST_STUDENT.registrationNumber,
+      password: TEST_STUDENT.password,
+    }),
+  });
+  assert.equal(successfulLoginRes.status, 200);
+  const successfulLoginData = await successfulLoginRes.json();
+  assert.equal(successfulLoginData.success, true);
+
+  // 8. Audit log contains ACCOUNT_UNLOCKED
+  const auditRes = await fetch(`${baseUrl}/api/v1/superadmin/audit-logs?search=${TEST_STUDENT.registrationNumber}`, {
+    headers: { Authorization: `Bearer ${superAdminToken}` },
+  });
+  assert.equal(auditRes.status, 200);
+  const auditData = await auditRes.json();
+  const unlockLog = auditData.logs.find((l) => l.action === "ACCOUNT_UNLOCKED");
+  assert.ok(unlockLog, "Audit log must contain ACCOUNT_UNLOCKED entry");
+  assert.equal(unlockLog.targetIdentifier, TEST_STUDENT.registrationNumber);
+});
+

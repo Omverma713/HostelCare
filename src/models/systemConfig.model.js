@@ -89,6 +89,40 @@ const systemConfigSchema = new mongoose.Schema(
         plannedEnd: { type: Date, default: null },
       },
     },
+
+    appVersion: {
+      latestVersion: {
+        type: String,
+        default: "1.0.0",
+        trim: true,
+      },
+      minimumSupportedVersion: {
+        type: String,
+        default: "1.0.0",
+        trim: true,
+      },
+      updateMessage: {
+        type: String,
+        default: "A new version of HostelCare is available. Please update to enjoy the latest features and security improvements.",
+        maxlength: 1000,
+        trim: true,
+      },
+      updateUrl: {
+        type: String,
+        default: "https://play.google.com/store/apps/details?id=com.hostelcare.app",
+        trim: true,
+      },
+      forceUpdate: {
+        type: Boolean,
+        default: false,
+      },
+      releaseNotes: {
+        type: String,
+        default: "",
+        maxlength: 2000,
+        trim: true,
+      },
+    },
   },
   {
     timestamps: true,

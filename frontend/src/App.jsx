@@ -11,6 +11,7 @@ import Canvas3DBackground from './components/Canvas3DBackground';
 import AppFooter from './components/AppFooter';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import ImpersonationBanner from './components/ImpersonationBanner';
+import AppUpdateModal from './components/AppUpdateModal';
 import { api } from './services/api';
 import { MobileBackHandler } from './hooks/useMobileBackHandler';
 import { initPushNotifications } from './services/notificationService';
@@ -170,6 +171,9 @@ export default function App() {
           <MaintenanceManager>
             {/* Super Admin User Impersonation Session Banner */}
             <ImpersonationBanner />
+
+            {/* Mobile App In-App Version Update Management Modal */}
+            <AppUpdateModal />
 
             {/* Mobile Hardware Back Button Handler */}
             <MobileBackHandler />

@@ -117,6 +117,17 @@ export default function SuperAdminPortal() {
   const [confirmGlobalModal, setConfirmGlobalModal] = useState(false);
   const [targetRegInput, setTargetRegInput] = useState('');
 
+  // App Version State
+  const [appVersionConfig, setAppVersionConfig] = useState({
+    latestVersion: '1.0.0',
+    minimumSupportedVersion: '1.0.0',
+    updateMessage: '',
+    updateUrl: 'https://play.google.com/store/apps/details?id=com.hostelcare.app',
+    forceUpdate: false,
+    releaseNotes: '',
+  });
+  const [savingAppVersion, setSavingAppVersion] = useState(false);
+
   // Load Overview Data
   const loadOverview = useCallback(async () => {
     try {
@@ -243,6 +254,21 @@ export default function SuperAdminPortal() {
     }
   }, []);
 
+  // Load App Version Configuration
+  const loadAppVersion = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await adminApi.getAppVersionConfig();
+      if (res.success && res.appVersion) {
+        setAppVersionConfig(res.appVersion);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to load app version configuration', 'App Version');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Initial load according to active tab
   useEffect(() => {
     if (activeTab === 'overview') loadOverview();
@@ -250,9 +276,10 @@ export default function SuperAdminPortal() {
     else if (activeTab === 'sessions') loadSessions(1);
     else if (activeTab === 'limits') loadConfig();
     else if (activeTab === 'maintenance') loadMaintenance();
+    else if (activeTab === 'appversion') loadAppVersion();
     else if (activeTab === 'notifications') loadCampaigns();
     else if (activeTab === 'audit') loadAuditLogs(1);
-  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadCampaigns, loadAuditLogs]);
+  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadAuditLogs]);
 
   // Fetch full details for a selected user
   const handleSelectUser = async (user) => {
@@ -351,6 +378,41 @@ export default function SuperAdminPortal() {
       }
     } catch (err) {
       triggerToast('error', err.message, 'Logout Failed');
+    }
+  };
+
+  // Unlock user lockout handler
+  const handleUnlockUser = async (userId, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await adminApi.unlockUser(userId);
+      if (res.success) {
+        triggerToast('success', res.message, 'Account Unlocked');
+        loadUsers(userPagination.page);
+        if (selectedUser && selectedUser._id === userId) {
+          setSelectedUser((prev) => ({
+            ...prev,
+            isLocked: false,
+            lockUntil: null,
+            lockMinutesRemaining: 0,
+            failedLoginAttempts: 0,
+          }));
+          if (userDetails?.user) {
+            setUserDetails((prev) => ({
+              ...prev,
+              user: {
+                ...prev.user,
+                isLocked: false,
+                lockUntil: null,
+                lockMinutesRemaining: 0,
+                failedLoginAttempts: 0,
+              },
+            }));
+          }
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message, 'Unlock Failed');
     }
   };
 
@@ -544,6 +606,22 @@ export default function SuperAdminPortal() {
     handleSaveMaintenance(updated);
   };
 
+  const handleSaveAppVersion = async (e) => {
+    if (e) e.preventDefault();
+    setSavingAppVersion(true);
+    try {
+      const res = await adminApi.updateAppVersionConfig(appVersionConfig);
+      if (res.success) {
+        triggerToast('success', res.message || 'App version configuration saved', 'App Version Updated');
+        setAppVersionConfig(res.appVersion);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to save app version configuration', 'Save Error');
+    } finally {
+      setSavingAppVersion(false);
+    }
+  };
+
   return (
     <div className="sa-portal-container">
       {/* 1. Header Banner */}
@@ -575,6 +653,7 @@ export default function SuperAdminPortal() {
             { id: 'sessions', label: '📱 Sessions & Devices' },
             { id: 'limits', label: '⚙️ Login Limits' },
             { id: 'maintenance', label: '🛠️ Maintenance' },
+            { id: 'appversion', label: '📲 App Updates' },
             { id: 'notifications', label: '🔔 Push Broadcast' },
             { id: 'audit', label: '📜 Audit Logs' },
           ].map((tab) => (
@@ -762,6 +841,7 @@ export default function SuperAdminPortal() {
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
+                <option value="locked">🔒 Locked Out</option>
                 <option value="deactivated">Deactivated</option>
                 <option value="suspended">Suspended</option>
               </select>
@@ -861,27 +941,72 @@ export default function SuperAdminPortal() {
                           </div>
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
-                          <span
-                            style={{
-                              padding: '2px 8px',
-                              borderRadius: '12px',
-                              fontSize: '0.725rem',
-                              fontWeight: 700,
-                              background:
-                                u.accountStatus === 'active'
-                                  ? 'var(--success-bg)'
-                                  : 'var(--danger-bg)',
-                              color:
-                                u.accountStatus === 'active'
-                                  ? 'var(--success-text)'
-                                  : 'var(--danger-text)',
-                            }}
-                          >
-                            {u.accountStatus}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                            <span
+                              style={{
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '0.725rem',
+                                fontWeight: 700,
+                                background:
+                                  u.accountStatus === 'active'
+                                    ? 'var(--success-bg)'
+                                    : 'var(--danger-bg)',
+                                color:
+                                  u.accountStatus === 'active'
+                                    ? 'var(--success-text)'
+                                    : 'var(--danger-text)',
+                              }}
+                            >
+                              {u.accountStatus}
+                            </span>
+                            {u.isLocked && (
+                              <span
+                                style={{
+                                  padding: '2px 8px',
+                                  borderRadius: '12px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  color: '#ef4444',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                title={`Temporarily locked due to multiple wrong passwords. ${u.lockMinutesRemaining}m remaining.`}
+                              >
+                                🔒 Locked ({u.lockMinutesRemaining}m)
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            {u.isLocked && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleUnlockUser(u._id, e)}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(16, 185, 129, 0.5)',
+                                  background: 'rgba(16, 185, 129, 0.12)',
+                                  color: '#059669',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                title="Unlock user account immediately"
+                              >
+                                🔓 Unlock
+                              </button>
+                            )}
                             {u._id !== currentUser?.id && u.role !== 'superadmin' && u.accountStatus === 'active' && (
                               <button
                                 type="button"
@@ -983,6 +1108,24 @@ export default function SuperAdminPortal() {
                         >
                           {u.accountStatus}
                         </span>
+                        {u.isLocked && (
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              color: '#ef4444',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                            }}
+                          >
+                            🔒 Locked ({u.lockMinutesRemaining}m)
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -997,6 +1140,27 @@ export default function SuperAdminPortal() {
                     </div>
 
                     <div className="sa-user-card-actions">
+                      {u.isLocked && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleUnlockUser(u._id, e)}
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(16, 185, 129, 0.5)',
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            color: '#059669',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          🔓 Unlock
+                        </button>
+                      )}
                       {u._id !== currentUser?.id && u.role !== 'superadmin' && u.accountStatus === 'active' && (
                         <button
                           type="button"
@@ -1153,6 +1317,53 @@ export default function SuperAdminPortal() {
                   {selectedUser.lastLoginAt ? new Date(selectedUser.lastLoginAt).toLocaleString() : 'Never'}
                 </div>
               </div>
+
+              {/* Lockout Warning Banner */}
+              {selectedUser.isLocked && (
+                <div
+                  style={{
+                    marginBottom: '1rem',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div>
+                    <div style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🔒</span> Account Temporarily Locked
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '2px' }}>
+                      Locked due to multiple wrong passwords ({selectedUser.failedLoginAttempts || '5+'} attempts). Expires in ~{selectedUser.lockMinutesRemaining || 15}m.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleUnlockUser(selectedUser._id)}
+                    style={{
+                      padding: '0.45rem 0.85rem',
+                      borderRadius: '6px',
+                      border: '1px solid #10b981',
+                      background: '#10b981',
+                      color: '#ffffff',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
+                    }}
+                  >
+                    🔓 Unlock Account Now
+                  </button>
+                </div>
+              )}
 
               {/* Edit Profile Form */}
               <form onSubmit={handleSaveUserProfile} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
@@ -1340,6 +1551,46 @@ export default function SuperAdminPortal() {
               {/* Administrative Actions Grid */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                 <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>ADMINISTRATIVE ACTIONS</div>
+
+                {selectedUser.isLocked ? (
+                  <button
+                    type="button"
+                    onClick={() => handleUnlockUser(selectedUser._id)}
+                    style={{
+                      padding: '0.55rem',
+                      borderRadius: '6px',
+                      border: '1px solid #10b981',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      color: '#059669',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>🔓</span> Unlock Account (Clear Login Lockout)
+                  </button>
+                ) : (selectedUser.failedLoginAttempts > 0) ? (
+                  <button
+                    type="button"
+                    onClick={() => handleUnlockUser(selectedUser._id)}
+                    style={{
+                      padding: '0.5rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-secondary)',
+                      fontWeight: 600,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🔄 Reset Failed Attempts ({selectedUser.failedLoginAttempts})
+                  </button>
+                ) : null}
 
                 {selectedUser.accountStatus === 'active' ? (
                   <button
@@ -2534,6 +2785,412 @@ export default function SuperAdminPortal() {
         </div>
       )}
 
+      {/* 6b. TAB: APP VERSION & UPDATE MANAGEMENT */}
+      {activeTab === 'appversion' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Top Info Banner */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.25rem 1.5rem',
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.5rem' }}>📲</span>
+                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Mobile App Update Management
+                </h2>
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Configure Android version requirements, Google Play In-App Updates, and forced security rollouts.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  background: appVersionConfig.forceUpdate ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                  border: appVersionConfig.forceUpdate ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                  color: appVersionConfig.forceUpdate ? '#ef4444' : '#10b981',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>{appVersionConfig.forceUpdate ? '🚨 Forced Mode (Immediate)' : '✨ Flexible Mode (Optional)'}</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadAppVersion}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
+
+          <div className="sa-two-col-grid">
+            {/* Version Configuration Form Card */}
+            <form
+              onSubmit={handleSaveAppVersion}
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--border-radius-lg)',
+                border: '1px solid var(--border-color)',
+                padding: '1.5rem',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Version Parameters
+              </h3>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Latest Version *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={appVersionConfig.latestVersion}
+                    onChange={(e) => setAppVersionConfig((prev) => ({ ...prev, latestVersion: e.target.value }))}
+                    placeholder="e.g. 1.2.0"
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Highest released version on Play Store.
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Minimum Supported Version *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={appVersionConfig.minimumSupportedVersion}
+                    onChange={(e) => setAppVersionConfig((prev) => ({ ...prev, minimumSupportedVersion: e.target.value }))}
+                    placeholder="e.g. 1.0.0"
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Any app below this version is blocked.
+                  </div>
+                </div>
+              </div>
+
+              {/* Force Update Toggle */}
+              <div
+                style={{
+                  padding: '0.85rem 1rem',
+                  borderRadius: '10px',
+                  background: appVersionConfig.forceUpdate ? 'rgba(239, 68, 68, 0.08)' : 'var(--bg-secondary)',
+                  border: appVersionConfig.forceUpdate ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-color)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                    Enforce Immediate Update (All Outdated Versions)
+                  </div>
+                  <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    When enabled, any client with version below Latest Version will be blocked until updated.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAppVersionConfig((prev) => ({ ...prev, forceUpdate: !prev.forceUpdate }))}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: 'none',
+                    background: appVersionConfig.forceUpdate ? '#ef4444' : 'var(--border-color)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {appVersionConfig.forceUpdate ? 'ACTIVE (BLOCKING)' : 'DISABLED'}
+                </button>
+              </div>
+
+              {/* Update URL */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Official Update URL (Play Store / Store Link) *
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={appVersionConfig.updateUrl}
+                  onChange={(e) => setAppVersionConfig((prev) => ({ ...prev, updateUrl: e.target.value }))}
+                  placeholder="https://play.google.com/store/apps/details?id=com.hostelcare.app"
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Update Message */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Update Dialog Message
+                </label>
+                <textarea
+                  rows={2}
+                  maxLength={1000}
+                  value={appVersionConfig.updateMessage}
+                  onChange={(e) => setAppVersionConfig((prev) => ({ ...prev, updateMessage: e.target.value }))}
+                  placeholder="A new version of HostelCare is available. Please update to enjoy the latest features."
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+
+              {/* Release Notes */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Release Notes / Changelog (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  maxLength={2000}
+                  value={appVersionConfig.releaseNotes}
+                  onChange={(e) => setAppVersionConfig((prev) => ({ ...prev, releaseNotes: e.target.value }))}
+                  placeholder="• Fixed complaint push notification sync&#10;• Faster room inspection records&#10;• Security patches"
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingAppVersion}
+                style={{
+                  marginTop: '0.5rem',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'var(--primary)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  cursor: savingAppVersion ? 'not-allowed' : 'pointer',
+                  opacity: savingAppVersion ? 0.7 : 1,
+                }}
+              >
+                {savingAppVersion ? 'Saving App Version Config...' : '💾 Save App Version Configuration'}
+              </button>
+            </form>
+
+            {/* Live Client Preview Card */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--border-radius-lg)',
+                border: '1px solid var(--border-color)',
+                padding: '1.5rem',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <h3 style={{ margin: '0 0 1rem', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                📱 Live Mobile In-App Dialog Preview
+              </h3>
+
+              <div
+                style={{
+                  padding: '1.25rem',
+                  borderRadius: '14px',
+                  background: '#0d152c',
+                  border: appVersionConfig.forceUpdate ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(99, 102, 241, 0.3)',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
+                  color: '#ffffff',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: appVersionConfig.forceUpdate ? 'rgba(239, 68, 68, 0.2)' : 'rgba(99, 102, 241, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.1rem',
+                    }}
+                  >
+                    {appVersionConfig.forceUpdate ? '🚨' : '✨'}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: appVersionConfig.forceUpdate ? '#f87171' : '#a5b4fc' }}>
+                      {appVersionConfig.forceUpdate ? 'CRITICAL UPDATE REQUIRED' : 'HOSTELCARE UPDATE'}
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>
+                      {appVersionConfig.forceUpdate ? 'Update Required to Continue' : 'New Version Available'}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '8px',
+                    padding: '0.5rem 0.75rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.75rem',
+                    marginBottom: '0.75rem',
+                  }}
+                >
+                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Current: v1.0.0</span>
+                  <span style={{ color: '#818cf8' }}>→</span>
+                  <span style={{ fontWeight: 800, color: '#38bdf8' }}>Available: v{appVersionConfig.latestVersion || '1.0.0'}</span>
+                </div>
+
+                <div style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem', lineHeight: 1.4 }}>
+                  {appVersionConfig.updateMessage || 'A new version of HostelCare is available.'}
+                </div>
+
+                {appVersionConfig.releaseNotes && (
+                  <div
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.25)',
+                      borderRadius: '6px',
+                      padding: '0.5rem',
+                      fontSize: '0.725rem',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      marginBottom: '0.75rem',
+                      whiteSpace: 'pre-line',
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '2px' }}>What's New:</div>
+                    {appVersionConfig.releaseNotes}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {!appVersionConfig.forceUpdate && (
+                    <button
+                      type="button"
+                      disabled
+                      style={{
+                        flex: 1,
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        background: 'transparent',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Later
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: appVersionConfig.forceUpdate
+                        ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                        : 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                      color: '#ffffff',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {appVersionConfig.forceUpdate ? 'Update Now (Required)' : 'Update Now'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 7. TAB: NOTIFICATION CENTER */}
       {activeTab === 'notifications' && (
         <div className="sa-two-col-grid">
@@ -3015,6 +3672,7 @@ export default function SuperAdminPortal() {
               <option value="PROFILE_UPDATE">Profile Update</option>
               <option value="ACCOUNT_ACTIVATED">Account Activated</option>
               <option value="ACCOUNT_DEACTIVATED">Account Deactivated</option>
+              <option value="ACCOUNT_UNLOCKED">Account Unlocked</option>
               <option value="PASSWORD_RESET">Password Reset</option>
               <option value="SESSION_REVOKED">Session Revoked</option>
               <option value="SESSIONS_REVOKED_ALL">Force Logout All</option>

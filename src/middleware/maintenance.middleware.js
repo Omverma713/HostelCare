@@ -26,6 +26,7 @@ const maintenanceMiddleware = async (req, res, next) => {
   if (
     path === "/health" ||
     path === "/api/v1/maintenance/status" ||
+    path.startsWith("/api/v1/app-version") ||
     path.startsWith("/api/v1/superadmin")
   ) {
     return next();

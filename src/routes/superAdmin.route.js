@@ -13,6 +13,7 @@ const {
   updateUserStatus,
   resetUserPassword,
   forceLogoutUser,
+  unlockUserAccount,
   getSessionsDirectory,
   revokeSessionById,
   getSystemConfig,
@@ -23,6 +24,8 @@ const {
   getNotificationHistory,
   getAuditLogs,
   impersonateUser,
+  getSuperAdminAppVersionConfig,
+  updateSuperAdminAppVersionConfig,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -67,6 +70,7 @@ router.patch("/users/:userId/status", sensitiveActionLimiter, updateUserStatus);
 router.post("/users/:userId/reset-password", sensitiveActionLimiter, resetUserPassword);
 router.post("/users/:userId/force-logout", sensitiveActionLimiter, forceLogoutUser);
 router.post("/users/:userId/impersonate", sensitiveActionLimiter, impersonateUser);
+router.post("/users/:userId/unlock", sensitiveActionLimiter, unlockUserAccount);
 
 // Session & Device Management
 router.get("/sessions", getSessionsDirectory);
@@ -79,6 +83,10 @@ router.put("/config", sensitiveActionLimiter, updateSystemConfig);
 // Maintenance Mode Configuration
 router.get("/maintenance", getMaintenanceConfig);
 router.put("/maintenance", sensitiveActionLimiter, updateMaintenanceConfig);
+
+// App Version & In-App Update Management
+router.get("/app-version", getSuperAdminAppVersionConfig);
+router.put("/app-version", sensitiveActionLimiter, updateSuperAdminAppVersionConfig);
 
 // Notification Center
 router.post("/notifications/send", sensitiveActionLimiter, sendAdminNotification);

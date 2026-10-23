@@ -93,6 +93,12 @@ export const adminApi = {
     });
   },
 
+  unlockUser(userId) {
+    return adminRequest(`/superadmin/users/${userId}/unlock`, {
+      method: 'POST',
+    });
+  },
+
   // Sessions & Devices
   getSessions({ page = 1, limit = 20, status = '', deviceType = '', search = '' } = {}) {
     const params = new URLSearchParams({ page, limit });
@@ -153,6 +159,18 @@ export const adminApi = {
     return adminRequest('/superadmin/maintenance', {
       method: 'PUT',
       body: JSON.stringify(maintenanceData),
+    });
+  },
+
+  // App Version & Update Management
+  getAppVersionConfig() {
+    return adminRequest('/superadmin/app-version');
+  },
+
+  updateAppVersionConfig(versionData) {
+    return adminRequest('/superadmin/app-version', {
+      method: 'PUT',
+      body: JSON.stringify(versionData),
     });
   },
 };

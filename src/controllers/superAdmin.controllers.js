@@ -8,6 +8,7 @@ const Argon = require("argon2");
 const argonLimiter = require("../../utils/argonLimiter");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { isValidVersion, compareVersions } = require("../utils/versionComparator");
 
 // Safe helper to log audit actions
 async function recordAudit({
@@ -126,7 +127,11 @@ const getUsersDirectory = async (req, res) => {
     }
 
     if (status && status !== "all") {
-      query.accountStatus = status;
+      if (status === "locked") {
+        query.lockUntil = { $gt: new Date() };
+      } else {
+        query.accountStatus = status;
+      }
     }
 
     if (hostel && hostel !== "all") {
@@ -158,8 +163,14 @@ const getUsersDirectory = async (req, res) => {
         typeof u.maxDevices === "number" && u.maxDevices > 0
           ? u.maxDevices
           : config.maxConcurrentSessions;
+      const isLocked = Boolean(u.lockUntil && new Date(u.lockUntil) > new Date());
+      const lockMinutesRemaining = isLocked
+        ? Math.max(1, Math.ceil((new Date(u.lockUntil) - new Date()) / (60 * 1000)))
+        : 0;
       return {
         ...u,
+        isLocked,
+        lockMinutesRemaining,
         activeDeviceCount: activeCount,
         effectiveDeviceLimit: effectiveLimit,
       };
@@ -221,10 +232,17 @@ const getUserDetails = async (req, res) => {
         ? user.maxDevices
         : config.maxConcurrentSessions;
 
+    const isLocked = Boolean(user.lockUntil && new Date(user.lockUntil) > new Date());
+    const lockMinutesRemaining = isLocked
+      ? Math.max(1, Math.ceil((new Date(user.lockUntil) - new Date()) / (60 * 1000)))
+      : 0;
+
     return res.status(200).json({
       success: true,
       user: {
         ...user,
+        isLocked,
+        lockMinutesRemaining,
         activeDeviceCount: activeSessions.length,
         effectiveDeviceLimit,
       },
@@ -462,6 +480,10 @@ const updateUserStatus = async (req, res) => {
 
     if (accountStatus && ["active", "deactivated", "suspended"].includes(accountStatus)) {
       user.accountStatus = accountStatus;
+      if (accountStatus === "active") {
+        user.failedLoginAttempts = 0;
+        user.lockUntil = null;
+      }
     }
 
     if (typeof isActivated === "boolean") {
@@ -575,6 +597,8 @@ const resetUserPassword = async (req, res) => {
     user.password = hashedPassword;
     user.isActivated = true;
     user.accountStatus = "active";
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
     user.sessionsRevokedAt = new Date(); // Revoke all existing sessions
     await user.save();
 
@@ -661,6 +685,64 @@ const forceLogoutUser = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to force logout user",
+      error: error.message,
+    });
+  }
+};
+
+// ─── UNLOCK USER ACCOUNT (CLEAR LOCKOUT) ──────────────────────────────────────
+// POST /api/v1/superadmin/users/:userId/unlock
+const unlockUserAccount = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const wasLocked = Boolean(user.lockUntil && new Date(user.lockUntil) > new Date());
+    const previousAttempts = user.failedLoginAttempts || 0;
+    const previousLockUntil = user.lockUntil;
+
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
+    await recordAudit({
+      req,
+      action: "ACCOUNT_UNLOCKED",
+      targetType: "USER",
+      targetId: user._id,
+      targetIdentifier: user.registrationNumber,
+      summary: `Unlocked login lockout for user ${user.registrationNumber} (cleared ${previousAttempts} failed attempt(s))`,
+      details: {
+        wasLocked,
+        previousAttempts,
+        previousLockUntil,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Account for ${user.registrationNumber} has been successfully unlocked.`,
+      user: {
+        _id: user._id,
+        registrationNumber: user.registrationNumber,
+        failedLoginAttempts: 0,
+        lockUntil: null,
+        isLocked: false,
+        lockMinutesRemaining: 0,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to unlock user account",
       error: error.message,
     });
   }
@@ -1586,6 +1668,141 @@ const impersonateUser = async (req, res) => {
   }
 };
 
+// ─── APP VERSION & UPDATE MANAGEMENT ─────────────────────────────────────────
+// GET /api/v1/superadmin/app-version
+const getSuperAdminAppVersionConfig = async (req, res) => {
+  try {
+    const config = await SystemConfig.getEffectiveConfig();
+    return res.status(200).json({
+      success: true,
+      appVersion: config.appVersion || {
+        latestVersion: "1.0.0",
+        minimumSupportedVersion: "1.0.0",
+        updateMessage: "A new version of HostelCare is available. Please update to enjoy the latest features and security improvements.",
+        updateUrl: "https://play.google.com/store/apps/details?id=com.hostelcare.app",
+        forceUpdate: false,
+        releaseNotes: "",
+      },
+      updatedAt: config.updatedAt,
+      updatedBy: config.updatedBy,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve app version configuration",
+      error: error.message,
+    });
+  }
+};
+
+// PUT /api/v1/superadmin/app-version
+const updateSuperAdminAppVersionConfig = async (req, res) => {
+  try {
+    const {
+      latestVersion,
+      minimumSupportedVersion,
+      updateMessage,
+      updateUrl,
+      forceUpdate,
+      releaseNotes,
+    } = req.body;
+
+    if (latestVersion !== undefined && !isValidVersion(latestVersion)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid latestVersion format. Must be a valid semantic version (e.g. 1.2.0).",
+      });
+    }
+
+    if (minimumSupportedVersion !== undefined && !isValidVersion(minimumSupportedVersion)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid minimumSupportedVersion format. Must be a valid semantic version (e.g. 1.0.0).",
+      });
+    }
+
+    const config = await SystemConfig.getEffectiveConfig();
+    if (!config.appVersion) {
+      config.appVersion = {
+        latestVersion: "1.0.0",
+        minimumSupportedVersion: "1.0.0",
+        updateMessage: "A new version of HostelCare is available.",
+        updateUrl: "https://play.google.com/store/apps/details?id=com.hostelcare.app",
+        forceUpdate: false,
+        releaseNotes: "",
+      };
+    }
+
+    const nextLatest = latestVersion !== undefined ? latestVersion.trim().replace(/^v/i, "") : config.appVersion.latestVersion;
+    const nextMin = minimumSupportedVersion !== undefined ? minimumSupportedVersion.trim().replace(/^v/i, "") : config.appVersion.minimumSupportedVersion;
+
+    if (compareVersions(nextMin, nextLatest) > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Minimum supported version (${nextMin}) cannot be higher than latest version (${nextLatest}).`,
+      });
+    }
+
+    if (updateUrl !== undefined) {
+      const trimmedUrl = String(updateUrl).trim();
+      if (!trimmedUrl.startsWith("https://") && !trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("market://")) {
+        return res.status(400).json({
+          success: false,
+          message: "updateUrl must start with https://, http://, or market://",
+        });
+      }
+      config.appVersion.updateUrl = trimmedUrl;
+    }
+
+    const previous = {
+      latestVersion: config.appVersion.latestVersion,
+      minimumSupportedVersion: config.appVersion.minimumSupportedVersion,
+      updateMessage: config.appVersion.updateMessage,
+      updateUrl: config.appVersion.updateUrl,
+      forceUpdate: config.appVersion.forceUpdate,
+      releaseNotes: config.appVersion.releaseNotes,
+    };
+
+    if (latestVersion !== undefined) config.appVersion.latestVersion = nextLatest;
+    if (minimumSupportedVersion !== undefined) config.appVersion.minimumSupportedVersion = nextMin;
+    if (typeof forceUpdate === "boolean") config.appVersion.forceUpdate = forceUpdate;
+    if (typeof updateMessage === "string") config.appVersion.updateMessage = updateMessage.trim().slice(0, 1000);
+    if (typeof releaseNotes === "string") config.appVersion.releaseNotes = releaseNotes.trim().slice(0, 2000);
+
+    config.updatedBy = req.user.registrationNumber || "superadmin";
+    config.markModified("appVersion");
+    await config.save();
+
+    await recordAudit({
+      req,
+      action: "APP_VERSION_CONFIG_UPDATED",
+      targetType: "SYSTEM_CONFIG",
+      targetId: config._id,
+      targetIdentifier: "appVersion",
+      outcome: "SUCCESS",
+      summary: `App version config updated: latest=${config.appVersion.latestVersion}, min=${config.appVersion.minimumSupportedVersion}, force=${config.appVersion.forceUpdate} by ${req.user.registrationNumber}`,
+      details: {
+        previous,
+        updated: config.appVersion,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "App version configuration updated successfully",
+      appVersion: config.appVersion,
+      updatedAt: config.updatedAt,
+      updatedBy: config.updatedBy,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update app version configuration",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getSystemOverview,
   getUsersDirectory,
@@ -1596,6 +1813,7 @@ module.exports = {
   updateUserStatus,
   resetUserPassword,
   forceLogoutUser,
+  unlockUserAccount,
   getSessionsDirectory,
   revokeSessionById,
   getSystemConfig,
@@ -1606,5 +1824,7 @@ module.exports = {
   getNotificationHistory,
   getAuditLogs,
   impersonateUser,
+  getSuperAdminAppVersionConfig,
+  updateSuperAdminAppVersionConfig,
 };
 

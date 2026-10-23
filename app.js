@@ -7,6 +7,7 @@ const complaintRouter   = require("./src/routes/complaints.router");
 const UserRouters       = require("./src/routes/user.route");
 const feedbackRouter    = require("./src/routes/feedback.route");
 const superAdminRouter  = require("./src/routes/superAdmin.route");
+const appVersionRouter  = require("./src/routes/appVersion.route");
 
 const app = express();
 
@@ -126,6 +127,7 @@ app.use("/api/v1/complaints", complaintRouter);
 app.use("/api/v1/users", UserRouters);
 app.use("/api/v1/feedback", feedbackRouter);
 app.use("/api/v1/superadmin", superAdminRouter);
+app.use("/api/v1/app-version", appVersionRouter);
 
 // ─── 7. Centralized Error Handler ────────────────────────────────────────────
 // Express 5 propagates async errors automatically — this handler catches them
