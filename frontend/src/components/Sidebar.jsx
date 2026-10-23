@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/ThemeContext';
 import { ROLE_LABELS } from '../constants';
@@ -7,23 +7,65 @@ import { ROLE_LABELS } from '../constants';
 /**
  * Ultra-Modern 3D Floating Glass Sidebar Dock
  * Features holographic brand header, dynamic illuminated nav pills,
- * live hostel telemetry widget, verified resident profile pod, and sleek cosmic theme toggle.
+ * verified resident profile pod, and sleek cosmic theme toggle.
  */
 export default function Sidebar({ isOpen, onClose }) {
-  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout, setDirectToken } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [sosActive, setSosActive] = useState(false);
 
-  // Lock background body scrolling cleanly when sidebar drawer is open on mobile
+  // Lock background body/html scrolling cleanly and prevent touch scroll chaining when drawer is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = '';
-      };
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (!isOpen) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverscroll = document.body.style.overscrollBehavior;
+    const originalHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    document.documentElement.classList.add('sidebar-open-lock');
+    document.body.classList.add('sidebar-open-lock');
+
+    // Intercept touchmove & wheel to prevent background scroll chaining
+    const handleTouchMove = (e) => {
+      const scrollable = e.target.closest('.sidebar-nav-container');
+      if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
+        // If content genuinely overflows the container, allow scrolling inside it
+        return;
+      }
+      // If user swipes anywhere on sidebar or backdrop, prevent default to stop background scrolling
+      if (e.target.closest('.sidebar') || e.target.closest('.sidebar-backdrop')) {
+        e.preventDefault();
+      }
+    };
+
+    const handleWheel = (e) => {
+      const scrollable = e.target.closest('.sidebar-nav-container');
+      if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
+        return;
+      }
+      if (e.target.closest('.sidebar') || e.target.closest('.sidebar-backdrop')) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overscrollBehavior = originalHtmlOverscroll;
+      document.body.style.overscrollBehavior = originalBodyOverscroll;
+      document.documentElement.classList.remove('sidebar-open-lock');
+      document.body.classList.remove('sidebar-open-lock');
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('wheel', handleWheel);
+    };
   }, [isOpen]);
 
   if (!user) return null;
@@ -93,6 +135,17 @@ export default function Sidebar({ isOpen, onClose }) {
               <span className="live-status-lbl">CAMPUS LIVE</span>
             </div>
           </div>
+
+          {/* Close button on mobile */}
+          <button
+            type="button"
+            className="sidebar-close-btn"
+            onClick={onClose}
+            aria-label="Close sidebar"
+            title="Close menu"
+          >
+            ✕
+          </button>
         </div>
 
         {/* 2. Navigation Section */}
@@ -152,59 +205,25 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
             </NavLink>
 
-            <NavLink
-              to="/notifications"
-              onClick={onClose}
-              className={({ isActive }) => `sidebar-dock-link ${isActive ? 'active' : ''}`}
-            >
-              <div className="dock-link-icon-wrap icon-primary">🔔</div>
+            {userRole === 'superadmin' && (
+              <NavLink
+                to="/notifications"
+                onClick={onClose}
+                className={({ isActive }) => `sidebar-dock-link ${isActive ? 'active' : ''}`}
+              >
+                <div className="dock-link-icon-wrap icon-primary">🔔</div>
 
-              <div className="dock-link-content">
-                <span className="dock-link-title">Custom Notification</span>
-                <span className="dock-link-subtitle">Android shade test</span>
-              </div>
+                <div className="dock-link-content">
+                  <span className="dock-link-title">Custom Notification</span>
+                  <span className="dock-link-subtitle">Android shade test</span>
+                </div>
 
-              <div className="dock-link-indicator-chip">
-                <span className="indicator-ray" />
-              </div>
-            </NavLink>
+                <div className="dock-link-indicator-chip">
+                  <span className="indicator-ray" />
+                </div>
+              </NavLink>
+            )}
           </nav>
-
-          {/* 3. Middle Section: Campus Hostel Telemetry & Utilities Widget */}
-          <div className="sidebar-telemetry-widget">
-            <div className="telemetry-widget-header">
-              <span className="telemetry-widget-icon">⚡</span>
-              <span className="telemetry-widget-title">{user.hostel || 'BH-1'} Telemetry</span>
-              <span className="telemetry-widget-dot" />
-            </div>
-
-            <div className="telemetry-items-list">
-              <div className="telemetry-mini-row">
-                <span className="mini-row-key">📶 Campus Wi-Fi</span>
-                <span className="mini-row-val val-green">Online 5G</span>
-              </div>
-              <div className="telemetry-mini-row">
-                <span className="mini-row-key">⚡ Grid Power</span>
-                <span className="mini-row-val val-cyan">230V Stable</span>
-              </div>
-              <div className="telemetry-mini-row">
-                <span className="mini-row-key">🚰 Water Supply</span>
-                <span className="mini-row-val val-emerald">Normal</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className={`btn-sos-helpline ${sosActive ? 'active' : ''}`}
-              onClick={() => setSosActive(!sosActive)}
-              title="Click to toggle campus emergency contact"
-            >
-              <span className="sos-icon">🚨</span>
-              <span className="sos-text">
-                {sosActive ? 'Help: 1800-419-CARE' : 'Emergency Hotline'}
-              </span>
-            </button>
-          </div>
         </div>
 
         {/* 4. Bottom Section: Elevated User Profile Card */}
@@ -254,15 +273,22 @@ export default function Sidebar({ isOpen, onClose }) {
 
             <button
               onClick={() => {
-                logout();
+                const backupToken = localStorage.getItem('hostelcare_impersonate_backup');
+                if (backupToken && setDirectToken) {
+                  localStorage.removeItem('hostelcare_impersonate_backup');
+                  setDirectToken(backupToken);
+                  navigate('/superadmin');
+                } else {
+                  logout();
+                }
                 if (onClose) onClose();
               }}
               className="btn-dock-logout"
-              title="Log out of HostelCare"
+              title={localStorage.getItem('hostelcare_impersonate_backup') ? 'Exit & Return to Super Admin' : 'Log out of HostelCare'}
               aria-label="Log Out"
             >
-              <span className="dock-logout-icon">🚪</span>
-              <span className="dock-logout-text">Log Out</span>
+              <span className="dock-logout-icon">{localStorage.getItem('hostelcare_impersonate_backup') ? '↩️' : '🚪'}</span>
+              <span className="dock-logout-text">{localStorage.getItem('hostelcare_impersonate_backup') ? 'Exit Admin' : 'Log Out'}</span>
             </button>
           </div>
         </div>

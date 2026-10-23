@@ -1069,6 +1069,7 @@ html.dark-theme .modal-header {
   transition: transform var(--transition-normal);
   box-shadow: 6px 0 28px rgba(67, 97, 238, 0.09);
   overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 html.dark-theme .sidebar.sidebar-dock-3d {
@@ -1219,6 +1220,8 @@ html.dark-theme .sidebar-brand-dock {
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-section-eyebrow {
@@ -1683,20 +1686,75 @@ html.dark-theme .btn-dock-logout:hover {
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
 }
 
+/* Prevent background scrolling when sidebar is open */
+html.sidebar-open-lock,
+body.sidebar-open-lock {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+/* Sidebar close button */
+.sidebar-close-btn {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
+    z-index: 10001 !important;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y;
   }
 
   .sidebar.open {
     transform: translateX(0);
+    box-shadow: 10px 0 36px rgba(0, 0, 0, 0.45);
   }
 
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(26, 29, 59, 0.35);
-    z-index: 998;
+    background-color: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 10000 !important;
+    touch-action: none !important;
+    overscroll-behavior: none !important;
+  }
+
+  .sidebar-brand-dock {
+    padding-top: max(22px, calc(16px + env(safe-area-inset-top, 0px)));
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid rgba(67, 97, 238, 0.2);
+    background: rgba(255, 255, 255, 0.45);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  html.dark-theme .sidebar-close-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+  }
+
+  .sidebar-close-btn:hover,
+  .sidebar-close-btn:active {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.35);
   }
 }
 
@@ -9340,7 +9398,7 @@ html:not(.dark-theme) .btn-view-all-subtle {
 }
 
 /* ==========================================================================
-   Smooth APK Scrolling & Touch Handling
+   Smooth APK Scrolling & Touch Handling (Zero-Stutter 60/120fps)
    ========================================================================== */
 
 * {
@@ -9348,13 +9406,13 @@ html:not(.dark-theme) .btn-view-all-subtle {
 }
 
 html, body {
-  scroll-behavior: smooth !important;
   -webkit-overflow-scrolling: touch !important;
 }
 
 .main-content {
   flex: 1;
   overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 .table-container-spatial,
@@ -9362,6 +9420,59 @@ html, body {
   scroll-behavior: smooth !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain !important;
+}
+
+/* Eliminate GPU shader bottlenecks and compositing hitch on mobile devices */
+@media (max-width: 1024px), (pointer: coarse) {
+  .main-content {
+    transform: none !important;
+  }
+
+  /* Disable heavy floating background orbs on mobile to eliminate compositor lag & stutter during scroll */
+  .cosmic-glow-orb {
+    display: none !important;
+  }
+
+  /* Remove GPU-heavy backdrop-filter blur on mobile — fixes WebView scroll stall */
+  .spatial-room-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  html:not(.dark-theme) .spatial-room-card {
+    background: #eef2fd !important;
+    box-shadow: 0 8px 24px rgba(67, 97, 238, 0.12) !important;
+  }
+
+  .spatial-room-meta-chip {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .spatial-pod-stage {
+    transform: none !important;
+    transform-style: flat !important;
+    will-change: auto !important;
+    transition: none !important;
+  }
+
+  .spatial-room-svg {
+    filter: none !important;
+  }
+
+  .hotspot-pulse-ring {
+    animation: none !important;
+    display: none !important;
+  }
+
+  .spatial-command-header,
+  .spatial-gauge-card,
+  .spatial-ticket-card-3d,
+  .spatial-tickets-deck {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 /* ==========================================================================

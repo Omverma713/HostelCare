@@ -410,39 +410,45 @@ const loggedInUser = async (req, res) => {
       }
     }
 
-    // Per-user device limit override (maxDevices) takes precedence over system default
-    const effectiveLimit =
-      typeof user.maxDevices === "number" && user.maxDevices > 0
-        ? user.maxDevices
-        : config.maxConcurrentSessions;
+    // 4. Enforce Configurable Concurrent Session & Device Limits
+    // Super Admins are exempt from concurrent session limits to allow simultaneous multi-user / multi-device management
+    const isSuperAdmin = user.role === "superadmin";
 
-    const activeSessions = await Session.find({
-      userId: user._id,
-      status: "active",
-    }).sort({ lastActivityAt: 1 });
+    if (!isSuperAdmin) {
+      // Per-user device limit override (maxDevices) takes precedence over system default
+      const effectiveLimit =
+        typeof user.maxDevices === "number" && user.maxDevices > 0
+          ? user.maxDevices
+          : config.maxConcurrentSessions;
 
-    if (activeSessions.length >= effectiveLimit) {
-      if (config.revokeOldestOnLimit) {
-        const excessCount = activeSessions.length - effectiveLimit + 1;
-        const toRevoke = activeSessions.slice(0, excessCount);
-        const revokeIds = toRevoke.map((s) => s._id);
+      const activeSessions = await Session.find({
+        userId: user._id,
+        status: "active",
+      }).sort({ lastActivityAt: 1 });
 
-        await Session.updateMany(
-          { _id: { $in: revokeIds } },
-          {
-            $set: {
-              status: "revoked",
-              revokedAt: new Date(),
-              revokedBy: "system_limit",
-            },
-          }
-        );
-      } else {
-        return res.status(403).json({
-          success: false,
-          code: "SESSION_LIMIT_EXCEEDED",
-          message: `Maximum concurrent session limit reached (${effectiveLimit}). Please log out from another device first.`,
-        });
+      if (activeSessions.length >= effectiveLimit) {
+        if (config.revokeOldestOnLimit) {
+          const excessCount = activeSessions.length - effectiveLimit + 1;
+          const toRevoke = activeSessions.slice(0, excessCount);
+          const revokeIds = toRevoke.map((s) => s._id);
+
+          await Session.updateMany(
+            { _id: { $in: revokeIds } },
+            {
+              $set: {
+                status: "revoked",
+                revokedAt: new Date(),
+                revokedBy: "system_limit",
+              },
+            }
+          );
+        } else {
+          return res.status(403).json({
+            success: false,
+            code: "SESSION_LIMIT_EXCEEDED",
+            message: `Maximum concurrent session limit reached (${effectiveLimit}). Please log out from another device first.`,
+          });
+        }
       }
     }
 
@@ -472,8 +478,13 @@ const loggedInUser = async (req, res) => {
       lastActivityAt: new Date(),
     });
 
-    // 5b. Concurrency safety check: Ensure concurrent logins did not exceed effectiveLimit
-    if (config.revokeOldestOnLimit) {
+    // 5b. Concurrency safety check: Ensure concurrent logins did not exceed effectiveLimit (skipped for superadmin)
+    if (!isSuperAdmin && config.revokeOldestOnLimit) {
+      const effectiveLimit =
+        typeof user.maxDevices === "number" && user.maxDevices > 0
+          ? user.maxDevices
+          : config.maxConcurrentSessions;
+
       const postActiveSessions = await Session.find({
         userId: user._id,
         status: "active",

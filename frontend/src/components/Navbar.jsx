@@ -23,25 +23,27 @@ export default function Navbar({ onToggleSidebar }) {
         🛡️ HostelCare
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Link
-          to="/notifications"
-          aria-label="Open Custom Notifications"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            background: 'var(--primary-light)',
-            color: 'var(--primary)',
-            fontSize: '1rem',
-            textDecoration: 'none',
-          }}
-          title="Custom Notifications"
-        >
-          🔔
-        </Link>
+        {user.role === 'superadmin' && (
+          <Link
+            to="/notifications"
+            aria-label="Open Custom Notifications"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'var(--primary-light)',
+              color: 'var(--primary)',
+              fontSize: '1rem',
+              textDecoration: 'none',
+            }}
+            title="Custom Notifications"
+          >
+            🔔
+          </Link>
+        )}
         <div style={{ fontSize: '0.8rem', fontWeight: 'bold', opacity: 0.8 }}>
           hostel {user.hostel}
         </div>

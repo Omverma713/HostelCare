@@ -39,6 +39,7 @@ const auditLogSchema = new mongoose.Schema(
         "USER_PROVISIONED",
         "DEVICE_LIMIT_UPDATED",
         "MAINTENANCE_MODE_UPDATED",
+        "USER_IMPERSONATED",
       ],
     },
 

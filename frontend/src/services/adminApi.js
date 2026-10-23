@@ -87,6 +87,12 @@ export const adminApi = {
     });
   },
 
+  impersonateUser(userId) {
+    return adminRequest(`/superadmin/users/${userId}/impersonate`, {
+      method: 'POST',
+    });
+  },
+
   // Sessions & Devices
   getSessions({ page = 1, limit = 20, status = '', deviceType = '', search = '' } = {}) {
     const params = new URLSearchParams({ page, limit });

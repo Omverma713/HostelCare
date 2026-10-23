@@ -231,16 +231,6 @@ export default function Login() {
             <span className="concept-icon">🔮</span>
             <span className="concept-label">Cyber Velvet</span>
           </button>
-          <button
-            type="button"
-            className="auth-concept-btn"
-            onClick={() => navigate('/custom-notifications')}
-            title="Test Custom Android Notification"
-            style={{ borderColor: 'rgba(67, 97, 238, 0.4)', background: 'rgba(67, 97, 238, 0.12)' }}
-          >
-            <span className="concept-icon">🔔</span>
-            <span className="concept-label">Notify Test</span>
-          </button>
         </div>
 
         {/* Hanging Beta Banner in Top Bar */}

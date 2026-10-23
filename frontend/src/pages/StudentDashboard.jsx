@@ -9,7 +9,7 @@ import ActionHistory from '../components/ActionHistory';
 import EmptyState from '../components/EmptyState';
 import HostelCareLoader from '../components/HostelCareLoader';
 import { triggerToast } from '../components/Toast';
-import SpatialRoomHero3D from '../components/SpatialRoomHero3D';
+
 import ResolutionRingGauge3D from '../components/ResolutionRingGauge3D';
 import SpatialTicketCard from '../components/SpatialTicketCard';
 
@@ -44,6 +44,10 @@ export default function StudentDashboard() {
   const [department, setDepartment] = useState('');
   const [description, setDescription] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
+
+  // View More / View Less
+  const INITIAL_SHOW = 4;
+  const [showAll, setShowAll] = useState(false);
 
   // Detail modal state
   const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -96,12 +100,11 @@ export default function StudentDashboard() {
     });
   }, [complaints, statusFilter, searchQuery]);
 
-  // Handle clicking a 3D hotpin from the digital twin room pod
-  const handleSelectHotspot = (cat) => {
-    setDepartment(cat);
-    setIsCreateOpen(true);
-    triggerToast('info', `Pre-selected ${cat} issue from 3D Digital Twin`);
-  };
+  // Reset showAll whenever filter/search changes
+  useEffect(() => {
+    setShowAll(false);
+  }, [statusFilter, searchQuery]);
+
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
@@ -176,60 +179,47 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      {/* Spatial Bento Command Deck */}
-      <section className="spatial-bento-grid">
-        {/* Column 1: Interactive 3D Digital Twin Room */}
-        <div className="bento-cell bento-hero-room">
-          <SpatialRoomHero3D
-            studentName={user?.name}
-            roomNo={user?.roomNumber || '302-B'}
-            hostel={user?.hostel || 'BH-1'}
-            onSelectHotspot={handleSelectHotspot}
-          />
-        </div>
+      {/* Stats & Gauge Section */}
+      <section className="bento-analytics-col">
+        {/* Holographic Circular Resolution Ring Gauge */}
+        <ResolutionRingGauge3D
+          total={counts.all}
+          pending={counts.pending}
+          inProgress={counts.inprogress}
+          resolved={counts.resolved}
+        />
 
-        {/* Column 2: Holographic Telemetry Gauge & Quick Pods */}
-        <div className="bento-cell bento-analytics-col">
-          {/* Holographic Circular Resolution Ring Gauge */}
-          <ResolutionRingGauge3D
-            total={counts.all}
-            pending={counts.pending}
-            inProgress={counts.inprogress}
-            resolved={counts.resolved}
-          />
-
-          {/* Quick Metrics Quad Pod */}
-          <div className="spatial-quick-quad">
-            <div className="quick-quad-card card-total">
-              <div className="quad-icon-wrap">📁</div>
-              <div className="quad-info">
-                <span className="quad-num">{counts.all}</span>
-                <span className="quad-lbl">Total Logs</span>
-              </div>
+        {/* Quick Metrics Quad Pod */}
+        <div className="spatial-quick-quad">
+          <div className="quick-quad-card card-total">
+            <div className="quad-icon-wrap">📁</div>
+            <div className="quad-info">
+              <span className="quad-num">{counts.all}</span>
+              <span className="quad-lbl">Total Logs</span>
             </div>
+          </div>
 
-            <div className="quick-quad-card card-pending">
-              <div className="quad-icon-wrap">⏳</div>
-              <div className="quad-info">
-                <span className="quad-num">{counts.pending}</span>
-                <span className="quad-lbl">Pending</span>
-              </div>
+          <div className="quick-quad-card card-pending">
+            <div className="quad-icon-wrap">⏳</div>
+            <div className="quad-info">
+              <span className="quad-num">{counts.pending}</span>
+              <span className="quad-lbl">Pending</span>
             </div>
+          </div>
 
-            <div className="quick-quad-card card-progress">
-              <div className="quad-icon-wrap">⚙️</div>
-              <div className="quad-info">
-                <span className="quad-num">{counts.inprogress}</span>
-                <span className="quad-lbl">In Progress</span>
-              </div>
+          <div className="quick-quad-card card-progress">
+            <div className="quad-icon-wrap">⚙️</div>
+            <div className="quad-info">
+              <span className="quad-num">{counts.inprogress}</span>
+              <span className="quad-lbl">In Progress</span>
             </div>
+          </div>
 
-            <div className="quick-quad-card card-resolved">
-              <div className="quad-icon-wrap">✅</div>
-              <div className="quad-info">
-                <span className="quad-num">{counts.resolved}</span>
-                <span className="quad-lbl">Resolved</span>
-              </div>
+          <div className="quick-quad-card card-resolved">
+            <div className="quad-icon-wrap">✅</div>
+            <div className="quad-info">
+              <span className="quad-num">{counts.resolved}</span>
+              <span className="quad-lbl">Resolved</span>
             </div>
           </div>
         </div>
@@ -377,7 +367,7 @@ export default function StudentDashboard() {
             /* --- 1. SPATIAL 3D CARDS GRID VIEW --- */
             <div className="spatial-cards-wrapper">
               <div className="spatial-cards-grid">
-                {filteredComplaints.map((c) => (
+                {(showAll ? filteredComplaints : filteredComplaints.slice(0, INITIAL_SHOW)).map((c) => (
                   <SpatialTicketCard
                     key={c._id}
                     complaint={c}
@@ -386,6 +376,21 @@ export default function StudentDashboard() {
                   />
                 ))}
               </div>
+
+              {/* View More / View Less */}
+              {filteredComplaints.length > INITIAL_SHOW && (
+                <div className="view-all-deck-footer">
+                  <button
+                    type="button"
+                    className="btn-view-all-subtle"
+                    onClick={() => setShowAll((prev) => !prev)}
+                  >
+                    {showAll
+                      ? '⬆️ View Less'
+                      : `⬇️ View More (${filteredComplaints.length - INITIAL_SHOW} more)`}
+                  </button>
+                </div>
+              )}
 
               {/* View All Complaints Action */}
               {statusFilter !== 'all' && (
@@ -418,7 +423,7 @@ export default function StudentDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredComplaints.map((c) => (
+                    {(showAll ? filteredComplaints : filteredComplaints.slice(0, INITIAL_SHOW)).map((c) => (
                       <tr key={c._id} className="table-row-spatial">
                         <td className="col-cat">
                           <div className="cat-cell-spatial">
@@ -456,19 +461,20 @@ export default function StudentDashboard() {
                 </table>
               </div>
 
-              {/* View All Complaints Action Bar */}
-              <div className="view-all-deck-footer">
-                <button
-                  type="button"
-                  className="btn-view-all-subtle"
-                  onClick={() => {
-                    setStatusFilter('all');
-                    setSearchQuery('');
-                  }}
-                >
-                  📋 View All Complaints ({complaints.length})
-                </button>
-              </div>
+              {/* View More / View Less for Table */}
+              {filteredComplaints.length > INITIAL_SHOW && (
+                <div className="view-all-deck-footer">
+                  <button
+                    type="button"
+                    className="btn-view-all-subtle"
+                    onClick={() => setShowAll((prev) => !prev)}
+                  >
+                    {showAll
+                      ? '⬆️ View Less'
+                      : `⬇️ View More (${filteredComplaints.length - INITIAL_SHOW} more)`}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </EmptyState>

@@ -10,6 +10,7 @@ import BetaBanner from './components/BetaBanner';
 import Canvas3DBackground from './components/Canvas3DBackground';
 import AppFooter from './components/AppFooter';
 import MaintenanceScreen from './components/MaintenanceScreen';
+import ImpersonationBanner from './components/ImpersonationBanner';
 import { api } from './services/api';
 import { MobileBackHandler } from './hooks/useMobileBackHandler';
 import { initPushNotifications } from './services/notificationService';
@@ -167,6 +168,9 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <MaintenanceManager>
+            {/* Super Admin User Impersonation Session Banner */}
+            <ImpersonationBanner />
+
             {/* Mobile Hardware Back Button Handler */}
             <MobileBackHandler />
 
@@ -176,27 +180,6 @@ export default function App() {
             <Routes>
               {/* Public Authentication Route */}
               <Route path="/login" element={<LoginRoute />} />
-
-            {/* Direct / Unauthenticated Custom Notification Route */}
-            <Route
-              path="/custom-notifications"
-              element={
-                <div className="app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                  <header className="mobile-navbar" style={{ justifyContent: 'space-between', padding: '0.85rem 1.25rem' }}>
-                    <div className="sidebar-logo" style={{ fontSize: '1.1rem' }}>🛡️ HostelCare</div>
-                    <a href="/login" style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none' }}>
-                      ← Back to Login
-                    </a>
-                  </header>
-                  <main className="main-content" style={{ flex: 1, padding: '1rem' }}>
-                    <Suspense fallback={<PageFallback />}>
-                      <NotificationsPage />
-                    </Suspense>
-                  </main>
-                  <AppFooter />
-                </div>
-              }
-            />
 
             {/* Protected Dashboards Route Nesting */}
             <Route element={<ProtectedRoute />}>
@@ -225,11 +208,11 @@ export default function App() {
                 <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
                   <Route path="/superadmin" element={<SuperAdminPortal />} />
                   <Route path="/superadmin/*" element={<SuperAdminPortal />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
                 </Route>
 
                 {/* Shared Protected Pages */}
                 <Route path="/feedback" element={<FeedbackPage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
               </Route>
             </Route>

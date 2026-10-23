@@ -11,8 +11,13 @@ export default function SpatialRoomHero3D({ studentName, roomNo = '302-B', hoste
   const containerRef = useRef(null);
   const rafRef = useRef(null);
 
+  const isTouchDevice =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    (window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768);
+
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+    if (isTouchDevice) {
       return;
     }
 
@@ -45,7 +50,7 @@ export default function SpatialRoomHero3D({ studentName, roomNo = '302-B', hoste
         container.removeEventListener('mousemove', handleMouseMove);
       }
     };
-  }, []);
+  }, [isTouchDevice]);
 
   const handleMouseLeave = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -53,7 +58,9 @@ export default function SpatialRoomHero3D({ studentName, roomNo = '302-B', hoste
     setActiveHotspot(null);
   };
 
-  const podTilt = `perspective(1000px) rotateX(${8 - mouseOffset.y * 10}deg) rotateY(${-10 + mouseOffset.x * 12}deg) translateZ(12px)`;
+  const podTilt = isTouchDevice
+    ? undefined
+    : `perspective(1000px) rotateX(${8 - mouseOffset.y * 10}deg) rotateY(${-10 + mouseOffset.x * 12}deg) translateZ(12px)`;
   const badge1Float = `translate3d(${mouseOffset.x * 14}px, ${mouseOffset.y * 12}px, 35px)`;
   const badge2Float = `translate3d(${mouseOffset.x * -12}px, ${mouseOffset.y * 14}px, 45px)`;
 
@@ -112,7 +119,10 @@ export default function SpatialRoomHero3D({ studentName, roomNo = '302-B', hoste
       </div>
 
       {/* Interactive 3D Room Visual Stage */}
-      <div className="spatial-pod-stage" style={{ transform: podTilt }}>
+      <div
+        className="spatial-pod-stage"
+        style={podTilt ? { transform: podTilt } : undefined}
+      >
         <div className="spatial-pod-halo" />
 
         <svg
@@ -154,14 +164,15 @@ export default function SpatialRoomHero3D({ studentName, roomNo = '302-B', hoste
               <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
             </radialGradient>
 
-            <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="5" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
+            <radialGradient id="podShadowGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(0,0,0,0.55)" />
+              <stop offset="65%" stopColor="rgba(0,0,0,0.2)" />
+              <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+            </radialGradient>
           </defs>
 
           {/* Pod Base Shadow */}
-          <ellipse cx="200" cy="345" rx="155" ry="34" fill="rgba(0,0,0,0.6)" filter="blur(12px)" />
+          <ellipse cx="200" cy="345" rx="155" ry="34" fill="url(#podShadowGrad)" />
 
           {/* Isometric Ground Platform */}
           <polygon
@@ -191,7 +202,7 @@ export default function SpatialRoomHero3D({ studentName, roomNo = '302-B', hoste
             <polygon points="68,235 108,260 108,274 68,250" fill="#1c130c" />
             <polygon points="108,260 185,215 185,230 108,274" fill="#24170d" />
             {/* Cyan Blanket */}
-            <polygon points="73,230 142,188 180,211 111,253" fill="url(#spatialBed)" filter="url(#neonGlow)" />
+            <polygon points="73,230 142,188 180,211 111,253" fill="url(#spatialBed)" />
             {/* Pillow */}
             <polygon points="120,197 140,187 155,195 135,205" fill="#ffffff" opacity="0.9" />
           </g>
@@ -205,7 +216,7 @@ export default function SpatialRoomHero3D({ studentName, roomNo = '302-B', hoste
 
             {/* Glowing Laptop */}
             <polygon points="262,210 282,198 292,204 272,216" fill="#475569" />
-            <polygon points="282,198 282,183 292,189 292,204" fill="#38bdf8" filter="url(#neonGlow)" />
+            <polygon points="282,198 282,183 292,189 292,204" fill="#38bdf8" />
 
             {/* Desk Lamp */}
             <circle cx="312" cy="178" r="30" fill="url(#lampGlow)" />
@@ -226,7 +237,6 @@ export default function SpatialRoomHero3D({ studentName, roomNo = '302-B', hoste
             stroke="#38bdf8"
             strokeWidth="3"
             strokeLinecap="round"
-            filter="url(#neonGlow)"
           />
         </svg>
 

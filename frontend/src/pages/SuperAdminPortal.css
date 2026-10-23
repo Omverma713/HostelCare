@@ -1,0 +1,574 @@
+/* SuperAdminPortal Mobile-Optimized Stylesheet */
+
+.sa-portal-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 1. Header Banner */
+.sa-header-banner {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg, 16px);
+  border: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.05));
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sa-header-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.sa-header-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #4361ee 0%, #7c3aed 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: 0 6px 18px rgba(67, 97, 238, 0.35);
+  flex-shrink: 0;
+}
+
+.sa-header-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.sa-header-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sa-header-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.sa-badge-rbac {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.sa-header-subtitle {
+  margin: 0.35rem 0 0 0;
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+/* 2. Navigation Tab Bar */
+.sa-tab-bar {
+  display: flex;
+  gap: 0.4rem;
+  background: var(--bg-secondary);
+  padding: 5px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sa-tab-btn {
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.825rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sa-tab-btn:hover {
+  background: rgba(67, 97, 238, 0.08);
+  color: var(--text-primary);
+}
+
+.sa-tab-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3);
+}
+
+/* 3. KPI Grid */
+.sa-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.sa-kpi-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-md, 12px);
+  border: 1px solid var(--border-color);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.04));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sa-kpi-title {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sa-kpi-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-top: 4px;
+  line-height: 1.1;
+}
+
+.sa-kpi-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+/* Breakdown Grids */
+.sa-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Two-column container for wide forms */
+.sa-two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Recent Audit Trail Item */
+.sa-audit-item {
+  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.825rem;
+}
+
+.sa-audit-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sa-audit-badge {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.sa-audit-summary {
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.sa-audit-item-meta {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 4. Filters Bar */
+.sa-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.sa-filter-search {
+  flex: 1 1 200px;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.sa-filter-select {
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.sa-filter-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* 5. Desktop Table vs Mobile Cards */
+.sa-desktop-table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sa-mobile-cards {
+  display: none;
+}
+
+/* User Card on Mobile */
+.sa-user-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.sa-user-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-light, rgba(67, 97, 238, 0.08));
+}
+
+.sa-user-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sa-user-card-reg {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.sa-user-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sa-user-card-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.sa-user-card-email {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.sa-user-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+}
+
+.sa-user-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Session Card on Mobile */
+.sa-session-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sa-session-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sa-session-card-device {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sa-session-card-user {
+  font-size: 0.825rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.sa-session-card-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Audit Log Card on Mobile */
+.sa-audit-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sa-audit-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sa-audit-card-summary {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.sa-audit-card-footer {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-top: 1px dashed var(--border-color);
+  padding-top: 4px;
+  margin-top: 2px;
+}
+
+/* Responsive Grid for User Management layout */
+.sa-users-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 992px) {
+  .sa-users-grid.has-selection {
+    grid-template-columns: 1fr 380px;
+  }
+}
+
+/* =======================================================
+   MOBILE BREAKPOINT: <= 768px
+   ======================================================= */
+@media (max-width: 768px) {
+  .sa-portal-container {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .sa-header-banner {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .sa-header-info {
+    gap: 0.75rem;
+    flex: 1 1 100%;
+  }
+
+  .sa-header-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.35rem;
+    border-radius: 10px;
+  }
+
+  .sa-header-title {
+    font-size: 1.15rem;
+  }
+
+  .sa-badge-rbac {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+  }
+
+  .sa-header-subtitle {
+    font-size: 0.75rem;
+  }
+
+  /* Horizontal touch-swipe tab bar */
+  .sa-tab-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: 0.3rem;
+    padding: 4px;
+    width: 100%;
+  }
+
+  .sa-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sa-tab-btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+  }
+
+  /* KPI grid: 2 columns on mobile */
+  .sa-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .sa-kpi-card {
+    padding: 0.85rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .sa-kpi-icon-box {
+    align-self: flex-end;
+    margin-top: -1.75rem;
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+  }
+
+  .sa-kpi-value {
+    font-size: 1.4rem;
+  }
+
+  .sa-kpi-title {
+    font-size: 0.72rem;
+  }
+
+  /* Breakdown & Two-col grids: 1 column */
+  .sa-breakdown-grid,
+  .sa-two-col-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  /* Audit item stack on mobile */
+  .sa-audit-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .sa-audit-item-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    width: 100%;
+  }
+
+  .sa-audit-item-meta {
+    font-size: 0.7rem;
+    align-self: flex-end;
+    margin-top: 2px;
+  }
+
+  /* Filters stack on mobile */
+  .sa-filter-search {
+    flex: 1 1 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sa-filter-select {
+    flex: 1 1 calc(50% - 0.35rem);
+    min-width: 130px;
+    box-sizing: border-box;
+  }
+
+  .sa-filter-btn {
+    width: 100%;
+    padding: 0.65rem;
+  }
+
+  /* Switch tables to mobile cards on small screens */
+  .sa-desktop-table {
+    display: none !important;
+  }
+
+  .sa-mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}

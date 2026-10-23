@@ -86,8 +86,20 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const setDirectToken = (newToken) => {
+    if (newToken) {
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      const decoded = decodeToken(newToken);
+      setUser(decoded);
+      return decoded;
+    }
+    return null;
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('hostelcare_impersonate_backup');
     setToken(null);
     setUser(null);
   };
@@ -98,6 +110,7 @@ export function AuthProvider({ children }) {
     loading,
     login: handleLogin,
     logout: handleLogout,
+    setDirectToken,
     isAuthenticated: !!user,
   };
 

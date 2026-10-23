@@ -62,7 +62,7 @@ export default function Canvas3DBackground({ role = null, theme = 'dark', concep
       if (scrollTimer) clearTimeout(scrollTimer);
       scrollTimer = setTimeout(() => {
         isScrolling = false;
-      }, 100);
+      }, 150);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
 
@@ -192,6 +192,12 @@ export default function Canvas3DBackground({ role = null, theme = 'dark', concep
       if (!isMounted) return;
 
       if (document.hidden) {
+        return;
+      }
+
+      // On mobile devices, pause canvas drawing completely during active scroll to eliminate any hitching/jank
+      if (isMobile && isScrolling) {
+        animationFrameId = requestAnimationFrame(render);
         return;
       }
 

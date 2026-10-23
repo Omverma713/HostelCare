@@ -6,6 +6,8 @@ const NotificationCampaign = require("../models/notification.model");
 const { sendPushToSessions } = require("../services/pushService");
 const Argon = require("argon2");
 const argonLimiter = require("../../utils/argonLimiter");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 // Safe helper to log audit actions
 async function recordAudit({
@@ -1480,6 +1482,107 @@ const updateMaintenanceConfig = async (req, res) => {
   }
 };
 
+// ─── IMPERSONATE USER (LOGIN AS USER) ─────────────────────────────────────────
+// POST /api/v1/superadmin/users/:userId/impersonate
+const impersonateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const targetUser = await User.findById(userId);
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Target user not found",
+      });
+    }
+
+    if (targetUser.accountStatus === "deactivated" || targetUser.accountStatus === "suspended") {
+      return res.status(403).json({
+        success: false,
+        message: `Cannot login as user whose account status is '${targetUser.accountStatus}'.`,
+      });
+    }
+
+    const config = await SystemConfig.getEffectiveConfig();
+    const timeoutMinutes = config.sessionInactivityTimeoutMinutes || 10080;
+    const expiresAt = new Date(Date.now() + timeoutMinutes * 60 * 1000);
+    const sessionId = crypto.randomUUID();
+
+    const newSession = await Session.create({
+      sessionId,
+      userId: targetUser._id,
+      registrationNumber: targetUser.registrationNumber,
+      deviceNickname: `Impersonated by Super Admin (${req.user.name || "Master Super Admin"})`,
+      installationId: sessionId,
+      deviceType: "desktop",
+      os: "Web",
+      browser: "SuperAdmin Console",
+      userAgent: (req.headers["user-agent"] || "SuperAdmin Impersonation").slice(0, 512),
+      ip: req.ip || "127.0.0.1",
+      status: "active",
+      expiresAt,
+      loginAt: new Date(),
+      lastActivityAt: new Date(),
+    });
+
+    const token = jwt.sign(
+      {
+        id: targetUser._id,
+        sessionId: newSession.sessionId,
+        name: targetUser.name,
+        registrationNumber: targetUser.registrationNumber,
+        role: targetUser.role,
+        hostel: targetUser.hostel,
+        roomNumber: targetUser.roomNumber,
+        isImpersonated: true,
+        impersonatedBy: req.user.id || req.user._id,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Record Audit Trail
+    await recordAudit({
+      req,
+      action: "USER_IMPERSONATED",
+      targetType: "USER",
+      targetId: targetUser._id.toString(),
+      targetIdentifier: targetUser.registrationNumber,
+      summary: `Super Admin '${req.user.name}' impersonated user '${targetUser.name}' (${targetUser.role})`,
+      details: {
+        targetRole: targetUser.role,
+        targetHostel: targetUser.hostel,
+        targetRoom: targetUser.roomNumber,
+        sessionId: newSession.sessionId,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully logged in as ${targetUser.name} (${targetUser.role})`,
+      token,
+      user: {
+        _id: targetUser._id,
+        id: targetUser._id,
+        name: targetUser.name,
+        registrationNumber: targetUser.registrationNumber,
+        role: targetUser.role,
+        hostel: targetUser.hostel,
+        roomNumber: targetUser.roomNumber,
+        email: targetUser.email,
+        isActivated: targetUser.isActivated,
+      },
+      isImpersonated: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to impersonate user",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getSystemOverview,
   getUsersDirectory,
@@ -1499,5 +1602,6 @@ module.exports = {
   sendAdminNotification,
   getNotificationHistory,
   getAuditLogs,
+  impersonateUser,
 };
 

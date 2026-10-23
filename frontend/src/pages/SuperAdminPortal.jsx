@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { adminApi } from '../services/adminApi';
 import { triggerToast } from '../components/Toast';
+import './SuperAdminPortal.css';
 
 export default function SuperAdminPortal() {
+  const navigate = useNavigate();
+  const { token, user: currentUser, setDirectToken } = useAuth();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'users' | 'sessions' | 'limits' | 'notifications' | 'audit'
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +36,49 @@ export default function SuperAdminPortal() {
     revokeOldestOnLimit: true,
     sessionInactivityTimeoutMinutes: 10080,
   });
+
+  const handleImpersonateUser = async (targetUser) => {
+    if (!targetUser) return;
+    const targetId = targetUser._id || targetUser.id;
+    const confirmMsg = `Are you sure you want to log in as ${targetUser.name} (${targetUser.role})? You will be switched to their portal with an instant one-click return option.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setLoading(true);
+      const res = await adminApi.impersonateUser(targetId);
+      if (res && res.token) {
+        const currentToken = token || localStorage.getItem('token');
+        localStorage.setItem('hostelcare_impersonate_backup', currentToken);
+        triggerToast('success', `Switched session to ${targetUser.name} (${targetUser.role})`, 'Impersonation Active');
+
+        const switched = setDirectToken(res.token);
+        const role = switched?.role || targetUser.role;
+        switch (role) {
+          case 'student':
+            navigate('/student');
+            break;
+          case 'caretaker':
+            navigate('/caretaker');
+            break;
+          case 'warden':
+            navigate('/warden');
+            break;
+          case 'superintendent':
+            navigate('/superintendent');
+            break;
+          default:
+            navigate('/');
+        }
+      } else {
+        throw new Error(res.message || 'Failed to switch user');
+      }
+    } catch (err) {
+      console.error('Impersonation error:', err);
+      triggerToast('error', err.message || 'Could not log in as user', 'Impersonation Failed');
+    } finally {
+      setLoading(false);
+    }
+  };
   const [savingConfig, setSavingConfig] = useState(false);
 
   // Notification Center State
@@ -499,76 +547,30 @@ export default function SuperAdminPortal() {
   };
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem', width: '100%', boxSizing: 'border-box' }}>
+    <div className="sa-portal-container">
       {/* 1. Header Banner */}
-      <div
-        style={{
-          background: 'var(--bg-card)',
-          borderRadius: 'var(--border-radius-lg)',
-          border: '1px solid var(--border-color)',
-          padding: '1.5rem',
-          boxShadow: 'var(--shadow-md)',
-          marginBottom: '1.25rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #4361ee 0%, #7c3aed 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.8rem',
-              boxShadow: '0 6px 18px rgba(67, 97, 238, 0.4)',
-            }}
-          >
+      <div className="sa-header-banner">
+        <div className="sa-header-info">
+          <div className="sa-header-icon">
             🛡️
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+          <div className="sa-header-text">
+            <div className="sa-header-title-row">
+              <h1 className="sa-header-title">
                 Super Admin Control Panel
               </h1>
-              <span
-                style={{
-                  fontSize: '0.725rem',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  background: 'var(--primary)',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                }}
-              >
+              <span className="sa-badge-rbac">
                 RBAC PRIVILEGED
               </span>
             </div>
-            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <p className="sa-header-subtitle">
               Centralized user directory, session control, device limits, push dispatch & security audits
             </p>
           </div>
         </div>
 
         {/* Tab Switcher Pills */}
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0.4rem',
-            background: 'var(--bg-secondary)',
-            padding: '4px',
-            borderRadius: '12px',
-            border: '1px solid var(--border-color)',
-          }}
-        >
+        <div className="sa-tab-bar">
           {[
             { id: 'overview', label: '📊 Overview' },
             { id: 'users', label: '👥 User Directory' },
@@ -582,17 +584,7 @@ export default function SuperAdminPortal() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '0.5rem 0.85rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: activeTab === tab.id ? 'var(--primary)' : 'transparent',
-                color: activeTab === tab.id ? '#ffffff' : 'var(--text-secondary)',
-                fontWeight: activeTab === tab.id ? 700 : 500,
-                fontSize: '0.825rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
+              className={`sa-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
             >
               {tab.label}
             </button>
@@ -604,50 +596,23 @@ export default function SuperAdminPortal() {
       {activeTab === 'overview' && overview && (
         <div>
           {/* Top 4 KPI Cards */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-              gap: '1rem',
-              marginBottom: '1.25rem',
-            }}
-          >
+          <div className="sa-kpi-grid">
             {[
               { title: 'Total Registered Users', value: overview.stats.totalUsers, icon: '👥', color: '#4361ee' },
               { title: 'Active Accounts', value: overview.stats.activeUsers, icon: '✅', color: '#10b981' },
               { title: 'Active Device Sessions', value: overview.stats.activeSessions, icon: '📱', color: '#8b5cf6' },
               { title: 'Notification Campaigns', value: overview.stats.totalCampaigns, icon: '📢', color: '#f59e0b' },
             ].map((kpi, idx) => (
-              <div
-                key={idx}
-                style={{
-                  background: 'var(--bg-card)',
-                  borderRadius: 'var(--border-radius-md)',
-                  border: '1px solid var(--border-color)',
-                  padding: '1.25rem',
-                  boxShadow: 'var(--shadow-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
+              <div key={idx} className="sa-kpi-card">
                 <div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>{kpi.title}</div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
-                    {kpi.value}
-                  </div>
+                  <div className="sa-kpi-title">{kpi.title}</div>
+                  <div className="sa-kpi-value">{kpi.value}</div>
                 </div>
                 <div
+                  className="sa-kpi-icon-box"
                   style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '10px',
                     background: `${kpi.color}18`,
                     color: kpi.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.3rem',
                   }}
                 >
                   {kpi.icon}
@@ -657,7 +622,7 @@ export default function SuperAdminPortal() {
           </div>
 
           {/* Breakdown Grids */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div className="sa-breakdown-grid">
             {/* Roles Breakdown */}
             <div
               style={{
@@ -718,7 +683,7 @@ export default function SuperAdminPortal() {
               padding: '1.25rem',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                 Recent Security Audit Logs
               </h3>
@@ -732,6 +697,7 @@ export default function SuperAdminPortal() {
                   fontWeight: 600,
                   fontSize: '0.8rem',
                   cursor: 'pointer',
+                  padding: '2px 0',
                 }}
               >
                 View Full Audit Trail →
@@ -740,26 +706,13 @@ export default function SuperAdminPortal() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {(overview.recentActivity || []).map((log) => (
-                <div
-                  key={log._id}
-                  style={{
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '8px',
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '1rem',
-                    fontSize: '0.825rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--primary)' }}>[{log.action}]</span>
-                    <span style={{ color: 'var(--text-primary)' }}>{log.summary}</span>
+                <div key={log._id} className="sa-audit-item">
+                  <div className="sa-audit-item-left">
+                    <span className="sa-audit-badge">[{log.action}]</span>
+                    <span className="sa-audit-summary">{log.summary}</span>
                   </div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                    by {log.adminRegistrationNumber} • {new Date(log.createdAt).toLocaleTimeString()}
+                  <div className="sa-audit-item-meta">
+                    by {log.adminRegistrationNumber} • {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
               ))}
@@ -770,7 +723,7 @@ export default function SuperAdminPortal() {
 
       {/* 3. TAB: USER DIRECTORY */}
       {activeTab === 'users' && (
-        <div style={{ display: 'grid', gridTemplateColumns: selectedUser ? '1fr 380px' : '1fr', gap: '1.25rem' }}>
+        <div className={`sa-users-grid ${selectedUser ? 'has-selection' : ''}`}>
           {/* Main Users Table */}
           <div
             style={{
@@ -782,34 +735,19 @@ export default function SuperAdminPortal() {
             }}
           >
             {/* Filters Row */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', marginBottom: '1rem' }}>
+            <div className="sa-filters-bar">
               <input
                 type="text"
                 placeholder="Search by reg#, name, email..."
                 value={userFilters.search}
                 onChange={(e) => setUserFilters((prev) => ({ ...prev, search: e.target.value }))}
-                style={{
-                  flex: '1 1 200px',
-                  padding: '0.55rem 0.85rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.85rem',
-                }}
+                className="sa-filter-search"
               />
 
               <select
                 value={userFilters.role}
                 onChange={(e) => setUserFilters((prev) => ({ ...prev, role: e.target.value }))}
-                style={{
-                  padding: '0.55rem 0.85rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.85rem',
-                }}
+                className="sa-filter-select"
               >
                 <option value="all">All Roles</option>
                 <option value="student">Student</option>
@@ -822,14 +760,7 @@ export default function SuperAdminPortal() {
               <select
                 value={userFilters.status}
                 onChange={(e) => setUserFilters((prev) => ({ ...prev, status: e.target.value }))}
-                style={{
-                  padding: '0.55rem 0.85rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.85rem',
-                }}
+                className="sa-filter-select"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
@@ -840,23 +771,14 @@ export default function SuperAdminPortal() {
               <button
                 type="button"
                 onClick={() => loadUsers(1)}
-                style={{
-                  padding: '0.55rem 1rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'var(--primary)',
-                  color: '#ffffff',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                }}
+                className="sa-filter-btn"
               >
                 Search
               </button>
             </div>
 
-            {/* Table */}
-            <div style={{ overflowX: 'auto' }}>
+            {/* Desktop Table View */}
+            <div className="sa-desktop-table">
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
@@ -961,25 +883,53 @@ export default function SuperAdminPortal() {
                           </span>
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectUser(u);
-                            }}
-                            style={{
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border-color)',
-                              background: 'var(--bg-secondary)',
-                              color: 'var(--text-primary)',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Details →
-                          </button>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            {u._id !== currentUser?.id && u.role !== 'superadmin' && u.accountStatus === 'active' && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleImpersonateUser(u);
+                                }}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(99, 102, 241, 0.4)',
+                                  background: 'rgba(99, 102, 241, 0.12)',
+                                  color: '#6366f1',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                title={`Login as ${u.name} (${u.role})`}
+                              >
+                                ⚡ Login As
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectUser(u);
+                              }}
+                              style={{
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Details →
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -988,8 +938,118 @@ export default function SuperAdminPortal() {
               </table>
             </div>
 
+            {/* Mobile Cards View */}
+            <div className="sa-mobile-cards">
+              {users.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  {loading ? 'Loading users...' : 'No users found matching query.'}
+                </div>
+              ) : (
+                users.map((u) => (
+                  <div
+                    key={u._id}
+                    className={`sa-user-card ${selectedUser?._id === u._id ? 'selected' : ''}`}
+                    onClick={() => handleSelectUser(u)}
+                  >
+                    <div className="sa-user-card-header">
+                      <div className="sa-user-card-reg">{u.registrationNumber}</div>
+                      <div className="sa-user-card-badges">
+                        <span
+                          style={{
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: u.role === 'superadmin' ? '#7c3aed22' : 'var(--bg-card)',
+                            color: u.role === 'superadmin' ? '#7c3aed' : 'var(--text-primary)',
+                            fontWeight: 700,
+                            textTransform: 'capitalize',
+                            fontSize: '0.72rem',
+                          }}
+                        >
+                          {u.role}
+                        </span>
+                        <span
+                          style={{
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            background:
+                              u.accountStatus === 'active'
+                                ? 'var(--success-bg)'
+                                : 'var(--danger-bg)',
+                            color:
+                              u.accountStatus === 'active'
+                                ? 'var(--success-text)'
+                                : 'var(--danger-text)',
+                          }}
+                        >
+                          {u.accountStatus}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="sa-user-card-name">{u.name}</div>
+                      <div className="sa-user-card-email">{u.email || 'No email registered'}</div>
+                    </div>
+
+                    <div className="sa-user-card-details">
+                      <span>🏢 {u.hostel || 'Hostel N/A'} {u.roomNumber ? `• Rm ${u.roomNumber}` : ''}</span>
+                      <span>📱 {u.activeDeviceCount || 0} / {u.maxDevices || config.maxConcurrentSessions || 3} devices</span>
+                    </div>
+
+                    <div className="sa-user-card-actions">
+                      {u._id !== currentUser?.id && u.role !== 'superadmin' && u.accountStatus === 'active' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleImpersonateUser(u);
+                          }}
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(99, 102, 241, 0.4)',
+                            background: 'rgba(99, 102, 241, 0.12)',
+                            color: '#6366f1',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          ⚡ Login As
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectUser(u);
+                        }}
+                        style={{
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Manage Details →
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
             {/* Pagination Controls */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', fontSize: '0.825rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', fontSize: '0.825rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div style={{ color: 'var(--text-muted)' }}>
                 Page {userPagination.page} of {userPagination.totalPages} ({userPagination.total} users)
               </div>
@@ -1040,10 +1100,28 @@ export default function SuperAdminPortal() {
                 height: 'fit-content',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  User Management
-                </h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUser(null)}
+                    style={{
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      color: 'var(--text-secondary)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    ← Back to List
+                  </button>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    User Details
+                  </h3>
+                </div>
                 <button
                   type="button"
                   onClick={() => setSelectedUser(null)}
@@ -1301,6 +1379,30 @@ export default function SuperAdminPortal() {
                   </button>
                 )}
 
+                {selectedUser._id !== currentUser?.id && selectedUser.role !== 'superadmin' && selectedUser.accountStatus === 'active' && (
+                  <button
+                    type="button"
+                    onClick={() => handleImpersonateUser(selectedUser)}
+                    style={{
+                      padding: '0.6rem',
+                      borderRadius: '8px',
+                      border: '1px solid #6366f1',
+                      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.22) 100%)',
+                      color: '#6366f1',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 2px 8px rgba(99, 102, 241, 0.2)',
+                    }}
+                  >
+                    <span>⚡</span> Login as this User (Impersonate)
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() =>
@@ -1524,34 +1626,19 @@ export default function SuperAdminPortal() {
           }}
         >
           {/* Filters */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', marginBottom: '1rem' }}>
+          <div className="sa-filters-bar">
             <input
               type="text"
               placeholder="Filter by reg#, device, IP..."
               value={sessionFilters.search}
               onChange={(e) => setSessionFilters((prev) => ({ ...prev, search: e.target.value }))}
-              style={{
-                flex: '1 1 200px',
-                padding: '0.55rem 0.85rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
-              }}
+              className="sa-filter-search"
             />
 
             <select
               value={sessionFilters.status}
               onChange={(e) => setSessionFilters((prev) => ({ ...prev, status: e.target.value }))}
-              style={{
-                padding: '0.55rem 0.85rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
-              }}
+              className="sa-filter-select"
             >
               <option value="active">Active Sessions Only</option>
               <option value="revoked">Revoked Sessions</option>
@@ -1562,14 +1649,7 @@ export default function SuperAdminPortal() {
             <select
               value={sessionFilters.deviceType}
               onChange={(e) => setSessionFilters((prev) => ({ ...prev, deviceType: e.target.value }))}
-              style={{
-                padding: '0.55rem 0.85rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
-              }}
+              className="sa-filter-select"
             >
               <option value="all">All Device Types</option>
               <option value="android">Android Devices</option>
@@ -1580,23 +1660,14 @@ export default function SuperAdminPortal() {
             <button
               type="button"
               onClick={() => loadSessions(1)}
-              style={{
-                padding: '0.55rem 1rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'var(--primary)',
-                color: '#ffffff',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-              }}
+              className="sa-filter-btn"
             >
               Filter
             </button>
           </div>
 
-          {/* Sessions List */}
-          <div style={{ overflowX: 'auto' }}>
+          {/* Desktop Table View */}
+          <div className="sa-desktop-table">
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
@@ -1686,6 +1757,74 @@ export default function SuperAdminPortal() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="sa-mobile-cards">
+            {sessions.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                No session records found.
+              </div>
+            ) : (
+              sessions.map((s) => (
+                <div key={s.sessionId} className="sa-session-card">
+                  <div className="sa-session-card-top">
+                    <div className="sa-session-card-device">
+                      {s.deviceType === 'android' ? '🤖' : s.deviceType === 'desktop' ? '💻' : '🌐'} {s.deviceNickname}
+                    </div>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        background:
+                          s.status === 'active'
+                            ? 'var(--success-bg)'
+                            : 'var(--danger-bg)',
+                        color:
+                          s.status === 'active'
+                            ? 'var(--success-text)'
+                            : 'var(--danger-text)',
+                      }}
+                    >
+                      {s.status}
+                    </span>
+                  </div>
+
+                  <div className="sa-session-card-user">
+                    {s.registrationNumber} • {s.userId?.name || ''} ({s.userId?.role || ''})
+                  </div>
+
+                  <div className="sa-session-card-meta">
+                    <div>📱 {s.os} • {s.browser} • IP: {s.ip}</div>
+                    <div>🔔 Push: {s.pushProvider === 'none' ? 'Unsubscribed' : s.pushProvider.toUpperCase()}</div>
+                    <div>🕒 Last Active: {new Date(s.lastActivityAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(s.lastActivityAt).toLocaleDateString()}</div>
+                  </div>
+
+                  {s.status === 'active' && (
+                    <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleRevokeSession(s.sessionId)}
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--danger-border)',
+                          background: 'var(--danger-bg)',
+                          color: 'var(--danger-text)',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Revoke Session
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -1917,7 +2056,7 @@ export default function SuperAdminPortal() {
           </div>
 
           {/* Two Mode Configuration Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.25rem' }}>
+          <div className="sa-two-col-grid">
             {/* Mode 1: Global Maintenance Card */}
             <div
               style={{
@@ -2399,7 +2538,7 @@ export default function SuperAdminPortal() {
 
       {/* 7. TAB: NOTIFICATION CENTER */}
       {activeTab === 'notifications' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
+        <div className="sa-two-col-grid">
           {/* Composer Form */}
           <form
             onSubmit={handleSendNotification}
@@ -2722,34 +2861,19 @@ export default function SuperAdminPortal() {
           }}
         >
           {/* Filters */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', marginBottom: '1rem' }}>
+          <div className="sa-filters-bar">
             <input
               type="text"
               placeholder="Search action summary or admin..."
               value={auditFilters.search}
               onChange={(e) => setAuditFilters((prev) => ({ ...prev, search: e.target.value }))}
-              style={{
-                flex: '1 1 220px',
-                padding: '0.55rem 0.85rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
-              }}
+              className="sa-filter-search"
             />
 
             <select
               value={auditFilters.action}
               onChange={(e) => setAuditFilters((prev) => ({ ...prev, action: e.target.value }))}
-              style={{
-                padding: '0.55rem 0.85rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
-              }}
+              className="sa-filter-select"
             >
               <option value="all">All Actions</option>
               <option value="MAINTENANCE_MODE_UPDATED">Maintenance Mode Updated</option>
@@ -2767,23 +2891,14 @@ export default function SuperAdminPortal() {
             <button
               type="button"
               onClick={() => loadAuditLogs(1)}
-              style={{
-                padding: '0.55rem 1rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'var(--primary)',
-                color: '#ffffff',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-              }}
+              className="sa-filter-btn"
             >
               Filter Logs
             </button>
           </div>
 
-          {/* Logs Table */}
-          <div style={{ overflowX: 'auto' }}>
+          {/* Desktop Logs Table */}
+          <div className="sa-desktop-table">
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
@@ -2837,8 +2952,49 @@ export default function SuperAdminPortal() {
             </table>
           </div>
 
+          {/* Mobile Cards View */}
+          <div className="sa-mobile-cards">
+            {auditLogs.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                No audit records found.
+              </div>
+            ) : (
+              auditLogs.map((log) => (
+                <div key={log._id} className="sa-audit-card">
+                  <div className="sa-audit-card-head">
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: 'var(--primary-light, rgba(67, 97, 238, 0.1))',
+                        color: 'var(--primary)',
+                        fontWeight: 700,
+                        fontSize: '0.72rem',
+                      }}
+                    >
+                      {log.action}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(log.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="sa-audit-card-summary">
+                    {log.summary}
+                  </div>
+
+                  <div className="sa-audit-card-footer">
+                    <span>by <strong>{log.adminRegistrationNumber}</strong></span>
+                    {log.targetIdentifier && <span>Target: {log.targetIdentifier}</span>}
+                    <span>IP: {log.ip}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
           {/* Pagination */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', fontSize: '0.825rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', fontSize: '0.825rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ color: 'var(--text-muted)' }}>
               Page {auditPagination.page} of {auditPagination.totalPages} ({auditPagination.total} audit entries)
             </div>

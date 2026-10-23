@@ -22,6 +22,7 @@ const {
   sendAdminNotification,
   getNotificationHistory,
   getAuditLogs,
+  impersonateUser,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -65,6 +66,7 @@ router.patch("/users/:userId/device-limit", sensitiveActionLimiter, updateUserDe
 router.patch("/users/:userId/status", sensitiveActionLimiter, updateUserStatus);
 router.post("/users/:userId/reset-password", sensitiveActionLimiter, resetUserPassword);
 router.post("/users/:userId/force-logout", sensitiveActionLimiter, forceLogoutUser);
+router.post("/users/:userId/impersonate", sensitiveActionLimiter, impersonateUser);
 
 // Session & Device Management
 router.get("/sessions", getSessionsDirectory);
