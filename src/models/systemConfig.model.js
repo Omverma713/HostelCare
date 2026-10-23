@@ -119,8 +119,12 @@ const systemConfigSchema = new mongoose.Schema(
       releaseNotes: {
         type: String,
         default: "",
-        maxlength: 2000,
+        maxlength: 10000,
         trim: true,
+      },
+      releaseMedia: {
+        type: [String],
+        default: [],
       },
       apkSha256: {
         type: String,

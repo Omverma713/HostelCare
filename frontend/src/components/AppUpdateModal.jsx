@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../hooks/useAuth';
 import { appUpdateService } from '../services/appUpdateService';
@@ -14,6 +14,239 @@ import {
   ArrowDownCircle,
   PackageCheck,
 } from 'lucide-react';
+
+/**
+ * Renders release notes text with responsive, mobile-first embedded screenshots, GIFs, and videos
+ */
+function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
+  const [activePreview, setActivePreview] = useState(null);
+
+  const parsed = useMemo(() => {
+    if (!releaseNotes && (!releaseMedia || releaseMedia.length === 0)) {
+      return { textLines: [], mediaItems: [] };
+    }
+
+    const lines = (releaseNotes || '').split('\n');
+    const textLines = [];
+    const mediaItems = [];
+
+    const isImageUrl = (url) => /\.(gif|png|jpe?g|webp|svg)(\?.*)?$/i.test(url);
+    const isVideoUrl = (url) => /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url);
+    const mdImageRegex = /!\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g;
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      // 1. Markdown image syntax ![alt](url)
+      let match;
+      let hasMdMedia = false;
+      const stripped = line.replace(mdImageRegex, (m, alt, url) => {
+        hasMdMedia = true;
+        mediaItems.push({
+          type: isVideoUrl(url) ? 'video' : 'image',
+          url,
+          alt: alt || 'Release visual',
+        });
+        return '';
+      }).trim();
+
+      if (hasMdMedia) {
+        if (stripped) textLines.push(stripped);
+        continue;
+      }
+
+      // 2. Direct media URL
+      if (line.startsWith('http://') || line.startsWith('https://')) {
+        if (isImageUrl(line)) {
+          mediaItems.push({ type: 'image', url: line, alt: 'Release screenshot' });
+          continue;
+        } else if (isVideoUrl(line)) {
+          mediaItems.push({ type: 'video', url: line, alt: 'Release clip' });
+          continue;
+        }
+      }
+
+      // 3. Regular text line
+      textLines.push(line);
+    }
+
+    // 4. Merge any explicit releaseMedia array URLs
+    if (Array.isArray(releaseMedia)) {
+      for (const url of releaseMedia) {
+        if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
+          if (!mediaItems.some((m) => m.url === url)) {
+            mediaItems.push({
+              type: isVideoUrl(url) ? 'video' : 'image',
+              url,
+              alt: 'Release media',
+            });
+          }
+        }
+      }
+    }
+
+    return { textLines, mediaItems };
+  }, [releaseNotes, releaseMedia]);
+
+  return (
+    <div style={{ width: '100%', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+      {/* Text bullet items */}
+      {parsed.textLines.length > 0 && (
+        <div style={{ marginBottom: parsed.mediaItems.length > 0 ? '0.75rem' : 0 }}>
+          {parsed.textLines.map((line, idx) => {
+            const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*');
+            return (
+              <div
+                key={idx}
+                style={{
+                  fontSize: '0.775rem',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  lineHeight: 1.45,
+                  marginBottom: '4px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '6px',
+                }}
+              >
+                {isBullet ? (
+                  <>
+                    <span style={{ color: '#818cf8', fontWeight: 800, flexShrink: 0 }}>•</span>
+                    <span>{line.replace(/^[•\-*]\s*/, '')}</span>
+                  </>
+                ) : (
+                  <span>{line}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Media Gallery (Screenshots / GIFs / Videos) */}
+      {parsed.mediaItems.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+          {parsed.mediaItems.map((item, idx) => (
+            <div
+              key={idx}
+              style={{
+                borderRadius: '10px',
+                overflow: 'hidden',
+                background: 'rgba(0, 0, 0, 0.45)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35)',
+              }}
+            >
+              {item.type === 'video' ? (
+                <video
+                  src={item.url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  style={{
+                    width: '100%',
+                    maxHeight: '200px',
+                    display: 'block',
+                    background: '#000',
+                    borderRadius: '10px',
+                    objectFit: 'contain',
+                  }}
+                />
+              ) : (
+                <div
+                  onClick={() => setActivePreview(item.url)}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                  title="Tap to preview full size"
+                >
+                  <img
+                    src={item.url}
+                    alt={item.alt}
+                    loading="lazy"
+                    style={{
+                      width: '100%',
+                      maxHeight: '190px',
+                      objectFit: 'contain',
+                      display: 'block',
+                      background: 'rgba(0, 0, 0, 0.25)',
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  {item.alt && item.alt !== 'Release screenshot' && item.alt !== 'Release visual' && item.alt !== 'Release media' && (
+                    <div
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '0.65rem',
+                        color: 'rgba(255, 255, 255, 0.75)',
+                        background: 'rgba(0, 0, 0, 0.65)',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                      }}
+                    >
+                      {item.alt}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox Modal on Tap */}
+      {activePreview && (
+        <div
+          onClick={() => setActivePreview(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999999,
+            background: 'rgba(0, 0, 0, 0.92)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '12px',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          <img
+            src={activePreview}
+            alt="Full Preview"
+            style={{
+              maxWidth: '96%',
+              maxHeight: '90vh',
+              objectFit: 'contain',
+              borderRadius: '12px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)',
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setActivePreview(null)}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              color: '#ffffff',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AppUpdateModal() {
   const [state, setState] = useState(() => appUpdateService.updateState);
@@ -234,7 +467,7 @@ export default function AppUpdateModal() {
           </div>
         )}
 
-        <div style={{ padding: '1.5rem' }}>
+        <div style={{ padding: '1.25rem 1.5rem', maxHeight: '82vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {/* ============================================================== */}
           {/* CASE 1: Manual Check - Up to date */}
           {/* ============================================================== */}
@@ -645,23 +878,27 @@ export default function AppUpdateModal() {
                 {state.updateMessage || 'A new update for HostelCare is ready to install directly inside the app.'}
               </p>
 
-              {/* Release Notes */}
-              {state.releaseNotes && (
+              {/* Release Notes with Media (Screenshots / GIFs / Videos) */}
+              {(state.releaseNotes || (state.releaseMedia && state.releaseMedia.length > 0)) && (
                 <div
                   style={{
                     background: 'rgba(0, 0, 0, 0.3)',
-                    borderRadius: '10px',
-                    padding: '0.75rem 0.9rem',
+                    borderRadius: '12px',
+                    padding: '0.8rem 1rem',
                     marginBottom: '1.25rem',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    maxHeight: '260px',
+                    overflowY: 'auto',
+                    WebkitOverflowScrolling: 'touch',
                   }}
                 >
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '4px' }}>
-                    What's New:
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>✨ What's New:</span>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.7)', whiteSpace: 'pre-line', lineHeight: 1.4 }}>
-                    {state.releaseNotes}
-                  </div>
+                  <ChangelogMediaRenderer
+                    releaseNotes={state.releaseNotes}
+                    releaseMedia={state.releaseMedia}
+                  />
                 </div>
               )}
 

@@ -148,6 +148,7 @@ const getAppVersionStatus = async (req, res) => {
       updateMessage: appVersionConfig.updateMessage,
       updateUrl: appVersionConfig.updateUrl,
       releaseNotes: appVersionConfig.releaseNotes || "",
+      releaseMedia: appVersionConfig.releaseMedia || [],
       apkSha256: appVersionConfig.apkSha256 || "",
       checkedAt: new Date().toISOString(),
     });

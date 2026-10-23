@@ -24,6 +24,7 @@ class AppUpdateService {
       updateMessage: '',
       updateUrl: '',
       releaseNotes: '',
+      releaseMedia: [],
       apkSha256: '',
       isDismissed: false,
       manualCheck: false,
@@ -149,6 +150,7 @@ class AppUpdateService {
       this.updateState.updateMessage = data.updateMessage || (isForced ? 'A critical update is required to continue accessing HostelCare.' : 'A new version of HostelCare is available.');
       this.updateState.updateUrl = data.updateUrl || '';
       this.updateState.releaseNotes = data.releaseNotes || '';
+      this.updateState.releaseMedia = data.releaseMedia || [];
       this.updateState.apkSha256 = data.apkSha256 || '';
 
       if (manual) {

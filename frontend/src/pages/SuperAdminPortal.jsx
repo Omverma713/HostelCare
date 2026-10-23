@@ -3535,14 +3535,14 @@ export default function SuperAdminPortal() {
               {/* Release Notes */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  Release Notes / Changelog (Optional)
+                  Release Notes / Changelog (Supports Screenshots, GIFs & Videos)
                 </label>
                 <textarea
-                  rows={3}
-                  maxLength={2000}
+                  rows={4}
+                  maxLength={10000}
                   value={appVersionConfig.releaseNotes}
                   onChange={(e) => setAppVersionConfig((prev) => ({ ...prev, releaseNotes: e.target.value }))}
-                  placeholder="• Fixed complaint push notification sync&#10;• Faster room inspection records&#10;• Security patches"
+                  placeholder="• Fixed complaint push notification sync&#10;• New UI preview: ![New Look](https://example.com/demo.gif)&#10;• https://example.com/screenshot.png"
                   style={{
                     width: '100%',
                     padding: '0.55rem 0.75rem',
@@ -3553,8 +3553,12 @@ export default function SuperAdminPortal() {
                     fontSize: '0.85rem',
                     boxSizing: 'border-box',
                     resize: 'vertical',
+                    fontFamily: 'inherit',
                   }}
                 />
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  💡 <strong>Rich Media Supported:</strong> You can paste image/GIF/video URLs directly or use Markdown syntax (e.g. <code>![Screenshot](https://...png)</code>). Images and animated GIFs scale responsively and can be tapped for full-screen view in the Android app.
+                </div>
               </div>
 
               <button

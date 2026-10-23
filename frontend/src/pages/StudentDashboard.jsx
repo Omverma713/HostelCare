@@ -175,7 +175,15 @@ export default function StudentDashboard() {
           </p>
         </div>
 
-        <div className="command-header-right" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div
+          className="command-header-right"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap',
+          }}
+        >
           <button
             type="button"
             className="btn-spatial-refresh"
@@ -184,7 +192,7 @@ export default function StudentDashboard() {
             id="btn-refresh-dashboard"
             title="Refresh dashboard & check for updates"
             style={{
-              padding: '0.65rem 1.1rem',
+              padding: '0.65rem 0.95rem',
               borderRadius: '12px',
               border: '1px solid var(--border-color)',
               background: 'var(--bg-card)',
@@ -194,9 +202,12 @@ export default function StudentDashboard() {
               cursor: refreshing ? 'not-allowed' : 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px',
+              justifyContent: 'center',
+              gap: '6px',
               boxShadow: 'var(--shadow-sm)',
               transition: 'all 0.2s ease',
+              minHeight: '44px',
+              flex: '0 0 auto',
             }}
           >
             <span
@@ -220,6 +231,10 @@ export default function StudentDashboard() {
               setIsCreateOpen(true);
             }}
             id="btn-file-complaint-spatial"
+            style={{
+              minHeight: '44px',
+              flex: '1 1 180px',
+            }}
           >
             <span className="btn-trigger-glow" />
             <span className="btn-trigger-icon">➕</span>

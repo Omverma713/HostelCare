@@ -1686,6 +1686,7 @@ const getSuperAdminAppVersionConfig = async (req, res) => {
           "https://play.google.com/store/apps/details?id=com.hostelcare.app",
         forceUpdate: Boolean(config?.appVersion?.forceUpdate),
         releaseNotes: config?.appVersion?.releaseNotes || "",
+        releaseMedia: config?.appVersion?.releaseMedia || [],
         apkSha256: config?.appVersion?.apkSha256 || "",
         targetAudience: config?.appVersion?.targetAudience || "all",
         targetedRegistrationNumbers: config?.appVersion?.targetedRegistrationNumbers || [],
@@ -1714,6 +1715,7 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       updateUrl,
       forceUpdate,
       releaseNotes,
+      releaseMedia,
       apkSha256,
       targetAudience,
       targetedRegistrationNumbers,
@@ -1828,7 +1830,12 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
     if (minimumSupportedVersion !== undefined) config.appVersion.minimumSupportedVersion = nextMin;
     if (typeof forceUpdate === "boolean") config.appVersion.forceUpdate = forceUpdate;
     if (typeof updateMessage === "string") config.appVersion.updateMessage = updateMessage.trim().slice(0, 1000);
-    if (typeof releaseNotes === "string") config.appVersion.releaseNotes = releaseNotes.trim().slice(0, 2000);
+    if (typeof releaseNotes === "string") config.appVersion.releaseNotes = releaseNotes.trim().slice(0, 10000);
+    if (Array.isArray(releaseMedia)) {
+      config.appVersion.releaseMedia = releaseMedia
+        .map((m) => String(m).trim())
+        .filter((m) => m.startsWith("http://") || m.startsWith("https://"));
+    }
     if (typeof apkSha256 === "string") config.appVersion.apkSha256 = apkSha256.trim().slice(0, 128);
 
     config.updatedBy = req.user.registrationNumber || "superadmin";
