@@ -96,11 +96,6 @@ export default function StudentDashboard() {
     });
   }, [complaints, statusFilter, searchQuery]);
 
-  // Reset showAll whenever filter/search changes
-  useEffect(() => {
-    setShowAll(false);
-  }, [statusFilter, searchQuery]);
-
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
