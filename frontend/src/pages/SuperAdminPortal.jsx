@@ -126,7 +126,16 @@ export default function SuperAdminPortal() {
     updateUrl: 'https://play.google.com/store/apps/details?id=com.hostelcare.app',
     forceUpdate: false,
     releaseNotes: '',
+    apkSha256: '',
+    targetAudience: 'all',
+    targetedRegistrationNumbers: [],
+    targetedRoles: [],
+    targetedHostels: [],
   });
+  const [targetUserSearch, setTargetUserSearch] = useState('');
+  const [targetUserSearchResults, setTargetUserSearchResults] = useState([]);
+  const [searchingTargetUsers, setSearchingTargetUsers] = useState(false);
+  const [targetManualReg, setTargetManualReg] = useState('');
   const [savingAppVersion, setSavingAppVersion] = useState(false);
   const [manualChecking, setManualChecking] = useState(false);
   const [manualCheckResult, setManualCheckResult] = useState(null);
@@ -307,6 +316,50 @@ export default function SuperAdminPortal() {
     } finally {
       setManualChecking(false);
     }
+  };
+
+  const handleSearchTargetUsers = async (query) => {
+    setTargetUserSearch(query);
+    if (!query || query.trim().length < 2) {
+      setTargetUserSearchResults([]);
+      return;
+    }
+    try {
+      setSearchingTargetUsers(true);
+      const res = await adminApi.getUsers({ search: query.trim(), limit: 6 });
+      if (res.success && res.users) {
+        setTargetUserSearchResults(res.users);
+      }
+    } catch (e) {
+      console.warn('Failed searching users for app release targeting:', e);
+    } finally {
+      setSearchingTargetUsers(false);
+    }
+  };
+
+  const handleAddTargetUser = (userOrReg) => {
+    const reg = typeof userOrReg === 'string'
+      ? userOrReg.trim().toUpperCase()
+      : userOrReg.registrationNumber?.trim().toUpperCase();
+    if (!reg) return;
+    setAppVersionConfig((prev) => {
+      const existing = prev.targetedRegistrationNumbers || [];
+      if (existing.includes(reg)) return prev;
+      return {
+        ...prev,
+        targetedRegistrationNumbers: [...existing, reg],
+      };
+    });
+    setTargetUserSearch('');
+    setTargetUserSearchResults([]);
+    setTargetManualReg('');
+  };
+
+  const handleRemoveTargetUser = (reg) => {
+    setAppVersionConfig((prev) => ({
+      ...prev,
+      targetedRegistrationNumbers: (prev.targetedRegistrationNumbers || []).filter((r) => r !== reg),
+    }));
   };
 
   // Initial load according to active tab
@@ -3085,6 +3138,248 @@ export default function SuperAdminPortal() {
                 </button>
               </div>
 
+              {/* Release Target Audience Selector */}
+              <div
+                style={{
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  background: appVersionConfig.targetAudience === 'specific' ? 'rgba(245, 158, 11, 0.05)' : 'var(--bg-secondary)',
+                  border: appVersionConfig.targetAudience === 'specific' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '0.75rem' }}>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🎯 Release Rollout Audience</span>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontWeight: 700,
+                          background: appVersionConfig.targetAudience === 'specific' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                          color: appVersionConfig.targetAudience === 'specific' ? '#f59e0b' : '#3b82f6',
+                        }}
+                      >
+                        {appVersionConfig.targetAudience === 'specific' ? 'PILOT / SPECIFIC USERS' : 'GLOBAL (ALL USERS)'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      Release to everyone globally or selectively test with specific users (filtered by Name or Registration Number).
+                    </div>
+                  </div>
+                  <div style={{ display: 'inline-flex', gap: '4px', background: 'var(--bg-card)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setAppVersionConfig((prev) => ({ ...prev, targetAudience: 'all' }))}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        background: appVersionConfig.targetAudience === 'all' ? 'var(--primary)' : 'transparent',
+                        color: appVersionConfig.targetAudience === 'all' ? '#fff' : 'var(--text-secondary)',
+                      }}
+                    >
+                      🌐 All Users
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAppVersionConfig((prev) => ({ ...prev, targetAudience: 'specific' }))}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        background: appVersionConfig.targetAudience === 'specific' ? '#f59e0b' : 'transparent',
+                        color: appVersionConfig.targetAudience === 'specific' ? '#fff' : 'var(--text-secondary)',
+                      }}
+                    >
+                      🎯 Specific Users
+                    </button>
+                  </div>
+                </div>
+
+                {appVersionConfig.targetAudience === 'specific' && (
+                  <div style={{ marginTop: '0.75rem', borderTop: '1px dashed rgba(245, 158, 11, 0.3)', paddingTop: '0.75rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                      Filter & Add User by Name or Registration Number:
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        value={targetUserSearch}
+                        onChange={(e) => handleSearchTargetUsers(e.target.value)}
+                        placeholder="Search student/user name or reg number (e.g. Om Verma or 21BCON001)..."
+                        style={{
+                          width: '100%',
+                          padding: '0.55rem 0.75rem',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.85rem',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                      {searchingTargetUsers && (
+                        <span style={{ position: 'absolute', right: '12px', top: '9px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Searching...
+                        </span>
+                      )}
+                      {targetUserSearchResults.length > 0 && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            zIndex: 40,
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            marginTop: '4px',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                          }}
+                        >
+                          {targetUserSearchResults.map((u) => {
+                            const isAdded = (appVersionConfig.targetedRegistrationNumbers || []).includes(u.registrationNumber?.toUpperCase());
+                            return (
+                              <div
+                                key={u._id}
+                                onClick={() => !isAdded && handleAddTargetUser(u)}
+                                style={{
+                                  padding: '8px 12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  cursor: isAdded ? 'default' : 'pointer',
+                                  opacity: isAdded ? 0.6 : 1,
+                                  borderBottom: '1px solid var(--border-color)',
+                                }}
+                                onMouseEnter={(e) => !isAdded && (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                                onMouseLeave={(e) => !isAdded && (e.currentTarget.style.background = 'transparent')}
+                              >
+                                <div>
+                                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                                    {u.name}
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                    {u.registrationNumber} • {u.role} {u.hostel ? `(${u.hostel})` : ''}
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isAdded ? '#10b981' : 'var(--primary)' }}>
+                                  {isAdded ? 'Added ✓' : '+ Add to Release'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick Manual Entry */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <input
+                        type="text"
+                        value={targetManualReg}
+                        onChange={(e) => setTargetManualReg(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (targetManualReg.trim()) handleAddTargetUser(targetManualReg);
+                          }
+                        }}
+                        placeholder="Or directly enter Reg Number (e.g. 21BCON001) & press Add"
+                        style={{
+                          flex: 1,
+                          padding: '0.45rem 0.65rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.8rem',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => targetManualReg.trim() && handleAddTargetUser(targetManualReg)}
+                        style={{
+                          padding: '0.45rem 0.95rem',
+                          borderRadius: '6px',
+                          border: 'none',
+                          background: 'var(--primary)',
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        + Add
+                      </button>
+                    </div>
+
+                    {/* Chips for Selected Registration Numbers */}
+                    <div style={{ marginTop: '10px' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                        Active Release Targets ({appVersionConfig.targetedRegistrationNumbers?.length || 0}):
+                      </div>
+                      {(!appVersionConfig.targetedRegistrationNumbers || appVersionConfig.targetedRegistrationNumbers.length === 0) ? (
+                        <div style={{ fontSize: '0.75rem', color: '#f59e0b', fontStyle: 'italic' }}>
+                          ⚠️ No specific users added yet. Search above to add pilot users, or switch to "All Users".
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {appVersionConfig.targetedRegistrationNumbers.map((reg) => (
+                            <span
+                              key={reg}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '3px 8px',
+                                borderRadius: '14px',
+                                background: 'rgba(245, 158, 11, 0.15)',
+                                border: '1px solid rgba(245, 158, 11, 0.4)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              <span>👤 {reg}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTargetUser(reg)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                  padding: '0 2px',
+                                  fontSize: '0.8rem',
+                                  lineHeight: 1,
+                                }}
+                                title="Remove User"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Update URL */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
@@ -3269,6 +3564,25 @@ export default function SuperAdminPortal() {
                   <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Current: v1.0.0</span>
                   <span style={{ color: '#818cf8' }}>→</span>
                   <span style={{ fontWeight: 800, color: '#38bdf8' }}>Available: v{appVersionConfig.latestVersion || '1.0.0'}</span>
+                </div>
+
+                <div style={{ marginBottom: '0.6rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.65rem',
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                      background: appVersionConfig.targetAudience === 'specific' ? 'rgba(245, 158, 11, 0.25)' : 'rgba(59, 130, 246, 0.25)',
+                      color: appVersionConfig.targetAudience === 'specific' ? '#f59e0b' : '#60a5fa',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.03em',
+                    }}
+                  >
+                    {appVersionConfig.targetAudience === 'specific'
+                      ? `🎯 Pilot Rollout: ${appVersionConfig.targetedRegistrationNumbers?.length || 0} Target User(s)`
+                      : '🌐 Global Rollout: All Users'}
+                  </span>
                 </div>
 
                 <div style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem', lineHeight: 1.4, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>

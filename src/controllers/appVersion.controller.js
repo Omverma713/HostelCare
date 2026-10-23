@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken");
 const SystemConfig = require("../models/systemConfig.model");
 const { isValidVersion, evaluateUpdate } = require("../utils/versionComparator");
 
@@ -6,7 +7,8 @@ const { isValidVersion, evaluateUpdate } = require("../utils/versionComparator")
  * GET /api/v1/app-version
  * 
  * Validates request parameters and returns a structured response indicating
- * whether an optional or forced update is required. Never exposes internal credentials.
+ * whether an optional or forced update is required. Supports targeted rollouts
+ * for pilot testing specific users or groups.
  */
 const getAppVersionStatus = async (req, res) => {
   try {
@@ -28,13 +30,91 @@ const getAppVersionStatus = async (req, res) => {
       updateUrl: "https://play.google.com/store/apps/details?id=com.hostelcare.app",
       forceUpdate: false,
       releaseNotes: "",
+      targetAudience: "all",
+      targetedRegistrationNumbers: [],
+      targetedRoles: [],
+      targetedHostels: [],
     };
 
-    const origin = String(req.headers.origin || req.headers.referer || '');
+    // Extract requester identity from JWT (if sent) or query parameters
+    let clientRegistrationNumber = req.query.registrationNumber
+      ? String(req.query.registrationNumber).trim().toUpperCase()
+      : null;
+    let clientRole = req.query.role ? String(req.query.role).trim().toLowerCase() : null;
+    let clientHostel = req.query.hostel ? String(req.query.hostel).trim() : null;
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.substring(7).trim();
+      try {
+        const decoded = jwt.decode(token);
+        if (decoded) {
+          if (!clientRegistrationNumber && decoded.registrationNumber) {
+            clientRegistrationNumber = String(decoded.registrationNumber).trim().toUpperCase();
+          }
+          if (!clientRole && decoded.role) {
+            clientRole = String(decoded.role).trim().toLowerCase();
+          }
+          if (!clientHostel && decoded.hostel) {
+            clientHostel = String(decoded.hostel).trim();
+          }
+        }
+      } catch (e) {
+        // Safe ignore token decode error
+      }
+    }
+
+    // Check targeted release eligibility
+    const targetAudience = appVersionConfig.targetAudience || "all";
+    const targetedRegs = (appVersionConfig.targetedRegistrationNumbers || []).map((r) =>
+      String(r).toUpperCase()
+    );
+    const targetedRoles = (appVersionConfig.targetedRoles || []).map((r) =>
+      String(r).toLowerCase()
+    );
+    const targetedHostels = (appVersionConfig.targetedHostels || []).map((h) =>
+      String(h).toLowerCase()
+    );
+
+    let isEligible = true;
+    if (targetAudience === "specific") {
+      isEligible = false;
+      if (clientRegistrationNumber && targetedRegs.includes(clientRegistrationNumber)) {
+        isEligible = true;
+      } else if (clientRole && targetedRoles.includes(clientRole)) {
+        isEligible = true;
+      } else if (clientHostel && targetedHostels.includes(clientHostel.toLowerCase())) {
+        isEligible = true;
+      }
+    }
+
+    // If targeted release is enabled and user is not in the pilot rollout group, do not prompt/block
+    if (!isEligible) {
+      return res.status(200).json({
+        success: true,
+        clientVersion: currentVersion || null,
+        platform: platform || "android",
+        buildNumber: buildNumber || null,
+        latestVersion: currentVersion || appVersionConfig.latestVersion,
+        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+        updateAvailable: false,
+        forceUpdate: false,
+        updateType: "none",
+        targetAudience: "specific",
+        isTargeted: false,
+        updateMessage: "You are currently on the stable channel for your user account.",
+        updateUrl: appVersionConfig.updateUrl,
+        releaseNotes: "",
+        apkSha256: "",
+        checkedAt: new Date().toISOString(),
+      });
+    }
+
+    const origin = String(req.headers.origin || req.headers.referer || "");
     const isWebRequest =
-      platform === 'web' ||
-      origin.includes('workers.dev') ||
-      origin.includes('localhost:5173');
+      platform === "web" ||
+      origin.includes("workers.dev") ||
+      origin.includes("localhost:5173");
 
     let evaluation = {
       updateAvailable: false,
@@ -63,6 +143,8 @@ const getAppVersionStatus = async (req, res) => {
       updateAvailable: evaluation.updateAvailable,
       forceUpdate: evaluation.forceUpdate,
       updateType: evaluation.updateType, // 'none' | 'flexible' | 'immediate'
+      targetAudience: targetAudience,
+      isTargeted: true,
       updateMessage: appVersionConfig.updateMessage,
       updateUrl: appVersionConfig.updateUrl,
       releaseNotes: appVersionConfig.releaseNotes || "",

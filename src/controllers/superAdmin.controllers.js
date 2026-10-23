@@ -1706,6 +1706,10 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       forceUpdate,
       releaseNotes,
       apkSha256,
+      targetAudience,
+      targetedRegistrationNumbers,
+      targetedRoles,
+      targetedHostels,
     } = req.body;
 
     if (latestVersion !== undefined && !isValidVersion(latestVersion)) {
@@ -1731,6 +1735,10 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
         updateUrl: "https://play.google.com/store/apps/details?id=com.hostelcare.app",
         forceUpdate: false,
         releaseNotes: "",
+        targetAudience: "all",
+        targetedRegistrationNumbers: [],
+        targetedRoles: [],
+        targetedHostels: [],
       };
     }
 
@@ -1755,6 +1763,45 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       config.appVersion.updateUrl = trimmedUrl;
     }
 
+    if (targetAudience !== undefined) {
+      if (!["all", "specific"].includes(targetAudience)) {
+        return res.status(400).json({
+          success: false,
+          message: "targetAudience must be either 'all' or 'specific'.",
+        });
+      }
+      config.appVersion.targetAudience = targetAudience;
+    }
+
+    if (targetedRegistrationNumbers !== undefined) {
+      if (Array.isArray(targetedRegistrationNumbers)) {
+        config.appVersion.targetedRegistrationNumbers = targetedRegistrationNumbers
+          .map((r) => String(r).trim().toUpperCase())
+          .filter(Boolean);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "targetedRegistrationNumbers must be an array of registration numbers.",
+        });
+      }
+    }
+
+    if (targetedRoles !== undefined) {
+      if (Array.isArray(targetedRoles)) {
+        config.appVersion.targetedRoles = targetedRoles
+          .map((r) => String(r).trim().toLowerCase())
+          .filter(Boolean);
+      }
+    }
+
+    if (targetedHostels !== undefined) {
+      if (Array.isArray(targetedHostels)) {
+        config.appVersion.targetedHostels = targetedHostels
+          .map((h) => String(h).trim())
+          .filter(Boolean);
+      }
+    }
+
     const previous = {
       latestVersion: config.appVersion.latestVersion,
       minimumSupportedVersion: config.appVersion.minimumSupportedVersion,
@@ -1762,6 +1809,10 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       updateUrl: config.appVersion.updateUrl,
       forceUpdate: config.appVersion.forceUpdate,
       releaseNotes: config.appVersion.releaseNotes,
+      targetAudience: config.appVersion.targetAudience,
+      targetedRegistrationNumbers: config.appVersion.targetedRegistrationNumbers,
+      targetedRoles: config.appVersion.targetedRoles,
+      targetedHostels: config.appVersion.targetedHostels,
     };
 
     if (latestVersion !== undefined) config.appVersion.latestVersion = nextLatest;

@@ -104,8 +104,27 @@ class AppUpdateService {
         buildNumber: build,
       });
 
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+      let userReg = '';
+      try {
+        const storedUser = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          userReg = parsed.registrationNumber || '';
+        }
+      } catch (e) {}
+
+      if (userReg) {
+        params.append('registrationNumber', userReg);
+      }
+
+      const headers = { Accept: 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_BASE}/app-version?${params.toString()}`, {
-        headers: { Accept: 'application/json' },
+        headers,
       });
 
       if (!response.ok) {

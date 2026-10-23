@@ -352,6 +352,47 @@ test("Super Admin API: Super Admin updates version configuration and writes Audi
   assert.equal(versionLog.adminRegistrationNumber, TEST_SUPERADMIN.registrationNumber);
 });
 
+test("Super Admin can configure targeted rollout and only matching users receive the update", async () => {
+  // Configure targeted rollout for only TEST_STUDENT's registration number
+  const targetedPayload = {
+    latestVersion: "3.0.0",
+    minimumSupportedVersion: "1.0.0",
+    targetAudience: "specific",
+    targetedRegistrationNumbers: [TEST_STUDENT.registrationNumber],
+    updateUrl: "https://play.google.com/store/apps/details?id=com.hostelcare.app",
+    forceUpdate: false,
+  };
+
+  const updateRes = await fetch(`${baseUrl}/api/v1/superadmin/app-version`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${superAdminToken}`,
+    },
+    body: JSON.stringify(targetedPayload),
+  });
+  assert.equal(updateRes.status, 200);
+
+  // Check from an untargeted user (different registration number)
+  const untargetedRes = await fetch(
+    `${baseUrl}/api/v1/app-version?currentVersion=1.0.0&registrationNumber=RANDOM_STUDENT_999`
+  );
+  assert.equal(untargetedRes.status, 200);
+  const untargetedData = await untargetedRes.json();
+  assert.equal(untargetedData.updateAvailable, false);
+  assert.equal(untargetedData.isTargeted, false);
+
+  // Check from the targeted student
+  const targetedStudentRes = await fetch(
+    `${baseUrl}/api/v1/app-version?currentVersion=1.0.0&registrationNumber=${TEST_STUDENT.registrationNumber}`
+  );
+  assert.equal(targetedStudentRes.status, 200);
+  const targetedStudentData = await targetedStudentRes.json();
+  assert.equal(targetedStudentData.updateAvailable, true);
+  assert.equal(targetedStudentData.isTargeted, true);
+  assert.equal(targetedStudentData.latestVersion, "3.0.0");
+});
+
 after(async () => {
   try {
     const SystemConfig = require("../src/models/systemConfig.model");

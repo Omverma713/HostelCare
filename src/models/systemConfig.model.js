@@ -128,6 +128,23 @@ const systemConfigSchema = new mongoose.Schema(
         maxlength: 128,
         trim: true,
       },
+      targetAudience: {
+        type: String,
+        enum: ["all", "specific"],
+        default: "all",
+      },
+      targetedRegistrationNumbers: {
+        type: [String],
+        default: [],
+      },
+      targetedRoles: {
+        type: [String],
+        default: [],
+      },
+      targetedHostels: {
+        type: [String],
+        default: [],
+      },
     },
   },
   {
