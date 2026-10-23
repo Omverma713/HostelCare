@@ -109,11 +109,24 @@ async function sendPushToSessions(sessions, payload) {
 
   const Session = require("../models/session.model");
 
+  // Track unique tokens and endpoints to ensure exactly 1 push per device even with multiple sessions
+  const seenFcmTokens = new Set();
+  const seenWebPushEndpoints = new Set();
+
   for (const session of sessions) {
     const { pushToken, webPushSubscription, pushProvider, _id: sessionId } = session;
 
     // 1. Android FCM Notification
     if (pushToken && (pushProvider === "fcm" || pushProvider === "none")) {
+      const normalizedToken = typeof pushToken === "string" ? pushToken.trim() : "";
+      if (!normalizedToken) continue;
+
+      // Skip duplicate sends if the same FCM token exists across multiple active sessions
+      if (seenFcmTokens.has(normalizedToken)) {
+        continue;
+      }
+      seenFcmTokens.add(normalizedToken);
+
       report.attempted++;
       report.fcm.attempted++;
 
@@ -130,7 +143,7 @@ async function sendPushToSessions(sessions, payload) {
 
       try {
         const message = {
-          token: pushToken,
+          token: normalizedToken,
           notification: {
             title: payload.title || "HostelCare",
             body: payload.body || "",
@@ -187,6 +200,11 @@ async function sendPushToSessions(sessions, payload) {
 
     // 2. Web Push Notification
     else if (webPushSubscription && pushProvider === "webpush") {
+      const endpoint = webPushSubscription.endpoint;
+      if (!endpoint || seenWebPushEndpoints.has(endpoint)) {
+        continue;
+      }
+      seenWebPushEndpoints.add(endpoint);
       report.attempted++;
       report.webpush.attempted++;
 

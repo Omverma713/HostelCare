@@ -661,6 +661,12 @@ const registerPushToken = async (req, res) => {
     }
 
     if (pushToken) {
+      // Clear this FCM push token from other sessions to avoid multi-session duplication
+      await Session.updateMany(
+        { pushToken, _id: { $ne: session._id } },
+        { $set: { pushToken: null, pushProvider: "none" } }
+      ).catch(() => {});
+
       session.pushToken = pushToken;
       session.pushProvider = "fcm";
     }

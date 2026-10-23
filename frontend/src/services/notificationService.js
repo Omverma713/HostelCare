@@ -30,6 +30,9 @@ export async function initPushNotifications() {
 
     await PushNotifications.register();
 
+    // Ensure clean state without duplicate listeners
+    await PushNotifications.removeAllListeners().catch(() => {});
+
     PushNotifications.addListener('registration', async (token) => {
       console.log('FCM Device Token registered:', token.value);
       try {
@@ -44,30 +47,16 @@ export async function initPushNotifications() {
       console.error('FCM registration error:', err);
     });
 
-    PushNotifications.addListener('pushNotificationReceived', async (notification) => {
+    // Foreground push notification received:
+    // Capacitor's PushNotifications plugin automatically presents the system notification banner
+    // according to presentationOptions: ["badge", "sound", "alert"].
+    // Do NOT schedule a LocalNotification here as that causes duplicate notifications in the shade.
+    PushNotifications.addListener('pushNotificationReceived', (notification) => {
       console.log('Push received in foreground:', notification);
-      try {
-        await LocalNotifications.schedule({
-          notifications: [
-            {
-              id: Math.floor(Math.random() * 2000000000) + 1,
-              title: notification.title || 'HostelCare',
-              body: notification.body || '',
-              channelId: CHANNEL_ID,
-              smallIcon: 'ic_stat_hostelcare',
-              largeIcon: 'ic_launcher',
-              iconColor: '#4361EE',
-              extra: notification.data || {},
-            },
-          ],
-        });
-      } catch (e) {
-        console.warn('Local dispatch failed:', e);
-      }
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-      const route = notification.notification.data?.route;
+      const route = notification.notification?.data?.route;
       if (route && window.location.pathname !== route) {
         window.location.href = route;
       }
