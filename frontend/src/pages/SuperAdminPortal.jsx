@@ -49,26 +49,22 @@ export default function SuperAdminPortal() {
       if (res && res.token) {
         const currentToken = token || localStorage.getItem('token');
         localStorage.setItem('hostelcare_impersonate_backup', currentToken);
+        localStorage.setItem('token', res.token);
         triggerToast('success', `Switched session to ${targetUser.name} (${targetUser.role})`, 'Impersonation Active');
 
-        const switched = setDirectToken(res.token);
-        const role = switched?.role || targetUser.role;
-        switch (role) {
-          case 'student':
-            navigate('/student');
-            break;
-          case 'caretaker':
-            navigate('/caretaker');
-            break;
-          case 'warden':
-            navigate('/warden');
-            break;
-          case 'superintendent':
-            navigate('/superintendent');
-            break;
-          default:
-            navigate('/');
-        }
+        const role = targetUser.role;
+        const targetRoute =
+          role === 'student'
+            ? '/student'
+            : role === 'caretaker'
+            ? '/caretaker'
+            : role === 'warden'
+            ? '/warden'
+            : role === 'superintendent'
+            ? '/superintendent'
+            : '/';
+
+        window.location.replace(targetRoute);
       } else {
         throw new Error(res.message || 'Failed to switch user');
       }

@@ -17,12 +17,12 @@ export default function ImpersonationBanner() {
   const handleExit = () => {
     try {
       localStorage.removeItem('hostelcare_impersonate_backup');
-      setDirectToken(backupToken);
+      localStorage.setItem('token', backupToken);
       triggerToast('success', 'Returned to Super Admin Control Panel', 'Session Restored');
-      navigate('/superadmin');
+      window.location.replace('/superadmin');
     } catch (err) {
       console.error('Failed to exit impersonation:', err);
-      navigate('/login');
+      window.location.replace('/login');
     }
   };
 
