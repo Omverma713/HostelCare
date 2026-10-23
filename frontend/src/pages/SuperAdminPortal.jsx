@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { adminApi } from '../services/adminApi';
+import { appUpdateService } from '../services/appUpdateService';
 import { triggerToast } from '../components/Toast';
 import './SuperAdminPortal.css';
 
@@ -127,6 +128,9 @@ export default function SuperAdminPortal() {
     releaseNotes: '',
   });
   const [savingAppVersion, setSavingAppVersion] = useState(false);
+  const [manualChecking, setManualChecking] = useState(false);
+  const [manualCheckResult, setManualCheckResult] = useState(null);
+  const [installedAppVersion, setInstalledAppVersion] = useState('1.1.0');
 
   // Load Overview Data
   const loadOverview = useCallback(async () => {
@@ -262,12 +266,48 @@ export default function SuperAdminPortal() {
       if (res.success && res.appVersion) {
         setAppVersionConfig(res.appVersion);
       }
+      const info = await appUpdateService.getInstalledVersion();
+      setInstalledAppVersion(info.version || '1.1.0');
     } catch (err) {
       triggerToast('error', err.message || 'Failed to load app version configuration', 'App Version');
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const handleManualCheckForUpdates = async () => {
+    try {
+      setManualChecking(true);
+      setManualCheckResult(null);
+      const res = await appUpdateService.checkForUpdates({ manual: true });
+      if (res.updateAvailable) {
+        setManualCheckResult({
+          status: 'update_available',
+          message: `New version v${res.latestVersion} is available!`,
+          latestVersion: res.latestVersion,
+          releaseNotes: res.releaseNotes,
+        });
+      } else if (!res.errorMessage) {
+        setManualCheckResult({
+          status: 'up_to_date',
+          message: `You're up to date! (Installed: v${res.currentVersion || installedAppVersion})`,
+          currentVersion: res.currentVersion || installedAppVersion,
+        });
+      } else {
+        setManualCheckResult({
+          status: 'error',
+          message: res.errorMessage || 'Unable to check for updates.',
+        });
+      }
+    } catch (err) {
+      setManualCheckResult({
+        status: 'error',
+        message: err.message || 'Unable to check for updates.',
+      });
+    } finally {
+      setManualChecking(false);
+    }
+  };
 
   // Initial load according to active tab
   useEffect(() => {
@@ -2852,6 +2892,101 @@ export default function SuperAdminPortal() {
             </div>
           </div>
 
+          {/* Manual Check for Update Card */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.25rem 1.5rem',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                CLIENT APP UPDATE STATUS
+              </div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>Installed Version: <strong>v{installedAppVersion}</strong></span>
+                {manualCheckResult?.status === 'up_to_date' && (
+                  <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontWeight: 700 }}>
+                    You're up to date!
+                  </span>
+                )}
+              </div>
+              {manualCheckResult ? (
+                <div
+                  style={{
+                    marginTop: '6px',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color:
+                      manualCheckResult.status === 'up_to_date'
+                        ? '#10b981'
+                        : manualCheckResult.status === 'update_available'
+                        ? '#38bdf8'
+                        : '#ef4444',
+                  }}
+                >
+                  {manualCheckResult.message}
+                </div>
+              ) : (
+                <div style={{ marginTop: '4px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Click below to verify if your device has the latest released HostelCare APK.
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                disabled={manualChecking}
+                onClick={handleManualCheckForUpdates}
+                style={{
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  cursor: manualChecking ? 'not-allowed' : 'pointer',
+                  opacity: manualChecking ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                }}
+              >
+                <span>{manualChecking ? '⏳ Checking...' : '🔍 Check for Update'}</span>
+              </button>
+              {manualCheckResult?.status === 'update_available' && (
+                <button
+                  type="button"
+                  onClick={() => appUpdateService.performUpdate()}
+                  style={{
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Update Now
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="sa-two-col-grid">
             {/* Version Configuration Form Card */}
             <form
@@ -2968,14 +3103,13 @@ export default function SuperAdminPortal() {
               {/* Update URL */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  Official Update URL (Play Store / Store Link) *
+                  Direct APK Download Link (HTTPS)
                 </label>
                 <input
                   type="url"
-                  required
                   value={appVersionConfig.updateUrl}
                   onChange={(e) => setAppVersionConfig((prev) => ({ ...prev, updateUrl: e.target.value }))}
-                  placeholder="https://play.google.com/store/apps/details?id=com.hostelcare.app"
+                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.0/hostelcare-v1.2.0.apk"
                   style={{
                     width: '100%',
                     padding: '0.55rem 0.75rem',
@@ -2987,6 +3121,9 @@ export default function SuperAdminPortal() {
                     boxSizing: 'border-box',
                   }}
                 />
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Must be a reachable HTTPS direct download link to the published APK asset on GitHub Releases (e.g. <code>https://github.com/Omverma713/HostelCare/releases/download/vX.Y.Z/hostelcare-vX.Y.Z.apk</code>). If empty or unconfigured, the app will notify users that download is pending rather than opening a broken link.
+                </div>
               </div>
 
               {/* Update Message */}

@@ -30,6 +30,12 @@ const getAppVersionStatus = async (req, res) => {
       releaseNotes: "",
     };
 
+    const origin = String(req.headers.origin || req.headers.referer || '');
+    const isWebRequest =
+      platform === 'web' ||
+      origin.includes('workers.dev') ||
+      origin.includes('localhost:5173');
+
     let evaluation = {
       updateAvailable: false,
       forceUpdate: false,
@@ -38,7 +44,7 @@ const getAppVersionStatus = async (req, res) => {
       isBelowLatest: false,
     };
 
-    if (currentVersion) {
+    if (currentVersion && !isWebRequest) {
       evaluation = evaluateUpdate({
         currentVersion,
         latestVersion: appVersionConfig.latestVersion,

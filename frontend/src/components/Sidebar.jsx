@@ -3,6 +3,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/ThemeContext';
 import { ROLE_LABELS } from '../constants';
+import { Capacitor } from '@capacitor/core';
+import { appUpdateService } from '../services/appUpdateService';
 
 /**
  * Ultra-Modern 3D Floating Glass Sidebar Dock
@@ -247,6 +249,34 @@ export default function Sidebar({ isOpen, onClose }) {
               <span className="resident-id-code">ID: {user.registrationNumber}</span>
             </div>
           </div>
+
+          {/* App Update Check Button (Native Mobile APK Only) */}
+          {Capacitor.isNativePlatform() && (
+            <div style={{ padding: '0 0.5rem 0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => appUpdateService.checkForUpdates({ manual: true })}
+                style={{
+                  width: '100%',
+                  padding: '0.45rem 0.75rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  color: 'var(--text-secondary, rgba(255, 255, 255, 0.7))',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                }}
+                title="Check if a newer version of HostelCare is available"
+              >
+                <span>📲 App Version</span>
+                <span style={{ fontSize: '0.7rem', color: '#818cf8', fontWeight: 700 }}>Check for Update</span>
+              </button>
+            </div>
+          )}
 
           {/* 5. Theme Switcher & Logout */}
           <div className="sidebar-controls-row">

@@ -1,8 +1,11 @@
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
-import { AppUpdate } from '@capawesome/capacitor-app-update';
+import { compareVersions, isValidDirectApkUrl } from '../utils/versionComparator';
 
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://hostelcare-api.duckdns.org/api/v1' : '/api/v1');
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? 'https://hostelcare-api.duckdns.org/api/v1' : '/api/v1');
 
 const DISMISSED_SESSION_KEY = 'hostelcare_update_dismissed_session';
 
@@ -11,26 +14,24 @@ class AppUpdateService {
     this.updateState = {
       checking: false,
       updateAvailable: false,
-      forceUpdate: false,
-      updateType: 'none', // 'none' | 'flexible' | 'immediate'
+      forceUpdate: false, // Never force update in this sideloaded workflow
+      updateType: 'none',
       currentVersion: '1.0.0',
       latestVersion: '1.0.0',
       minimumSupportedVersion: '1.0.0',
       updateMessage: '',
-      updateUrl: 'https://play.google.com/store/apps/details?id=com.hostelcare.app',
+      updateUrl: '',
       releaseNotes: '',
       isDismissed: false,
-      // Google Play In-App Updates API state
-      playStoreAvailable: false,
-      playStoreUpdateAvailability: null,
-      flexibleDownloadProgress: null, // { bytesDownloaded, totalBytesToDownload }
-      flexibleUpdateDownloaded: false,
+      manualCheck: false,
+      manualCheckStatus: null, // null | 'checking' | 'up_to_date' | 'update_available' | 'error'
+      manualCheckMessage: '',
+      apkDownloadError: null,
       errorMessage: null,
     };
 
     this.listeners = new Set();
     this.hasInitialized = false;
-    this.flexibleStateListener = null;
   }
 
   notifyListeners() {
@@ -45,25 +46,23 @@ class AppUpdateService {
 
   subscribe(listener) {
     this.listeners.add(listener);
-    // Immediately invoke with current state
     listener({ ...this.updateState });
     return () => this.listeners.delete(listener);
   }
 
   async getInstalledVersion() {
-    if (!Capacitor.isNativePlatform()) {
-      return { version: '1.0.0', build: '1' };
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const info = await App.getInfo();
+        return {
+          version: info.version || '1.0.0',
+          build: info.build || '1',
+        };
+      } catch (err) {
+        console.warn('[AppUpdateService] Could not retrieve native App.getInfo():', err);
+      }
     }
-    try {
-      const info = await App.getInfo();
-      return {
-        version: info.version || '1.0.0',
-        build: info.build || '1',
-      };
-    } catch (err) {
-      console.warn('[AppUpdateService] Could not retrieve native App.getInfo():', err);
-      return { version: '1.0.0', build: '1' };
-    }
+    return { version: '1.1.0', build: '2' };
   }
 
   async checkForUpdates({ manual = false } = {}) {
@@ -71,15 +70,19 @@ class AppUpdateService {
 
     this.updateState.checking = true;
     this.updateState.errorMessage = null;
+    this.updateState.apkDownloadError = null;
+    if (manual) {
+      this.updateState.manualCheck = true;
+      this.updateState.manualCheckStatus = 'checking';
+      this.updateState.manualCheckMessage = 'Checking for updates...';
+    }
     this.notifyListeners();
 
     try {
-      const isNative = Capacitor.isNativePlatform();
-      const platform = Capacitor.getPlatform();
+      const platform = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : 'android';
       const { version, build } = await this.getInstalledVersion();
       this.updateState.currentVersion = version;
 
-      // 1. Query Backend-managed App Version Configuration
       const params = new URLSearchParams({
         currentVersion: version,
         platform,
@@ -91,7 +94,7 @@ class AppUpdateService {
       });
 
       if (!response.ok) {
-        throw new Error(`Version check server returned HTTP ${response.status}`);
+        throw new Error(`Server returned HTTP ${response.status}`);
       }
 
       const data = await response.json();
@@ -99,44 +102,43 @@ class AppUpdateService {
         throw new Error(data.message || 'Invalid version check response');
       }
 
-      const updateAvailable = Boolean(data.updateAvailable);
-      const forceUpdate = Boolean(data.forceUpdate);
-      const updateType = data.updateType || (forceUpdate ? 'immediate' : updateAvailable ? 'flexible' : 'none');
+      const latestVersion = data.latestVersion || version;
+      // Newer version is strictly when latestVersion > installed version
+      const hasNewer = compareVersions(latestVersion, version) > 0;
+      const isBelowMinimum = compareVersions(version, data.minimumSupportedVersion || version) < 0;
+      const isForced = isBelowMinimum || Boolean(data.forceUpdate);
 
-      // Check if session previously dismissed this optional version
-      const dismissed = !forceUpdate && Boolean(sessionStorage.getItem(`${DISMISSED_SESSION_KEY}_${data.latestVersion}`));
-
-      this.updateState.updateAvailable = updateAvailable;
-      this.updateState.forceUpdate = forceUpdate;
-      this.updateState.updateType = updateType;
-      this.updateState.latestVersion = data.latestVersion || version;
+      this.updateState.latestVersion = latestVersion;
       this.updateState.minimumSupportedVersion = data.minimumSupportedVersion || version;
-      this.updateState.updateMessage = data.updateMessage || 'A new version of HostelCare is available.';
-      this.updateState.updateUrl = data.updateUrl || 'https://play.google.com/store/apps/details?id=com.hostelcare.app';
+      this.updateState.updateAvailable = hasNewer || isForced;
+      this.updateState.forceUpdate = isForced;
+      this.updateState.updateType = isForced ? 'immediate' : (hasNewer ? 'flexible' : 'none');
+      this.updateState.updateMessage = data.updateMessage || (isForced ? 'A critical update is required to continue accessing HostelCare.' : 'A new version of HostelCare is available.');
+      this.updateState.updateUrl = data.updateUrl || '';
       this.updateState.releaseNotes = data.releaseNotes || '';
-      this.updateState.isDismissed = !manual && dismissed;
 
-      // 2. If Android native, check Google Play In-App Updates API capability
-      if (isNative && platform === 'android') {
-        try {
-          const playInfo = await AppUpdate.getAppUpdateInfo();
-          // UpdateAvailability: 0 = UNKNOWN, 1 = UPDATE_NOT_AVAILABLE, 2 = UPDATE_AVAILABLE, 3 = DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
-          this.updateState.playStoreAvailable = true;
-          this.updateState.playStoreUpdateAvailability = playInfo.updateAvailability;
-
-          // If Google Play itself says update is available, register flexible download listener
-          if (playInfo.updateAvailability === 2 && !this.flexibleStateListener) {
-            this.setupFlexibleListener();
-          }
-        } catch (playErr) {
-          // Expected on local debug builds, sideloaded APKs, or devices without Google Play Services
-          this.updateState.playStoreAvailable = false;
-          console.info('[AppUpdateService] Google Play In-App Update info check skipped or unavailable:', playErr?.message);
+      if (manual) {
+        this.updateState.manualCheck = true;
+        if (hasNewer || isForced) {
+          this.updateState.manualCheckStatus = 'update_available';
+          this.updateState.manualCheckMessage = `New version v${latestVersion} is available!`;
+          this.updateState.isDismissed = false; // Show modal on explicit manual check
+        } else {
+          this.updateState.manualCheckStatus = 'up_to_date';
+          this.updateState.manualCheckMessage = `You're up to date! (v${version})`;
         }
+      } else {
+        // Startup/resume: respect session dismissal ONLY for optional updates
+        const dismissed = !isForced && Boolean(sessionStorage.getItem(`${DISMISSED_SESSION_KEY}_${latestVersion}`));
+        this.updateState.isDismissed = dismissed;
       }
     } catch (err) {
-      console.warn('[AppUpdateService] Version check failed (offline or network error):', err.message);
-      this.updateState.errorMessage = err.message;
+      console.warn('[AppUpdateService] Version check failed:', err.message);
+      this.updateState.errorMessage = 'Unable to check for updates. Please check your internet connection.';
+      if (manual) {
+        this.updateState.manualCheckStatus = 'error';
+        this.updateState.manualCheckMessage = this.updateState.errorMessage;
+      }
     } finally {
       this.updateState.checking = false;
       this.notifyListeners();
@@ -145,90 +147,43 @@ class AppUpdateService {
     return this.updateState;
   }
 
-  async setupFlexibleListener() {
+  performUpdate() {
+    const { updateUrl } = this.updateState;
+
+    if (!isValidDirectApkUrl(updateUrl)) {
+      this.updateState.apkDownloadError =
+        'The direct APK download link has not been configured yet. Please contact your hostel administrator.';
+      this.notifyListeners();
+      return false;
+    }
+
+    this.updateState.apkDownloadError = null;
+    this.notifyListeners();
+
     try {
-      this.flexibleStateListener = await AppUpdate.addListener('onFlexibleUpdateStateChange', (state) => {
-        // installStatus: 1 = PENDING, 2 = DOWNLOADING, 3 = INSTALLING, 11 = DOWNLOADED, 5 = FAILED, 6 = CANCELED
-        if (state.totalBytesToDownload > 0) {
-          this.updateState.flexibleDownloadProgress = {
-            bytesDownloaded: state.bytesDownloaded,
-            totalBytesToDownload: state.totalBytesToDownload,
-            percent: Math.round((state.bytesDownloaded / state.totalBytesToDownload) * 100),
-          };
-        }
-
-        if (state.installStatus === 11 /* DOWNLOADED */) {
-          this.updateState.flexibleUpdateDownloaded = true;
-          this.updateState.flexibleDownloadProgress = null;
-        }
-
-        this.notifyListeners();
-      });
-    } catch (err) {
-      console.warn('[AppUpdateService] Failed to attach flexible update listener:', err);
+      window.open(updateUrl, '_system');
+    } catch (e) {
+      window.location.href = updateUrl;
     }
-  }
-
-  /**
-   * Triggers the appropriate update flow:
-   * 1. Google Play In-App Updates API (if available on Android)
-   * 2. Fallback to opening the official Play Store / update URL safely
-   */
-  async performUpdate() {
-    const isNative = Capacitor.isNativePlatform();
-    const platform = Capacitor.getPlatform();
-    const { forceUpdate, updateUrl, playStoreAvailable, playStoreUpdateAvailability } = this.updateState;
-
-    if (isNative && platform === 'android' && playStoreAvailable && playStoreUpdateAvailability === 2) {
-      try {
-        if (forceUpdate) {
-          // Immediate update flow
-          await AppUpdate.performImmediateUpdate();
-          return;
-        } else {
-          // Flexible background update flow
-          await AppUpdate.startFlexibleUpdate();
-          return;
-        }
-      } catch (playUpdateErr) {
-        console.warn('[AppUpdateService] Google Play In-App update failed, falling back to official update URL:', playUpdateErr);
-      }
-    }
-
-    // Direct official update URL fallback
-    this.openOfficialUpdateUrl(updateUrl);
-  }
-
-  async completeFlexibleUpdate() {
-    try {
-      await AppUpdate.completeFlexibleUpdate();
-    } catch (err) {
-      console.error('[AppUpdateService] Failed to complete flexible update installation:', err);
-      this.openOfficialUpdateUrl(this.updateState.updateUrl);
-    }
-  }
-
-  openOfficialUpdateUrl(url) {
-    const targetUrl = url || this.updateState.updateUrl || 'https://play.google.com/store/apps/details?id=com.hostelcare.app';
-    try {
-      // Use window.open with _system so Android launches Google Play Store app directly
-      window.open(targetUrl, '_system');
-    } catch (err) {
-      window.location.href = targetUrl;
-    }
+    return true;
   }
 
   dismissUpdate() {
     if (this.updateState.forceUpdate) {
-      // Security rule: forced updates cannot be dismissed
+      // Force update cannot be dismissed
       return;
     }
     this.updateState.isDismissed = true;
+    this.updateState.manualCheck = false;
+    this.updateState.manualCheckStatus = null;
+    this.updateState.apkDownloadError = null;
+
     try {
       sessionStorage.setItem(`${DISMISSED_SESSION_KEY}_${this.updateState.latestVersion}`, 'true');
     } catch (e) {
-      // ignore
+      // Ignore sessionStorage errors
     }
+
     this.notifyListeners();
   }
 
@@ -236,21 +191,23 @@ class AppUpdateService {
     if (this.hasInitialized) return;
     this.hasInitialized = true;
 
-    // 1. Initial check on startup
+    // App updates only apply to native mobile APK clients, not standard website browsers
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+
+    // 1. Initial non-blocking check on app startup
     this.checkForUpdates();
 
-    // 2. Setup Resume listener on native app
-    if (Capacitor.isNativePlatform()) {
-      try {
-        App.addListener('appStateChange', ({ isActive }) => {
-          if (isActive) {
-            // Re-evaluate version when app is brought back to foreground
-            this.checkForUpdates();
-          }
-        });
-      } catch (err) {
-        console.warn('[AppUpdateService] Failed to bind appStateChange listener:', err);
-      }
+    // 2. Non-blocking check on app resume
+    try {
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          this.checkForUpdates();
+        }
+      });
+    } catch (err) {
+      console.warn('[AppUpdateService] Failed to bind appStateChange listener:', err);
     }
   }
 }

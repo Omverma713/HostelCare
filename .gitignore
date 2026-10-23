@@ -14,3 +14,4 @@ mobile-app/www/
 *.jks
 *firebase-adminsdk*.json
 **/google-services.json
+mobile-app/dist-apk/

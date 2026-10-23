@@ -351,3 +351,24 @@ test("Super Admin API: Super Admin updates version configuration and writes Audi
   assert.ok(versionLog, "Audit log must contain APP_VERSION_CONFIG_UPDATED");
   assert.equal(versionLog.adminRegistrationNumber, TEST_SUPERADMIN.registrationNumber);
 });
+
+after(async () => {
+  try {
+    const SystemConfig = require("../src/models/systemConfig.model");
+    await SystemConfig.updateOne(
+      { key: "default" },
+      {
+        $set: {
+          "appVersion.latestVersion": "1.0.0",
+          "appVersion.minimumSupportedVersion": "1.0.0",
+          "appVersion.forceUpdate": false,
+          "appVersion.updateUrl": "",
+          "appVersion.updateMessage": "",
+          "appVersion.releaseNotes": "",
+        },
+      }
+    );
+  } catch (err) {
+    // ignore
+  }
+});

@@ -89,3 +89,21 @@ export function evaluateUpdate({
     isBelowLatest,
   };
 }
+
+/**
+ * Validates whether an update URL is a valid, direct HTTPS download link for sideloaded distribution.
+ * Rejects non-HTTPS links, empty URLs, and placeholder Google Play links.
+ */
+export function isValidDirectApkUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed.startsWith('https://')) return false;
+  if (
+    trimmed.includes('play.google.com') ||
+    trimmed.includes('example.com') ||
+    trimmed === 'https://'
+  ) {
+    return false;
+  }
+  return true;
+}

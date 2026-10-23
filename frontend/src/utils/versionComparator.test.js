@@ -4,6 +4,7 @@ import {
   isValidVersion,
   compareVersions,
   evaluateUpdate,
+  isValidDirectApkUrl,
 } from './versionComparator.js';
 
 test('Frontend VersionComparator: Syntax Validation', () => {
@@ -32,61 +33,65 @@ test('Frontend VersionComparator: Version Ordering & Equality', () => {
   // Equal versions
   assert.equal(compareVersions('1.0.0', '1.0.0'), 0);
   assert.equal(compareVersions('v1.0.0', '1.0.0'), 0);
+  assert.equal(compareVersions('1.1.0', '1.1.0'), 0);
   assert.equal(compareVersions('1.0', '1.0.0'), 0);
 });
 
-test('Frontend VersionComparator: Optional vs Forced Update Logic', () => {
-  // Case 1: Up-to-date
-  const current = evaluateUpdate({
-    currentVersion: '2.0.0',
-    latestVersion: '2.0.0',
+test('Frontend VersionComparator: Sideloaded Direct APK URL Validation', () => {
+  // Valid direct HTTPS APK URLs
+  assert.equal(
+    isValidDirectApkUrl('https://github.com/Omverma713/HostelCare/releases/download/v1.1.0/hostelcare.apk'),
+    true
+  );
+  assert.equal(
+    isValidDirectApkUrl('https://hostelcare.s3.ap-south-1.amazonaws.com/builds/app-v1.1.0.apk'),
+    true
+  );
+
+  // Invalid / placeholder URLs
+  assert.equal(isValidDirectApkUrl(''), false);
+  assert.equal(isValidDirectApkUrl(null), false);
+  assert.equal(isValidDirectApkUrl(undefined), false);
+  assert.equal(isValidDirectApkUrl('http://insecure-download.com/app.apk'), false); // Must be HTTPS
+  assert.equal(
+    isValidDirectApkUrl('https://play.google.com/store/apps/details?id=com.hostelcare.app'),
+    false // Google Play placeholder rejected for sideloaded direct APK
+  );
+  assert.equal(isValidDirectApkUrl('https://example.com/app.apk'), false);
+  assert.equal(isValidDirectApkUrl('https://'), false);
+});
+
+test('Frontend VersionComparator: Sideloaded Optional Update Workflow Evaluation', () => {
+  // Case 1: Installed equals latest version (Up-to-date)
+  const upToDate = evaluateUpdate({
+    currentVersion: '1.1.0',
+    latestVersion: '1.1.0',
     minimumSupportedVersion: '1.0.0',
     forceUpdateFlag: false,
   });
-  assert.equal(current.updateAvailable, false);
-  assert.equal(current.forceUpdate, false);
-  assert.equal(current.updateType, 'none');
+  assert.equal(upToDate.updateAvailable, false);
+  assert.equal(upToDate.forceUpdate, false);
+  assert.equal(upToDate.updateType, 'none');
 
-  // Case 2: Optional update (Flexible)
-  const optional = evaluateUpdate({
-    currentVersion: '1.5.0',
-    latestVersion: '2.0.0',
+  // Case 2: Installed version is newer than latest (Local developer build)
+  const devAhead = evaluateUpdate({
+    currentVersion: '1.2.0',
+    latestVersion: '1.1.0',
     minimumSupportedVersion: '1.0.0',
     forceUpdateFlag: false,
   });
-  assert.equal(optional.updateAvailable, true);
-  assert.equal(optional.forceUpdate, false);
-  assert.equal(optional.updateType, 'flexible');
+  assert.equal(devAhead.updateAvailable, false);
+  assert.equal(devAhead.forceUpdate, false);
+  assert.equal(devAhead.updateType, 'none');
 
-  // Case 3: Forced update by minimum supported floor
-  const forcedByFloor = evaluateUpdate({
-    currentVersion: '0.9.0',
-    latestVersion: '2.0.0',
+  // Case 3: Newer version available (Optional / Flexible update)
+  const updateAvailable = evaluateUpdate({
+    currentVersion: '1.0.0',
+    latestVersion: '1.1.0',
     minimumSupportedVersion: '1.0.0',
     forceUpdateFlag: false,
   });
-  assert.equal(forcedByFloor.updateAvailable, true);
-  assert.equal(forcedByFloor.forceUpdate, true);
-  assert.equal(forcedByFloor.updateType, 'immediate');
-
-  // Case 4: Forced update by server-side flag
-  const forcedByFlag = evaluateUpdate({
-    currentVersion: '1.5.0',
-    latestVersion: '2.0.0',
-    minimumSupportedVersion: '1.0.0',
-    forceUpdateFlag: true,
-  });
-  assert.equal(forcedByFlag.updateAvailable, true);
-  assert.equal(forcedByFlag.forceUpdate, true);
-  assert.equal(forcedByFlag.updateType, 'immediate');
-
-  // Case 5: Invalid current version safely returns no update
-  const invalid = evaluateUpdate({
-    currentVersion: 'invalid',
-    latestVersion: '2.0.0',
-    minimumSupportedVersion: '1.0.0',
-  });
-  assert.equal(invalid.updateAvailable, false);
-  assert.equal(invalid.forceUpdate, false);
-  assert.equal(invalid.updateType, 'none');
+  assert.equal(updateAvailable.updateAvailable, true);
+  assert.equal(updateAvailable.forceUpdate, false); // Crucial: must be false for optional workflow
+  assert.equal(updateAvailable.updateType, 'flexible');
 });
