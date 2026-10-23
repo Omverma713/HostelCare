@@ -45,10 +45,6 @@ export default function StudentDashboard() {
   const [description, setDescription] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  // View More / View Less
-  const INITIAL_SHOW = 4;
-  const [showAll, setShowAll] = useState(false);
-
   // Detail modal state
   const [selectedComplaint, setSelectedComplaint] = useState(null);
 
@@ -367,7 +363,7 @@ export default function StudentDashboard() {
             /* --- 1. SPATIAL 3D CARDS GRID VIEW --- */
             <div className="spatial-cards-wrapper">
               <div className="spatial-cards-grid">
-                {(showAll ? filteredComplaints : filteredComplaints.slice(0, INITIAL_SHOW)).map((c) => (
+                {filteredComplaints.map((c) => (
                   <SpatialTicketCard
                     key={c._id}
                     complaint={c}
@@ -376,21 +372,6 @@ export default function StudentDashboard() {
                   />
                 ))}
               </div>
-
-              {/* View More / View Less */}
-              {filteredComplaints.length > INITIAL_SHOW && (
-                <div className="view-all-deck-footer">
-                  <button
-                    type="button"
-                    className="btn-view-all-subtle"
-                    onClick={() => setShowAll((prev) => !prev)}
-                  >
-                    {showAll
-                      ? '⬆️ View Less'
-                      : `⬇️ View More (${filteredComplaints.length - INITIAL_SHOW} more)`}
-                  </button>
-                </div>
-              )}
 
               {/* View All Complaints Action */}
               {statusFilter !== 'all' && (
@@ -423,7 +404,7 @@ export default function StudentDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(showAll ? filteredComplaints : filteredComplaints.slice(0, INITIAL_SHOW)).map((c) => (
+                    {filteredComplaints.map((c) => (
                       <tr key={c._id} className="table-row-spatial">
                         <td className="col-cat">
                           <div className="cat-cell-spatial">
@@ -460,21 +441,6 @@ export default function StudentDashboard() {
                   </tbody>
                 </table>
               </div>
-
-              {/* View More / View Less for Table */}
-              {filteredComplaints.length > INITIAL_SHOW && (
-                <div className="view-all-deck-footer">
-                  <button
-                    type="button"
-                    className="btn-view-all-subtle"
-                    onClick={() => setShowAll((prev) => !prev)}
-                  >
-                    {showAll
-                      ? '⬆️ View Less'
-                      : `⬇️ View More (${filteredComplaints.length - INITIAL_SHOW} more)`}
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </EmptyState>
