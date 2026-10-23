@@ -11,6 +11,24 @@ const API_BASE =
 
 const DISMISSED_SESSION_KEY = 'hostelcare_update_dismissed_session';
 
+function decodeTokenPayload(token) {
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    return null;
+  }
+}
+
 class AppUpdateService {
   constructor() {
     this.updateState = {
@@ -18,6 +36,7 @@ class AppUpdateService {
       updateAvailable: false,
       forceUpdate: false,
       updateType: 'none',
+      isSuspended: false,
       currentVersion: '1.2.0.1',
       latestVersion: '1.2.0.1',
       minimumSupportedVersion: '1.0.0',
@@ -107,16 +126,25 @@ class AppUpdateService {
 
       const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
       let userReg = '';
-      try {
-        const storedUser = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
-        if (storedUser) {
-          const parsed = JSON.parse(storedUser);
-          userReg = parsed.registrationNumber || '';
+      let userRole = '';
+      let userHostel = '';
+      if (token) {
+        const decoded = decodeTokenPayload(token);
+        if (decoded) {
+          userReg = decoded.registrationNumber || decoded.regNo || decoded.username || '';
+          userRole = decoded.role || '';
+          userHostel = decoded.hostel || '';
         }
-      } catch (e) {}
+      }
 
       if (userReg) {
         params.append('registrationNumber', userReg);
+      }
+      if (userRole) {
+        params.append('role', userRole);
+      }
+      if (userHostel) {
+        params.append('hostel', userHostel);
       }
 
       const headers = { Accept: 'application/json' };
@@ -137,16 +165,38 @@ class AppUpdateService {
         throw new Error(data.message || 'Invalid version check response');
       }
 
+      // 1. If release is suspended by administration, do not show or force updates
+      if (data.isSuspended) {
+        this.updateState.isSuspended = true;
+        this.updateState.updateAvailable = false;
+        this.updateState.forceUpdate = false;
+        this.updateState.updateType = 'none';
+        this.updateState.updateMessage = data.updateMessage || 'Release is temporarily paused by administration.';
+        this.updateState.releaseNotes = '';
+        this.updateState.releaseMedia = [];
+        if (manual) {
+          this.updateState.manualCheck = true;
+          this.updateState.manualCheckStatus = 'up_to_date';
+          this.updateState.manualCheckMessage = 'Updates are temporarily paused by administration.';
+        }
+        return this.updateState;
+      }
+
+      this.updateState.isSuspended = false;
+
+      // 2. If user is excluded from targeted pilot rollout (or updateAvailable false), do not prompt/block
+      const isEligible = data.isTargeted !== false && data.updateAvailable !== false;
       const latestVersion = data.latestVersion || version;
       const hasNewer = compareVersions(latestVersion, version) > 0;
       const isBelowMinimum = compareVersions(version, data.minimumSupportedVersion || version) < 0;
-      const isForced = isBelowMinimum || Boolean(data.forceUpdate);
+      const isForced = (isBelowMinimum || Boolean(data.forceUpdate)) && isEligible;
+      const updateAvailable = (hasNewer || isForced) && isEligible;
 
       this.updateState.latestVersion = latestVersion;
       this.updateState.minimumSupportedVersion = data.minimumSupportedVersion || version;
-      this.updateState.updateAvailable = hasNewer || isForced;
+      this.updateState.updateAvailable = updateAvailable;
       this.updateState.forceUpdate = isForced;
-      this.updateState.updateType = isForced ? 'immediate' : (hasNewer ? 'flexible' : 'none');
+      this.updateState.updateType = isForced ? 'immediate' : (updateAvailable ? 'flexible' : 'none');
       this.updateState.updateMessage = data.updateMessage || (isForced ? 'A critical update is required to continue accessing HostelCare.' : 'A new version of HostelCare is available.');
       this.updateState.updateUrl = data.updateUrl || '';
       this.updateState.releaseNotes = data.releaseNotes || '';
@@ -155,13 +205,15 @@ class AppUpdateService {
 
       if (manual) {
         this.updateState.manualCheck = true;
-        if (hasNewer || isForced) {
+        if (updateAvailable) {
           this.updateState.manualCheckStatus = 'update_available';
           this.updateState.manualCheckMessage = `New version v${latestVersion} is available!`;
           this.updateState.isDismissed = false;
         } else {
           this.updateState.manualCheckStatus = 'up_to_date';
-          this.updateState.manualCheckMessage = `You're up to date! (v${version})`;
+          this.updateState.manualCheckMessage = isEligible
+            ? `You're up to date! (v${version})`
+            : `You are on the stable channel (v${version})`;
         }
       } else {
         const dismissed = !isForced && Boolean(sessionStorage.getItem(`${DISMISSED_SESSION_KEY}_${latestVersion}`));

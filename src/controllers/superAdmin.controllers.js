@@ -1685,6 +1685,8 @@ const getSuperAdminAppVersionConfig = async (req, res) => {
           config?.appVersion?.updateUrl ||
           "https://play.google.com/store/apps/details?id=com.hostelcare.app",
         forceUpdate: Boolean(config?.appVersion?.forceUpdate),
+        isSuspended: Boolean(config?.appVersion?.isSuspended),
+        suspendedReason: config?.appVersion?.suspendedReason || "",
         releaseNotes: config?.appVersion?.releaseNotes || "",
         releaseMedia: config?.appVersion?.releaseMedia || [],
         apkSha256: config?.appVersion?.apkSha256 || "",
@@ -1714,6 +1716,8 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       updateMessage,
       updateUrl,
       forceUpdate,
+      isSuspended,
+      suspendedReason,
       releaseNotes,
       releaseMedia,
       apkSha256,
@@ -1819,6 +1823,8 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       updateMessage: config.appVersion.updateMessage,
       updateUrl: config.appVersion.updateUrl,
       forceUpdate: config.appVersion.forceUpdate,
+      isSuspended: config.appVersion.isSuspended,
+      suspendedReason: config.appVersion.suspendedReason,
       releaseNotes: config.appVersion.releaseNotes,
       targetAudience: config.appVersion.targetAudience,
       targetedRegistrationNumbers: config.appVersion.targetedRegistrationNumbers,
@@ -1829,6 +1835,8 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
     if (latestVersion !== undefined) config.appVersion.latestVersion = nextLatest;
     if (minimumSupportedVersion !== undefined) config.appVersion.minimumSupportedVersion = nextMin;
     if (typeof forceUpdate === "boolean") config.appVersion.forceUpdate = forceUpdate;
+    if (typeof isSuspended === "boolean") config.appVersion.isSuspended = isSuspended;
+    if (typeof suspendedReason === "string") config.appVersion.suspendedReason = suspendedReason.trim().slice(0, 500);
     if (typeof updateMessage === "string") config.appVersion.updateMessage = updateMessage.trim().slice(0, 1000);
     if (typeof releaseNotes === "string") config.appVersion.releaseNotes = releaseNotes.trim().slice(0, 10000);
     if (Array.isArray(releaseMedia)) {

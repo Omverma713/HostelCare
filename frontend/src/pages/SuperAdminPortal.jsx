@@ -125,6 +125,8 @@ export default function SuperAdminPortal() {
     updateMessage: '',
     updateUrl: 'https://play.google.com/store/apps/details?id=com.hostelcare.app',
     forceUpdate: false,
+    isSuspended: false,
+    suspendedReason: '',
     releaseNotes: '',
     apkSha256: '',
     targetAudience: 'all',
@@ -276,6 +278,8 @@ export default function SuperAdminPortal() {
         setAppVersionConfig((prev) => ({
           ...prev,
           ...res.appVersion,
+          isSuspended: Boolean(res.appVersion.isSuspended),
+          suspendedReason: res.appVersion.suspendedReason || '',
           targetAudience: res.appVersion.targetAudience || 'all',
           targetedRegistrationNumbers: res.appVersion.targetedRegistrationNumbers || [],
         }));
@@ -304,7 +308,9 @@ export default function SuperAdminPortal() {
       } else if (!res.errorMessage) {
         setManualCheckResult({
           status: 'up_to_date',
-          message: `You're up to date! (Installed: v${res.currentVersion || installedAppVersion})`,
+          message: res.isSuspended
+            ? 'Updates are currently suspended by administration.'
+            : `You're up to date! (Installed: v${res.currentVersion || installedAppVersion})`,
           currentVersion: res.currentVersion || installedAppVersion,
         });
       } else {
@@ -320,6 +326,61 @@ export default function SuperAdminPortal() {
       });
     } finally {
       setManualChecking(false);
+    }
+  };
+
+  const handleToggleReleaseSuspension = async () => {
+    const nextSuspended = !appVersionConfig.isSuspended;
+    const updated = {
+      ...appVersionConfig,
+      isSuspended: nextSuspended,
+    };
+    setAppVersionConfig(updated);
+    try {
+      setSavingAppVersion(true);
+      const res = await adminApi.updateAppVersionConfig(updated);
+      if (res.success) {
+        triggerToast(
+          nextSuspended ? 'warning' : 'success',
+          nextSuspended
+            ? 'Release suspended successfully. No users will receive update notifications.'
+            : 'Release resumed successfully. Update prompts are now active.',
+          nextSuspended ? 'Release Suspended ⏸️' : 'Release Resumed ▶️'
+        );
+        if (res.appVersion) {
+          setAppVersionConfig((prev) => ({
+            ...prev,
+            ...res.appVersion,
+            isSuspended: Boolean(res.appVersion.isSuspended),
+          }));
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to toggle release suspension', 'Error');
+    } finally {
+      setSavingAppVersion(false);
+    }
+  };
+
+  const handleSelectTargetAudience = async (audience) => {
+    const updated = {
+      ...appVersionConfig,
+      targetAudience: audience,
+    };
+    setAppVersionConfig(updated);
+    try {
+      const res = await adminApi.updateAppVersionConfig(updated);
+      if (res.success) {
+        triggerToast(
+          'success',
+          audience === 'specific'
+            ? 'Switched rollout to Specific Pilot Users'
+            : 'Switched rollout to All Users (Global Rollout)',
+          'Audience Updated'
+        );
+      }
+    } catch (e) {
+      console.warn('Audience update failed:', e);
     }
   };
 
@@ -342,29 +403,56 @@ export default function SuperAdminPortal() {
     }
   };
 
-  const handleAddTargetUser = (userOrReg) => {
+  const handleAddTargetUser = async (userOrReg) => {
     const reg = typeof userOrReg === 'string'
       ? userOrReg.trim().toUpperCase()
       : userOrReg.registrationNumber?.trim().toUpperCase();
     if (!reg) return;
-    setAppVersionConfig((prev) => {
-      const existing = prev.targetedRegistrationNumbers || [];
-      if (existing.includes(reg)) return prev;
-      return {
-        ...prev,
-        targetedRegistrationNumbers: [...existing, reg],
-      };
-    });
+
+    const existing = appVersionConfig.targetedRegistrationNumbers || [];
+    if (existing.includes(reg)) {
+      triggerToast('info', `User ${reg} is already added to pilot rollout`, 'Already Added');
+      setTargetUserSearch('');
+      setTargetUserSearchResults([]);
+      setTargetManualReg('');
+      return;
+    }
+
+    const updated = {
+      ...appVersionConfig,
+      targetAudience: 'specific',
+      targetedRegistrationNumbers: [...existing, reg],
+    };
+
+    setAppVersionConfig(updated);
     setTargetUserSearch('');
     setTargetUserSearchResults([]);
     setTargetManualReg('');
+
+    try {
+      const res = await adminApi.updateAppVersionConfig(updated);
+      if (res.success) {
+        triggerToast('success', `Added ${reg} to pilot rollout and saved`, 'Pilot Rollout');
+      }
+    } catch (e) {
+      triggerToast('error', e.message || 'Failed saving target user', 'Error');
+    }
   };
 
-  const handleRemoveTargetUser = (reg) => {
-    setAppVersionConfig((prev) => ({
-      ...prev,
-      targetedRegistrationNumbers: (prev.targetedRegistrationNumbers || []).filter((r) => r !== reg),
-    }));
+  const handleRemoveTargetUser = async (reg) => {
+    const updated = {
+      ...appVersionConfig,
+      targetedRegistrationNumbers: (appVersionConfig.targetedRegistrationNumbers || []).filter((r) => r !== reg),
+    };
+    setAppVersionConfig(updated);
+    try {
+      const res = await adminApi.updateAppVersionConfig(updated);
+      if (res.success) {
+        triggerToast('success', `Removed ${reg} from pilot rollout`, 'Pilot Rollout');
+      }
+    } catch (e) {
+      triggerToast('error', e.message || 'Failed removing target user', 'Error');
+    }
   };
 
   const handleTogglePilotTargetUser = async (u, e) => {
@@ -3118,6 +3206,73 @@ export default function SuperAdminPortal() {
                 Version Parameters
               </h3>
 
+              {/* Release Suspension (Pause / Resume) Control Card */}
+              <div
+                style={{
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  background: appVersionConfig.isSuspended ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.08)',
+                  border: appVersionConfig.isSuspended ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(16, 185, 129, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '1.25rem' }}>{appVersionConfig.isSuspended ? '⏸️' : '🟢'}</span>
+                    <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                      Release Status: {appVersionConfig.isSuspended ? 'SUSPENDED (PAUSED)' : 'ACTIVE (ROLLING OUT)'}
+                    </span>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        background: appVersionConfig.isSuspended ? '#ef4444' : '#10b981',
+                        color: '#fff',
+                      }}
+                    >
+                      {appVersionConfig.isSuspended ? 'PAUSED' : 'LIVE'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {appVersionConfig.isSuspended
+                      ? '⚠️ Updates are completely suspended. Neither global nor pilot users will receive update notifications or be blocked.'
+                      : 'All eligible clients (based on Rollout Audience below) are receiving update checks and prompts.'}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={savingAppVersion}
+                  onClick={handleToggleReleaseSuspension}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: appVersionConfig.isSuspended
+                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                      : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: savingAppVersion ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: appVersionConfig.isSuspended
+                      ? '0 4px 12px rgba(16, 185, 129, 0.3)'
+                      : '0 4px 12px rgba(239, 68, 68, 0.3)',
+                  }}
+                >
+                  {appVersionConfig.isSuspended ? '▶️ Resume Release' : '⏸️ Suspend Release'}
+                </button>
+              </div>
+
               <div className="sa-form-grid-2col">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
@@ -3245,7 +3400,7 @@ export default function SuperAdminPortal() {
                   <div style={{ display: 'inline-flex', gap: '4px', background: 'var(--bg-card)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <button
                       type="button"
-                      onClick={() => setAppVersionConfig((prev) => ({ ...prev, targetAudience: 'all' }))}
+                      onClick={() => handleSelectTargetAudience('all')}
                       style={{
                         padding: '6px 12px',
                         borderRadius: '6px',
@@ -3261,7 +3416,7 @@ export default function SuperAdminPortal() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setAppVersionConfig((prev) => ({ ...prev, targetAudience: 'specific' }))}
+                      onClick={() => handleSelectTargetAudience('specific')}
                       style={{
                         padding: '6px 12px',
                         borderRadius: '6px',
@@ -3600,6 +3755,27 @@ export default function SuperAdminPortal() {
                   overflow: 'hidden',
                 }}
               >
+                {appVersionConfig.isSuspended && (
+                  <div
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.25)',
+                      border: '1px solid rgba(239, 68, 68, 0.6)',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      color: '#fca5a5',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>⏸️</span>
+                    <span>RELEASE SUSPENDED — All client update popups and force update blocks are paused.</span>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
                   <div
                     style={{

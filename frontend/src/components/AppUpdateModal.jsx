@@ -263,6 +263,14 @@ export default function AppUpdateModal() {
     return () => unsubscribe();
   }, []);
 
+  // Whenever the authenticated user changes (e.g. login/switch account), re-check for targeted updates
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (user?.registrationNumber) {
+      appUpdateService.checkForUpdates();
+    }
+  }, [user?.registrationNumber]);
+
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const search = typeof window !== 'undefined' ? window.location.search : '';
   const isSuperAdmin =
@@ -277,6 +285,11 @@ export default function AppUpdateModal() {
 
   // 2. Never show mobile APK updater on regular web browsers
   if (!Capacitor.isNativePlatform()) {
+    return null;
+  }
+
+  // 3. If release is suspended, suppress all update prompts
+  if (state.isSuspended && state.downloadStatus === 'idle') {
     return null;
   }
 

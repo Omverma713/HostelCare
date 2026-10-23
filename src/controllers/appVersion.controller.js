@@ -36,12 +36,40 @@ const getAppVersionStatus = async (req, res) => {
       targetedHostels: [],
     };
 
-    // Extract requester identity from JWT (if sent) or query parameters
-    let clientRegistrationNumber = req.query.registrationNumber
-      ? String(req.query.registrationNumber).trim().toUpperCase()
-      : null;
+    // 1. Check if release is suspended by Super Admin
+    if (appVersionConfig.isSuspended) {
+      return res.status(200).json({
+        success: true,
+        clientVersion: currentVersion || null,
+        platform: platform || "android",
+        buildNumber: buildNumber || null,
+        latestVersion: currentVersion || appVersionConfig.latestVersion,
+        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+        updateAvailable: false,
+        forceUpdate: false,
+        updateType: "none",
+        isSuspended: true,
+        suspendedReason: appVersionConfig.suspendedReason || "Release is temporarily paused by administrator.",
+        targetAudience: appVersionConfig.targetAudience || "all",
+        isTargeted: false,
+        updateMessage: "Release is currently suspended by administration.",
+        updateUrl: appVersionConfig.updateUrl,
+        releaseNotes: "",
+        releaseMedia: [],
+        apkSha256: "",
+        checkedAt: new Date().toISOString(),
+      });
+    }
+
+    // 2. Extract requester identity from query parameters or decoded JWT
+    let clientRegistrationNumber = (
+      req.query.registrationNumber ||
+      req.query.regNo ||
+      req.query.username ||
+      ""
+    ).toString().trim().toUpperCase() || null;
     let clientRole = req.query.role ? String(req.query.role).trim().toLowerCase() : null;
-    let clientHostel = req.query.hostel ? String(req.query.hostel).trim() : null;
+    let clientHostel = req.query.hostel ? String(req.query.hostel).trim().toLowerCase() : null;
 
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -49,14 +77,14 @@ const getAppVersionStatus = async (req, res) => {
       try {
         const decoded = jwt.decode(token);
         if (decoded) {
-          if (!clientRegistrationNumber && decoded.registrationNumber) {
-            clientRegistrationNumber = String(decoded.registrationNumber).trim().toUpperCase();
+          if (!clientRegistrationNumber && (decoded.registrationNumber || decoded.regNo || decoded.username)) {
+            clientRegistrationNumber = String(decoded.registrationNumber || decoded.regNo || decoded.username).trim().toUpperCase();
           }
           if (!clientRole && decoded.role) {
             clientRole = String(decoded.role).trim().toLowerCase();
           }
           if (!clientHostel && decoded.hostel) {
-            clientHostel = String(decoded.hostel).trim();
+            clientHostel = String(decoded.hostel).trim().toLowerCase();
           }
         }
       } catch (e) {
@@ -64,16 +92,16 @@ const getAppVersionStatus = async (req, res) => {
       }
     }
 
-    // Check targeted release eligibility
+    // 3. Check targeted release eligibility
     const targetAudience = appVersionConfig.targetAudience || "all";
     const targetedRegs = (appVersionConfig.targetedRegistrationNumbers || []).map((r) =>
-      String(r).toUpperCase()
+      String(r).trim().toUpperCase()
     );
     const targetedRoles = (appVersionConfig.targetedRoles || []).map((r) =>
-      String(r).toLowerCase()
+      String(r).trim().toLowerCase()
     );
     const targetedHostels = (appVersionConfig.targetedHostels || []).map((h) =>
-      String(h).toLowerCase()
+      String(h).trim().toLowerCase()
     );
 
     let isEligible = true;
@@ -83,7 +111,7 @@ const getAppVersionStatus = async (req, res) => {
         isEligible = true;
       } else if (clientRole && targetedRoles.includes(clientRole)) {
         isEligible = true;
-      } else if (clientHostel && targetedHostels.includes(clientHostel.toLowerCase())) {
+      } else if (clientHostel && targetedHostels.includes(clientHostel)) {
         isEligible = true;
       }
     }
@@ -100,21 +128,17 @@ const getAppVersionStatus = async (req, res) => {
         updateAvailable: false,
         forceUpdate: false,
         updateType: "none",
+        isSuspended: false,
         targetAudience: "specific",
         isTargeted: false,
         updateMessage: "You are currently on the stable channel for your user account.",
         updateUrl: appVersionConfig.updateUrl,
         releaseNotes: "",
+        releaseMedia: [],
         apkSha256: "",
         checkedAt: new Date().toISOString(),
       });
     }
-
-    const origin = String(req.headers.origin || req.headers.referer || "");
-    const isWebRequest =
-      platform === "web" ||
-      origin.includes("workers.dev") ||
-      origin.includes("localhost:5173");
 
     let evaluation = {
       updateAvailable: false,
@@ -124,7 +148,7 @@ const getAppVersionStatus = async (req, res) => {
       isBelowLatest: false,
     };
 
-    if (currentVersion && !isWebRequest) {
+    if (currentVersion) {
       evaluation = evaluateUpdate({
         currentVersion,
         latestVersion: appVersionConfig.latestVersion,
@@ -143,6 +167,7 @@ const getAppVersionStatus = async (req, res) => {
       updateAvailable: evaluation.updateAvailable,
       forceUpdate: evaluation.forceUpdate,
       updateType: evaluation.updateType, // 'none' | 'flexible' | 'immediate'
+      isSuspended: false,
       targetAudience: targetAudience,
       isTargeted: true,
       updateMessage: appVersionConfig.updateMessage,

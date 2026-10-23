@@ -116,6 +116,16 @@ const systemConfigSchema = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
+      isSuspended: {
+        type: Boolean,
+        default: false,
+      },
+      suspendedReason: {
+        type: String,
+        default: "",
+        maxlength: 500,
+        trim: true,
+      },
       releaseNotes: {
         type: String,
         default: "",
