@@ -12,6 +12,7 @@ import { triggerToast } from '../components/Toast';
 
 import ResolutionRingGauge3D from '../components/ResolutionRingGauge3D';
 import SpatialTicketCard from '../components/SpatialTicketCard';
+import { appUpdateService } from '../services/appUpdateService';
 
 // Department icon helper
 const getDeptIcon = (dept) => {
@@ -48,6 +49,8 @@ export default function StudentDashboard() {
   // Detail modal state
   const [selectedComplaint, setSelectedComplaint] = useState(null);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const fetchComplaints = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -68,8 +71,26 @@ export default function StudentDashboard() {
     }
   }, []);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.allSettled([
+        fetchComplaints(),
+        appUpdateService.checkForUpdates({ manual: true }),
+      ]);
+      triggerToast('info', 'Dashboard data & app status refreshed!', 'Refreshed');
+    } catch (err) {
+      console.warn('Refresh error:', err);
+    } finally {
+      setTimeout(() => setRefreshing(false), 500);
+    }
+  };
+
   useEffect(() => {
     fetchComplaints();
+    const handleGlobalRefresh = () => fetchComplaints();
+    window.addEventListener('app-refresh', handleGlobalRefresh);
+    return () => window.removeEventListener('app-refresh', handleGlobalRefresh);
   }, [fetchComplaints]);
 
   // Counts
@@ -154,7 +175,44 @@ export default function StudentDashboard() {
           </p>
         </div>
 
-        <div className="command-header-right">
+        <div className="command-header-right" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn-spatial-refresh"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            id="btn-refresh-dashboard"
+            title="Refresh dashboard & check for updates"
+            style={{
+              padding: '0.65rem 1.1rem',
+              borderRadius: '12px',
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: refreshing ? 'not-allowed' : 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                transform: refreshing ? 'rotate(360deg)' : 'none',
+                transition: refreshing ? 'transform 0.7s linear infinite' : 'none',
+                animation: refreshing ? 'spin 0.7s linear infinite' : 'none',
+                fontSize: '1rem',
+              }}
+            >
+              🔄
+            </span>
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+
           <button
             className="btn-spatial-primary-trigger"
             onClick={() => {

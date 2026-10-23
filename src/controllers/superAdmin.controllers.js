@@ -1675,13 +1675,22 @@ const getSuperAdminAppVersionConfig = async (req, res) => {
     const config = await SystemConfig.getEffectiveConfig();
     return res.status(200).json({
       success: true,
-      appVersion: config.appVersion || {
-        latestVersion: "1.0.0",
-        minimumSupportedVersion: "1.0.0",
-        updateMessage: "A new version of HostelCare is available. Please update to enjoy the latest features and security improvements.",
-        updateUrl: "https://play.google.com/store/apps/details?id=com.hostelcare.app",
-        forceUpdate: false,
-        releaseNotes: "",
+      appVersion: {
+        latestVersion: config?.appVersion?.latestVersion || "1.0.0",
+        minimumSupportedVersion: config?.appVersion?.minimumSupportedVersion || "1.0.0",
+        updateMessage:
+          config?.appVersion?.updateMessage ||
+          "A new version of HostelCare is available. Please update to enjoy the latest features and security improvements.",
+        updateUrl:
+          config?.appVersion?.updateUrl ||
+          "https://play.google.com/store/apps/details?id=com.hostelcare.app",
+        forceUpdate: Boolean(config?.appVersion?.forceUpdate),
+        releaseNotes: config?.appVersion?.releaseNotes || "",
+        apkSha256: config?.appVersion?.apkSha256 || "",
+        targetAudience: config?.appVersion?.targetAudience || "all",
+        targetedRegistrationNumbers: config?.appVersion?.targetedRegistrationNumbers || [],
+        targetedRoles: config?.appVersion?.targetedRoles || [],
+        targetedHostels: config?.appVersion?.targetedHostels || [],
       },
       updatedAt: config.updatedAt,
       updatedBy: config.updatedBy,

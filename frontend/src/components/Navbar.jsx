@@ -1,14 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { appUpdateService } from '../services/appUpdateService';
 
 /**
- * Mobile Top Navbar component with hamburger menu toggle and notification shortcut
+ * Mobile Top Navbar component with hamburger menu toggle, refresh action and notification shortcut
  */
 export default function Navbar({ onToggleSidebar }) {
   const { user } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
 
   if (!user) return null;
+
+  const handleQuickRefresh = async () => {
+    setRefreshing(true);
+    try {
+      window.dispatchEvent(new CustomEvent('app-refresh'));
+      await appUpdateService.checkForUpdates({ manual: true });
+    } catch (e) {
+      console.warn('Navbar refresh error:', e);
+    } finally {
+      setTimeout(() => setRefreshing(false), 600);
+    }
+  };
 
   return (
     <header className="mobile-navbar">
@@ -22,7 +36,39 @@ export default function Navbar({ onToggleSidebar }) {
       <div className="sidebar-logo" style={{ fontSize: '1.1rem' }}>
         🛡️ HostelCare
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button
+          type="button"
+          onClick={handleQuickRefresh}
+          disabled={refreshing}
+          aria-label="Refresh App & Check Updates"
+          title="Refresh App & Check for Updates"
+          style={{
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1rem',
+            cursor: refreshing ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-block',
+              animation: refreshing ? 'spin 0.8s linear infinite' : 'none',
+              transform: refreshing ? 'rotate(360deg)' : 'none',
+              transition: refreshing ? 'transform 0.8s' : 'none',
+            }}
+          >
+            🔄
+          </span>
+        </button>
+
         {user.role === 'superadmin' && (
           <Link
             to="/notifications"

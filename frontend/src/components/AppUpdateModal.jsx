@@ -92,6 +92,19 @@ export default function AppUpdateModal() {
     appUpdateService.startInAppDownload();
   };
 
+  const [rechecking, setRechecking] = useState(false);
+
+  const handleRecheck = async () => {
+    setRechecking(true);
+    try {
+      await appUpdateService.checkForUpdates({ manual: true });
+    } catch (e) {
+      console.warn('Recheck update error:', e);
+    } finally {
+      setTimeout(() => setRechecking(false), 500);
+    }
+  };
+
   // Helper formatting for downloaded bytes
   const bytesDownloadedMb = (
     (state.downloadProgress.bytesDownloaded || 0) /
@@ -160,31 +173,65 @@ export default function AppUpdateModal() {
           }}
         />
 
-        {/* Close Button (X) - Hidden during downloading or force update */}
-        {!state.forceUpdate && !isDownloading && (
-          <button
-            type="button"
-            onClick={handleDismiss}
-            aria-label="Close dialog"
+        {/* Close & Refresh Controls - Hidden during active downloading */}
+        {!isDownloading && (
+          <div
             style={{
               position: 'absolute',
               top: '14px',
               right: '14px',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              color: 'rgba(255, 255, 255, 0.8)',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
+              gap: '8px',
+              zIndex: 10,
             }}
           >
-            <X size={18} />
-          </button>
+            <button
+              type="button"
+              onClick={handleRecheck}
+              disabled={rechecking}
+              aria-label="Refresh update status"
+              title="Check server again for latest release"
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'rgba(255, 255, 255, 0.8)',
+                cursor: rechecking ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              <RefreshCw size={15} style={{ animation: rechecking ? 'spin 0.8s linear infinite' : 'none' }} />
+            </button>
+
+            {!state.forceUpdate && (
+              <button
+                type="button"
+                onClick={handleDismiss}
+                aria-label="Close dialog"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
         )}
 
         <div style={{ padding: '1.5rem' }}>
@@ -661,20 +708,20 @@ export default function AppUpdateModal() {
               )}
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {!state.forceUpdate && (
                   <button
                     type="button"
                     onClick={handleDismiss}
                     style={{
-                      flex: 1,
+                      flex: '1 1 70px',
                       padding: '0.75rem',
                       borderRadius: '10px',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       background: 'rgba(255, 255, 255, 0.06)',
                       color: 'rgba(255, 255, 255, 0.85)',
                       fontWeight: 600,
-                      fontSize: '0.875rem',
+                      fontSize: '0.85rem',
                       cursor: 'pointer',
                     }}
                   >
@@ -683,9 +730,33 @@ export default function AppUpdateModal() {
                 )}
                 <button
                   type="button"
+                  onClick={handleRecheck}
+                  disabled={rechecking}
+                  style={{
+                    flex: '1 1 105px',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#a5b4fc',
+                    fontWeight: 600,
+                    fontSize: '0.825rem',
+                    cursor: rechecking ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                  title="Check server again for latest update details"
+                >
+                  <RefreshCw size={14} style={{ animation: rechecking ? 'spin 0.8s linear infinite' : 'none' }} />
+                  {rechecking ? 'Checking...' : 'Check Again'}
+                </button>
+                <button
+                  type="button"
                   onClick={handleUpdate}
                   style={{
-                    flex: state.forceUpdate ? 1 : 2,
+                    flex: state.forceUpdate ? '2 1 180px' : '2 1 135px',
                     padding: '0.75rem',
                     borderRadius: '10px',
                     border: 'none',

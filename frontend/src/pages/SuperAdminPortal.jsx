@@ -273,7 +273,12 @@ export default function SuperAdminPortal() {
       setLoading(true);
       const res = await adminApi.getAppVersionConfig();
       if (res.success && res.appVersion) {
-        setAppVersionConfig(res.appVersion);
+        setAppVersionConfig((prev) => ({
+          ...prev,
+          ...res.appVersion,
+          targetAudience: res.appVersion.targetAudience || 'all',
+          targetedRegistrationNumbers: res.appVersion.targetedRegistrationNumbers || [],
+        }));
       }
       const info = await appUpdateService.getInstalledVersion();
       setInstalledAppVersion(info.version || '1.1.0');
@@ -362,10 +367,47 @@ export default function SuperAdminPortal() {
     }));
   };
 
+  const handleTogglePilotTargetUser = async (u, e) => {
+    if (e) e.stopPropagation();
+    const reg = u?.registrationNumber?.trim().toUpperCase();
+    if (!reg) return;
+
+    const currentTargets = appVersionConfig.targetedRegistrationNumbers || [];
+    const isTargeted = currentTargets.includes(reg);
+    const nextTargets = isTargeted
+      ? currentTargets.filter((r) => r !== reg)
+      : [...currentTargets, reg];
+
+    const updatedConfig = {
+      ...appVersionConfig,
+      targetAudience: 'specific',
+      targetedRegistrationNumbers: nextTargets,
+    };
+
+    setAppVersionConfig(updatedConfig);
+    try {
+      const res = await adminApi.updateAppVersionConfig(updatedConfig);
+      if (res.success) {
+        triggerToast(
+          'success',
+          isTargeted
+            ? `Removed ${u.name || reg} from targeted pilot release`
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.1'})`,
+          'Pilot Rollout'
+        );
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed updating app version rollout', 'Error');
+    }
+  };
+
   // Initial load according to active tab
   useEffect(() => {
     if (activeTab === 'overview') loadOverview();
-    else if (activeTab === 'users') loadUsers(1);
+    else if (activeTab === 'users') {
+      loadUsers(1);
+      loadAppVersion();
+    }
     else if (activeTab === 'sessions') loadSessions(1);
     else if (activeTab === 'limits') loadConfig();
     else if (activeTab === 'maintenance') loadMaintenance();
@@ -1278,6 +1320,38 @@ export default function SuperAdminPortal() {
                           ⚡ Login As
                         </button>
                       )}
+                      <button
+                        type="button"
+                        onClick={(e) => handleTogglePilotTargetUser(u, e)}
+                        style={{
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          border: (appVersionConfig.targetedRegistrationNumbers || []).includes(u.registrationNumber?.toUpperCase())
+                            ? '1px solid rgba(245, 158, 11, 0.6)'
+                            : '1px solid var(--border-color)',
+                          background: (appVersionConfig.targetedRegistrationNumbers || []).includes(u.registrationNumber?.toUpperCase())
+                            ? 'rgba(245, 158, 11, 0.15)'
+                            : 'var(--bg-card)',
+                          color: (appVersionConfig.targetedRegistrationNumbers || []).includes(u.registrationNumber?.toUpperCase())
+                            ? '#f59e0b'
+                            : 'var(--text-secondary)',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                        title={
+                          (appVersionConfig.targetedRegistrationNumbers || []).includes(u.registrationNumber?.toUpperCase())
+                            ? 'Remove this user from pilot app release'
+                            : 'Release new update only to this user'
+                        }
+                      >
+                        {(appVersionConfig.targetedRegistrationNumbers || []).includes(u.registrationNumber?.toUpperCase())
+                          ? '🎯 In Pilot ✓'
+                          : '🎯 Release Update'}
+                      </button>
                       <button
                         type="button"
                         onClick={(e) => {
