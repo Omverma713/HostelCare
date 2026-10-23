@@ -3111,6 +3111,33 @@ export default function SuperAdminPortal() {
                 </div>
               </div>
 
+              {/* Release APK SHA-256 Checksum */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Release APK SHA-256 Checksum (Optional for Security Verification)
+                </label>
+                <input
+                  type="text"
+                  value={appVersionConfig.apkSha256 || ''}
+                  onChange={(e) => setAppVersionConfig((prev) => ({ ...prev, apkSha256: e.target.value.trim() }))}
+                  placeholder="e.g. d73fc60e13975c61d40acf56959e5953d7b2c24eeadf57c7bd54b45763fb1400"
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                    fontFamily: 'monospace',
+                  }}
+                />
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  If provided, HostelCare verifies the downloaded APK's SHA-256 hash before launching Android's package installer.
+                </div>
+              </div>
+
               {/* Update Message */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>

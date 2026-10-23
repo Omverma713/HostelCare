@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Feedback = require("../models/feedback.model");
 const {
   sendFeedbackNotificationToAdmin,
@@ -47,8 +48,18 @@ const submitFeedback = async (req, res) => {
     const cleanMessage = message.trim();
     const parsedRating = Math.max(1, Math.min(5, parseInt(rating, 10) || 5));
     const cleanCategory = category || "Suggestion";
-    const userRole = (req.user && req.user.role) || role || "visitor";
-    const userId = req.user ? req.user.id || req.user._id : null;
+
+    // Supported roles matching feedback model enum
+    const validRoles = ["visitor", "student", "caretaker", "warden", "superintendent", "chiefHostelWarden", "superadmin"];
+    const rawRole = String((req.user && req.user.role) || role || "visitor").trim();
+    const userRole = validRoles.includes(rawRole) ? rawRole : "visitor";
+
+    // Ensure userRef is only passed if it is a valid 24-char hex MongoDB ObjectId
+    const rawUserId = req.user ? req.user.id || req.user._id : null;
+    const userId = (rawUserId && mongoose.Types.ObjectId.isValid(String(rawUserId)))
+      ? new mongoose.Types.ObjectId(String(rawUserId))
+      : null;
+
     const ipAddress =
       req.headers["x-forwarded-for"] ||
       req.socket?.remoteAddress ||

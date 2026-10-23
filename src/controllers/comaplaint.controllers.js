@@ -1,4 +1,5 @@
 const Complaint = require("../models/complaints.model");
+const User = require("../models/user.model");
 
 // ─── Pagination Defaults ──────────────────────────────────────────────────────
 const DEFAULT_PAGE  = 1;
@@ -271,19 +272,24 @@ const savingComplaint = async (req, res) => {
             });
         }
 
-        let studentName = req.user.name;
-        let registrationNo = req.user.registrationNumber;
-        let hostelNo = req.user.hostel;
-        let roomNo = parseInt(req.user.roomNumber) || 0;
+        let studentName = req.user?.name;
+        let registrationNo = req.user?.registrationNumber;
+        let hostelNo = req.user?.hostel;
+        let roomNo = parseInt(req.user?.roomNumber) || 0;
 
-        // If any required field is missing from JWT, fetch from DB
-        if (!studentName || !registrationNo || !hostelNo || !roomNo) {
-            const userDoc = await User.findById(req.user.id || req.user._id).lean();
-            if (userDoc) {
-                studentName = studentName || userDoc.name;
-                registrationNo = registrationNo || userDoc.registrationNumber;
-                hostelNo = hostelNo || userDoc.hostel;
-                roomNo = roomNo || parseInt(userDoc.roomNumber) || 302;
+        // If any required field is missing from JWT, fetch from DB safely
+        const userId = req.user?.id || req.user?._id;
+        if ((!studentName || !registrationNo || !hostelNo || !roomNo) && userId) {
+            try {
+                const userDoc = await User.findById(userId).lean();
+                if (userDoc) {
+                    studentName = studentName || userDoc.name;
+                    registrationNo = registrationNo || userDoc.registrationNumber;
+                    hostelNo = hostelNo || userDoc.hostel;
+                    roomNo = roomNo || parseInt(userDoc.roomNumber) || 302;
+                }
+            } catch (err) {
+                console.warn("[savingComplaint] User lookup error:", err.message);
             }
         }
 

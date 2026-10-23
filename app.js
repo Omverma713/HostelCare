@@ -42,7 +42,15 @@ app.use(cors(corsOptions));
 // ─── 2. Compression ───────────────────────────────────────────────────────────
 // Compresses JSON responses with gzip/deflate. Justified because complaint list
 // payloads can be large. Reduces network bandwidth and send latency.
-app.use(compression());
+// Exclude APK binaries to prevent chunked transfer encoding that causes mobile Chrome to stall at 100%.
+app.use(compression({
+    filter: (req, res) => {
+        if (req.path.endsWith('.apk') || req.path.includes('/download')) {
+            return false;
+        }
+        return compression.filter(req, res);
+    }
+}));
 
 // ─── 3. Body Parser ───────────────────────────────────────────────────────────
 // Limit request body to 50 KB — no legitimate complaint submission needs more.

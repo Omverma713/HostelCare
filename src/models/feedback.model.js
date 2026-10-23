@@ -15,7 +15,7 @@ const feedbackSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["visitor", "student", "caretaker", "warden", "superintendent", "chiefHostelWarden"],
+      enum: ["visitor", "student", "caretaker", "warden", "superintendent", "chiefHostelWarden", "superadmin"],
       default: "visitor",
     },
     rating: {

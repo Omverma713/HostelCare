@@ -1705,6 +1705,7 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       updateUrl,
       forceUpdate,
       releaseNotes,
+      apkSha256,
     } = req.body;
 
     if (latestVersion !== undefined && !isValidVersion(latestVersion)) {
@@ -1768,6 +1769,7 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
     if (typeof forceUpdate === "boolean") config.appVersion.forceUpdate = forceUpdate;
     if (typeof updateMessage === "string") config.appVersion.updateMessage = updateMessage.trim().slice(0, 1000);
     if (typeof releaseNotes === "string") config.appVersion.releaseNotes = releaseNotes.trim().slice(0, 2000);
+    if (typeof apkSha256 === "string") config.appVersion.apkSha256 = apkSha256.trim().slice(0, 128);
 
     config.updatedBy = req.user.registrationNumber || "superadmin";
     config.markModified("appVersion");

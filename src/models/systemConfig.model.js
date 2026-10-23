@@ -122,6 +122,12 @@ const systemConfigSchema = new mongoose.Schema(
         maxlength: 2000,
         trim: true,
       },
+      apkSha256: {
+        type: String,
+        default: "",
+        maxlength: 128,
+        trim: true,
+      },
     },
   },
   {

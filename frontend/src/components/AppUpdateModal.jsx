@@ -2,7 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../hooks/useAuth';
 import { appUpdateService } from '../services/appUpdateService';
-import { Sparkles, CheckCircle2, AlertCircle, ArrowUpCircle, X, Download } from 'lucide-react';
+import {
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Download,
+  ShieldCheck,
+  Settings as SettingsIcon,
+  RefreshCw,
+  ArrowDownCircle,
+  PackageCheck,
+} from 'lucide-react';
 
 export default function AppUpdateModal() {
   const [state, setState] = useState(() => appUpdateService.updateState);
@@ -26,19 +37,27 @@ export default function AppUpdateModal() {
     pathname.startsWith('/superadmin') ||
     (pathname === '/login' && search.includes('admin'));
 
-  // 1. Super Admin is ALWAYS exempt from all update popups (including force updates)
+  // 1. Super Admin is ALWAYS exempt from all update popups
   if (isSuperAdmin) {
     return null;
   }
 
-  // 2. On standard website / browser, updates are automatically delivered via web deployment.
-  // Never show the mobile APK update popup on the web.
+  // 2. Never show mobile APK updater on regular web browsers
   if (!Capacitor.isNativePlatform()) {
     return null;
   }
 
   // Determine whether modal should be visible
-  const isUpdatePromptVisible = state.updateAvailable && (!state.isDismissed || state.forceUpdate);
+  const isDownloadingOrActive =
+    state.downloadStatus === 'downloading' ||
+    state.downloadStatus === 'ready_to_install' ||
+    state.downloadStatus === 'permission_required' ||
+    state.downloadStatus === 'installing' ||
+    state.downloadStatus === 'error';
+
+  const isUpdatePromptVisible =
+    (state.updateAvailable && (!state.isDismissed || state.forceUpdate)) || isDownloadingOrActive;
+
   const isManualResultVisible =
     state.manualCheck &&
     (state.manualCheckStatus === 'up_to_date' || state.manualCheckStatus === 'error');
@@ -56,6 +75,38 @@ export default function AppUpdateModal() {
     appUpdateService.performUpdate();
   };
 
+  const handleCancelDownload = () => {
+    appUpdateService.cancelDownload();
+  };
+
+  const handleOpenSettings = () => {
+    appUpdateService.openInstallPermissionSettings();
+  };
+
+  const handleRetryInstall = () => {
+    appUpdateService.installDownloadedApk();
+  };
+
+  const handleResetAndRetry = () => {
+    appUpdateService.resetDownloadState();
+    appUpdateService.startInAppDownload();
+  };
+
+  // Helper formatting for downloaded bytes
+  const bytesDownloadedMb = (
+    (state.downloadProgress.bytesDownloaded || 0) /
+    (1024 * 1024)
+  ).toFixed(1);
+  const totalBytesMb = state.downloadProgress.totalBytes > 0
+    ? ((state.downloadProgress.totalBytes) / (1024 * 1024)).toFixed(1)
+    : null;
+  const percent = Math.max(0, Math.min(100, state.downloadProgress.percent || 0));
+
+  const isDownloading = state.downloadStatus === 'downloading';
+  const isPermissionRequired = state.downloadStatus === 'permission_required';
+  const isInstalling = state.downloadStatus === 'installing';
+  const isDownloadError = state.downloadStatus === 'error';
+
   return (
     <div
       style={{
@@ -65,17 +116,17 @@ export default function AppUpdateModal() {
         right: 0,
         bottom: 0,
         zIndex: 999999,
-        background: 'rgba(10, 15, 30, 0.78)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
+        background: 'rgba(8, 12, 26, 0.82)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1rem',
-        animation: 'fadeIn 0.2s ease-out',
+        animation: 'fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
       onClick={(e) => {
-        if (!state.forceUpdate && e.target === e.currentTarget) {
+        if (!state.forceUpdate && !isDownloading && e.target === e.currentTarget) {
           handleDismiss();
         }
       }}
@@ -83,13 +134,15 @@ export default function AppUpdateModal() {
       <div
         style={{
           width: '100%',
-          maxWidth: '440px',
-          background: 'linear-gradient(145deg, #131d3b 0%, #0d152c 100%)',
-          borderRadius: '16px',
-          border: state.forceUpdate ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(99, 102, 241, 0.35)',
+          maxWidth: '430px',
+          background: 'linear-gradient(150deg, #131d3b 0%, #0c1328 100%)',
+          borderRadius: '20px',
+          border: state.forceUpdate
+            ? '1px solid rgba(239, 68, 68, 0.45)'
+            : '1px solid rgba(99, 102, 241, 0.35)',
           boxShadow: state.forceUpdate
-            ? '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(239, 68, 68, 0.2)'
-            : '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 25px rgba(99, 102, 241, 0.15)',
+            ? '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(239, 68, 68, 0.2)'
+            : '0 25px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.2)',
           overflow: 'hidden',
           position: 'relative',
           color: '#ffffff',
@@ -101,14 +154,14 @@ export default function AppUpdateModal() {
           style={{
             height: '4px',
             background:
-              state.forceUpdate || state.manualCheckStatus === 'error'
+              state.forceUpdate || isDownloadError || state.manualCheckStatus === 'error'
                 ? 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)'
-                : 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #3b82f6 100%)',
+                : 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #38bdf8 100%)',
           }}
         />
 
-        {/* Close Button (X) - Hidden for force update */}
-        {!state.forceUpdate && (
+        {/* Close Button (X) - Hidden during downloading or force update */}
+        {!state.forceUpdate && !isDownloading && (
           <button
             type="button"
             onClick={handleDismiss}
@@ -135,8 +188,10 @@ export default function AppUpdateModal() {
         )}
 
         <div style={{ padding: '1.5rem' }}>
-          {/* CASE 1: Manual Check - Already Up to Date */}
-          {state.manualCheckStatus === 'up_to_date' && (
+          {/* ============================================================== */}
+          {/* CASE 1: Manual Check - Up to date */}
+          {/* ============================================================== */}
+          {state.manualCheckStatus === 'up_to_date' && !state.updateAvailable && (
             <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
               <div
                 style={{
@@ -183,8 +238,236 @@ export default function AppUpdateModal() {
             </div>
           )}
 
-          {/* CASE 2: Manual Check - Error */}
-          {state.manualCheckStatus === 'error' && (
+          {/* ============================================================== */}
+          {/* CASE 2: Active In-App Downloading with Live Progress Bar */}
+          {/* ============================================================== */}
+          {isDownloading && (
+            <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
+              {/* Animated Download Pulse Icon */}
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '20px',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  border: '1px solid rgba(99, 102, 241, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1.25rem',
+                  color: '#818cf8',
+                  position: 'relative',
+                }}
+              >
+                <ArrowDownCircle size={32} />
+              </div>
+
+              <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.01em' }}>
+                Downloading HostelCare v{state.latestVersion}
+              </h3>
+              <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+                Please stay in the app while the update is being downloaded.
+              </p>
+
+              {/* Progress Bar Container */}
+              <div
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  borderRadius: '999px',
+                  height: '10px',
+                  width: '100%',
+                  overflow: 'hidden',
+                  marginBottom: '0.75rem',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${percent}%`,
+                    background: 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #38bdf8 100%)',
+                    borderRadius: '999px',
+                    transition: 'width 0.2s ease-out',
+                    boxShadow: '0 0 12px rgba(99, 102, 241, 0.8)',
+                  }}
+                />
+              </div>
+
+              {/* Progress Text Details */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '0.8rem',
+                  color: 'rgba(255, 255, 255, 0.65)',
+                  marginBottom: '1.25rem',
+                  fontWeight: 600,
+                }}
+              >
+                <span>
+                  {bytesDownloadedMb} MB {totalBytesMb ? `/ ${totalBytesMb} MB` : ''}
+                </span>
+                <span style={{ color: '#38bdf8', fontWeight: 800 }}>
+                  {percent}%
+                </span>
+              </div>
+
+              {/* Cancel Button */}
+              <button
+                type="button"
+                onClick={handleCancelDownload}
+                style={{
+                  width: '100%',
+                  padding: '0.7rem',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  color: 'rgba(255, 255, 255, 0.75)',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+              >
+                Cancel Download
+              </button>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* CASE 3: Permission Required to Install Unknown Apps (Android 8.0+) */}
+          {/* ============================================================== */}
+          {isPermissionRequired && (
+            <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1rem',
+                  color: '#f59e0b',
+                }}
+              >
+                <SettingsIcon size={28} />
+              </div>
+
+              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 800 }}>
+                Install Permission Required
+              </h3>
+              <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.75)', lineHeight: 1.5 }}>
+                Android requires permission to install updates directly inside HostelCare. Please enable <strong>"Allow from this source"</strong> in Settings, then return to the app.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={handleOpenSettings}
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <SettingsIcon size={18} />
+                  Open Android Settings
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRetryInstall}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  I've Enabled It (Install Now)
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* CASE 4: System Installer Opened / Installing */}
+          {/* ============================================================== */}
+          {isInstalling && (
+            <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
+              <div
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '18px',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1.25rem',
+                  color: '#38bdf8',
+                }}
+              >
+                <PackageCheck size={32} />
+              </div>
+
+              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 800 }}>
+                System Installer Launched
+              </h3>
+              <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.75)', lineHeight: 1.5 }}>
+                Android's installation screen is now active. Please tap <strong>"Update"</strong> on your device screen to finish.
+              </p>
+
+              <button
+                type="button"
+                onClick={handleRetryInstall}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <RefreshCw size={16} />
+                Relaunch Installer
+              </button>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* CASE 5: Download or Verification Error */}
+          {/* ============================================================== */}
+          {isDownloadError && (
             <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
               <div
                 style={{
@@ -192,7 +475,7 @@ export default function AppUpdateModal() {
                   height: '56px',
                   borderRadius: '16px',
                   background: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -204,41 +487,69 @@ export default function AppUpdateModal() {
               </div>
 
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 800 }}>
-                Update Check Failed
+                Update Failed
               </h3>
-              <p style={{ margin: '0 0 1.25rem', fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', lineHeight: 1.5 }}>
-                {state.errorMessage || 'Unable to connect to the update server. Please check your internet connection and try again.'}
+              <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.75)', lineHeight: 1.5 }}>
+                {state.errorMessage || 'Unable to download the update package. Please check your internet connection and try again.'}
               </p>
 
-              <button
-                type="button"
-                onClick={handleDismiss}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: 'rgba(255, 255, 255, 0.12)',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                }}
-              >
-                Close
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {!state.forceUpdate && (
+                  <button
+                    type="button"
+                    onClick={handleDismiss}
+                    style={{
+                      flex: 1,
+                      padding: '0.75rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Close
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleResetAndRetry}
+                  style={{
+                    flex: state.forceUpdate ? 1 : 2,
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <RefreshCw size={16} />
+                  Retry Download
+                </button>
+              </div>
             </div>
           )}
 
-          {/* CASE 3: New Update Available (Prompt) */}
-          {isUpdatePromptVisible && (
+          {/* ============================================================== */}
+          {/* CASE 6: New Update Available Prompt (Idle state before click) */}
+          {/* ============================================================== */}
+          {!isDownloading && !isPermissionRequired && !isInstalling && !isDownloadError && state.updateAvailable && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
                 <div
                   style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '12px',
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '14px',
                     background: state.forceUpdate ? 'rgba(239, 68, 68, 0.2)' : 'rgba(99, 102, 241, 0.2)',
                     border: state.forceUpdate ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(99, 102, 241, 0.35)',
                     display: 'flex',
@@ -247,14 +558,14 @@ export default function AppUpdateModal() {
                     color: state.forceUpdate ? '#f87171' : '#818cf8',
                   }}
                 >
-                  {state.forceUpdate ? <AlertCircle size={24} /> : <Sparkles size={24} />}
+                  {state.forceUpdate ? <AlertCircle size={26} /> : <Sparkles size={26} />}
                 </div>
                 <div>
                   <div style={{ fontSize: '0.75rem', fontWeight: 700, color: state.forceUpdate ? '#f87171' : '#a5b4fc', letterSpacing: '0.04em' }}>
-                    {state.forceUpdate ? 'CRITICAL UPDATE REQUIRED' : 'HOSTELCARE UPDATE'}
+                    {state.forceUpdate ? 'CRITICAL UPDATE REQUIRED' : 'HOSTELCARE IN-APP UPDATE'}
                   </div>
                   <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
-                    {state.forceUpdate ? 'Update Required to Continue' : 'New Update Available!'}
+                    {state.forceUpdate ? 'Update Required to Continue' : 'New Version Available!'}
                   </h3>
                 </div>
               </div>
@@ -263,18 +574,18 @@ export default function AppUpdateModal() {
               <div
                 style={{
                   background: 'rgba(255, 255, 255, 0.04)',
-                  borderRadius: '10px',
-                  padding: '0.65rem 0.85rem',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  fontSize: '0.8rem',
+                  fontSize: '0.825rem',
                   marginBottom: '1rem',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
                 }}
               >
-                <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                  Installed: <strong>v{state.currentVersion}</strong>
+                <span style={{ color: 'rgba(255, 255, 255, 0.65)' }}>
+                  Current: <strong>v{state.currentVersion}</strong>
                 </span>
                 <span style={{ color: '#818cf8', fontWeight: 700 }}>→</span>
                 <span style={{ color: '#38bdf8', fontWeight: 800 }}>
@@ -284,7 +595,7 @@ export default function AppUpdateModal() {
 
               {/* Message */}
               <p style={{ margin: '0 0 1rem', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.8)', lineHeight: 1.5 }}>
-                {state.updateMessage || 'A new version of HostelCare is available with performance improvements and bug fixes.'}
+                {state.updateMessage || 'A new update for HostelCare is ready to install directly inside the app.'}
               </p>
 
               {/* Release Notes */}
@@ -292,8 +603,8 @@ export default function AppUpdateModal() {
                 <div
                   style={{
                     background: 'rgba(0, 0, 0, 0.3)',
-                    borderRadius: '8px',
-                    padding: '0.65rem 0.85rem',
+                    borderRadius: '10px',
+                    padding: '0.75rem 0.9rem',
                     marginBottom: '1.25rem',
                     border: '1px solid rgba(255, 255, 255, 0.05)',
                   }}
@@ -304,6 +615,27 @@ export default function AppUpdateModal() {
                   <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.7)', whiteSpace: 'pre-line', lineHeight: 1.4 }}>
                     {state.releaseNotes}
                   </div>
+                </div>
+              )}
+
+              {/* Security Checksum Verification Badge */}
+              {state.apkSha256 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.7rem',
+                    color: '#34d399',
+                    marginBottom: '1rem',
+                    padding: '0.4rem 0.6rem',
+                    background: 'rgba(52, 211, 153, 0.1)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(52, 211, 153, 0.25)',
+                  }}
+                >
+                  <ShieldCheck size={14} style={{ flexShrink: 0 }} />
+                  <span>Verified SHA-256 Release Security Check</span>
                 </div>
               )}
 
