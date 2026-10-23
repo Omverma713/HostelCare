@@ -2348,14 +2348,9 @@ export default function SuperAdminPortal() {
           <div className="sa-two-col-grid">
             {/* Mode 1: Global Maintenance Card */}
             <div
+              className="sa-config-card"
               style={{
-                background: 'var(--bg-card)',
-                borderRadius: 'var(--border-radius-lg)',
                 border: maintenanceConfig.global.enabled ? '2px solid rgba(239, 68, 68, 0.5)' : '1px solid var(--border-color)',
-                padding: '1.5rem',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
@@ -2455,7 +2450,7 @@ export default function SuperAdminPortal() {
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div className="sa-form-grid-2col">
                     <div>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
                         Planned Start (Optional)
@@ -2553,14 +2548,9 @@ export default function SuperAdminPortal() {
 
             {/* Mode 2: Selective / Role-Based Maintenance Card */}
             <div
+              className="sa-config-card"
               style={{
-                background: 'var(--bg-card)',
-                borderRadius: 'var(--border-radius-lg)',
                 border: maintenanceConfig.selective.enabled ? '2px solid rgba(245, 158, 11, 0.5)' : '1px solid var(--border-color)',
-                padding: '1.5rem',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
@@ -2648,7 +2638,7 @@ export default function SuperAdminPortal() {
                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
                       Specific Users by Registration Number (Optional)
                     </label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', width: '100%', maxWidth: '100%', minWidth: 0 }}>
                       <input
                         type="text"
                         placeholder="e.g. 21BCE1001"
@@ -2657,6 +2647,7 @@ export default function SuperAdminPortal() {
                         onKeyDown={(e) => e.key === 'Enter' && handleAddTargetReg(e)}
                         style={{
                           flex: 1,
+                          minWidth: 0,
                           padding: '0.45rem 0.65rem',
                           borderRadius: '8px',
                           border: '1px solid var(--border-color)',
@@ -2991,14 +2982,8 @@ export default function SuperAdminPortal() {
             {/* Version Configuration Form Card */}
             <form
               onSubmit={handleSaveAppVersion}
+              className="sa-config-card"
               style={{
-                background: 'var(--bg-card)',
-                borderRadius: 'var(--border-radius-lg)',
-                border: '1px solid var(--border-color)',
-                padding: '1.5rem',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexDirection: 'column',
                 gap: '1rem',
               }}
             >
@@ -3006,7 +2991,7 @@ export default function SuperAdminPortal() {
                 Version Parameters
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div className="sa-form-grid-2col">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
                     Latest Version *
@@ -3121,8 +3106,8 @@ export default function SuperAdminPortal() {
                     boxSizing: 'border-box',
                   }}
                 />
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Must be a reachable HTTPS direct download link to the published APK asset on GitHub Releases (e.g. <code>https://github.com/Omverma713/HostelCare/releases/download/vX.Y.Z/hostelcare-vX.Y.Z.apk</code>). If empty or unconfigured, the app will notify users that download is pending rather than opening a broken link.
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                  Must be a reachable HTTPS direct download link to the published APK asset on GitHub Releases (e.g. <code style={{ wordBreak: 'break-all', overflowWrap: 'anywhere' }}>https://github.com/Omverma713/HostelCare/releases/download/vX.Y.Z/hostelcare-vX.Y.Z.apk</code>). If empty or unconfigured, the app will notify users that download is pending rather than opening a broken link.
                 </div>
               </div>
 
@@ -3192,22 +3177,12 @@ export default function SuperAdminPortal() {
                   opacity: savingAppVersion ? 0.7 : 1,
                 }}
               >
-                {savingAppVersion ? 'Saving App Version Config...' : '💾 Save App Version Configuration'}
+                {savingAppVersion ? 'Releasing Update...' : '🚀 Release the Update'}
               </button>
             </form>
 
             {/* Live Client Preview Card */}
-            <div
-              style={{
-                background: 'var(--bg-card)',
-                borderRadius: 'var(--border-radius-lg)',
-                border: '1px solid var(--border-color)',
-                padding: '1.5rem',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+            <div className="sa-config-card">
               <h3 style={{ margin: '0 0 1rem', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                 📱 Live Mobile In-App Dialog Preview
               </h3>
@@ -3220,6 +3195,9 @@ export default function SuperAdminPortal() {
                   border: appVersionConfig.forceUpdate ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(99, 102, 241, 0.3)',
                   boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
                   color: '#ffffff',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
+                  overflow: 'hidden',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
@@ -3254,6 +3232,9 @@ export default function SuperAdminPortal() {
                     padding: '0.5rem 0.75rem',
                     display: 'flex',
                     justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '6px',
                     fontSize: '0.75rem',
                     marginBottom: '0.75rem',
                   }}
@@ -3263,7 +3244,7 @@ export default function SuperAdminPortal() {
                   <span style={{ fontWeight: 800, color: '#38bdf8' }}>Available: v{appVersionConfig.latestVersion || '1.0.0'}</span>
                 </div>
 
-                <div style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem', lineHeight: 1.4 }}>
+                <div style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem', lineHeight: 1.4, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                   {appVersionConfig.updateMessage || 'A new version of HostelCare is available.'}
                 </div>
 
@@ -3277,6 +3258,8 @@ export default function SuperAdminPortal() {
                       color: 'rgba(255, 255, 255, 0.7)',
                       marginBottom: '0.75rem',
                       whiteSpace: 'pre-line',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'anywhere',
                     }}
                   >
                     <div style={{ fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '2px' }}>What's New:</div>
@@ -3284,13 +3267,14 @@ export default function SuperAdminPortal() {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   {!appVersionConfig.forceUpdate && (
                     <button
                       type="button"
                       disabled
                       style={{
-                        flex: 1,
+                        flex: '1 1 110px',
+                        minWidth: 0,
                         padding: '0.5rem',
                         borderRadius: '8px',
                         border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -3307,7 +3291,8 @@ export default function SuperAdminPortal() {
                     type="button"
                     disabled
                     style={{
-                      flex: 1,
+                      flex: '1 1 110px',
+                      minWidth: 0,
                       padding: '0.5rem',
                       borderRadius: '8px',
                       border: 'none',

@@ -6,6 +6,15 @@
   padding: 1.25rem;
   width: 100%;
   box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.sa-portal-container code,
+.sa-portal-container pre {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  white-space: pre-wrap;
+  max-width: 100%;
 }
 
 /* 1. Header Banner */
@@ -178,8 +187,48 @@
 /* Two-column container for wide forms */
 .sa-two-col-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
   gap: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sa-two-col-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Config cards in Maintenance & App Version tabs */
+.sa-config-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg, 16px);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* 2-column form grid that stacks on smaller screens */
+.sa-form-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .sa-form-grid-2col {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Recent Audit Trail Item */
@@ -519,8 +568,14 @@
   /* Breakdown & Two-col grids: 1 column */
   .sa-breakdown-grid,
   .sa-two-col-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.85rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sa-config-card {
+    padding: 1rem;
   }
 
   /* Audit item stack on mobile */
