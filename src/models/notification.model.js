@@ -37,6 +37,13 @@ const notificationCampaignSchema = new mongoose.Schema(
       maxlength: 150,
     },
 
+    imageUrl: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: 1000,
+    },
+
     sentBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

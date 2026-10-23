@@ -883,6 +883,7 @@ const sendAdminNotification = async (req, res) => {
       targetAudience, // "SINGLE_DEVICE" | "SINGLE_USER" | "ROLE_GROUP" | "HOSTEL_GROUP" | "ALL_DEVICES"
       targetCriteria = {},
       route = "/",
+      imageUrl = null,
     } = req.body;
 
     if (!title || !body || !targetAudience) {
@@ -981,6 +982,7 @@ const sendAdminNotification = async (req, res) => {
       title,
       body,
       route,
+      imageUrl: imageUrl && typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
       data: {
         sender: req.user.registrationNumber,
         campaignAt: new Date().toISOString(),
@@ -1001,6 +1003,7 @@ const sendAdminNotification = async (req, res) => {
       targetAudience,
       targetCriteria,
       route,
+      imageUrl: imageUrl && typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
       sentBy: req.user.id,
       sentByRegistrationNumber: req.user.registrationNumber,
       targetCount: targetSessions.length,

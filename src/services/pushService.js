@@ -147,9 +147,11 @@ async function sendPushToSessions(sessions, payload) {
           notification: {
             title: payload.title || "HostelCare",
             body: payload.body || "",
+            ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
           },
           data: {
             route: payload.route || "/",
+            imageUrl: payload.imageUrl || "",
             sentAt: new Date().toISOString(),
             ...(payload.data || {}),
           },
@@ -162,6 +164,7 @@ async function sendPushToSessions(sessions, payload) {
               color: "#4361EE",
               defaultSound: true,
               defaultVibrateTimings: true,
+              ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
             },
           },
         };
@@ -223,8 +226,10 @@ async function sendPushToSessions(sessions, payload) {
         const pushPayload = JSON.stringify({
           title: payload.title || "HostelCare",
           body: payload.body || "",
+          image: payload.imageUrl || undefined,
           data: {
             route: payload.route || "/",
+            imageUrl: payload.imageUrl || "",
             sentAt: new Date().toISOString(),
           },
         });

@@ -81,6 +81,7 @@ export default function SuperAdminPortal() {
   const [notifyForm, setNotifyForm] = useState({
     title: '',
     body: '',
+    imageUrl: '',
     targetAudience: 'ALL_DEVICES',
     targetCriteria: { sessionId: '', registrationNumber: '', role: 'student', hostel: 'BH-1' },
     route: '/',
@@ -423,6 +424,7 @@ export default function SuperAdminPortal() {
         setNotifyForm({
           title: '',
           body: '',
+          imageUrl: '',
           targetAudience: 'ALL_DEVICES',
           targetCriteria: { sessionId: '', registrationNumber: '', role: 'student', hostel: 'BH-1' },
           route: '/',
@@ -2761,6 +2763,125 @@ export default function SuperAdminPortal() {
                 />
               </div>
 
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    🖼️ Banner Image URL (BigPicture Rich Notification • Optional)
+                  </label>
+                  {notifyForm.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setNotifyForm((prev) => ({ ...prev, imageUrl: '' }))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--danger-text)',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        padding: 0,
+                      }}
+                    >
+                      Clear Image
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="url"
+                  value={notifyForm.imageUrl}
+                  onChange={(e) => setNotifyForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+                  placeholder="https://example.com/banner.jpg (Direct image link for rich expandable poster)"
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                    marginTop: '4px',
+                  }}
+                />
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginTop: '3px' }}>
+                  Supports PNG, JPG, or WebP URLs. Android renders this directly as a large expandable banner image in the notification shade.
+                </span>
+              </div>
+
+              {/* Live Android Notification Shade Preview */}
+              <div
+                style={{
+                  padding: '0.85rem 1rem',
+                  borderRadius: '12px',
+                  background: 'rgba(16, 28, 61, 0.75)',
+                  border: '1px solid rgba(67, 97, 238, 0.35)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '4px',
+                        background: '#4361EE',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        color: '#fff',
+                        fontWeight: 800,
+                      }}
+                    >
+                      🛡️
+                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8' }}>
+                      HostelCare • now
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Android Shade Preview</span>
+                </div>
+
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc' }}>
+                  {notifyForm.title.trim() || 'Notification Title'}
+                </div>
+
+                <div style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                  {notifyForm.body.trim() || 'Notification message body will appear here in the Android notification shade.'}
+                </div>
+
+                {notifyForm.imageUrl && notifyForm.imageUrl.trim() && (
+                  <div
+                    style={{
+                      marginTop: '6px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      maxHeight: '180px',
+                      background: '#0a0f1d',
+                    }}
+                  >
+                    <img
+                      src={notifyForm.imageUrl.trim()}
+                      alt="Banner Preview"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        maxHeight: '180px',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
               <button
                 type="submit"
                 disabled={sendingNotify}
@@ -2811,7 +2932,7 @@ export default function SuperAdminPortal() {
                       border: '1px solid var(--border-color)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '4px',
+                      gap: '6px',
                       fontSize: '0.825rem',
                     }}
                   >
@@ -2833,7 +2954,25 @@ export default function SuperAdminPortal() {
 
                     <div style={{ color: 'var(--text-secondary)' }}>{c.body}</div>
 
-                    <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {c.imageUrl && (
+                      <div
+                        style={{
+                          borderRadius: '6px',
+                          overflow: 'hidden',
+                          border: '1px solid var(--border-color)',
+                          maxHeight: '120px',
+                          marginTop: '2px',
+                        }}
+                      >
+                        <img
+                          src={c.imageUrl}
+                          alt="Campaign Banner"
+                          style={{ width: '100%', maxHeight: '120px', objectFit: 'cover', display: 'block' }}
+                        />
+                      </div>
+                    )}
+
+                    <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                       Target: {c.targetAudience} ({c.targetCount} targets) • Accepted: {c.successCount} • Failed: {c.failureCount} • Sent:{' '}
                       {new Date(c.sentAt).toLocaleString()}
                     </div>
