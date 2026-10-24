@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/ThemeContext';
 import { ROLE_LABELS } from '../constants';
@@ -13,6 +13,7 @@ import { appUpdateService } from '../services/appUpdateService';
  */
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, setDirectToken } = useAuth();
   const { theme, setTheme } = useTheme();
 
@@ -228,22 +229,50 @@ export default function Sidebar({ isOpen, onClose }) {
             </NavLink>
 
             {userRole === 'superadmin' && (
-              <NavLink
-                to="/notifications"
-                onClick={onClose}
-                className={({ isActive }) => `sidebar-dock-link ${isActive ? 'active' : ''}`}
-              >
-                <div className="dock-link-icon-wrap icon-primary">🔔</div>
+              <>
+                <NavLink
+                  to="/superadmin?tab=messalerts"
+                  onClick={onClose}
+                  id="sidebar-link-mess-alerts"
+                  className={() =>
+                    `sidebar-dock-link ${
+                      location.pathname === '/superadmin' && location.search.includes('tab=messalerts')
+                        ? 'active'
+                        : ''
+                    }`
+                  }
+                >
+                  <div className="dock-link-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
+                    🍱
+                  </div>
 
-                <div className="dock-link-content">
-                  <span className="dock-link-title">Custom Notification</span>
-                  <span className="dock-link-subtitle">Android shade test</span>
-                </div>
+                  <div className="dock-link-content">
+                    <span className="dock-link-title">Mess Auto-Alerts</span>
+                    <span className="dock-link-subtitle">Daemon timings & test</span>
+                  </div>
 
-                <div className="dock-link-indicator-chip">
-                  <span className="indicator-ray" />
-                </div>
-              </NavLink>
+                  <div className="dock-link-indicator-chip">
+                    <span className="indicator-ray" />
+                  </div>
+                </NavLink>
+
+                <NavLink
+                  to="/notifications"
+                  onClick={onClose}
+                  className={({ isActive }) => `sidebar-dock-link ${isActive ? 'active' : ''}`}
+                >
+                  <div className="dock-link-icon-wrap icon-primary">🔔</div>
+
+                  <div className="dock-link-content">
+                    <span className="dock-link-title">Custom Notification</span>
+                    <span className="dock-link-subtitle">Android shade test</span>
+                  </div>
+
+                  <div className="dock-link-indicator-chip">
+                    <span className="indicator-ray" />
+                  </div>
+                </NavLink>
+              </>
             )}
           </nav>
         </div>

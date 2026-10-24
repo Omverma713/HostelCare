@@ -184,12 +184,14 @@ async function broadcastMealReminder(slotKey, options = {}) {
   let sessions = [];
   if (mongoose.connection && mongoose.connection.readyState === 1) {
     sessions = await Session.find({
-      isActive: true,
+      status: "active",
       $or: [
         { pushToken: { $exists: true, $ne: null, $ne: "" } },
         { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
       ],
-    }).lean();
+    })
+      .select("+pushToken +webPushSubscription")
+      .lean();
   }
 
   if (sessions.length === 0) {
@@ -225,7 +227,7 @@ async function checkAndTriggerMealAlerts() {
 
   for (const [slotKey, cfg] of Object.entries(timings)) {
     if (cfg.hour === kt.hour && cfg.minute === kt.minute) {
-      const broadcastKey = `${kt.dateStr}_${slotKey}`;
+      const broadcastKey = `${kt.dateStr}_${slotKey}_${cfg.hour}:${cfg.minute}`;
       if (firedBroadcastsToday.has(broadcastKey)) {
         continue;
       }
@@ -233,7 +235,7 @@ async function checkAndTriggerMealAlerts() {
       // Mark as fired immediately to prevent duplicate runs in the same minute
       firedBroadcastsToday.add(broadcastKey);
 
-      // Keep set clean (retain only last 20 entries)
+      // Keep set clean (retain only last 50 entries)
       if (firedBroadcastsToday.size > 50) {
         const oldest = firedBroadcastsToday.values().next().value;
         firedBroadcastsToday.delete(oldest);
@@ -247,6 +249,14 @@ async function checkAndTriggerMealAlerts() {
       }
     }
   }
+}
+
+/**
+ * Clear cached fired broadcasts so modified schedules can trigger immediately
+ */
+function clearFiredMealBroadcasts() {
+  firedBroadcastsToday.clear();
+  console.log("[MessReminderWorker] Fired meal broadcasts cache cleared on schedule update.");
 }
 
 /**
@@ -282,6 +292,7 @@ function stopMessReminderScheduler() {
 module.exports = {
   startMessReminderScheduler,
   stopMessReminderScheduler,
+  clearFiredMealBroadcasts,
   broadcastMealReminder,
   getKolkataTime,
   getEffectiveStartTimings,

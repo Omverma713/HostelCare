@@ -1699,13 +1699,13 @@ const getSuperAdminAppVersionConfig = async (req, res) => {
         enabled: Boolean(config?.pilotTesting?.enabled),
         isSuspended: Boolean(config?.pilotTesting?.isSuspended),
         suspendedReason: config?.pilotTesting?.suspendedReason || "",
-        version: config?.pilotTesting?.version || "1.2.2.6",
+        version: config?.pilotTesting?.version || "1.2.2.7",
         updateMessage:
           config?.pilotTesting?.updateMessage ||
           "You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.",
         updateUrl:
           config?.pilotTesting?.updateUrl ||
-          "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.6/hostelcare-v1.2.2.6.apk",
+          "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.7/hostelcare-v1.2.2.7.apk",
         forceUpdate: Boolean(config?.pilotTesting?.forceUpdate),
         releaseNotes: config?.pilotTesting?.releaseNotes || "",
         releaseMedia: config?.pilotTesting?.releaseMedia || [],
@@ -1954,7 +1954,7 @@ const testPilotUserEligibility = async (req, res) => {
     const isTargeted = pilotTargets.includes(cleanReg);
     const isPilotActive = Boolean(pilotConfig.enabled);
     const isPilotSuspended = Boolean(pilotConfig.isSuspended);
-    const pilotVersion = pilotConfig.version || "1.2.2.6";
+    const pilotVersion = pilotConfig.version || "1.2.2.7";
 
     let updateWillTrigger = false;
     let reason = "";
@@ -2122,7 +2122,7 @@ async function getMessNotificationSchedule(req, res) {
 
     // Count active push sessions (FCM & WebPush)
     const activePushSessionsCount = await Session.countDocuments({
-      isActive: true,
+      status: "active",
       $or: [
         { pushToken: { $exists: true, $ne: null, $ne: "" } },
         { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
@@ -2179,6 +2179,10 @@ async function updateMessNotificationSchedule(req, res) {
 
     config.updatedBy = req.user?.id || req.user?.registrationNumber || "superadmin";
     await config.save();
+
+    // Invalidate previously fired meal tracking so newly set times trigger immediately
+    const { clearFiredMealBroadcasts } = require("../services/messReminderScheduler");
+    clearFiredMealBroadcasts();
 
     await recordAudit({
       req,

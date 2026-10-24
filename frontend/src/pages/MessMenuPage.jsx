@@ -49,6 +49,20 @@ export default function MessMenuPage() {
   // Veg filter: 'all' | 'veg'
   const [vegOnly, setVegOnly] = useState(false);
   const [alertsEnabled, setAlertsEnabled] = useState(() => areMealRemindersEnabled());
+  const [liveNotificationConfig, setLiveNotificationConfig] = useState(null);
+
+  // Fetch public automated notification schedule
+  useEffect(() => {
+    api.getPublicMessNotificationSchedule()
+      .then((res) => {
+        if (res?.success && res.config) {
+          setLiveNotificationConfig(res.config);
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to fetch public mess notification schedule:', err);
+      });
+  }, []);
 
   // Staff Management Modal State
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
@@ -365,6 +379,21 @@ export default function MessMenuPage() {
               aria-label="Test meal notification"
             >
               ⚡ Test Alert
+            </button>
+
+            {/* Quick jump to Automated Mess Notifications Panel */}
+            <button
+              type="button"
+              className="mess-chip-toggle"
+              onClick={() => {
+                const el = document.getElementById('mess-autonotice-options');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              id="btn-scroll-mess-options"
+              title="View automated push notification options and timetable"
+              aria-label="View automated notification options"
+            >
+              🍱 Auto-Alerts Info
             </button>
 
             {/* Staff Management Action */}
@@ -687,6 +716,97 @@ export default function MessMenuPage() {
             </table>
           </div>
         )}
+
+        {/* Automated Mess Notification Options Section */}
+        {(() => {
+          const scheduleKey = effectiveIsHoliday ? 'sundayAndHolidays' : 'workingDays';
+          const currentConfig = liveNotificationConfig?.[scheduleKey] || {};
+          const bTime = currentConfig.breakfast?.timing || (effectiveIsHoliday ? '08:00 AM – 10:00 AM' : '07:00 AM – 09:15 AM');
+          const lTime = currentConfig.lunch?.timing || '12:30 PM – 02:30 PM';
+          const sTime = currentConfig.snacks?.timing || (effectiveIsHoliday ? '05:30 PM – 07:00 PM' : '05:45 PM – 07:30 PM');
+          const dTime = currentConfig.dinner?.timing || '08:30 PM – 10:00 PM';
+
+          return (
+            <section className="mess-autonotice-panel" id="mess-autonotice-options">
+              <div className="autonotice-header">
+                <div className="autonotice-title-wrap">
+                  <span className="autonotice-icon">🍱</span>
+                  <div>
+                    <h2 className="autonotice-title">Automated Mess Push Notifications</h2>
+                    <p className="autonotice-subtitle">
+                      Receive instant meal alerts at each dining start time whether this website is open, running in the background, or your mobile screen is locked. Pulls daily food items directly from the campus schedule.
+                    </p>
+                  </div>
+                </div>
+                <div className={`autonotice-status-badge ${alertsEnabled ? '' : 'muted'}`}>
+                  {alertsEnabled ? '🔔 ACTIVE & SCHEDULED' : '🔕 REMINDERS PAUSED'}
+                </div>
+              </div>
+
+              <div className="autonotice-timings-grid">
+                <div className="autonotice-slot-item">
+                  <span className="slot-emoji">🍳</span>
+                  <div className="slot-info">
+                    <span className="slot-name">Breakfast</span>
+                    <span className="slot-time">{bTime}</span>
+                  </div>
+                </div>
+                <div className="autonotice-slot-item">
+                  <span className="slot-emoji">🍛</span>
+                  <div className="slot-info">
+                    <span className="slot-name">Lunch</span>
+                    <span className="slot-time">{lTime}</span>
+                  </div>
+                </div>
+                <div className="autonotice-slot-item">
+                  <span className="slot-emoji">☕</span>
+                  <div className="slot-info">
+                    <span className="slot-name">Evening Snacks</span>
+                    <span className="slot-time">{sTime}</span>
+                  </div>
+                </div>
+                <div className="autonotice-slot-item">
+                  <span className="slot-emoji">🍲</span>
+                  <div className="slot-info">
+                    <span className="slot-name">Dinner</span>
+                    <span className="slot-time">{dTime}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="autonotice-actions-row">
+                <button
+                  type="button"
+                  className={`autonotice-action-btn ${alertsEnabled ? 'btn-active' : 'btn-primary'}`}
+                  onClick={handleToggleAlerts}
+                  id="btn-panel-toggle-alerts"
+                >
+                  {alertsEnabled ? '🔕 Mute Meal Reminders' : '🔔 Turn On Auto Reminders'}
+                </button>
+
+                <button
+                  type="button"
+                  className="autonotice-action-btn btn-secondary"
+                  onClick={handleTestNotification}
+                  id="btn-panel-test-alert"
+                >
+                  ⚡ Send Test Alert Now
+                </button>
+
+                {isStaff && (
+                  <button
+                    type="button"
+                    className="autonotice-action-btn btn-admin"
+                    onClick={() => navigate('/superadmin?tab=messalerts')}
+                    id="btn-panel-admin-schedule"
+                  >
+                    ⚙️ Configure Push Timings & Broadcast
+                  </button>
+                )}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Official Mess Guidelines & Dietary Standards */}
         <section className="mess-guidelines-card">

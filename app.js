@@ -159,6 +159,29 @@ const { getPublicMessMenu } = require("./src/controllers/messMenu.controller");
 
 // ─── 7. Application Routes ───────────────────────────────────────────────────
 app.get("/api/v1/public/mess-menu", getPublicMessMenu);
+
+// Public mess auto-notification schedule query (for mobile and web background alarms)
+app.get("/api/v1/public/mess-notifications", async (req, res) => {
+    try {
+        const { getEffectiveStartTimings, getKolkataTime } = require("./src/services/messReminderScheduler");
+        const SystemConfig = require("./src/models/systemConfig.model");
+        const config = await SystemConfig.getEffectiveConfig();
+        const effectiveTimings = await getEffectiveStartTimings();
+        const timeInfo = getKolkataTime();
+        return res.status(200).json({
+            success: true,
+            config: config.messNotificationConfig,
+            effectiveTimings,
+            serverTime: timeInfo,
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Failed to retrieve mess notifications schedule",
+            error: err.message,
+        });
+    }
+});
 app.use("/api/v1/mess-menu", messMenuRouter);
 app.use("/api/v1/complaints", complaintRouter);
 app.use("/api/v1/users", UserRouters);

@@ -627,3 +627,265 @@
     gap: 0.75rem;
   }
 }
+
+/* ==========================================================
+   MESS AUTO-NOTIFICATION SECTION STYLES (APK & WEB OPTIMIZED)
+   ========================================================== */
+.sa-mess-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sa-mess-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg, 16px);
+  border: 1px solid var(--border-color);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.04));
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sa-mess-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.sa-mess-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.sa-mess-title-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sa-mess-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.sa-mess-status-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.sa-mess-desc {
+  margin: 0;
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  max-width: 760px;
+}
+
+.sa-mess-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* Horizontal Divider Line with safe padding */
+.sa-mess-divider-line {
+  height: 1px;
+  width: 100%;
+  background: var(--border-color);
+  margin: 1rem 0;
+  border: none;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* KPI strip */
+.sa-mess-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sa-mess-kpi-item {
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
+}
+
+.sa-mess-kpi-lbl {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sa-mess-kpi-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Two-column layout */
+.sa-mess-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Meal Slot Card */
+.sa-mess-slot-card {
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.sa-mess-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.sa-mess-slot-name {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+}
+
+.sa-mess-slot-badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(67, 97, 238, 0.12);
+  color: var(--primary);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Slot input grid */
+.sa-mess-slot-grid {
+  display: grid;
+  grid-template-columns: 100px 100px 1fr;
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sa-mess-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sa-mess-field-lbl {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sa-mess-input {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.sa-mess-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+}
+
+/* Responsive Overrides for Mobile APK Screens */
+@media (max-width: 768px) {
+  .sa-mess-card {
+    padding: 0.85rem;
+    border-radius: 12px;
+  }
+
+  .sa-mess-two-col {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .sa-mess-title {
+    font-size: 1.05rem;
+  }
+
+  .sa-mess-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .sa-mess-slot-card {
+    padding: 0.75rem;
+  }
+
+  .sa-mess-slot-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .sa-mess-slot-grid-span2 {
+    grid-column: span 2;
+  }
+
+  .sa-mess-divider-line {
+    margin: 0.75rem 0;
+  }
+
+  .sa-mess-actions {
+    width: 100%;
+  }
+
+  .sa-mess-actions button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+

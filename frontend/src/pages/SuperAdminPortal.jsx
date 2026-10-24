@@ -1,16 +1,35 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { adminApi } from '../services/adminApi';
 import { appUpdateService } from '../services/appUpdateService';
 import { triggerToast } from '../components/Toast';
+import { scheduleWeeklyMealReminders } from '../services/messNotificationService';
 import './SuperAdminPortal.css';
 
 export default function SuperAdminPortal() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { token, user: currentUser, setDirectToken } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'users' | 'sessions' | 'limits' | 'notifications' | 'audit'
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'overview');
   const [loading, setLoading] = useState(false);
+
+  // Sync tab with URL search parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams, activeTab]);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tabId);
+      return next;
+    }, { replace: true });
+  };
 
   // Overview State
   const [overview, setOverview] = useState(null);
@@ -146,10 +165,10 @@ export default function SuperAdminPortal() {
 
   // App Version State
   const [appVersionConfig, setAppVersionConfig] = useState({
-    latestVersion: '1.2.2.6',
+    latestVersion: '1.2.2.7',
     minimumSupportedVersion: '1.0.0',
     updateMessage: '',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.6/hostelcare-v1.2.2.6.apk',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.7/hostelcare-v1.2.2.7.apk',
     forceUpdate: false,
     isSuspended: false,
     suspendedReason: '',
@@ -177,8 +196,8 @@ export default function SuperAdminPortal() {
     enabled: true,
     isSuspended: false,
     suspendedReason: '',
-    version: '1.2.2.6',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.6/hostelcare-v1.2.2.6.apk',
+    version: '1.2.2.7',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.7/hostelcare-v1.2.2.7.apk',
     updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
     releaseNotes: '',
     releaseMedia: [],
@@ -349,7 +368,7 @@ export default function SuperAdminPortal() {
             releaseMedia: res.pilotTesting.releaseMedia || [],
             enabled: Boolean(res.pilotTesting.enabled),
             isSuspended: Boolean(res.pilotTesting.isSuspended),
-            version: res.pilotTesting.version || '1.2.2.6',
+            version: res.pilotTesting.version || '1.2.2.7',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
           }));
         }
@@ -576,7 +595,7 @@ export default function SuperAdminPortal() {
           'success',
           isTargeted
             ? `Removed ${u.name || reg} from targeted pilot release`
-            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.6'})`,
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.7'})`,
           'Pilot Rollout'
         );
       }
@@ -974,6 +993,10 @@ export default function SuperAdminPortal() {
             sundayAndHolidays: res.config.sundayAndHolidays,
           });
         }
+        // Immediately sync local background alarms in Android OS & Web watcher
+        await scheduleWeeklyMealReminders(null, res.config || payload).catch((e) => {
+          console.warn('Local reminder sync note:', e);
+        });
         triggerToast('success', 'Mess notification schedule updated and synchronized across all active daemons!', 'Mess Schedule Saved 🍱');
       }
     } catch (err) {
@@ -1432,7 +1455,7 @@ export default function SuperAdminPortal() {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`sa-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
             >
               {tab.label}
@@ -6097,30 +6120,19 @@ export default function SuperAdminPortal() {
 
       {/* 8. TAB: MESS AUTO-NOTIFICATIONS & SCHEDULE */}
       {activeTab === 'messalerts' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="sa-mess-container">
           {/* Header & Status Card */}
-          <div
-            style={{
-              background: 'var(--bg-card)',
-              borderRadius: 'var(--border-radius-lg)',
-              border: '1px solid var(--border-color)',
-              padding: '1.25rem',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <span style={{ fontSize: '1.5rem' }}>🍱</span>
-                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <div className="sa-mess-card">
+            <div className="sa-mess-header-row">
+              <div className="sa-mess-title-group">
+                <div className="sa-mess-title-line">
+                  <span style={{ fontSize: '1.4rem' }}>🍱</span>
+                  <h2 className="sa-mess-title">
                     Automated Mess Menu Push Notification Engine
                   </h2>
                   <span
+                    className="sa-mess-status-pill"
                     style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '3px 8px',
-                      borderRadius: '12px',
                       background: messAlertConfig.enabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
                       color: messAlertConfig.enabled ? '#22c55e' : '#ef4444',
                       border: `1px solid ${messAlertConfig.enabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
@@ -6129,13 +6141,13 @@ export default function SuperAdminPortal() {
                     {messAlertConfig.enabled ? '● ENGINE ACTIVE' : '○ ENGINE MUTED'}
                   </span>
                 </div>
-                <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '750px', lineHeight: 1.45 }}>
+                <p className="sa-mess-desc">
                   The backend background daemon inspects server IST time every 30 seconds and automatically delivers high-priority meal push notifications to all student & staff devices (FCM & WebPush) at the exact meal start time.
                 </p>
               </div>
 
               {/* Master Toggle & Telemetry */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div className="sa-mess-actions">
                 <button
                   type="button"
                   onClick={() => {
@@ -6198,90 +6210,45 @@ export default function SuperAdminPortal() {
               </div>
             </div>
 
+            {/* Safe horizontal line */}
+            <hr className="sa-mess-divider-line" />
+
             {/* Quick KPI Strip */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '0.85rem',
-                marginTop: '1.25rem',
-                paddingTop: '1rem',
-                borderTop: '1px solid var(--border-color)',
-              }}
-            >
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                }}
-              >
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>SCHEDULE DAEMON</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#22c55e', marginTop: '0.2rem' }}>
+            <div className="sa-mess-kpi-grid">
+              <div className="sa-mess-kpi-item">
+                <div className="sa-mess-kpi-lbl">SCHEDULE DAEMON</div>
+                <div className="sa-mess-kpi-val" style={{ color: '#22c55e' }}>
                   ⚡ Running (30s Cycle)
                 </div>
               </div>
 
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                }}
-              >
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>REGISTERED PUSH DEVICES</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
+              <div className="sa-mess-kpi-item">
+                <div className="sa-mess-kpi-lbl">REGISTERED PUSH DEVICES</div>
+                <div className="sa-mess-kpi-val">
                   📱 {messAlertTelemetry.activePushSessionsCount} Active Sessions
                 </div>
               </div>
 
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                }}
-              >
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>TIMEZONE ANCHOR</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
+              <div className="sa-mess-kpi-item">
+                <div className="sa-mess-kpi-lbl">TIMEZONE ANCHOR</div>
+                <div className="sa-mess-kpi-val">
                   🇮🇳 Asia/Kolkata (IST +05:30)
                 </div>
               </div>
 
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                }}
-              >
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>OFFICIAL NOTICE REF</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)', marginTop: '0.2rem' }}>
-                  📋 08/10/2026 Timing Schedule
+              <div className="sa-mess-kpi-item">
+                <div className="sa-mess-kpi-lbl">OFFICIAL NOTICE REF</div>
+                <div className="sa-mess-kpi-val" style={{ color: 'var(--primary)' }}>
+                  📋 08/10/2026 Timetable
                 </div>
               </div>
             </div>
           </div>
 
           {/* Two-Column Grid: Left = Schedule Configurator, Right = Live Test Broadcast Studio */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '1.25rem' }}>
+          <div className="sa-mess-two-col">
             {/* LEFT: Schedule Configurator */}
-            <div
-              style={{
-                background: 'var(--bg-card)',
-                borderRadius: 'var(--border-radius-lg)',
-                border: '1px solid var(--border-color)',
-                padding: '1.25rem',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-              }}
-            >
+            <div className="sa-mess-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                   ⏰ Meal Start Timings & Schedule
@@ -6340,7 +6307,7 @@ export default function SuperAdminPortal() {
                 ];
 
                 return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {slotsMeta.map((slot) => {
                       const item = currentSchedule[slot.key] || { startHour: 0, startMinute: 0, timing: '' };
                       const hourStr = String(item.startHour ?? 0).padStart(2, '0');
@@ -6360,43 +6327,21 @@ export default function SuperAdminPortal() {
                       };
 
                       return (
-                        <div
-                          key={slot.key}
-                          style={{
-                            padding: '0.85rem',
-                            borderRadius: '8px',
-                            background: 'var(--bg-secondary)',
-                            border: '1px solid var(--border-color)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.5rem',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div key={slot.key} className="sa-mess-slot-card">
+                          <div className="sa-mess-slot-header">
+                            <div className="sa-mess-slot-name">
                               <span style={{ fontSize: '1.15rem' }}>{slot.emoji}</span>
-                              <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>
-                                {slot.name}
-                              </span>
+                              <span>{slot.name}</span>
                             </div>
-                            <span
-                              style={{
-                                fontSize: '0.72rem',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                background: 'rgba(67, 97, 238, 0.1)',
-                                color: 'var(--primary)',
-                                fontWeight: 700,
-                              }}
-                            >
+                            <span className="sa-mess-slot-badge">
                               Alert Time: {hourStr}:{minStr} IST
                             </span>
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '0.5rem' }}>
+                          <div className="sa-mess-slot-grid">
                             {/* Start Hour */}
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                            <div className="sa-mess-field">
+                              <label className="sa-mess-field-lbl">
                                 Start Hour (0-23)
                               </label>
                               <input
@@ -6405,22 +6350,13 @@ export default function SuperAdminPortal() {
                                 max="23"
                                 value={item.startHour ?? 0}
                                 onChange={(e) => updateSlotField('startHour', parseInt(e.target.value, 10) || 0)}
-                                style={{
-                                  width: '100%',
-                                  padding: '0.45rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid var(--border-color)',
-                                  background: 'var(--bg-card)',
-                                  color: 'var(--text-primary)',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 600,
-                                }}
+                                className="sa-mess-input"
                               />
                             </div>
 
                             {/* Start Minute */}
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                            <div className="sa-mess-field">
+                              <label className="sa-mess-field-lbl">
                                 Start Minute (0-59)
                               </label>
                               <input
@@ -6429,22 +6365,13 @@ export default function SuperAdminPortal() {
                                 max="59"
                                 value={item.startMinute ?? 0}
                                 onChange={(e) => updateSlotField('startMinute', parseInt(e.target.value, 10) || 0)}
-                                style={{
-                                  width: '100%',
-                                  padding: '0.45rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid var(--border-color)',
-                                  background: 'var(--bg-card)',
-                                  color: 'var(--text-primary)',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 600,
-                                }}
+                                className="sa-mess-input"
                               />
                             </div>
 
                             {/* Display Timing String */}
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                            <div className="sa-mess-field sa-mess-slot-grid-span2">
+                              <label className="sa-mess-field-lbl">
                                 Display Timing (Banner Text)
                               </label>
                               <input
@@ -6452,15 +6379,8 @@ export default function SuperAdminPortal() {
                                 value={item.timing || ''}
                                 placeholder="e.g. 07:00 AM – 09:15 AM"
                                 onChange={(e) => updateSlotField('timing', e.target.value)}
-                                style={{
-                                  width: '100%',
-                                  padding: '0.45rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid var(--border-color)',
-                                  background: 'var(--bg-card)',
-                                  color: 'var(--text-primary)',
-                                  fontSize: '0.85rem',
-                                }}
+                                className="sa-mess-input"
+                                style={{ fontWeight: 400 }}
                               />
                             </div>
                           </div>
@@ -6478,7 +6398,7 @@ export default function SuperAdminPortal() {
                   disabled={savingMessAlerts}
                   onClick={() => handleSaveMessAlertConfig()}
                   style={{
-                    flex: '1',
+                    flex: '1 1 180px',
                     padding: '0.65rem 1.25rem',
                     borderRadius: '8px',
                     border: 'none',
@@ -6517,18 +6437,7 @@ export default function SuperAdminPortal() {
             </div>
 
             {/* RIGHT: Live Test Broadcast Studio */}
-            <div
-              style={{
-                background: 'var(--bg-card)',
-                borderRadius: 'var(--border-radius-lg)',
-                border: '1px solid var(--border-color)',
-                padding: '1.25rem',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-              }}
-            >
+            <div className="sa-mess-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                   🧪 Interactive Test Broadcast Dispatcher

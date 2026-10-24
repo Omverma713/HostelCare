@@ -197,6 +197,32 @@ export const api = {
     });
   },
 
+  // Public & Client Mess Auto-Notification Schedule
+  async getPublicMessNotificationSchedule() {
+    try {
+      const res = await request('/public/mess-notifications');
+      if (res?.success) {
+        try {
+          localStorage.setItem('hostelcare_cached_mess_schedule', JSON.stringify({
+            config: res.config,
+            cachedAt: new Date().toISOString(),
+          }));
+        } catch (_) {}
+        return res;
+      }
+      throw new Error('Invalid mess notification schedule response');
+    } catch (err) {
+      try {
+        const raw = localStorage.getItem('hostelcare_cached_mess_schedule');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.config) return { success: true, config: parsed.config, fromCache: true };
+        }
+      } catch (_) {}
+      return { success: false, error: err.message };
+    }
+  },
+
   // Super Admin Mess Auto-Notification Schedule & Test Engine
   getMessNotificationSchedule() {
     return request('/superadmin/mess-notifications');

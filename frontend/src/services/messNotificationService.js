@@ -15,6 +15,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { api } from './api';
 import {
   DEFAULT_MESS_DATA,
   OFFICIAL_MESS_TIMINGS,
@@ -159,12 +160,31 @@ function formatMealSummary(mealObj) {
  * 
  * Works 100% offline and triggers whether the user is logged in or logged out.
  */
-export async function scheduleWeeklyMealReminders(customMenu = null) {
+export async function scheduleWeeklyMealReminders(customMenu = null, customConfig = null) {
   if (!areMealRemindersEnabled()) return { scheduled: 0, reason: 'disabled' };
+
+  let activeConfig = customConfig;
+  if (!activeConfig) {
+    try {
+      const scheduleRes = await api.getPublicMessNotificationSchedule();
+      if (scheduleRes?.success && scheduleRes.config) {
+        activeConfig = scheduleRes.config;
+      }
+    } catch (_) {}
+  }
+
+  // If engine is disabled by administrator, cancel local alarms
+  if (activeConfig && activeConfig.enabled === false) {
+    await cancelAllMealReminders();
+    return { scheduled: 0, reason: 'admin_muted' };
+  }
 
   const menu = customMenu || DEFAULT_MESS_DATA;
   const schedule = menu.schedule || DEFAULT_MESS_DATA.schedule;
   const isNative = Capacitor.isNativePlatform();
+
+  const workingTimings = activeConfig?.workingDays || OFFICIAL_MESS_TIMINGS.workingDays;
+  const sundayTimings = activeConfig?.sundayAndHolidays || OFFICIAL_MESS_TIMINGS.sundayAndHolidays;
 
   if (isNative) {
     await initializeMessChannel();
@@ -202,43 +222,40 @@ export async function scheduleWeeklyMealReminders(customMenu = null) {
 
       const daySchedule = schedule[dayKey] || schedule.monday;
       const meals = daySchedule.meals || {};
-
-      // Meal slot timing config
-      const timingConfig = isSunday
-        ? OFFICIAL_MESS_TIMINGS.sundayAndHolidays
-        : OFFICIAL_MESS_TIMINGS.workingDays;
+      const timingSource = isSunday ? sundayTimings : workingTimings;
 
       const slotConfigs = [
         {
           key: 'breakfast',
           title: '🌅 Breakfast is now starting!',
-          config: timingConfig.breakfast,
+          config: timingSource.breakfast || OFFICIAL_MESS_TIMINGS.workingDays.breakfast,
           icon: '🌅',
         },
         {
           key: 'lunch',
           title: '☀️ Lunch is now being served!',
-          config: timingConfig.lunch,
+          config: timingSource.lunch || OFFICIAL_MESS_TIMINGS.workingDays.lunch,
           icon: '☀️',
         },
         {
           key: 'snacks',
           title: '☕ Evening Snacks is starting now!',
-          config: timingConfig.snacks,
+          config: timingSource.snacks || OFFICIAL_MESS_TIMINGS.workingDays.snacks,
           icon: '☕',
         },
         {
           key: 'dinner',
           title: '🌙 Dinner is now being served!',
-          config: timingConfig.dinner,
+          config: timingSource.dinner || OFFICIAL_MESS_TIMINGS.workingDays.dinner,
           icon: '🌙',
         },
       ];
 
       for (const slot of slotConfigs) {
         const mealData = meals[slot.key];
-        const startHour = slot.config.startHour;
-        const startMinute = slot.config.startMinute;
+        const startHour = Number(slot.config.startHour ?? slot.config.hour ?? 7);
+        const startMinute = Number(slot.config.startMinute ?? slot.config.minute ?? 0);
+        const displayTiming = slot.config.timing || '';
 
         const scheduledAt = new Date(
           targetDate.getFullYear(),
@@ -254,8 +271,8 @@ export async function scheduleWeeklyMealReminders(customMenu = null) {
         if (scheduledAt.getTime() > now + 1000) {
           const itemsSummary = formatMealSummary(mealData);
           const bodyText = itemsSummary
-            ? `Today's Menu: ${itemsSummary} (${slot.config.timing}). Tap to see full menu.`
-            : `Meal timing: ${slot.config.timing}. Tap to see details.`;
+            ? `Today's Menu: ${itemsSummary} (${displayTiming}). Tap to see full menu.`
+            : `Meal timing: ${displayTiming}. Tap to see details.`;
 
           notificationsToSchedule.push({
             id: getMealNotificationId(scheduledAt, slot.key),
@@ -265,7 +282,10 @@ export async function scheduleWeeklyMealReminders(customMenu = null) {
             smallIcon: 'ic_stat_hostelcare',
             largeIcon: 'ic_launcher',
             iconColor: '#10B981',
-            schedule: { at: scheduledAt },
+            schedule: {
+              at: scheduledAt,
+              allowWhileIdle: true,
+            },
             extra: {
               route: '/mess-menu',
               slotKey: slot.key,
@@ -282,7 +302,7 @@ export async function scheduleWeeklyMealReminders(customMenu = null) {
         await LocalNotifications.schedule({
           notifications: notificationsToSchedule,
         });
-        console.log(`✅ [MessAutoNotice] Successfully scheduled ${notificationsToSchedule.length} meal start alarms.`);
+        console.log(`✅ [MessAutoNotice] Successfully scheduled ${notificationsToSchedule.length} meal start alarms with OS AlarmManager (allowWhileIdle: true).`);
         return { scheduled: notificationsToSchedule.length, success: true };
       } catch (scheduleErr) {
         console.error('Failed to schedule local meal notifications:', scheduleErr);
@@ -294,7 +314,7 @@ export async function scheduleWeeklyMealReminders(customMenu = null) {
   }
 
   // Web Browser fallback
-  startWebMealWatcher(menu);
+  startWebMealWatcher(menu, activeConfig);
   return { scheduled: 0, platform: 'web', success: true };
 }
 
@@ -303,14 +323,19 @@ export async function scheduleWeeklyMealReminders(customMenu = null) {
  * When the app is open in any web browser, checks current Kolkata minute
  * and presents a Notification if a meal has just started.
  */
-export function startWebMealWatcher(customMenu = null) {
+export function startWebMealWatcher(customMenu = null, customConfig = null) {
   if (typeof window === 'undefined') return;
-  if (webWatcherInterval) return; // already active
+  if (webWatcherInterval) {
+    clearInterval(webWatcherInterval);
+    webWatcherInterval = null;
+  }
 
   const menu = customMenu || DEFAULT_MESS_DATA;
   const schedule = menu.schedule || DEFAULT_MESS_DATA.schedule;
+  const workingTimings = customConfig?.workingDays || OFFICIAL_MESS_TIMINGS.workingDays;
+  const sundayTimings = customConfig?.sundayAndHolidays || OFFICIAL_MESS_TIMINGS.sundayAndHolidays;
 
-  webWatcherInterval = setInterval(() => {
+  const runWatcher = () => {
     if (!areMealRemindersEnabled()) return;
     if (!('Notification' in window) || window.Notification.permission !== 'granted') return;
 
@@ -326,47 +351,53 @@ export function startWebMealWatcher(customMenu = null) {
     const dayKey = DAYS_ORDER.find((_, idx) => (idx + 1) % 7 === dayIndex)?.key || 'monday';
     const daySchedule = schedule[dayKey] || schedule.monday;
     const meals = daySchedule.meals || {};
-
-    const timingConfig = isSunday
-      ? OFFICIAL_MESS_TIMINGS.sundayAndHolidays
-      : OFFICIAL_MESS_TIMINGS.workingDays;
+    const timingSource = isSunday ? sundayTimings : workingTimings;
 
     const slots = [
-      { key: 'breakfast', title: '🌅 Breakfast is now starting!', config: timingConfig.breakfast },
-      { key: 'lunch', title: '☀️ Lunch is now being served!', config: timingConfig.lunch },
-      { key: 'snacks', title: '☕ Evening Snacks is starting now!', config: timingConfig.snacks },
-      { key: 'dinner', title: '🌙 Dinner is now being served!', config: timingConfig.dinner },
+      { key: 'breakfast', title: '🌅 Breakfast is now starting!', config: timingSource.breakfast || OFFICIAL_MESS_TIMINGS.workingDays.breakfast },
+      { key: 'lunch', title: '☀️ Lunch is now being served!', config: timingSource.lunch || OFFICIAL_MESS_TIMINGS.workingDays.lunch },
+      { key: 'snacks', title: '☕ Evening Snacks is starting now!', config: timingSource.snacks || OFFICIAL_MESS_TIMINGS.workingDays.snacks },
+      { key: 'dinner', title: '🌙 Dinner is now being served!', config: timingSource.dinner || OFFICIAL_MESS_TIMINGS.workingDays.dinner },
     ];
 
     for (const slot of slots) {
-      if (slot.config.startHour === hour && slot.config.startMinute === minute) {
-        const fireKey = `${istDate.toDateString()}_${slot.key}`;
+      const startHour = Number(slot.config.startHour ?? slot.config.hour ?? 7);
+      const startMinute = Number(slot.config.startMinute ?? slot.config.minute ?? 0);
+      if (startHour === hour && startMinute === minute) {
+        const fireKey = `${istDate.toDateString()}_${slot.key}_${hour}:${minute}`;
         const lastFired = sessionStorage.getItem(LAST_FIRED_KEY);
         if (lastFired === fireKey) continue;
 
         sessionStorage.setItem(LAST_FIRED_KEY, fireKey);
         const mealData = meals[slot.key];
         const summary = formatMealSummary(mealData);
+        const displayTiming = slot.config.timing || '';
 
         const body = summary
-          ? `Today's Menu: ${summary} (${slot.config.timing}). Click to view.`
-          : `Serving now (${slot.config.timing}). Click to view.`;
+          ? `Today's Menu: ${summary} (${displayTiming}). Click to view.`
+          : `Serving now (${displayTiming}). Click to view.`;
 
-        const notification = new window.Notification(slot.title, {
-          body,
-          icon: '/apple-touch-icon.png',
-          tag: `hostelcare-meal-${slot.key}`,
-        });
+        try {
+          const notification = new window.Notification(slot.title, {
+            body,
+            icon: '/apple-touch-icon.png',
+            tag: `hostelcare-meal-${slot.key}`,
+          });
 
-        notification.onclick = () => {
-          window.focus();
-          if (window.location.pathname !== '/mess-menu') {
-            window.location.href = '/mess-menu';
-          }
-        };
+          notification.onclick = () => {
+            window.focus();
+            if (window.location.pathname !== '/mess-menu') {
+              window.location.href = '/mess-menu';
+            }
+          };
+        } catch (_) {}
       }
     }
-  }, 30000); // Check every 30 seconds
+  };
+
+  // Run initial check and then every 15 seconds
+  runWatcher();
+  webWatcherInterval = setInterval(runWatcher, 15000);
 }
 
 /**
