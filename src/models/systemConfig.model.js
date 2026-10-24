@@ -178,7 +178,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       version: {
         type: String,
-        default: "1.2.2.5",
+        default: "1.2.2.6",
         trim: true,
       },
       updateMessage: {
@@ -189,7 +189,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       updateUrl: {
         type: String,
-        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.5/hostelcare-v1.2.2.5.apk",
+        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.6/hostelcare-v1.2.2.6.apk",
         trim: true,
       },
       forceUpdate: {
