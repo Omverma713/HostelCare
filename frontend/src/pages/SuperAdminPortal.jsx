@@ -120,10 +120,10 @@ export default function SuperAdminPortal() {
 
   // App Version State
   const [appVersionConfig, setAppVersionConfig] = useState({
-    latestVersion: '1.2.2.4',
+    latestVersion: '1.2.2.5',
     minimumSupportedVersion: '1.0.0',
     updateMessage: '',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.4/hostelcare-v1.2.2.4.apk',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.5/hostelcare-v1.2.2.5.apk',
     forceUpdate: false,
     isSuspended: false,
     suspendedReason: '',
@@ -151,8 +151,8 @@ export default function SuperAdminPortal() {
     enabled: true,
     isSuspended: false,
     suspendedReason: '',
-    version: '1.2.2.4',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.4/hostelcare-v1.2.2.4.apk',
+    version: '1.2.2.5',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.5/hostelcare-v1.2.2.5.apk',
     updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
     releaseNotes: '',
     releaseMedia: [],
@@ -323,7 +323,7 @@ export default function SuperAdminPortal() {
             releaseMedia: res.pilotTesting.releaseMedia || [],
             enabled: Boolean(res.pilotTesting.enabled),
             isSuspended: Boolean(res.pilotTesting.isSuspended),
-            version: res.pilotTesting.version || '1.2.2.4',
+            version: res.pilotTesting.version || '1.2.2.5',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
           }));
         }
@@ -550,7 +550,7 @@ export default function SuperAdminPortal() {
           'success',
           isTargeted
             ? `Removed ${u.name || reg} from targeted pilot release`
-            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.4'})`,
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.5'})`,
           'Pilot Rollout'
         );
       }
@@ -4561,7 +4561,7 @@ export default function SuperAdminPortal() {
                 </span>
               </div>
               <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Deploy pre-release APK versions (e.g. <strong>v{pilotConfig.version || '1.2.2.4'}</strong>) strictly to selected students like <strong>24E122A11</strong> before public rollout.
+                Deploy pre-release APK versions (e.g. <strong>v{pilotConfig.version || '1.2.2.5'}</strong>) strictly to selected students like <strong>24E122A11</strong> before public rollout.
               </p>
             </div>
 
@@ -4777,7 +4777,7 @@ export default function SuperAdminPortal() {
                     <strong>Active IP Mapped:</strong> {pilotTestResult.checks?.ipTracked ? `✅ YES (${pilotTestResult.checks.detectedIp})` : 'ℹ️ No active session IP'}
                   </div>
                   <div>
-                    <strong>Target Version:</strong> v{pilotTestResult.pilotConfig?.version || '1.2.2.4'}
+                    <strong>Target Version:</strong> v{pilotTestResult.pilotConfig?.version || '1.2.2.5'}
                   </div>
                 </div>
               </div>
@@ -4795,7 +4795,7 @@ export default function SuperAdminPortal() {
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   ⚙️ Pilot Release Parameters
                 </h3>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: v{pilotConfig.version || '1.2.2.4'}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: v{pilotConfig.version || '1.2.2.5'}</span>
               </div>
 
               {/* Prominent Per-Release Suspension Card */}
@@ -4884,7 +4884,7 @@ export default function SuperAdminPortal() {
                     required
                     value={pilotConfig.version}
                     onChange={(e) => setPilotConfig((prev) => ({ ...prev, version: e.target.value }))}
-                    placeholder="e.g. 1.2.2.4"
+                    placeholder="e.g. 1.2.2.5"
                     style={{
                       width: '100%',
                       padding: '0.55rem 0.75rem',
@@ -4897,7 +4897,7 @@ export default function SuperAdminPortal() {
                     }}
                   />
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Version delivered to pilot testers (e.g. 1.2.2.4).
+                    Version delivered to pilot testers (e.g. 1.2.2.5).
                   </div>
                 </div>
 
@@ -4949,7 +4949,7 @@ export default function SuperAdminPortal() {
                   required
                   value={pilotConfig.updateUrl}
                   onChange={(e) => setPilotConfig((prev) => ({ ...prev, updateUrl: e.target.value }))}
-                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.4/hostelcare-v1.2.2.4.apk"
+                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.5/hostelcare-v1.2.2.5.apk"
                   style={{
                     width: '100%',
                     padding: '0.55rem 0.75rem',
@@ -5451,7 +5451,7 @@ export default function SuperAdminPortal() {
                       marginBottom: '0.75rem',
                     }}
                   >
-                    <span>Target: <strong>v{pilotConfig.version || '1.2.2.4'}</strong></span>
+                    <span>Target: <strong>v{pilotConfig.version || '1.2.2.5'}</strong></span>
                     <span style={{ color: '#38bdf8' }}>Channel: Pilot Beta</span>
                   </div>
 
