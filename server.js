@@ -1,11 +1,15 @@
 const app       = require("./app");
 const connectDB = require("./src/db/db");
+const { startMessReminderScheduler, stopMessReminderScheduler } = require("./src/services/messReminderScheduler");
 require("dotenv").config();
 
 const PORT = process.env.PORT || 3000;
 
 async function start() {
     await connectDB();
+
+    // Start autonomous mess menu meal start notification daemon
+    startMessReminderScheduler();
 
     const server = app.listen(PORT, () => {
         console.log(`HostelCare server running on port ${PORT}`);
@@ -18,6 +22,7 @@ async function start() {
     // Without this, a restart drops in-flight requests mid-response.
     function gracefulShutdown(signal) {
         console.log(`Received ${signal}. Closing server…`);
+        stopMessReminderScheduler();
         server.close(() => {
             console.log("HTTP server closed. Disconnecting from MongoDB…");
             const mongoose = require("mongoose");

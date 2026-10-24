@@ -16,6 +16,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { api } from './services/api';
 import { MobileBackHandler } from './hooks/useMobileBackHandler';
 import { initPushNotifications } from './services/notificationService';
+import { initMessAutoNotifications } from './services/messNotificationService';
 
 // Immediate Load
 import Login from './pages/Login';
@@ -165,12 +166,30 @@ function MaintenanceManager({ children }) {
   return children;
 }
 
+/**
+ * Autonomous Meal Reminder Daemon
+ * Registers OS alarm schedules for all meal start timings immediately on app launch,
+ * completely independent of whether user is authenticated or guest.
+ */
+function MessMealAlarmScheduler() {
+  useEffect(() => {
+    initMessAutoNotifications().catch((err) => {
+      console.warn('Mess auto notification scheduler notice:', err);
+    });
+  }, []);
+
+  return null;
+}
+
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
           <MaintenanceManager>
+            {/* Autonomous Meal Start Timings Alarm Scheduler (Works logged in or logged out) */}
+            <MessMealAlarmScheduler />
+
             {/* Super Admin User Impersonation Session Banner */}
             <ImpersonationBanner />
 

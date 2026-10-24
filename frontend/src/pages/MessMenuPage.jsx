@@ -12,6 +12,12 @@ import {
   getKolkataTime,
   getMealStatusForDay,
 } from '../constants/messMenuData';
+import {
+  scheduleWeeklyMealReminders,
+  areMealRemindersEnabled,
+  setMealRemindersEnabled,
+  triggerTestMealNotification,
+} from '../services/messNotificationService';
 import './MessMenuPage.css';
 
 // Staff roles authorized to manage mess timetable
@@ -42,6 +48,7 @@ export default function MessMenuPage() {
 
   // Veg filter: 'all' | 'veg'
   const [vegOnly, setVegOnly] = useState(false);
+  const [alertsEnabled, setAlertsEnabled] = useState(() => areMealRemindersEnabled());
 
   // Staff Management Modal State
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
@@ -88,6 +95,34 @@ export default function MessMenuPage() {
   useEffect(() => {
     loadMenu();
   }, [loadMenu]);
+
+  // Auto-schedule meal start notifications whenever menuData is loaded or changed
+  useEffect(() => {
+    scheduleWeeklyMealReminders(menuData).catch(() => {});
+  }, [menuData]);
+
+  const handleToggleAlerts = async () => {
+    const next = !alertsEnabled;
+    setAlertsEnabled(next);
+    const success = await setMealRemindersEnabled(next, menuData);
+    if (success) {
+      triggerToast(
+        'success',
+        next
+          ? '🔔 Auto Meal Alerts Active! You will receive notifications at each meal start time.'
+          : '🔕 Meal start notifications paused.'
+      );
+    }
+  };
+
+  const handleTestNotification = async () => {
+    try {
+      await triggerTestMealNotification(mealStatus?.activeSlot || 'breakfast');
+      triggerToast('info', '🔔 Sample meal notification sent! Check your notification drawer.');
+    } catch (err) {
+      triggerToast('error', err.message || 'Notification permission required.');
+    }
+  };
 
   // Determine official holiday status of selected day
   const isSelectedDayOfficialHoliday = useMemo(() => {
@@ -306,6 +341,30 @@ export default function MessMenuPage() {
               aria-label="Toggle display theme"
             >
               {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+            </button>
+
+            {/* Autonomous Meal Start Reminders Toggle */}
+            <button
+              type="button"
+              className={`mess-chip-toggle ${alertsEnabled ? 'active' : ''}`}
+              onClick={handleToggleAlerts}
+              id="btn-toggle-meal-alerts"
+              title={alertsEnabled ? 'Auto notifications active for every meal start timing' : 'Enable auto notifications for meal timings'}
+              aria-label="Toggle meal notifications"
+            >
+              {alertsEnabled ? '🔔 Alerts ON' : '🔕 Alerts OFF'}
+            </button>
+
+            {/* Test Meal Notification */}
+            <button
+              type="button"
+              className="mess-chip-toggle"
+              onClick={handleTestNotification}
+              id="btn-test-meal-alert"
+              title="Test real-time meal notification"
+              aria-label="Test meal notification"
+            >
+              ⚡ Test Alert
             </button>
 
             {/* Staff Management Action */}
