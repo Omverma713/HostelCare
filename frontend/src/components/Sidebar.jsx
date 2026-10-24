@@ -207,6 +207,26 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
             </NavLink>
 
+            <NavLink
+              to="/mess-menu"
+              onClick={onClose}
+              id="sidebar-link-mess-menu"
+              className={({ isActive }) => `sidebar-dock-link ${isActive ? 'active' : ''}`}
+            >
+              <div className="dock-link-icon-wrap" style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#10b981' }}>
+                🍽️
+              </div>
+
+              <div className="dock-link-content">
+                <span className="dock-link-title">Mess Menu</span>
+                <span className="dock-link-subtitle">Weekly meals & timings</span>
+              </div>
+
+              <div className="dock-link-indicator-chip">
+                <span className="indicator-ray" />
+              </div>
+            </NavLink>
+
             {userRole === 'superadmin' && (
               <NavLink
                 to="/notifications"

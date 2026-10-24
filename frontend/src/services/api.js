@@ -150,4 +150,51 @@ export const api = {
       body: JSON.stringify({ pushToken, provider }),
     });
   },
+
+  // --- MESS MENU (OFFLINE-FIRST & STAFF MANAGED) ---
+  async getMessMenu() {
+    try {
+      const res = await request('/public/mess-menu');
+      if (res?.success && res.menu) {
+        try {
+          localStorage.setItem('hostelcare_cached_mess_menu', JSON.stringify({
+            menu: res.menu,
+            cachedAt: new Date().toISOString(),
+          }));
+        } catch (_) {}
+        return { ...res, source: 'live' };
+      }
+      throw new Error('Invalid mess menu response');
+    } catch (err) {
+      // Fallback: check localStorage cached menu
+      try {
+        const cachedRaw = localStorage.getItem('hostelcare_cached_mess_menu');
+        if (cachedRaw) {
+          const cachedParsed = JSON.parse(cachedRaw);
+          const menu = cachedParsed.menu || (cachedParsed.schedule ? cachedParsed : null);
+          const cachedAt = cachedParsed.cachedAt || null;
+          if (menu) {
+            return { success: true, menu, fromCache: true, cachedAt, source: 'cache' };
+          }
+        }
+      } catch (_) {}
+      // Fallback: return bundled default official menu
+      const { DEFAULT_MESS_DATA } = await import('../constants/messMenuData');
+      return { success: true, menu: DEFAULT_MESS_DATA, isOfflineFallback: true, source: 'default' };
+    }
+  },
+
+  updateMessMenu(menuPayload) {
+    return request('/mess-menu', {
+      method: 'PUT',
+      body: JSON.stringify(menuPayload),
+    });
+  },
+
+  resetMessMenu() {
+    return request('/mess-menu/reset', {
+      method: 'POST',
+    });
+  },
 };
+

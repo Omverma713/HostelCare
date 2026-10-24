@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { adminApi } from '../services/adminApi';
@@ -120,10 +120,10 @@ export default function SuperAdminPortal() {
 
   // App Version State
   const [appVersionConfig, setAppVersionConfig] = useState({
-    latestVersion: '1.2.2.2',
+    latestVersion: '1.2.2.3',
     minimumSupportedVersion: '1.0.0',
     updateMessage: '',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.2/hostelcare-v1.2.2.2.apk',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.3/hostelcare-v1.2.2.3.apk',
     forceUpdate: false,
     isSuspended: false,
     suspendedReason: '',
@@ -136,6 +136,7 @@ export default function SuperAdminPortal() {
     targetedHostels: [],
   });
   const [appMediaInput, setAppMediaInput] = useState('');
+  const appMediaFileInputRef = useRef(null);
   const [targetUserSearch, setTargetUserSearch] = useState('');
   const [targetUserSearchResults, setTargetUserSearchResults] = useState([]);
   const [searchingTargetUsers, setSearchingTargetUsers] = useState(false);
@@ -150,8 +151,8 @@ export default function SuperAdminPortal() {
     enabled: true,
     isSuspended: false,
     suspendedReason: '',
-    version: '1.2.2.2',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.2/hostelcare-v1.2.2.2.apk',
+    version: '1.2.2.3',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.3/hostelcare-v1.2.2.3.apk',
     updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
     releaseNotes: '',
     releaseMedia: [],
@@ -160,6 +161,7 @@ export default function SuperAdminPortal() {
     targetedRegistrationNumbers: ['24E122A11'],
   });
   const [pilotMediaInput, setPilotMediaInput] = useState('');
+  const pilotMediaFileInputRef = useRef(null);
   const [pilotTestQuery, setPilotTestQuery] = useState('24E122A11');
   const [pilotTestResult, setPilotTestResult] = useState(null);
   const [testingPilotUser, setTestingPilotUser] = useState(false);
@@ -321,7 +323,7 @@ export default function SuperAdminPortal() {
             releaseMedia: res.pilotTesting.releaseMedia || [],
             enabled: Boolean(res.pilotTesting.enabled),
             isSuspended: Boolean(res.pilotTesting.isSuspended),
-            version: res.pilotTesting.version || '1.2.2.2',
+            version: res.pilotTesting.version || '1.2.2.3',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
           }));
         }
@@ -548,7 +550,7 @@ export default function SuperAdminPortal() {
           'success',
           isTargeted
             ? `Removed ${u.name || reg} from targeted pilot release`
-            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.2'})`,
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.3'})`,
           'Pilot Rollout'
         );
       }
@@ -559,8 +561,19 @@ export default function SuperAdminPortal() {
 
   // Media Management Handlers for App Updates & Pilot Testing
   const handleAddAppMedia = () => {
-    if (!appMediaInput || !appMediaInput.trim()) return;
-    const url = appMediaInput.trim();
+    if (!appMediaInput || !appMediaInput.trim()) {
+      // If text input is empty, open file picker to let user choose a screenshot/media file
+      if (appMediaFileInputRef.current) {
+        appMediaFileInputRef.current.click();
+      } else {
+        triggerToast('warning', 'Please enter a media URL or select a screenshot file', 'Media Required');
+      }
+      return;
+    }
+    let url = appMediaInput.trim();
+    if (!/^https?:\/\//i.test(url) && !url.startsWith('data:')) {
+      url = 'https://' + url;
+    }
     const existing = appVersionConfig.releaseMedia || [];
     if (existing.includes(url)) {
       triggerToast('info', 'Media URL is already added', 'Already Added');
@@ -573,6 +586,27 @@ export default function SuperAdminPortal() {
     }));
     setAppMediaInput('');
     triggerToast('success', 'Added media attachment to changelog', 'Media Added');
+  };
+
+  const handleAppMediaFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      triggerToast('error', 'Media file exceeds 3MB limit.', 'File Too Large');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const existing = appVersionConfig.releaseMedia || [];
+      setAppVersionConfig((prev) => ({
+        ...prev,
+        releaseMedia: [...existing, dataUrl],
+      }));
+      triggerToast('success', `Added ${file.name} to changelog media`, 'Media Added');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleRemoveAppMedia = (url) => {
@@ -593,8 +627,18 @@ export default function SuperAdminPortal() {
   };
 
   const handleAddPilotMedia = () => {
-    if (!pilotMediaInput || !pilotMediaInput.trim()) return;
-    const url = pilotMediaInput.trim();
+    if (!pilotMediaInput || !pilotMediaInput.trim()) {
+      if (pilotMediaFileInputRef.current) {
+        pilotMediaFileInputRef.current.click();
+      } else {
+        triggerToast('warning', 'Please enter a media URL or select a screenshot file', 'Media Required');
+      }
+      return;
+    }
+    let url = pilotMediaInput.trim();
+    if (!/^https?:\/\//i.test(url) && !url.startsWith('data:')) {
+      url = 'https://' + url;
+    }
     const existing = pilotConfig.releaseMedia || [];
     if (existing.includes(url)) {
       triggerToast('info', 'Media URL is already added', 'Already Added');
@@ -607,6 +651,27 @@ export default function SuperAdminPortal() {
     }));
     setPilotMediaInput('');
     triggerToast('success', 'Added media attachment to pilot changelog', 'Media Added');
+  };
+
+  const handlePilotMediaFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      triggerToast('error', 'Media file exceeds 3MB limit.', 'File Too Large');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const existing = pilotConfig.releaseMedia || [];
+      setPilotConfig((prev) => ({
+        ...prev,
+        releaseMedia: [...existing, dataUrl],
+      }));
+      triggerToast('success', `Added ${file.name} to pilot changelog media`, 'Media Added');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleRemovePilotMedia = (url) => {
@@ -4115,15 +4180,23 @@ export default function SuperAdminPortal() {
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Screenshots, GIFs & Videos</span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                  <input
+                    type="file"
+                    ref={appMediaFileInputRef}
+                    accept="image/*,video/*"
+                    style={{ display: 'none' }}
+                    onChange={handleAppMediaFileUpload}
+                  />
                   <input
                     type="url"
                     value={appMediaInput}
                     onChange={(e) => setAppMediaInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAppMedia())}
-                    placeholder="Paste image/GIF/video HTTPS link (e.g. https://.../demo.gif)..."
+                    placeholder="Paste image/GIF/video HTTPS link (or click Upload File)..."
                     style={{
                       flex: 1,
+                      minWidth: '200px',
                       padding: '0.45rem 0.65rem',
                       borderRadius: '6px',
                       border: '1px solid var(--border-color)',
@@ -4135,6 +4208,7 @@ export default function SuperAdminPortal() {
                   <button
                     type="button"
                     onClick={handleAddAppMedia}
+                    id="btn-add-changelog-media"
                     style={{
                       padding: '0.45rem 0.9rem',
                       borderRadius: '6px',
@@ -4148,6 +4222,24 @@ export default function SuperAdminPortal() {
                     }}
                   >
                     + Add Media
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => appMediaFileInputRef.current?.click()}
+                    title="Upload image or screenshot from your device"
+                    style={{
+                      padding: '0.45rem 0.8rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      color: 'var(--text-primary)',
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    📁 Upload File
                   </button>
                 </div>
 
@@ -4469,7 +4561,7 @@ export default function SuperAdminPortal() {
                 </span>
               </div>
               <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Deploy pre-release APK versions (e.g. <strong>v{pilotConfig.version || '1.2.2.2'}</strong>) strictly to selected students like <strong>24E122A11</strong> before public rollout.
+                Deploy pre-release APK versions (e.g. <strong>v{pilotConfig.version || '1.2.2.3'}</strong>) strictly to selected students like <strong>24E122A11</strong> before public rollout.
               </p>
             </div>
 
@@ -4685,7 +4777,7 @@ export default function SuperAdminPortal() {
                     <strong>Active IP Mapped:</strong> {pilotTestResult.checks?.ipTracked ? `✅ YES (${pilotTestResult.checks.detectedIp})` : 'ℹ️ No active session IP'}
                   </div>
                   <div>
-                    <strong>Target Version:</strong> v{pilotTestResult.pilotConfig?.version || '1.2.2.2'}
+                    <strong>Target Version:</strong> v{pilotTestResult.pilotConfig?.version || '1.2.2.3'}
                   </div>
                 </div>
               </div>
@@ -4703,7 +4795,7 @@ export default function SuperAdminPortal() {
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   ⚙️ Pilot Release Parameters
                 </h3>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: v{pilotConfig.version || '1.2.2.2'}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: v{pilotConfig.version || '1.2.2.3'}</span>
               </div>
 
               {/* Prominent Per-Release Suspension Card */}
@@ -4792,7 +4884,7 @@ export default function SuperAdminPortal() {
                     required
                     value={pilotConfig.version}
                     onChange={(e) => setPilotConfig((prev) => ({ ...prev, version: e.target.value }))}
-                    placeholder="e.g. 1.2.2.2"
+                    placeholder="e.g. 1.2.2.3"
                     style={{
                       width: '100%',
                       padding: '0.55rem 0.75rem',
@@ -4805,7 +4897,7 @@ export default function SuperAdminPortal() {
                     }}
                   />
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Version delivered to pilot testers (e.g. 1.2.2.2).
+                    Version delivered to pilot testers (e.g. 1.2.2.3).
                   </div>
                 </div>
 
@@ -4857,7 +4949,7 @@ export default function SuperAdminPortal() {
                   required
                   value={pilotConfig.updateUrl}
                   onChange={(e) => setPilotConfig((prev) => ({ ...prev, updateUrl: e.target.value }))}
-                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.2/hostelcare-v1.2.2.2.apk"
+                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.3/hostelcare-v1.2.2.3.apk"
                   style={{
                     width: '100%',
                     padding: '0.55rem 0.75rem',
@@ -4937,15 +5029,23 @@ export default function SuperAdminPortal() {
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Screenshots, GIFs & Videos</span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                  <input
+                    type="file"
+                    ref={pilotMediaFileInputRef}
+                    accept="image/*,video/*"
+                    style={{ display: 'none' }}
+                    onChange={handlePilotMediaFileUpload}
+                  />
                   <input
                     type="url"
                     value={pilotMediaInput}
                     onChange={(e) => setPilotMediaInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPilotMedia())}
-                    placeholder="Paste pilot screenshot/GIF/video HTTPS link..."
+                    placeholder="Paste pilot screenshot/GIF/video HTTPS link (or click Upload File)..."
                     style={{
                       flex: 1,
+                      minWidth: '200px',
                       padding: '0.45rem 0.65rem',
                       borderRadius: '6px',
                       border: '1px solid var(--border-color)',
@@ -4957,6 +5057,7 @@ export default function SuperAdminPortal() {
                   <button
                     type="button"
                     onClick={handleAddPilotMedia}
+                    id="btn-add-pilot-changelog-media"
                     style={{
                       padding: '0.45rem 0.9rem',
                       borderRadius: '6px',
@@ -4970,6 +5071,24 @@ export default function SuperAdminPortal() {
                     }}
                   >
                     + Add Media
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => pilotMediaFileInputRef.current?.click()}
+                    title="Upload image or screenshot from your device"
+                    style={{
+                      padding: '0.45rem 0.8rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      color: 'var(--text-primary)',
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    📁 Upload File
                   </button>
                 </div>
 
@@ -5332,7 +5451,7 @@ export default function SuperAdminPortal() {
                       marginBottom: '0.75rem',
                     }}
                   >
-                    <span>Target: <strong>v{pilotConfig.version || '1.2.2.2'}</strong></span>
+                    <span>Target: <strong>v{pilotConfig.version || '1.2.2.3'}</strong></span>
                     <span style={{ color: '#38bdf8' }}>Channel: Pilot Beta</span>
                   </div>
 

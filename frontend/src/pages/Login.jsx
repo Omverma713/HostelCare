@@ -10,6 +10,78 @@ import InteractiveLamp from '../components/InteractiveLamp';
 import Canvas3DBackground from '../components/Canvas3DBackground';
 import FuturisticLoader from '../components/login/FuturisticLoader';
 
+function MessMenuGuestCard() {
+  const navigate = useNavigate();
+  return (
+    <div
+      className="auth-mess-guest-card"
+      style={{
+        marginTop: '1.25rem',
+        padding: '1rem 1.15rem',
+        borderRadius: '16px',
+        background: 'linear-gradient(135deg, rgba(29, 61, 46, 0.92) 0%, rgba(18, 38, 29, 0.96) 100%)',
+        border: '1px solid rgba(110, 231, 183, 0.28)',
+        color: '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+        textAlign: 'left',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <span style={{ fontSize: '0.975rem', fontWeight: 800, color: '#ffffff' }}>
+          Hungry? Check today&apos;s menu 🍽️
+        </span>
+        <span
+          style={{
+            fontSize: '0.675rem',
+            color: '#a7f3d0',
+            background: 'rgba(167, 243, 208, 0.15)',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+          }}
+        >
+          No Login Req.
+        </span>
+      </div>
+
+      <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+        View the weekly hostel mess schedule — No login required
+      </p>
+
+      <button
+        type="button"
+        id="btn-login-view-mess-menu"
+        onClick={() => navigate('/mess-menu')}
+        style={{
+          marginTop: '6px',
+          padding: '0.6rem 1rem',
+          borderRadius: '10px',
+          background: '#a7f3d0',
+          color: '#133524',
+          border: 'none',
+          fontSize: '0.85rem',
+          fontWeight: 700,
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          transition: 'transform 0.15s ease, background 0.15s ease',
+          boxShadow: '0 4px 12px rgba(167, 243, 208, 0.3)',
+        }}
+      >
+        <span>View Mess Menu</span>
+        <span>→</span>
+      </button>
+    </div>
+  );
+}
+
 export default function Login() {
   const { login, logout } = useAuth();
   const navigate = useNavigate();
@@ -462,6 +534,9 @@ export default function Login() {
                   </button>
                 </form>
               )}
+
+              {/* Guest Mess Menu Quick Access Card */}
+              <MessMenuGuestCard />
             </div>
           </div>
         </div>
@@ -698,6 +773,9 @@ export default function Login() {
                     </button>
                   </form>
                 )}
+
+                {/* Guest Mess Menu Quick Access Card */}
+                <MessMenuGuestCard />
               </div>
             </div>
           </div>

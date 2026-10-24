@@ -30,9 +30,9 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
     const textLines = [];
     const mediaItems = [];
 
-    const isImageUrl = (url) => /\.(gif|png|jpe?g|webp|svg)(\?.*)?$/i.test(url);
+    const isImageUrl = (url) => /\.(gif|png|jpe?g|webp|svg)(\?.*)?$/i.test(url) || (typeof url === 'string' && url.startsWith('data:image/'));
     const isVideoUrl = (url) => /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url);
-    const mdImageRegex = /!\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g;
+    const mdImageRegex = /!\[(.*?)\]\((https?:\/\/[^\s)]+|data:image\/[^\s)]+)\)/g;
 
     for (const rawLine of lines) {
       const line = rawLine.trim();
@@ -57,7 +57,7 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
       }
 
       // 2. Direct media URL
-      if (line.startsWith('http://') || line.startsWith('https://')) {
+      if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('data:image/')) {
         if (isImageUrl(line)) {
           mediaItems.push({ type: 'image', url: line, alt: 'Release screenshot' });
           continue;
@@ -74,7 +74,7 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
     // 4. Merge any explicit releaseMedia array URLs
     if (Array.isArray(releaseMedia)) {
       for (const url of releaseMedia) {
-        if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
+        if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/'))) {
           if (!mediaItems.some((m) => m.url === url)) {
             mediaItems.push({
               type: isVideoUrl(url) ? 'video' : 'image',

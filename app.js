@@ -154,7 +154,12 @@ app.get("/api/v1/maintenance/status", async (req, res) => {
 const maintenanceMiddleware = require("./src/middleware/maintenance.middleware");
 app.use(maintenanceMiddleware);
 
+const messMenuRouter   = require("./src/routes/messMenu.router");
+const { getPublicMessMenu } = require("./src/controllers/messMenu.controller");
+
 // ─── 7. Application Routes ───────────────────────────────────────────────────
+app.get("/api/v1/public/mess-menu", getPublicMessMenu);
+app.use("/api/v1/mess-menu", messMenuRouter);
 app.use("/api/v1/complaints", complaintRouter);
 app.use("/api/v1/users", UserRouters);
 app.use("/api/v1/feedback", feedbackRouter);

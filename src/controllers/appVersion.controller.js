@@ -37,8 +37,8 @@ const getAppVersionStatus = async (req, res) => {
     const pilotConfig = config.pilotTesting || {
       enabled: false,
       isSuspended: false,
-      version: "1.2.2.2",
-      updateUrl: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.2/hostelcare-v1.2.2.2.apk",
+      version: "1.2.2.3",
+      updateUrl: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.3/hostelcare-v1.2.2.3.apk",
       updateMessage: "You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.",
       releaseNotes: "",
       forceUpdate: false,
@@ -100,7 +100,7 @@ const getAppVersionStatus = async (req, res) => {
           clientVersion: currentVersion || null,
           platform: platform || "android",
           buildNumber: buildNumber || null,
-          latestVersion: currentVersion || pilotConfig.version || "1.2.2.2",
+          latestVersion: currentVersion || pilotConfig.version || "1.2.2.3",
           minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
           updateAvailable: false,
           forceUpdate: false,
@@ -120,7 +120,7 @@ const getAppVersionStatus = async (req, res) => {
       }
 
       // Pilot is ACTIVE and NOT suspended: deliver pilot version
-      const targetVersion = pilotConfig.version || appVersionConfig.latestVersion || "1.2.2.2";
+      const targetVersion = pilotConfig.version || appVersionConfig.latestVersion || "1.2.2.3";
       const hasNewer = currentVersion ? compareVersions(targetVersion, currentVersion) > 0 : true;
       const isForced = Boolean(pilotConfig.forceUpdate);
 
@@ -147,8 +147,17 @@ const getAppVersionStatus = async (req, res) => {
       });
     }
 
-    // ── CHANNEL B: EXCLUDED FROM PILOT (Target audience is specific but user is not in list)
-    if (appVersionConfig.targetAudience === "specific" && !isPilotTargetedUser) {
+    // ── CHANNEL B: TARGET AUDIENCE IS SPECIFIC BUT USER IS NOT TARGETED ──
+    const targetedRegs = (appVersionConfig.targetedRegistrationNumbers || []).map((r) => String(r).trim().toUpperCase());
+    const targetedRoles = (appVersionConfig.targetedRoles || []).map((r) => String(r).trim().toLowerCase());
+    const targetedHostels = (appVersionConfig.targetedHostels || []).map((h) => String(h).trim().toLowerCase());
+
+    const isAppTargetedUser =
+      (clientRegistrationNumber && targetedRegs.includes(clientRegistrationNumber)) ||
+      (clientRole && targetedRoles.includes(clientRole)) ||
+      (clientHostel && targetedHostels.includes(clientHostel));
+
+    if (appVersionConfig.targetAudience === "specific" && !isAppTargetedUser) {
       return res.status(200).json({
         success: true,
         clientVersion: currentVersion || null,

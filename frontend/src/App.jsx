@@ -28,6 +28,7 @@ const SuperintendentDashboard = lazy(() => import('./pages/SuperintendentDashboa
 const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const SuperAdminPortal = lazy(() => import('./pages/SuperAdminPortal'));
+const MessMenuPage = lazy(() => import('./pages/MessMenuPage'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -187,6 +188,16 @@ export default function App() {
             <Routes>
               {/* Public Authentication Route */}
               <Route path="/login" element={<LoginRoute />} />
+
+              {/* Public Mess Menu Route (Accessible without login & when logged in) */}
+              <Route
+                path="/mess-menu"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <MessMenuPage />
+                  </Suspense>
+                }
+              />
 
             {/* Protected Dashboards Route Nesting */}
             <Route element={<ProtectedRoute />}>

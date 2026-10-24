@@ -42,12 +42,14 @@ const auditLogSchema = new mongoose.Schema(
         "MAINTENANCE_MODE_UPDATED",
         "APP_VERSION_CONFIG_UPDATED",
         "USER_IMPERSONATED",
+        "MESS_MENU_UPDATED",
+        "MESS_MENU_RESET",
       ],
     },
 
     targetType: {
       type: String,
-      enum: ["USER", "SESSION", "DEVICE", "SYSTEM_CONFIG", "NOTIFICATION"],
+      enum: ["USER", "SESSION", "DEVICE", "SYSTEM_CONFIG", "NOTIFICATION", "MESS_MENU"],
       required: true,
     },
 

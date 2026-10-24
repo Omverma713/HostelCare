@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { DEPARTMENTS } from '../constants';
@@ -13,6 +14,7 @@ import { triggerToast } from '../components/Toast';
 import ResolutionRingGauge3D from '../components/ResolutionRingGauge3D';
 import SpatialTicketCard from '../components/SpatialTicketCard';
 import { appUpdateService } from '../services/appUpdateService';
+import { getKolkataTime, getMealStatusForDay, DEFAULT_MESS_DATA } from '../constants/messMenuData';
 
 // Department icon helper
 const getDeptIcon = (dept) => {
@@ -116,6 +118,16 @@ export default function StudentDashboard() {
       return matchesStatus && matchesSearch;
     });
   }, [complaints, statusFilter, searchQuery]);
+
+  // Real-time Mess Schedule Telemetry for Dashboard
+  const kolkataTime = useMemo(() => getKolkataTime(), []);
+  const todayDaySchedule = useMemo(() => {
+    const sched = DEFAULT_MESS_DATA.schedule || {};
+    return sched[kolkataTime.dayOfWeek] || sched.monday;
+  }, [kolkataTime]);
+  const messStatus = useMemo(() => {
+    return getMealStatusForDay(todayDaySchedule?.meals, kolkataTime);
+  }, [todayDaySchedule, kolkataTime]);
 
 
   const handleCreateSubmit = async (e) => {
@@ -242,6 +254,104 @@ export default function StudentDashboard() {
           </button>
         </div>
       </header>
+
+      {/* Dining & Mess Menu Quick Access Card */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, rgba(29, 61, 46, 0.95) 0%, rgba(18, 38, 29, 0.98) 100%)',
+          borderRadius: '20px',
+          padding: '1.25rem 1.4rem',
+          margin: '0 0 1.5rem 0',
+          border: '1px solid rgba(110, 231, 183, 0.3)',
+          boxShadow: '0 10px 28px rgba(18, 38, 29, 0.25)',
+          color: '#ffffff',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+        }}
+        id="card-mess-menu-quick-access"
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#a7f3d0' }}>
+              DINING • WEEKLY SCHEDULE
+            </div>
+            <h2 style={{ margin: '4px 0 0', fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Your Mess Menu 🍽️
+            </h2>
+            <p style={{ margin: '3px 0 0', fontSize: '0.85rem', color: '#cbd5e1' }}>
+              Check this week&apos;s verified mess menu & meal timings
+            </p>
+          </div>
+
+          <Link
+            to="/mess-menu"
+            id="btn-view-weekly-menu-dash"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '0.65rem 1.15rem',
+              borderRadius: '12px',
+              background: '#a7f3d0',
+              color: '#133524',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              boxShadow: '0 4px 14px rgba(167, 243, 208, 0.35)',
+              transition: 'transform 0.15s ease',
+            }}
+          >
+            <span>View Weekly Menu</span>
+            <span>→</span>
+          </Link>
+        </div>
+
+        {/* Live Slot Status Chips */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginTop: '4px' }}>
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              padding: '0.65rem 0.85rem',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+            }}
+          >
+            <div style={{ fontSize: '0.725rem', color: '#a7f3d0', fontWeight: 700, textTransform: 'uppercase' }}>
+              {messStatus.activeSlot
+                ? `🔴 Now Serving ${messStatus.activeSlot.countdownText ? `(${messStatus.activeSlot.countdownText})` : ''}`
+                : `⏳ Next Meal ${messStatus.nextSlot?.countdownText ? `(${messStatus.nextSlot.countdownText})` : ''}`}
+            </div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff', marginTop: '2px' }}>
+              {messStatus.activeSlot ? messStatus.activeSlot.name : messStatus.nextSlot ? messStatus.nextSlot.name : "Today's Schedule"}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '2px' }}>
+              {messStatus.activeSlot ? messStatus.activeSlot.timing : messStatus.nextSlot ? messStatus.nextSlot.timing : 'Tap to view'}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              padding: '0.65rem 0.85rem',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+            }}
+          >
+            <div style={{ fontSize: '0.725rem', color: '#a7f3d0', fontWeight: 700, textTransform: 'uppercase' }}>
+              TODAY ({todayDaySchedule.label})
+            </div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff', marginTop: '2px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {todayDaySchedule.meals?.lunch?.items?.slice(0, 3).join(', ') || 'Fresh meals prepared'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '2px' }}>
+              Usuna & Arua rice + Special curry
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Stats & Gauge Section */}
       <section className="bento-analytics-col">
