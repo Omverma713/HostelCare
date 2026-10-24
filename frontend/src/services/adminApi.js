@@ -192,4 +192,23 @@ export const adminApi = {
       body: JSON.stringify({ registrationNumber }),
     });
   },
+
+  // Mess Auto-Notification Schedule & Test Engine
+  getMessNotificationSchedule() {
+    return adminRequest('/superadmin/mess-notifications');
+  },
+
+  updateMessNotificationSchedule(payload) {
+    return adminRequest('/superadmin/mess-notifications', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  testMessNotificationBroadcast(payload) {
+    return adminRequest('/superadmin/mess-notifications/test', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };

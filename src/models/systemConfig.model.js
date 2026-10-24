@@ -217,6 +217,56 @@ const systemConfigSchema = new mongoose.Schema(
         default: [],
       },
     },
+    messNotificationConfig: {
+      enabled: {
+        type: Boolean,
+        default: true,
+      },
+      workingDays: {
+        breakfast: {
+          startHour: { type: Number, default: 7 },
+          startMinute: { type: Number, default: 0 },
+          timing: { type: String, default: "07:00 AM – 09:15 AM" },
+        },
+        lunch: {
+          startHour: { type: Number, default: 12 },
+          startMinute: { type: Number, default: 30 },
+          timing: { type: String, default: "12:30 PM – 02:30 PM" },
+        },
+        snacks: {
+          startHour: { type: Number, default: 17 },
+          startMinute: { type: Number, default: 45 },
+          timing: { type: String, default: "05:45 PM – 07:30 PM" },
+        },
+        dinner: {
+          startHour: { type: Number, default: 20 },
+          startMinute: { type: Number, default: 30 },
+          timing: { type: String, default: "08:30 PM – 10:00 PM" },
+        },
+      },
+      sundayAndHolidays: {
+        breakfast: {
+          startHour: { type: Number, default: 8 },
+          startMinute: { type: Number, default: 0 },
+          timing: { type: String, default: "08:00 AM – 10:00 AM" },
+        },
+        lunch: {
+          startHour: { type: Number, default: 12 },
+          startMinute: { type: Number, default: 30 },
+          timing: { type: String, default: "12:30 PM – 02:30 PM" },
+        },
+        snacks: {
+          startHour: { type: Number, default: 17 },
+          startMinute: { type: Number, default: 30 },
+          timing: { type: String, default: "05:30 PM – 07:00 PM" },
+        },
+        dinner: {
+          startHour: { type: Number, default: 20 },
+          startMinute: { type: Number, default: 30 },
+          timing: { type: String, default: "08:30 PM – 10:00 PM" },
+        },
+      },
+    },
   },
   {
     timestamps: true,

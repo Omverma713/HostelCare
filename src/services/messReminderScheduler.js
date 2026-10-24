@@ -41,6 +41,40 @@ const firedBroadcastsToday = new Set();
 let schedulerInterval = null;
 
 /**
+ * Resolves effective meal start timings from SystemConfig (or fallback to defaults)
+ */
+async function getEffectiveStartTimings() {
+  try {
+    const mongoose = require("mongoose");
+    if (mongoose.connection && mongoose.connection.readyState === 1) {
+      const SystemConfig = require("../models/systemConfig.model");
+      const config = await SystemConfig.getEffectiveConfig();
+      if (config && config.messNotificationConfig) {
+        const mc = config.messNotificationConfig;
+        return {
+          enabled: mc.enabled !== false,
+          working: {
+            breakfast: { hour: mc.workingDays?.breakfast?.startHour ?? 7, minute: mc.workingDays?.breakfast?.startMinute ?? 0, timing: mc.workingDays?.breakfast?.timing || "07:00 AM – 09:15 AM" },
+            lunch:     { hour: mc.workingDays?.lunch?.startHour ?? 12,    minute: mc.workingDays?.lunch?.startMinute ?? 30, timing: mc.workingDays?.lunch?.timing || "12:30 PM – 02:30 PM" },
+            snacks:    { hour: mc.workingDays?.snacks?.startHour ?? 17,   minute: mc.workingDays?.snacks?.startMinute ?? 45, timing: mc.workingDays?.snacks?.timing || "05:45 PM – 07:30 PM" },
+            dinner:    { hour: mc.workingDays?.dinner?.startHour ?? 20,   minute: mc.workingDays?.dinner?.startMinute ?? 30, timing: mc.workingDays?.dinner?.timing || "08:30 PM – 10:00 PM" },
+          },
+          sundayAndHolidays: {
+            breakfast: { hour: mc.sundayAndHolidays?.breakfast?.startHour ?? 8, minute: mc.sundayAndHolidays?.breakfast?.startMinute ?? 0, timing: mc.sundayAndHolidays?.breakfast?.timing || "08:00 AM – 10:00 AM" },
+            lunch:     { hour: mc.sundayAndHolidays?.lunch?.startHour ?? 12,    minute: mc.sundayAndHolidays?.lunch?.startMinute ?? 30, timing: mc.sundayAndHolidays?.lunch?.timing || "12:30 PM – 02:30 PM" },
+            snacks:    { hour: mc.sundayAndHolidays?.snacks?.startHour ?? 17,   minute: mc.sundayAndHolidays?.snacks?.startMinute ?? 30, timing: mc.sundayAndHolidays?.snacks?.timing || "05:30 PM – 07:00 PM" },
+            dinner:    { hour: mc.sundayAndHolidays?.dinner?.startHour ?? 20,   minute: mc.sundayAndHolidays?.dinner?.startMinute ?? 30, timing: mc.sundayAndHolidays?.dinner?.timing || "08:30 PM – 10:00 PM" },
+          },
+        };
+      }
+    }
+  } catch (e) {
+    // Fall back to defaults on error
+  }
+  return { enabled: true, ...OFFICIAL_START_TIMINGS };
+}
+
+/**
  * Get current time and day in Asia/Kolkata timezone
  */
 function getKolkataTime() {
@@ -179,10 +213,15 @@ async function broadcastMealReminder(slotKey, options = {}) {
  * Single heartbeat check: compares current Kolkata minute with meal start timings
  */
 async function checkAndTriggerMealAlerts() {
+  const effective = await getEffectiveStartTimings();
+  if (!effective.enabled) {
+    return;
+  }
+
   const kt = getKolkataTime();
   const timings = kt.isSunday
-    ? OFFICIAL_START_TIMINGS.sundayAndHolidays
-    : OFFICIAL_START_TIMINGS.working;
+    ? effective.sundayAndHolidays
+    : effective.working;
 
   for (const [slotKey, cfg] of Object.entries(timings)) {
     if (cfg.hour === kt.hour && cfg.minute === kt.minute) {
@@ -245,5 +284,6 @@ module.exports = {
   stopMessReminderScheduler,
   broadcastMealReminder,
   getKolkataTime,
+  getEffectiveStartTimings,
   OFFICIAL_START_TIMINGS,
 };

@@ -66,3 +66,15 @@ test("Mess Auto-Notification: Generates valid payload with route, title, and dis
     }
   }
 });
+
+test("Mess Auto-Notification: getEffectiveStartTimings returns valid fallback when DB offline", async () => {
+  const { getEffectiveStartTimings } = require("../src/services/messReminderScheduler");
+  const timings = await getEffectiveStartTimings();
+  assert.equal(timings.enabled, true);
+  assert.equal(timings.working.breakfast.hour, 7);
+  assert.equal(timings.working.breakfast.minute, 0);
+  assert.equal(timings.working.lunch.hour, 12);
+  assert.equal(timings.working.lunch.minute, 30);
+  assert.equal(timings.sundayAndHolidays.breakfast.hour, 8);
+  assert.equal(timings.sundayAndHolidays.snacks.minute, 30);
+});

@@ -196,5 +196,24 @@ export const api = {
       method: 'POST',
     });
   },
+
+  // Super Admin Mess Auto-Notification Schedule & Test Engine
+  getMessNotificationSchedule() {
+    return request('/superadmin/mess-notifications');
+  },
+
+  updateMessNotificationSchedule(payload) {
+    return request('/superadmin/mess-notifications', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  testMessNotificationBroadcast(payload) {
+    return request('/superadmin/mess-notifications/test', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };
 

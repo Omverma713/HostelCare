@@ -90,6 +90,32 @@ export default function SuperAdminPortal() {
   const [campaigns, setCampaigns] = useState([]);
   const [sendingNotify, setSendingNotify] = useState(false);
 
+  // Mess Auto-Notification Schedule & Test State
+  const [messAlertConfig, setMessAlertConfig] = useState({
+    enabled: true,
+    workingDays: {
+      breakfast: { startHour: 7, startMinute: 0, timing: '07:00 AM – 09:15 AM' },
+      lunch:     { startHour: 12, startMinute: 30, timing: '12:30 PM – 02:30 PM' },
+      snacks:    { startHour: 17, startMinute: 45, timing: '05:45 PM – 07:30 PM' },
+      dinner:    { startHour: 20, startMinute: 30, timing: '08:30 PM – 10:00 PM' },
+    },
+    sundayAndHolidays: {
+      breakfast: { startHour: 8, startMinute: 0, timing: '08:00 AM – 10:00 AM' },
+      lunch:     { startHour: 12, startMinute: 30, timing: '12:30 PM – 02:30 PM' },
+      snacks:    { startHour: 17, startMinute: 30, timing: '05:30 PM – 07:00 PM' },
+      dinner:    { startHour: 20, startMinute: 30, timing: '08:30 PM – 10:00 PM' },
+    },
+  });
+  const [messAlertTelemetry, setMessAlertTelemetry] = useState({
+    serverTime: null,
+    activePushSessionsCount: 0,
+  });
+  const [savingMessAlerts, setSavingMessAlerts] = useState(false);
+  const [testSlotKey, setTestSlotKey] = useState('breakfast');
+  const [testingMessAlert, setTestingMessAlert] = useState(false);
+  const [testAlertResult, setTestAlertResult] = useState(null);
+  const [scheduleDayTab, setScheduleDayTab] = useState('working'); // 'working' | 'sunday'
+
   // Audit Logs State
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditPagination, setAuditPagination] = useState({ page: 1, limit: 25, total: 0, totalPages: 1 });
@@ -912,6 +938,103 @@ export default function SuperAdminPortal() {
     }
   };
 
+  // Load Mess Auto-Notification Schedule
+  const loadMessNotifications = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await adminApi.getMessNotificationSchedule();
+      if (res.success && res.config) {
+        setMessAlertConfig((prev) => ({
+          enabled: Boolean(res.config.enabled),
+          workingDays: res.config.workingDays || prev.workingDays,
+          sundayAndHolidays: res.config.sundayAndHolidays || prev.sundayAndHolidays,
+        }));
+        setMessAlertTelemetry({
+          serverTime: res.serverTimeIST || null,
+          activePushSessionsCount: res.activePushSessionsCount || 0,
+        });
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to load mess notification schedule', 'Mess Alerts');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleSaveMessAlertConfig = async (overrideConfig = null) => {
+    try {
+      setSavingMessAlerts(true);
+      const payload = overrideConfig || messAlertConfig;
+      const res = await adminApi.updateMessNotificationSchedule(payload);
+      if (res.success) {
+        if (res.config) {
+          setMessAlertConfig({
+            enabled: Boolean(res.config.enabled),
+            workingDays: res.config.workingDays,
+            sundayAndHolidays: res.config.sundayAndHolidays,
+          });
+        }
+        triggerToast('success', 'Mess notification schedule updated and synchronized across all active daemons!', 'Mess Schedule Saved 🍱');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update mess notification schedule', 'Error');
+    } finally {
+      setSavingMessAlerts(false);
+    }
+  };
+
+  const handleResetMessScheduleToOfficial = async () => {
+    const officialDefaults = {
+      enabled: true,
+      workingDays: {
+        breakfast: { startHour: 7, startMinute: 0, timing: '07:00 AM – 09:15 AM' },
+        lunch:     { startHour: 12, startMinute: 30, timing: '12:30 PM – 02:30 PM' },
+        snacks:    { startHour: 17, startMinute: 45, timing: '05:45 PM – 07:30 PM' },
+        dinner:    { startHour: 20, startMinute: 30, timing: '08:30 PM – 10:00 PM' },
+      },
+      sundayAndHolidays: {
+        breakfast: { startHour: 8, startMinute: 0, timing: '08:00 AM – 10:00 AM' },
+        lunch:     { startHour: 12, startMinute: 30, timing: '12:30 PM – 02:30 PM' },
+        snacks:    { startHour: 17, startMinute: 30, timing: '05:30 PM – 07:00 PM' },
+        dinner:    { startHour: 20, startMinute: 30, timing: '08:30 PM – 10:00 PM' },
+      },
+    };
+    const confirmed = window.confirm(
+      'Reset all meal alert schedules to the official mess timings (Notice: 08/10/2026)?\n\n' +
+      '• Working Days: Breakfast 07:00, Lunch 12:30, Snacks 17:45, Dinner 20:30\n' +
+      '• Sunday/Holidays: Breakfast 08:00, Lunch 12:30, Snacks 17:30, Dinner 20:30'
+    );
+    if (!confirmed) return;
+    setMessAlertConfig(officialDefaults);
+    await handleSaveMessAlertConfig(officialDefaults);
+  };
+
+  const handleTestMessAlert = async () => {
+    try {
+      setTestingMessAlert(true);
+      setTestAlertResult(null);
+      const res = await adminApi.testMessNotificationBroadcast({ slotKey: testSlotKey });
+      if (res.success) {
+        setTestAlertResult(res);
+        triggerToast(
+          'success',
+          `Test alert for ${res.mealName || testSlotKey} triggered to ${res.targetSessionsCount || 0} active device(s)!`,
+          'Test Alert Broadcasted 🚀'
+        );
+      } else {
+        triggerToast('warning', res.message || 'Test broadcast finished with issues', 'Test Alert');
+      }
+    } catch (err) {
+      setTestAlertResult({
+        success: false,
+        message: err.message || 'Failed to dispatch test notification',
+      });
+      triggerToast('error', err.message || 'Failed to dispatch test notification', 'Dispatch Error');
+    } finally {
+      setTestingMessAlert(false);
+    }
+  };
+
   // Initial load according to active tab
   useEffect(() => {
     if (activeTab === 'overview') loadOverview();
@@ -924,8 +1047,9 @@ export default function SuperAdminPortal() {
     else if (activeTab === 'maintenance') loadMaintenance();
     else if (activeTab === 'appversion' || activeTab === 'pilottesting') loadAppVersion();
     else if (activeTab === 'notifications') loadCampaigns();
+    else if (activeTab === 'messalerts') loadMessNotifications();
     else if (activeTab === 'audit') loadAuditLogs(1);
-  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadAuditLogs]);
+  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadMessNotifications, loadAuditLogs]);
 
   // Fetch full details for a selected user
   const handleSelectUser = async (user) => {
@@ -1302,6 +1426,7 @@ export default function SuperAdminPortal() {
             { id: 'appversion', label: '📲 App Updates' },
             { id: 'pilottesting', label: '🧪 Pilot Testing' },
             { id: 'notifications', label: '🔔 Push Broadcast' },
+            { id: 'messalerts', label: '🍱 Mess Auto-Alerts' },
             { id: 'audit', label: '📜 Audit Logs' },
           ].map((tab) => (
             <button
@@ -5966,6 +6091,591 @@ export default function SuperAdminPortal() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 8. TAB: MESS AUTO-NOTIFICATIONS & SCHEDULE */}
+      {activeTab === 'messalerts' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Header & Status Card */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.25rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>🍱</span>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Automated Mess Menu Push Notification Engine
+                  </h2>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      background: messAlertConfig.enabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: messAlertConfig.enabled ? '#22c55e' : '#ef4444',
+                      border: `1px solid ${messAlertConfig.enabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                    }}
+                  >
+                    {messAlertConfig.enabled ? '● ENGINE ACTIVE' : '○ ENGINE MUTED'}
+                  </span>
+                </div>
+                <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '750px', lineHeight: 1.45 }}>
+                  The backend background daemon inspects server IST time every 30 seconds and automatically delivers high-priority meal push notifications to all student & staff devices (FCM & WebPush) at the exact meal start time.
+                </p>
+              </div>
+
+              {/* Master Toggle & Telemetry */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextEnabled = !messAlertConfig.enabled;
+                    setMessAlertConfig((prev) => ({ ...prev, enabled: nextEnabled }));
+                    handleSaveMessAlertConfig({ ...messAlertConfig, enabled: nextEnabled });
+                  }}
+                  style={{
+                    padding: '0.55rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: messAlertConfig.enabled ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                    color: messAlertConfig.enabled ? '#22c55e' : '#ef4444',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  {messAlertConfig.enabled ? '🔔 Notifications: ENABLED' : '🔕 Notifications: MUTED'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={loadMessNotifications}
+                  title="Refresh live status and active subscriber count"
+                  style={{
+                    padding: '0.55rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  🔄 Refresh Status
+                </button>
+              </div>
+            </div>
+
+            {/* Quick KPI Strip */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '0.85rem',
+                marginTop: '1.25rem',
+                paddingTop: '1rem',
+                borderTop: '1px solid var(--border-color)',
+              }}
+            >
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>SCHEDULE DAEMON</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#22c55e', marginTop: '0.2rem' }}>
+                  ⚡ Running (30s Cycle)
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>REGISTERED PUSH DEVICES</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
+                  📱 {messAlertTelemetry.activePushSessionsCount} Active Sessions
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>TIMEZONE ANCHOR</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
+                  🇮🇳 Asia/Kolkata (IST +05:30)
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>OFFICIAL NOTICE REF</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)', marginTop: '0.2rem' }}>
+                  📋 08/10/2026 Timing Schedule
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Two-Column Grid: Left = Schedule Configurator, Right = Live Test Broadcast Studio */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '1.25rem' }}>
+            {/* LEFT: Schedule Configurator */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--border-radius-lg)',
+                border: '1px solid var(--border-color)',
+                padding: '1.25rem',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  ⏰ Meal Start Timings & Schedule
+                </h3>
+
+                {/* Day Category Tabs */}
+                <div style={{ display: 'flex', gap: '0.35rem', background: 'var(--bg-secondary)', padding: '3px', borderRadius: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setScheduleDayTab('working')}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: scheduleDayTab === 'working' ? 'var(--primary)' : 'transparent',
+                      color: scheduleDayTab === 'working' ? '#ffffff' : 'var(--text-secondary)',
+                      fontWeight: 600,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Working Days (Mon–Sat)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScheduleDayTab('sunday')}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: scheduleDayTab === 'sunday' ? 'var(--primary)' : 'transparent',
+                      color: scheduleDayTab === 'sunday' ? '#ffffff' : 'var(--text-secondary)',
+                      fontWeight: 600,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Sunday & Holidays
+                  </button>
+                </div>
+              </div>
+
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Notifications trigger precisely when IST clock reaches the Start Hour & Minute configured below.
+              </p>
+
+              {/* Meal Slots List */}
+              {(() => {
+                const dayKey = scheduleDayTab === 'working' ? 'workingDays' : 'sundayAndHolidays';
+                const currentSchedule = messAlertConfig[dayKey] || {};
+                const slotsMeta = [
+                  { key: 'breakfast', name: 'Breakfast', emoji: '🍳', defaultNote: 'Morning Meal' },
+                  { key: 'lunch',     name: 'Lunch',     emoji: '🍛', defaultNote: 'Afternoon Meal' },
+                  { key: 'snacks',    name: 'Evening Snacks', emoji: '☕', defaultNote: 'High Tea' },
+                  { key: 'dinner',    name: 'Dinner',    emoji: '🍲', defaultNote: 'Night Meal' },
+                ];
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {slotsMeta.map((slot) => {
+                      const item = currentSchedule[slot.key] || { startHour: 0, startMinute: 0, timing: '' };
+                      const hourStr = String(item.startHour ?? 0).padStart(2, '0');
+                      const minStr = String(item.startMinute ?? 0).padStart(2, '0');
+
+                      const updateSlotField = (field, val) => {
+                        setMessAlertConfig((prev) => ({
+                          ...prev,
+                          [dayKey]: {
+                            ...prev[dayKey],
+                            [slot.key]: {
+                              ...prev[dayKey]?.[slot.key],
+                              [field]: val,
+                            },
+                          },
+                        }));
+                      };
+
+                      return (
+                        <div
+                          key={slot.key}
+                          style={{
+                            padding: '0.85rem',
+                            borderRadius: '8px',
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <span style={{ fontSize: '1.15rem' }}>{slot.emoji}</span>
+                              <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+                                {slot.name}
+                              </span>
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                background: 'rgba(67, 97, 238, 0.1)',
+                                color: 'var(--primary)',
+                                fontWeight: 700,
+                              }}
+                            >
+                              Alert Time: {hourStr}:{minStr} IST
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '0.5rem' }}>
+                            {/* Start Hour */}
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                                Start Hour (0-23)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="23"
+                                value={item.startHour ?? 0}
+                                onChange={(e) => updateSlotField('startHour', parseInt(e.target.value, 10) || 0)}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.45rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--border-color)',
+                                  background: 'var(--bg-card)',
+                                  color: 'var(--text-primary)',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 600,
+                                }}
+                              />
+                            </div>
+
+                            {/* Start Minute */}
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                                Start Minute (0-59)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={item.startMinute ?? 0}
+                                onChange={(e) => updateSlotField('startMinute', parseInt(e.target.value, 10) || 0)}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.45rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--border-color)',
+                                  background: 'var(--bg-card)',
+                                  color: 'var(--text-primary)',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 600,
+                                }}
+                              />
+                            </div>
+
+                            {/* Display Timing String */}
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                                Display Timing (Banner Text)
+                              </label>
+                              <input
+                                type="text"
+                                value={item.timing || ''}
+                                placeholder="e.g. 07:00 AM – 09:15 AM"
+                                onChange={(e) => updateSlotField('timing', e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.45rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--border-color)',
+                                  background: 'var(--bg-card)',
+                                  color: 'var(--text-primary)',
+                                  fontSize: '0.85rem',
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  disabled={savingMessAlerts}
+                  onClick={() => handleSaveMessAlertConfig()}
+                  style={{
+                    flex: '1',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #4361ee 0%, #3451d1 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    cursor: savingMessAlerts ? 'not-allowed' : 'pointer',
+                    boxShadow: 'var(--shadow-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  {savingMessAlerts ? '💾 Saving Schedule...' : '💾 Save Timing Schedule'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResetMessScheduleToOfficial}
+                  style={{
+                    padding: '0.65rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-secondary)',
+                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  🔄 Reset to Official (08/10/2026)
+                </button>
+              </div>
+            </div>
+
+            {/* RIGHT: Live Test Broadcast Studio */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--border-radius-lg)',
+                border: '1px solid var(--border-color)',
+                padding: '1.25rem',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  🧪 Interactive Test Broadcast Dispatcher
+                </h3>
+                <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Simulate an automated notification trigger right now for any meal slot. Pulls today’s active mess menu items directly from the database and broadcasts to all active student devices.
+                </p>
+              </div>
+
+              {/* Slot Selector */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                  Select Meal Slot to Test:
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+                  {[
+                    { id: 'breakfast', label: 'Breakfast', emoji: '🍳' },
+                    { id: 'lunch',     label: 'Lunch',     emoji: '🍛' },
+                    { id: 'snacks',    label: 'Snacks',    emoji: '☕' },
+                    { id: 'dinner',    label: 'Dinner',    emoji: '🍲' },
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setTestSlotKey(s.id)}
+                      style={{
+                        padding: '0.55rem 0.25rem',
+                        borderRadius: '6px',
+                        border: '1px solid',
+                        borderColor: testSlotKey === s.id ? 'var(--primary)' : 'var(--border-color)',
+                        background: testSlotKey === s.id ? 'rgba(67, 97, 238, 0.12)' : 'var(--bg-secondary)',
+                        color: testSlotKey === s.id ? 'var(--primary)' : 'var(--text-primary)',
+                        fontWeight: testSlotKey === s.id ? 700 : 500,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <div style={{ fontSize: '1rem' }}>{s.emoji}</div>
+                      <div>{s.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Device Preview Card Mockup */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                  Live Notification Preview (Mobile & PWA Banner):
+                </label>
+                <div
+                  style={{
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    padding: '0.85rem',
+                    boxShadow: 'var(--shadow-sm)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '0.9rem' }}>🛡️</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>HostelCare Mess</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>• Just now</span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        padding: '1px 5px',
+                        borderRadius: '4px',
+                        background: 'rgba(67, 97, 238, 0.15)',
+                        color: 'var(--primary)',
+                        fontWeight: 700,
+                      }}
+                    >
+                      TEST DISPATCH
+                    </span>
+                  </div>
+
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                    {testSlotKey === 'breakfast' && '🍳 Breakfast is Ready!'}
+                    {testSlotKey === 'lunch' && '🍛 Lunch is Served!'}
+                    {testSlotKey === 'snacks' && '☕ Evening Snacks Ready!'}
+                    {testSlotKey === 'dinner' && '🍲 Dinner is Served!'}
+                  </div>
+
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                    Today's {testSlotKey.charAt(0).toUpperCase() + testSlotKey.slice(1)} menu items will be dynamically embedded from the active mess schedule. Tap to view the full nutrition and weekly timetable.
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Action: Opens /mess-menu</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>• High Priority Alert</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trigger Button */}
+              <button
+                type="button"
+                disabled={testingMessAlert}
+                onClick={handleTestMessAlert}
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.92rem',
+                  cursor: testingMessAlert ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                {testingMessAlert ? '🚀 Dispatching Test Broadcast...' : `🚀 Trigger Live Test Notification (${testSlotKey.toUpperCase()})`}
+              </button>
+
+              {/* Result Diagnostics Card */}
+              {testAlertResult && (
+                <div
+                  style={{
+                    borderRadius: '8px',
+                    border: `1px solid ${testAlertResult.success ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+                    background: testAlertResult.success ? 'rgba(34, 197, 94, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                    padding: '0.75rem',
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 700, color: testAlertResult.success ? '#22c55e' : '#ef4444' }}>
+                      {testAlertResult.success ? '✅ Test Broadcast Executed Successfully' : '❌ Test Broadcast Failed'}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      {new Date().toLocaleTimeString()}
+                    </span>
+                  </div>
+
+                  <div style={{ color: 'var(--text-primary)' }}>
+                    {testAlertResult.message || (testAlertResult.success ? 'Alert delivered to provider.' : 'Failed')}
+                  </div>
+
+                  {testAlertResult.targetSessionsCount !== undefined && (
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                      Audience: {testAlertResult.targetSessionsCount} active push sessions targeted • Meal: {testAlertResult.mealName}
+                    </div>
+                  )}
+
+                  {testAlertResult.menuItems && testAlertResult.menuItems.length > 0 && (
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                      Dishes fetched: {testAlertResult.menuItems.join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

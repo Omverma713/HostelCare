@@ -2109,6 +2109,151 @@ const deleteSuperAdminPilotRelease = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/v1/superadmin/mess-notifications
+ * Fetches current mess auto-notification configuration and status telemetry
+ */
+async function getMessNotificationSchedule(req, res) {
+  try {
+    const config = await SystemConfig.getEffectiveConfig();
+    const { getKolkataTime, getEffectiveStartTimings } = require("../services/messReminderScheduler");
+    const timeInfo = getKolkataTime();
+    const effective = await getEffectiveStartTimings();
+
+    // Count active push sessions (FCM & WebPush)
+    const activePushSessionsCount = await Session.countDocuments({
+      isActive: true,
+      $or: [
+        { pushToken: { $exists: true, $ne: null, $ne: "" } },
+        { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      config: config.messNotificationConfig,
+      effectiveTimings: effective,
+      serverTime: timeInfo,
+      activePushSessionsCount,
+    });
+  } catch (error) {
+    console.error("getMessNotificationSchedule error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch mess auto-notification schedule",
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * PUT /api/v1/superadmin/mess-notifications
+ * Updates mess auto-notification schedule timings & enabled status
+ */
+async function updateMessNotificationSchedule(req, res) {
+  try {
+    const { enabled, workingDays, sundayAndHolidays } = req.body;
+    const config = await SystemConfig.getEffectiveConfig();
+
+    if (!config.messNotificationConfig) {
+      config.messNotificationConfig = {};
+    }
+
+    if (typeof enabled === "boolean") {
+      config.messNotificationConfig.enabled = enabled;
+    }
+
+    if (workingDays && typeof workingDays === "object") {
+      config.messNotificationConfig.workingDays = {
+        ...config.messNotificationConfig.workingDays,
+        ...workingDays,
+      };
+    }
+
+    if (sundayAndHolidays && typeof sundayAndHolidays === "object") {
+      config.messNotificationConfig.sundayAndHolidays = {
+        ...config.messNotificationConfig.sundayAndHolidays,
+        ...sundayAndHolidays,
+      };
+    }
+
+    config.updatedBy = req.user?.id || req.user?.registrationNumber || "superadmin";
+    await config.save();
+
+    await recordAudit({
+      req,
+      action: "MESS_NOTIFICATION_SCHEDULE_UPDATED",
+      targetType: "SYSTEM_CONFIG",
+      targetId: config._id,
+      summary: `Super Admin updated mess auto-notification schedule (Status: ${config.messNotificationConfig.enabled ? "ENABLED" : "DISABLED"})`,
+      details: {
+        enabled: config.messNotificationConfig.enabled,
+        workingDays: config.messNotificationConfig.workingDays,
+        sundayAndHolidays: config.messNotificationConfig.sundayAndHolidays,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Mess auto-notification schedule updated successfully.",
+      config: config.messNotificationConfig,
+    });
+  } catch (error) {
+    console.error("updateMessNotificationSchedule error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update mess auto-notification schedule",
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * POST /api/v1/superadmin/mess-notifications/test
+ * Triggers a live test broadcast for a meal slot to test phone notifications
+ */
+async function testMessNotificationBroadcast(req, res) {
+  try {
+    const { slotKey = "breakfast" } = req.body;
+    const validSlots = ["breakfast", "lunch", "snacks", "dinner"];
+    if (!validSlots.includes(slotKey)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid slot key: ${slotKey}. Must be one of: ${validSlots.join(", ")}`,
+      });
+    }
+
+    const { broadcastMealReminder } = require("../services/messReminderScheduler");
+    const result = await broadcastMealReminder(slotKey);
+
+    await recordAudit({
+      req,
+      action: "MESS_NOTIFICATION_TEST_TRIGGERED",
+      targetType: "NOTIFICATION",
+      summary: `Super Admin triggered live test alert for ${slotKey} (Targets: ${result.targets || 0})`,
+      details: {
+        slotKey,
+        targets: result.targets,
+        report: result.report,
+        payload: result.payload,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Live test notification for ${slotKey.toUpperCase()} broadcasted successfully to ${result.targets || 0} active devices.`,
+      result,
+    });
+  } catch (error) {
+    console.error("testMessNotificationBroadcast error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to broadcast test mess notification",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   getSystemOverview,
   getUsersDirectory,
@@ -2135,5 +2280,8 @@ module.exports = {
   testPilotUserEligibility,
   deleteSuperAdminAppRelease,
   deleteSuperAdminPilotRelease,
+  getMessNotificationSchedule,
+  updateMessNotificationSchedule,
+  testMessNotificationBroadcast,
 };
 

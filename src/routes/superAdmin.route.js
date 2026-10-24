@@ -29,6 +29,9 @@ const {
   testPilotUserEligibility,
   deleteSuperAdminAppRelease,
   deleteSuperAdminPilotRelease,
+  getMessNotificationSchedule,
+  updateMessNotificationSchedule,
+  testMessNotificationBroadcast,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -97,6 +100,11 @@ router.post("/pilot-testing/test-user", testPilotUserEligibility);
 // Notification Center
 router.post("/notifications/send", sensitiveActionLimiter, sendAdminNotification);
 router.get("/notifications", getNotificationHistory);
+
+// Autonomous Mess Menu Auto-Notification Schedule & Test Engine
+router.get("/mess-notifications", getMessNotificationSchedule);
+router.put("/mess-notifications", sensitiveActionLimiter, updateMessNotificationSchedule);
+router.post("/mess-notifications/test", sensitiveActionLimiter, testMessNotificationBroadcast);
 
 // Audit Logs
 router.get("/audit-logs", getAuditLogs);
