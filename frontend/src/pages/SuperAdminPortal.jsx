@@ -168,6 +168,8 @@ export default function SuperAdminPortal() {
   const [pilotSearchQuery, setPilotSearchQuery] = useState('');
   const [pilotSearchResults, setPilotSearchResults] = useState([]);
   const [searchingPilotUsers, setSearchingPilotUsers] = useState(false);
+  const [deletingAppRelease, setDeletingAppRelease] = useState(false);
+  const [deletingPilotRelease, setDeletingPilotRelease] = useState(false);
 
   // Load Overview Data
   const loadOverview = useCallback(async () => {
@@ -402,6 +404,32 @@ export default function SuperAdminPortal() {
     }
   };
 
+  const handleDeleteAppRelease = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to permanently delete this production release?\n\nThis will clear the release notes, media attachments, download URL, reset force update, and reset the version back to baseline so no users receive update prompts.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingAppRelease(true);
+      const res = await adminApi.deleteAppRelease();
+      if (res.success) {
+        triggerToast('success', 'Production app release deleted successfully and reset to baseline.', 'Release Deleted 🗑️');
+        if (res.appVersion) {
+          setAppVersionConfig((prev) => ({
+            ...prev,
+            ...res.appVersion,
+            isSuspended: false,
+          }));
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to delete release', 'Error');
+    } finally {
+      setDeletingAppRelease(false);
+    }
+  };
+
   const handleSelectTargetAudience = async (audience) => {
     const updated = {
       ...appVersionConfig,
@@ -632,6 +660,33 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to toggle pilot release suspension', 'Error');
     } finally {
       setSavingPilotConfig(false);
+    }
+  };
+
+  const handleDeletePilotRelease = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to permanently delete this pilot testing release?\n\nThis will clear the pilot version, media attachments, APK URL, disable pilot testing, and remove all targeted testers.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingPilotRelease(true);
+      const res = await adminApi.deletePilotRelease();
+      if (res.success) {
+        triggerToast('success', 'Pilot testing release deleted successfully and reset.', 'Pilot Deleted 🗑️');
+        if (res.pilotTesting) {
+          setPilotConfig((prev) => ({
+            ...prev,
+            ...res.pilotTesting,
+            enabled: false,
+            isSuspended: false,
+          }));
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to delete pilot release', 'Error');
+    } finally {
+      setDeletingPilotRelease(false);
     }
   };
 
@@ -3545,36 +3600,60 @@ export default function SuperAdminPortal() {
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                     {appVersionConfig.isSuspended
-                      ? '⚠️ Updates are completely suspended. Neither global nor pilot users will receive update notifications or be blocked.'
+                      ? '⚠️ Production updates are paused. Users will not receive global update notifications (Pilot testing remains independent).'
                       : 'All eligible clients (based on Rollout Audience below) are receiving update checks and prompts.'}
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={savingAppVersion}
-                  onClick={handleToggleReleaseSuspension}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: appVersionConfig.isSuspended
-                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                      : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: savingAppVersion ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: appVersionConfig.isSuspended
-                      ? '0 4px 12px rgba(16, 185, 129, 0.3)'
-                      : '0 4px 12px rgba(239, 68, 68, 0.3)',
-                  }}
-                >
-                  {appVersionConfig.isSuspended ? '▶️ Resume Release' : '⏸️ Suspend Release'}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    disabled={savingAppVersion}
+                    onClick={handleToggleReleaseSuspension}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: appVersionConfig.isSuspended
+                        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                        : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: savingAppVersion ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: appVersionConfig.isSuspended
+                        ? '0 4px 12px rgba(16, 185, 129, 0.3)'
+                        : '0 4px 12px rgba(239, 68, 68, 0.3)',
+                    }}
+                  >
+                    {appVersionConfig.isSuspended ? '▶️ Resume Release' : '⏸️ Suspend Release'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={deletingAppRelease || savingAppVersion}
+                    onClick={handleDeleteAppRelease}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      color: '#f87171',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: deletingAppRelease ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                    title="Permanently delete this release notes, URL and reset to baseline"
+                  >
+                    <span>{deletingAppRelease ? '⏳ Deleting...' : '🗑️ Delete Release'}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="sa-form-grid-2col">
@@ -4423,6 +4502,29 @@ export default function SuperAdminPortal() {
                 <span>{pilotConfig.isSuspended ? '▶️ Resume Pilot Release' : '⏸️ Suspend this Release'}</span>
               </button>
 
+              {/* Delete Pilot Release Button */}
+              <button
+                type="button"
+                disabled={deletingPilotRelease || savingPilotConfig}
+                onClick={handleDeletePilotRelease}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  color: '#f87171',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  cursor: deletingPilotRelease ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+                title="Permanently delete this pilot release, notes and URL"
+              >
+                <span>{deletingPilotRelease ? '⏳ Deleting...' : '🗑️ Delete Release'}</span>
+              </button>
+
               {/* Enable / Disable Pilot Toggle */}
               <button
                 type="button"
@@ -4632,28 +4734,52 @@ export default function SuperAdminPortal() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={savingPilotConfig}
-                  onClick={handleTogglePilotSuspension}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: pilotConfig.isSuspended
-                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                      : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: savingPilotConfig ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  {pilotConfig.isSuspended ? '▶️ Resume this Release' : '⏸️ Suspend this Release'}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    disabled={savingPilotConfig}
+                    onClick={handleTogglePilotSuspension}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: pilotConfig.isSuspended
+                        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                        : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: savingPilotConfig ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    {pilotConfig.isSuspended ? '▶️ Resume this Release' : '⏸️ Suspend this Release'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={deletingPilotRelease || savingPilotConfig}
+                    onClick={handleDeletePilotRelease}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      color: '#f87171',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: deletingPilotRelease ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                    title="Permanently delete this pilot release and reset all pilot parameters"
+                  >
+                    <span>{deletingPilotRelease ? '⏳ Deleting...' : '🗑️ Delete Release'}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="sa-form-grid-2col">

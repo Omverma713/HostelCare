@@ -1881,7 +1881,6 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
           .map((r) => String(r).trim().toUpperCase())
           .filter(Boolean);
         config.pilotTesting.targetedRegistrationNumbers = cleaned;
-        config.appVersion.targetedRegistrationNumbers = cleaned;
       }
       config.markModified("pilotTesting");
     }
@@ -1951,14 +1950,10 @@ const testPilotUserEligibility = async (req, res) => {
       }
     }
 
-    const allTargets = Array.from(new Set([
-      ...(pilotConfig.targetedRegistrationNumbers || []),
-      ...(appVersionConfig.targetedRegistrationNumbers || []),
-    ])).map((r) => String(r).trim().toUpperCase());
-
-    const isTargeted = allTargets.includes(cleanReg);
-    const isPilotActive = Boolean(pilotConfig.enabled) || appVersionConfig.targetAudience === "specific";
-    const isPilotSuspended = Boolean(pilotConfig.isSuspended) || Boolean(appVersionConfig.isSuspended);
+    const pilotTargets = (pilotConfig.targetedRegistrationNumbers || []).map((r) => String(r).trim().toUpperCase());
+    const isTargeted = pilotTargets.includes(cleanReg);
+    const isPilotActive = Boolean(pilotConfig.enabled);
+    const isPilotSuspended = Boolean(pilotConfig.isSuspended);
     const pilotVersion = pilotConfig.version || "1.2.2.2";
 
     let updateWillTrigger = false;
@@ -2017,6 +2012,103 @@ const testPilotUserEligibility = async (req, res) => {
   }
 };
 
+// ─── DELETE PRODUCTION APP RELEASE ──────────────────────────────────────────
+// DELETE /api/v1/superadmin/app-version/release
+const deleteSuperAdminAppRelease = async (req, res) => {
+  try {
+    const config = await SystemConfig.getEffectiveConfig();
+    const previous = { ...config.appVersion };
+
+    config.appVersion.latestVersion = config.appVersion.minimumSupportedVersion || "1.0.0";
+    config.appVersion.updateUrl = "";
+    config.appVersion.updateMessage = "";
+    config.appVersion.releaseNotes = "";
+    config.appVersion.releaseMedia = [];
+    config.appVersion.forceUpdate = false;
+    config.appVersion.isSuspended = false;
+    config.appVersion.suspendedReason = "";
+    config.appVersion.apkSha256 = "";
+    config.appVersion.targetedRegistrationNumbers = [];
+
+    config.updatedBy = req.user?.registrationNumber || "superadmin";
+    config.markModified("appVersion");
+    await config.save();
+
+    await recordAudit({
+      req,
+      action: "APP_RELEASE_DELETED",
+      targetType: "SYSTEM_CONFIG",
+      targetId: config._id,
+      targetIdentifier: "appVersion",
+      outcome: "SUCCESS",
+      summary: `Production app release deleted and reset to baseline by ${req.user?.registrationNumber || "superadmin"}`,
+      details: { previous, current: config.appVersion },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Production app release deleted successfully. All update prompts have been reset to baseline.",
+      appVersion: config.appVersion,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete production app release",
+      error: error.message,
+    });
+  }
+};
+
+// ─── DELETE PILOT TESTING RELEASE ───────────────────────────────────────────
+// DELETE /api/v1/superadmin/pilot-testing/release
+const deleteSuperAdminPilotRelease = async (req, res) => {
+  try {
+    const config = await SystemConfig.getEffectiveConfig();
+    const previous = { ...(config.pilotTesting || {}) };
+
+    config.pilotTesting = {
+      enabled: false,
+      isSuspended: false,
+      suspendedReason: "",
+      version: "",
+      updateUrl: "",
+      updateMessage: "",
+      releaseNotes: "",
+      forceUpdate: false,
+      releaseMedia: [],
+      apkSha256: "",
+      targetedRegistrationNumbers: [],
+    };
+
+    config.updatedBy = req.user?.registrationNumber || "superadmin";
+    config.markModified("pilotTesting");
+    await config.save();
+
+    await recordAudit({
+      req,
+      action: "PILOT_RELEASE_DELETED",
+      targetType: "SYSTEM_CONFIG",
+      targetId: config._id,
+      targetIdentifier: "pilotTesting",
+      outcome: "SUCCESS",
+      summary: `Pilot testing release permanently deleted and cleared by ${req.user?.registrationNumber || "superadmin"}`,
+      details: { previous, current: config.pilotTesting },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Pilot testing release deleted successfully. Pilot testing is now disabled and all pilot parameters have been cleared.",
+      pilotTesting: config.pilotTesting,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete pilot release",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getSystemOverview,
   getUsersDirectory,
@@ -2041,5 +2133,7 @@ module.exports = {
   getSuperAdminAppVersionConfig,
   updateSuperAdminAppVersionConfig,
   testPilotUserEligibility,
+  deleteSuperAdminAppRelease,
+  deleteSuperAdminPilotRelease,
 };
 

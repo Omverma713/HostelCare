@@ -86,19 +86,15 @@ const getAppVersionStatus = async (req, res) => {
       }
     }
 
-    // 2. Combine pilot target registration numbers from both configurations
-    const allPilotTargets = Array.from(new Set([
-      ...(pilotConfig.targetedRegistrationNumbers || []),
-      ...(appVersionConfig.targetedRegistrationNumbers || []),
-    ])).map((r) => String(r).trim().toUpperCase());
+    // 2. Check Pilot Testing target registration numbers independently
+    const pilotTargets = (pilotConfig.targetedRegistrationNumbers || []).map((r) => String(r).trim().toUpperCase());
+    const isPilotTargetedUser = clientRegistrationNumber && pilotTargets.includes(clientRegistrationNumber);
+    const isPilotRolloutActive = Boolean(pilotConfig.enabled) && Boolean(pilotConfig.version) && Boolean(pilotConfig.updateUrl);
 
-    const isPilotTargetedUser = clientRegistrationNumber && allPilotTargets.includes(clientRegistrationNumber);
-    const isPilotRolloutActive = Boolean(pilotConfig.enabled) || appVersionConfig.targetAudience === "specific";
-
-    // ── CHANNEL A: PILOT / TARGETED USER ROLLOUT ──────────────────────────────
+    // ── CHANNEL A: PILOT TESTING ROLLOUT (100% INDEPENDENT FROM PRODUCTION APP UPDATE) ──
     if (isPilotTargetedUser && isPilotRolloutActive) {
-      // Check if Pilot Release is suspended
-      if (pilotConfig.isSuspended || appVersionConfig.isSuspended) {
+      // Check if Pilot Release specifically is suspended (independent of appVersionConfig.isSuspended)
+      if (pilotConfig.isSuspended) {
         return res.status(200).json({
           success: true,
           clientVersion: currentVersion || null,
@@ -111,11 +107,11 @@ const getAppVersionStatus = async (req, res) => {
           updateType: "none",
           isSuspended: true,
           isPilot: true,
-          suspendedReason: pilotConfig.suspendedReason || appVersionConfig.suspendedReason || "Pilot release is temporarily paused by administrator.",
+          suspendedReason: pilotConfig.suspendedReason || "Pilot release is temporarily paused by administrator.",
           targetAudience: "specific",
           isTargeted: true,
           updateMessage: "Pilot release is currently paused by administration.",
-          updateUrl: pilotConfig.updateUrl || appVersionConfig.updateUrl,
+          updateUrl: pilotConfig.updateUrl,
           releaseNotes: "",
           releaseMedia: [],
           apkSha256: "",

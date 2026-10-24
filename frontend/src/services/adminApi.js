@@ -174,6 +174,18 @@ export const adminApi = {
     });
   },
 
+  deleteAppRelease() {
+    return adminRequest('/superadmin/app-version/release', {
+      method: 'DELETE',
+    });
+  },
+
+  deletePilotRelease() {
+    return adminRequest('/superadmin/pilot-testing/release', {
+      method: 'DELETE',
+    });
+  },
+
   testPilotUserEligibility(registrationNumber) {
     return adminRequest('/superadmin/pilot-testing/test-user', {
       method: 'POST',

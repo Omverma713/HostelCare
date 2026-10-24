@@ -27,6 +27,8 @@ const {
   getSuperAdminAppVersionConfig,
   updateSuperAdminAppVersionConfig,
   testPilotUserEligibility,
+  deleteSuperAdminAppRelease,
+  deleteSuperAdminPilotRelease,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -88,6 +90,8 @@ router.put("/maintenance", sensitiveActionLimiter, updateMaintenanceConfig);
 // App Version & In-App Update Management
 router.get("/app-version", getSuperAdminAppVersionConfig);
 router.put("/app-version", sensitiveActionLimiter, updateSuperAdminAppVersionConfig);
+router.delete("/app-version/release", sensitiveActionLimiter, deleteSuperAdminAppRelease);
+router.delete("/pilot-testing/release", sensitiveActionLimiter, deleteSuperAdminPilotRelease);
 router.post("/pilot-testing/test-user", testPilotUserEligibility);
 
 // Notification Center
