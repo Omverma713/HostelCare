@@ -1699,13 +1699,13 @@ const getSuperAdminAppVersionConfig = async (req, res) => {
         enabled: Boolean(config?.pilotTesting?.enabled),
         isSuspended: Boolean(config?.pilotTesting?.isSuspended),
         suspendedReason: config?.pilotTesting?.suspendedReason || "",
-        version: config?.pilotTesting?.version || "1.2.2.3",
+        version: config?.pilotTesting?.version || "1.2.2.4",
         updateMessage:
           config?.pilotTesting?.updateMessage ||
           "You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.",
         updateUrl:
           config?.pilotTesting?.updateUrl ||
-          "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.3/hostelcare-v1.2.2.3.apk",
+          "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.4/hostelcare-v1.2.2.4.apk",
         forceUpdate: Boolean(config?.pilotTesting?.forceUpdate),
         releaseNotes: config?.pilotTesting?.releaseNotes || "",
         releaseMedia: config?.pilotTesting?.releaseMedia || [],
@@ -1954,7 +1954,7 @@ const testPilotUserEligibility = async (req, res) => {
     const isTargeted = pilotTargets.includes(cleanReg);
     const isPilotActive = Boolean(pilotConfig.enabled);
     const isPilotSuspended = Boolean(pilotConfig.isSuspended);
-    const pilotVersion = pilotConfig.version || "1.2.2.3";
+    const pilotVersion = pilotConfig.version || "1.2.2.4";
 
     let updateWillTrigger = false;
     let reason = "";

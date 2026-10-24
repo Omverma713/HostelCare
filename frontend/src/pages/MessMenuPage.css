@@ -6,8 +6,20 @@
 .mess-menu-root {
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--bg-primary, #f5f6fa);
-  color: var(--text-primary, #1e293b);
+  /* Warm Organic Dining Tone (Warm Linen / Cream / Ivory — never harsh fluorescent white) */
+  --mess-bg-page: #fbf8f3;
+  --mess-bg-card: #fffdf9;
+  --mess-bg-chip: #f5efe4;
+  --mess-border: #ede4d6;
+  --mess-border-subtle: #f0e9dd;
+  --mess-text-heading: #26211d;
+  --mess-text-body: #443e38;
+  --mess-text-muted: #787067;
+  --mess-shadow: 0 4px 18px rgba(110, 85, 55, 0.05);
+
+  background: var(--mess-bg-page);
+  background: linear-gradient(180deg, #fcfaf6 0%, #f6f1e8 100%);
+  color: var(--mess-text-heading);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -20,15 +32,16 @@
   padding-right: env(safe-area-inset-right, 0px);
 }
 
-/* Warm background gradient orbs */
+/* Warm ambient dining glow (Honey amber & soft sage) */
 .mess-ambient-bg {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 480px;
-  background: radial-gradient(circle at 50% -20%, rgba(52, 116, 88, 0.15), transparent 70%),
-              radial-gradient(circle at 90% 10%, rgba(217, 119, 6, 0.08), transparent 50%);
+  background: radial-gradient(circle at 50% -20%, rgba(217, 119, 6, 0.08), transparent 65%),
+              radial-gradient(circle at 90% 10%, rgba(52, 116, 88, 0.1), transparent 50%),
+              radial-gradient(circle at 10% 40%, rgba(245, 158, 11, 0.05), transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -58,19 +71,19 @@
   gap: 8px;
   padding: 0.6rem 1rem;
   border-radius: 999px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
-  color: var(--text-primary, #1e293b);
+  background: var(--mess-bg-card, #fffdf9);
+  border: 1px solid var(--mess-border, #ede4d6);
+  color: var(--mess-text-body, #443e38);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 6px rgba(110, 85, 55, 0.04);
 }
 
 .mess-back-btn:hover {
   transform: translateX(-2px);
-  background: var(--bg-tertiary, #f1f5f9);
+  background: var(--mess-bg-chip, #f5efe4);
 }
 
 .mess-top-actions {
@@ -86,9 +99,9 @@
   gap: 6px;
   padding: 0.55rem 0.95rem;
   border-radius: 999px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
-  color: var(--text-secondary, #475569);
+  background: var(--mess-bg-card, #fffdf9);
+  border: 1px solid var(--mess-border, #ede4d6);
+  color: var(--mess-text-muted, #787067);
   font-size: 0.825rem;
   font-weight: 600;
   cursor: pointer;
@@ -200,9 +213,9 @@
   min-width: 72px;
   padding: 0.65rem 0.5rem;
   border-radius: 14px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
-  color: var(--text-secondary, #475569);
+  background: var(--mess-bg-card, #fffdf9);
+  border: 1px solid var(--mess-border, #ede4d6);
+  color: var(--mess-text-muted, #787067);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -259,12 +272,12 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.25rem;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  background: var(--mess-bg-card, #fffdf9);
+  border: 1px solid var(--mess-border, #ede4d6);
   border-radius: 16px;
   padding: 0.65rem 0.85rem;
   gap: 10px;
-  box-shadow: var(--shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.04));
+  box-shadow: var(--mess-shadow, 0 4px 18px rgba(110, 85, 55, 0.05));
 }
 
 .mess-step-btn {
@@ -274,9 +287,9 @@
   gap: 6px;
   padding: 0.5rem 0.85rem;
   border-radius: 10px;
-  background: var(--bg-tertiary, #f1f5f9);
-  border: 1px solid var(--border-color, transparent);
-  color: var(--text-primary, #1e293b);
+  background: var(--mess-bg-chip, #f5efe4);
+  border: 1px solid var(--mess-border, #ede4d6);
+  color: var(--mess-text-heading, #26211d);
   font-size: 0.825rem;
   font-weight: 600;
   cursor: pointer;
@@ -288,7 +301,7 @@
 }
 
 .mess-step-btn:hover {
-  background: var(--border-color, #e2e8f0);
+  background: #ebe3d6;
 }
 
 .mess-step-btn:active {
@@ -384,11 +397,11 @@
 }
 
 .mess-meal-card {
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  background: var(--mess-bg-card, #fffdf9);
+  border: 1px solid var(--mess-border, #ede4d6);
   border-radius: 18px;
   padding: 1.25rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--mess-shadow, 0 4px 18px rgba(110, 85, 55, 0.05));
   transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
@@ -505,9 +518,9 @@
   gap: 6px;
   padding: 0.35rem 0.75rem;
   border-radius: 10px;
-  background: var(--bg-tertiary, #f8fafc);
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
-  color: var(--text-primary, #334155);
+  background: var(--mess-bg-chip, #f5efe4);
+  border: 1px solid var(--mess-border-subtle, #f0e9dd);
+  color: var(--mess-text-body, #443e38);
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -637,9 +650,9 @@
 .mess-matrix-wrapper {
   overflow-x: auto;
   border-radius: 16px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  background: var(--mess-bg-card, #fffdf9);
+  border: 1px solid var(--mess-border, #ede4d6);
+  box-shadow: var(--mess-shadow, 0 4px 18px rgba(110, 85, 55, 0.05));
   margin-bottom: 2rem;
 }
 
@@ -686,11 +699,12 @@
 
 /* Official Guidelines Card */
 .mess-guidelines-card {
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  background: var(--mess-bg-card, #fffdf9);
+  border: 1px solid var(--mess-border, #ede4d6);
   border-radius: 16px;
   padding: 1.25rem;
   margin-top: 1rem;
+  box-shadow: var(--mess-shadow, 0 4px 18px rgba(110, 85, 55, 0.05));
 }
 
 .guidelines-header {

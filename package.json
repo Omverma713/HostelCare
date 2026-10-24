@@ -1,6 +1,6 @@
 {
   "name": "hostelcare",
-  "version": "1.2.2.3",
+  "version": "1.2.2.4",
   "description": "my 1s production-level project",
   "main": "index.js",
   "scripts": {
