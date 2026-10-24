@@ -12,6 +12,7 @@ import AppFooter from './components/AppFooter';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import ImpersonationBanner from './components/ImpersonationBanner';
 import AppUpdateModal from './components/AppUpdateModal';
+import ErrorBoundary from './components/ErrorBoundary';
 import { api } from './services/api';
 import { MobileBackHandler } from './hooks/useMobileBackHandler';
 import { initPushNotifications } from './services/notificationService';
@@ -173,7 +174,9 @@ export default function App() {
             <ImpersonationBanner />
 
             {/* Mobile App In-App Version Update Management Modal */}
-            <AppUpdateModal />
+            <ErrorBoundary fallback={null}>
+              <AppUpdateModal />
+            </ErrorBoundary>
 
             {/* Mobile Hardware Back Button Handler */}
             <MobileBackHandler />

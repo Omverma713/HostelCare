@@ -319,6 +319,7 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
 
 export default function AppUpdateModal() {
   const [state, setState] = useState(() => appUpdateService.updateState);
+  const [rechecking, setRechecking] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -358,31 +359,31 @@ export default function AppUpdateModal() {
   }
 
   // 3. If release is suspended, suppress all update prompts
-  if (state.isSuspended && state.downloadStatus === 'idle') {
+  if (state?.isSuspended && state?.downloadStatus === 'idle') {
     return null;
   }
 
   // Determine whether modal should be visible
   const isDownloadingOrActive =
-    state.downloadStatus === 'downloading' ||
-    state.downloadStatus === 'ready_to_install' ||
-    state.downloadStatus === 'permission_required' ||
-    state.downloadStatus === 'installing' ||
-    state.downloadStatus === 'error';
+    state?.downloadStatus === 'downloading' ||
+    state?.downloadStatus === 'ready_to_install' ||
+    state?.downloadStatus === 'permission_required' ||
+    state?.downloadStatus === 'installing' ||
+    state?.downloadStatus === 'error';
 
   const isUpdatePromptVisible =
-    (state.updateAvailable && (!state.isDismissed || state.forceUpdate)) || isDownloadingOrActive;
+    (state?.updateAvailable && (!state?.isDismissed || state?.forceUpdate)) || isDownloadingOrActive;
 
   const isManualResultVisible =
-    state.manualCheck &&
-    (state.manualCheckStatus === 'up_to_date' || state.manualCheckStatus === 'error');
+    state?.manualCheck &&
+    (state?.manualCheckStatus === 'up_to_date' || state?.manualCheckStatus === 'error');
 
   if (!isUpdatePromptVisible && !isManualResultVisible) {
     return null;
   }
 
   const handleDismiss = () => {
-    if (state.forceUpdate) return;
+    if (state?.forceUpdate) return;
     appUpdateService.dismissUpdate();
   };
 
@@ -407,8 +408,6 @@ export default function AppUpdateModal() {
     appUpdateService.startInAppDownload();
   };
 
-  const [rechecking, setRechecking] = useState(false);
-
   const handleRecheck = async () => {
     setRechecking(true);
     try {
@@ -422,18 +421,18 @@ export default function AppUpdateModal() {
 
   // Helper formatting for downloaded bytes
   const bytesDownloadedMb = (
-    (state.downloadProgress.bytesDownloaded || 0) /
+    ((state?.downloadProgress?.bytesDownloaded) || 0) /
     (1024 * 1024)
   ).toFixed(1);
-  const totalBytesMb = state.downloadProgress.totalBytes > 0
+  const totalBytesMb = (state?.downloadProgress?.totalBytes || 0) > 0
     ? ((state.downloadProgress.totalBytes) / (1024 * 1024)).toFixed(1)
     : null;
-  const percent = Math.max(0, Math.min(100, state.downloadProgress.percent || 0));
+  const percent = Math.max(0, Math.min(100, state?.downloadProgress?.percent || 0));
 
-  const isDownloading = state.downloadStatus === 'downloading';
-  const isPermissionRequired = state.downloadStatus === 'permission_required';
-  const isInstalling = state.downloadStatus === 'installing';
-  const isDownloadError = state.downloadStatus === 'error';
+  const isDownloading = state?.downloadStatus === 'downloading';
+  const isPermissionRequired = state?.downloadStatus === 'permission_required';
+  const isInstalling = state?.downloadStatus === 'installing';
+  const isDownloadError = state?.downloadStatus === 'error';
 
   return (
     <div
@@ -600,6 +599,80 @@ export default function AppUpdateModal() {
               >
                 Done
               </button>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* CASE 1B: Manual Check - Error */}
+          {/* ============================================================== */}
+          {state.manualCheckStatus === 'error' && !state.updateAvailable && (
+            <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1rem',
+                  color: '#ef4444',
+                }}
+              >
+                <AlertCircle size={30} />
+              </div>
+
+              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 800 }}>
+                Check for Updates
+              </h3>
+              <p style={{ margin: '0 0 1.25rem', fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', lineHeight: 1.5 }}>
+                {state.manualCheckMessage || state.errorMessage || 'Unable to check for updates. Please check your internet connection and try again.'}
+              </p>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRecheck}
+                  disabled={rechecking}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: rechecking ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <RefreshCw size={14} style={{ animation: rechecking ? 'spin 0.8s linear infinite' : 'none' }} />
+                  {rechecking ? 'Checking...' : 'Retry'}
+                </button>
+              </div>
             </div>
           )}
 
