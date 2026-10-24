@@ -1,14 +1,11 @@
 const jwt = require("jsonwebtoken");
 const SystemConfig = require("../models/systemConfig.model");
-const { isValidVersion, evaluateUpdate } = require("../utils/versionComparator");
+const { isValidVersion, evaluateUpdate, compareVersions } = require("../utils/versionComparator");
+const { getClientIdentityByIp, recordClientIdentity } = require("../utils/clientTracker");
 
 /**
  * Public, read-only Version-Check API
  * GET /api/v1/app-version
- * 
- * Validates request parameters and returns a structured response indicating
- * whether an optional or forced update is required. Supports targeted rollouts
- * for pilot testing specific users or groups.
  */
 const getAppVersionStatus = async (req, res) => {
   try {
@@ -26,9 +23,10 @@ const getAppVersionStatus = async (req, res) => {
     const appVersionConfig = config.appVersion || {
       latestVersion: "1.0.0",
       minimumSupportedVersion: "1.0.0",
-      updateMessage: "A new version of HostelCare is available. Please update to continue enjoying the latest features.",
+      updateMessage: "A new version of HostelCare is available.",
       updateUrl: "https://play.google.com/store/apps/details?id=com.hostelcare.app",
       forceUpdate: false,
+      isSuspended: false,
       releaseNotes: "",
       targetAudience: "all",
       targetedRegistrationNumbers: [],
@@ -36,32 +34,18 @@ const getAppVersionStatus = async (req, res) => {
       targetedHostels: [],
     };
 
-    // 1. Check if release is suspended by Super Admin
-    if (appVersionConfig.isSuspended) {
-      return res.status(200).json({
-        success: true,
-        clientVersion: currentVersion || null,
-        platform: platform || "android",
-        buildNumber: buildNumber || null,
-        latestVersion: currentVersion || appVersionConfig.latestVersion,
-        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
-        updateAvailable: false,
-        forceUpdate: false,
-        updateType: "none",
-        isSuspended: true,
-        suspendedReason: appVersionConfig.suspendedReason || "Release is temporarily paused by administrator.",
-        targetAudience: appVersionConfig.targetAudience || "all",
-        isTargeted: false,
-        updateMessage: "Release is currently suspended by administration.",
-        updateUrl: appVersionConfig.updateUrl,
-        releaseNotes: "",
-        releaseMedia: [],
-        apkSha256: "",
-        checkedAt: new Date().toISOString(),
-      });
-    }
+    const pilotConfig = config.pilotTesting || {
+      enabled: false,
+      isSuspended: false,
+      version: "1.2.2.1",
+      updateUrl: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.1/hostelcare-v1.2.2.1.apk",
+      updateMessage: "You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.",
+      releaseNotes: "",
+      forceUpdate: false,
+      targetedRegistrationNumbers: [],
+    };
 
-    // 2. Extract requester identity from query parameters or decoded JWT
+    // 1. Extract requester identity from query params, decoded JWT, or IP tracker
     let clientRegistrationNumber = (
       req.query.registrationNumber ||
       req.query.regNo ||
@@ -79,6 +63,7 @@ const getAppVersionStatus = async (req, res) => {
         if (decoded) {
           if (!clientRegistrationNumber && (decoded.registrationNumber || decoded.regNo || decoded.username)) {
             clientRegistrationNumber = String(decoded.registrationNumber || decoded.regNo || decoded.username).trim().toUpperCase();
+            recordClientIdentity(req.ip, clientRegistrationNumber);
           }
           if (!clientRole && decoded.role) {
             clientRole = String(decoded.role).trim().toLowerCase();
@@ -92,32 +77,82 @@ const getAppVersionStatus = async (req, res) => {
       }
     }
 
-    // 3. Check targeted release eligibility
-    const targetAudience = appVersionConfig.targetAudience || "all";
-    const targetedRegs = (appVersionConfig.targetedRegistrationNumbers || []).map((r) =>
-      String(r).trim().toUpperCase()
-    );
-    const targetedRoles = (appVersionConfig.targetedRoles || []).map((r) =>
-      String(r).trim().toLowerCase()
-    );
-    const targetedHostels = (appVersionConfig.targetedHostels || []).map((h) =>
-      String(h).trim().toLowerCase()
-    );
-
-    let isEligible = true;
-    if (targetAudience === "specific") {
-      isEligible = false;
-      if (clientRegistrationNumber && targetedRegs.includes(clientRegistrationNumber)) {
-        isEligible = true;
-      } else if (clientRole && targetedRoles.includes(clientRole)) {
-        isEligible = true;
-      } else if (clientHostel && targetedHostels.includes(clientHostel)) {
-        isEligible = true;
+    // Fallback: If older APK client (like v1.2.2.0) did not send auth header/regNo, check IP tracker!
+    if (!clientRegistrationNumber) {
+      const ip = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress;
+      const detectedReg = getClientIdentityByIp(ip);
+      if (detectedReg) {
+        clientRegistrationNumber = detectedReg;
       }
     }
 
-    // If targeted release is enabled and user is not in the pilot rollout group, do not prompt/block
-    if (!isEligible) {
+    // 2. Combine pilot target registration numbers from both configurations
+    const allPilotTargets = Array.from(new Set([
+      ...(pilotConfig.targetedRegistrationNumbers || []),
+      ...(appVersionConfig.targetedRegistrationNumbers || []),
+    ])).map((r) => String(r).trim().toUpperCase());
+
+    const isPilotTargetedUser = clientRegistrationNumber && allPilotTargets.includes(clientRegistrationNumber);
+    const isPilotRolloutActive = Boolean(pilotConfig.enabled) || appVersionConfig.targetAudience === "specific";
+
+    // ── CHANNEL A: PILOT / TARGETED USER ROLLOUT ──────────────────────────────
+    if (isPilotTargetedUser && isPilotRolloutActive) {
+      // Check if Pilot Release is suspended
+      if (pilotConfig.isSuspended || appVersionConfig.isSuspended) {
+        return res.status(200).json({
+          success: true,
+          clientVersion: currentVersion || null,
+          platform: platform || "android",
+          buildNumber: buildNumber || null,
+          latestVersion: currentVersion || pilotConfig.version || "1.2.2.1",
+          minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+          updateAvailable: false,
+          forceUpdate: false,
+          updateType: "none",
+          isSuspended: true,
+          isPilot: true,
+          suspendedReason: pilotConfig.suspendedReason || appVersionConfig.suspendedReason || "Pilot release is temporarily paused by administrator.",
+          targetAudience: "specific",
+          isTargeted: true,
+          updateMessage: "Pilot release is currently paused by administration.",
+          updateUrl: pilotConfig.updateUrl || appVersionConfig.updateUrl,
+          releaseNotes: "",
+          releaseMedia: [],
+          apkSha256: "",
+          checkedAt: new Date().toISOString(),
+        });
+      }
+
+      // Pilot is ACTIVE and NOT suspended: deliver pilot version
+      const targetVersion = pilotConfig.version || appVersionConfig.latestVersion || "1.2.2.1";
+      const hasNewer = currentVersion ? compareVersions(targetVersion, currentVersion) > 0 : true;
+      const isForced = Boolean(pilotConfig.forceUpdate);
+
+      return res.status(200).json({
+        success: true,
+        clientVersion: currentVersion || null,
+        platform: platform || "android",
+        buildNumber: buildNumber || null,
+        latestVersion: targetVersion,
+        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+        updateAvailable: hasNewer,
+        forceUpdate: isForced,
+        updateType: isForced ? "immediate" : (hasNewer ? "flexible" : "none"),
+        isSuspended: false,
+        isPilot: true,
+        targetAudience: "specific",
+        isTargeted: true,
+        updateMessage: pilotConfig.updateMessage || `HostelCare Beta v${targetVersion} is ready for your pilot account!`,
+        updateUrl: pilotConfig.updateUrl || appVersionConfig.updateUrl,
+        releaseNotes: pilotConfig.releaseNotes || appVersionConfig.releaseNotes || "",
+        releaseMedia: pilotConfig.releaseMedia || appVersionConfig.releaseMedia || [],
+        apkSha256: pilotConfig.apkSha256 || appVersionConfig.apkSha256 || "",
+        checkedAt: new Date().toISOString(),
+      });
+    }
+
+    // ── CHANNEL B: EXCLUDED FROM PILOT (Target audience is specific but user is not in list)
+    if (appVersionConfig.targetAudience === "specific" && !isPilotTargetedUser) {
       return res.status(200).json({
         success: true,
         clientVersion: currentVersion || null,
@@ -129,9 +164,36 @@ const getAppVersionStatus = async (req, res) => {
         forceUpdate: false,
         updateType: "none",
         isSuspended: false,
+        isPilot: false,
         targetAudience: "specific",
         isTargeted: false,
         updateMessage: "You are currently on the stable channel for your user account.",
+        updateUrl: appVersionConfig.updateUrl,
+        releaseNotes: "",
+        releaseMedia: [],
+        apkSha256: "",
+        checkedAt: new Date().toISOString(),
+      });
+    }
+
+    // ── CHANNEL C: GLOBAL ROLLOUT (ALL USERS) ──────────────────────────────────
+    if (appVersionConfig.isSuspended) {
+      return res.status(200).json({
+        success: true,
+        clientVersion: currentVersion || null,
+        platform: platform || "android",
+        buildNumber: buildNumber || null,
+        latestVersion: currentVersion || appVersionConfig.latestVersion,
+        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+        updateAvailable: false,
+        forceUpdate: false,
+        updateType: "none",
+        isSuspended: true,
+        isPilot: false,
+        suspendedReason: appVersionConfig.suspendedReason || "Release is temporarily paused by administrator.",
+        targetAudience: "all",
+        isTargeted: true,
+        updateMessage: "Release is currently suspended by administration.",
         updateUrl: appVersionConfig.updateUrl,
         releaseNotes: "",
         releaseMedia: [],
@@ -166,9 +228,10 @@ const getAppVersionStatus = async (req, res) => {
       minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
       updateAvailable: evaluation.updateAvailable,
       forceUpdate: evaluation.forceUpdate,
-      updateType: evaluation.updateType, // 'none' | 'flexible' | 'immediate'
+      updateType: evaluation.updateType,
       isSuspended: false,
-      targetAudience: targetAudience,
+      isPilot: false,
+      targetAudience: "all",
       isTargeted: true,
       updateMessage: appVersionConfig.updateMessage,
       updateUrl: appVersionConfig.updateUrl,

@@ -26,6 +26,7 @@ const {
   impersonateUser,
   getSuperAdminAppVersionConfig,
   updateSuperAdminAppVersionConfig,
+  testPilotUserEligibility,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -87,6 +88,7 @@ router.put("/maintenance", sensitiveActionLimiter, updateMaintenanceConfig);
 // App Version & In-App Update Management
 router.get("/app-version", getSuperAdminAppVersionConfig);
 router.put("/app-version", sensitiveActionLimiter, updateSuperAdminAppVersionConfig);
+router.post("/pilot-testing/test-user", testPilotUserEligibility);
 
 // Notification Center
 router.post("/notifications/send", sensitiveActionLimiter, sendAdminNotification);

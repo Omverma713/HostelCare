@@ -160,6 +160,63 @@ const systemConfigSchema = new mongoose.Schema(
         default: [],
       },
     },
+
+    pilotTesting: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      isSuspended: {
+        type: Boolean,
+        default: false,
+      },
+      suspendedReason: {
+        type: String,
+        default: "",
+        maxlength: 500,
+        trim: true,
+      },
+      version: {
+        type: String,
+        default: "1.2.2.1",
+        trim: true,
+      },
+      updateMessage: {
+        type: String,
+        default: "You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.",
+        maxlength: 1000,
+        trim: true,
+      },
+      updateUrl: {
+        type: String,
+        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.1/hostelcare-v1.2.2.1.apk",
+        trim: true,
+      },
+      forceUpdate: {
+        type: Boolean,
+        default: false,
+      },
+      releaseNotes: {
+        type: String,
+        default: "",
+        maxlength: 10000,
+        trim: true,
+      },
+      releaseMedia: {
+        type: [String],
+        default: [],
+      },
+      apkSha256: {
+        type: String,
+        default: "",
+        maxlength: 128,
+        trim: true,
+      },
+      targetedRegistrationNumbers: {
+        type: [String],
+        default: [],
+      },
+    },
   },
   {
     timestamps: true,

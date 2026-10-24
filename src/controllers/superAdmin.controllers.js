@@ -1695,6 +1695,23 @@ const getSuperAdminAppVersionConfig = async (req, res) => {
         targetedRoles: config?.appVersion?.targetedRoles || [],
         targetedHostels: config?.appVersion?.targetedHostels || [],
       },
+      pilotTesting: {
+        enabled: Boolean(config?.pilotTesting?.enabled),
+        isSuspended: Boolean(config?.pilotTesting?.isSuspended),
+        suspendedReason: config?.pilotTesting?.suspendedReason || "",
+        version: config?.pilotTesting?.version || "1.2.2.1",
+        updateMessage:
+          config?.pilotTesting?.updateMessage ||
+          "You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.",
+        updateUrl:
+          config?.pilotTesting?.updateUrl ||
+          "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.1/hostelcare-v1.2.2.1.apk",
+        forceUpdate: Boolean(config?.pilotTesting?.forceUpdate),
+        releaseNotes: config?.pilotTesting?.releaseNotes || "",
+        releaseMedia: config?.pilotTesting?.releaseMedia || [],
+        apkSha256: config?.pilotTesting?.apkSha256 || "",
+        targetedRegistrationNumbers: config?.pilotTesting?.targetedRegistrationNumbers || [],
+      },
       updatedAt: config.updatedAt,
       updatedBy: config.updatedBy,
     });
@@ -1846,6 +1863,29 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
     }
     if (typeof apkSha256 === "string") config.appVersion.apkSha256 = apkSha256.trim().slice(0, 128);
 
+    if (req.body.pilotTesting && typeof req.body.pilotTesting === "object") {
+      if (!config.pilotTesting) config.pilotTesting = {};
+      const pt = req.body.pilotTesting;
+      if (typeof pt.enabled === "boolean") config.pilotTesting.enabled = pt.enabled;
+      if (typeof pt.isSuspended === "boolean") config.pilotTesting.isSuspended = pt.isSuspended;
+      if (typeof pt.suspendedReason === "string") config.pilotTesting.suspendedReason = pt.suspendedReason.trim().slice(0, 500);
+      if (typeof pt.version === "string" && isValidVersion(pt.version)) {
+        config.pilotTesting.version = pt.version.trim().replace(/^v/i, "");
+      }
+      if (typeof pt.updateUrl === "string") config.pilotTesting.updateUrl = pt.updateUrl.trim();
+      if (typeof pt.updateMessage === "string") config.pilotTesting.updateMessage = pt.updateMessage.trim().slice(0, 1000);
+      if (typeof pt.releaseNotes === "string") config.pilotTesting.releaseNotes = pt.releaseNotes.trim().slice(0, 10000);
+      if (typeof pt.forceUpdate === "boolean") config.pilotTesting.forceUpdate = pt.forceUpdate;
+      if (Array.isArray(pt.targetedRegistrationNumbers)) {
+        const cleaned = pt.targetedRegistrationNumbers
+          .map((r) => String(r).trim().toUpperCase())
+          .filter(Boolean);
+        config.pilotTesting.targetedRegistrationNumbers = cleaned;
+        config.appVersion.targetedRegistrationNumbers = cleaned;
+      }
+      config.markModified("pilotTesting");
+    }
+
     config.updatedBy = req.user.registrationNumber || "superadmin";
     config.markModified("appVersion");
     await config.save();
@@ -1857,10 +1897,11 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       targetId: config._id,
       targetIdentifier: "appVersion",
       outcome: "SUCCESS",
-      summary: `App version config updated: latest=${config.appVersion.latestVersion}, min=${config.appVersion.minimumSupportedVersion}, force=${config.appVersion.forceUpdate} by ${req.user.registrationNumber}`,
+      summary: `App version config updated: latest=${config.appVersion.latestVersion}, pilot=${config.pilotTesting?.version}, pilotSuspended=${config.pilotTesting?.isSuspended} by ${req.user.registrationNumber}`,
       details: {
         previous,
         updated: config.appVersion,
+        pilotTesting: config.pilotTesting,
       },
     });
 
@@ -1868,6 +1909,7 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       success: true,
       message: "App version configuration updated successfully",
       appVersion: config.appVersion,
+      pilotTesting: config.pilotTesting,
       updatedAt: config.updatedAt,
       updatedBy: config.updatedBy,
     });
@@ -1877,6 +1919,59 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       message: "Failed to update app version configuration",
       error: error.message,
     });
+  }
+};
+
+// POST /api/v1/superadmin/pilot-testing/test-user
+const testPilotUserEligibility = async (req, res) => {
+  try {
+    const { registrationNumber } = req.body;
+    if (!registrationNumber) {
+      return res.status(400).json({ success: false, message: "registrationNumber is required" });
+    }
+
+    const cleanReg = String(registrationNumber).trim().toUpperCase();
+    const config = await SystemConfig.getEffectiveConfig();
+    const appVersionConfig = config.appVersion || {};
+    const pilotConfig = config.pilotTesting || {};
+
+    const allTargets = Array.from(new Set([
+      ...(pilotConfig.targetedRegistrationNumbers || []),
+      ...(appVersionConfig.targetedRegistrationNumbers || []),
+    ])).map((r) => String(r).trim().toUpperCase());
+
+    const isTargeted = allTargets.includes(cleanReg);
+    const isPilotActive = Boolean(pilotConfig.enabled) || appVersionConfig.targetAudience === "specific";
+    const isPilotSuspended = Boolean(pilotConfig.isSuspended) || Boolean(appVersionConfig.isSuspended);
+    const pilotVersion = pilotConfig.version || "1.2.2.1";
+
+    let updateWillTrigger = false;
+    let reason = "";
+
+    if (!isTargeted) {
+      reason = `Student ${cleanReg} is NOT in the pilot target list. They will only receive standard global updates.`;
+    } else if (!isPilotActive) {
+      reason = `Student ${cleanReg} is in the list, but Pilot Testing is currently DISABLED.`;
+    } else if (isPilotSuspended) {
+      reason = `Student ${cleanReg} is in the list, but the Pilot Release is currently SUSPENDED (Paused).`;
+    } else {
+      updateWillTrigger = true;
+      reason = `Student ${cleanReg} is ELIGIBLE! They will receive Pilot Release v${pilotVersion}.`;
+    }
+
+    return res.status(200).json({
+      success: true,
+      registrationNumber: cleanReg,
+      isTargeted,
+      isPilotActive,
+      isPilotSuspended,
+      pilotVersion,
+      updateWillTrigger,
+      reason,
+      pilotConfig,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -1903,5 +1998,6 @@ module.exports = {
   impersonateUser,
   getSuperAdminAppVersionConfig,
   updateSuperAdminAppVersionConfig,
+  testPilotUserEligibility,
 };
 

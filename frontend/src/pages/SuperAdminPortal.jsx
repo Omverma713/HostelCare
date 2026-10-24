@@ -143,6 +143,28 @@ export default function SuperAdminPortal() {
   const [manualCheckResult, setManualCheckResult] = useState(null);
   const [installedAppVersion, setInstalledAppVersion] = useState('1.1.0');
 
+  // Dedicated Pilot Testing State
+  const [pilotConfig, setPilotConfig] = useState({
+    enabled: true,
+    isSuspended: false,
+    suspendedReason: '',
+    version: '1.2.2.1',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.1/hostelcare-v1.2.2.1.apk',
+    updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
+    releaseNotes: '',
+    forceUpdate: false,
+    apkSha256: '',
+    targetedRegistrationNumbers: ['24E122A11'],
+  });
+  const [pilotTestQuery, setPilotTestQuery] = useState('24E122A11');
+  const [pilotTestResult, setPilotTestResult] = useState(null);
+  const [testingPilotUser, setTestingPilotUser] = useState(false);
+  const [savingPilotConfig, setSavingPilotConfig] = useState(false);
+  const [pilotManualReg, setPilotManualReg] = useState('');
+  const [pilotSearchQuery, setPilotSearchQuery] = useState('');
+  const [pilotSearchResults, setPilotSearchResults] = useState([]);
+  const [searchingPilotUsers, setSearchingPilotUsers] = useState(false);
+
   // Load Overview Data
   const loadOverview = useCallback(async () => {
     try {
@@ -274,15 +296,27 @@ export default function SuperAdminPortal() {
     try {
       setLoading(true);
       const res = await adminApi.getAppVersionConfig();
-      if (res.success && res.appVersion) {
-        setAppVersionConfig((prev) => ({
-          ...prev,
-          ...res.appVersion,
-          isSuspended: Boolean(res.appVersion.isSuspended),
-          suspendedReason: res.appVersion.suspendedReason || '',
-          targetAudience: res.appVersion.targetAudience || 'all',
-          targetedRegistrationNumbers: res.appVersion.targetedRegistrationNumbers || [],
-        }));
+      if (res.success) {
+        if (res.appVersion) {
+          setAppVersionConfig((prev) => ({
+            ...prev,
+            ...res.appVersion,
+            isSuspended: Boolean(res.appVersion.isSuspended),
+            suspendedReason: res.appVersion.suspendedReason || '',
+            targetAudience: res.appVersion.targetAudience || 'all',
+            targetedRegistrationNumbers: res.appVersion.targetedRegistrationNumbers || [],
+          }));
+        }
+        if (res.pilotTesting) {
+          setPilotConfig((prev) => ({
+            ...prev,
+            ...res.pilotTesting,
+            enabled: Boolean(res.pilotTesting.enabled),
+            isSuspended: Boolean(res.pilotTesting.isSuspended),
+            version: res.pilotTesting.version || '1.2.2.1',
+            targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
+          }));
+        }
       }
       const info = await appUpdateService.getInstalledVersion();
       setInstalledAppVersion(info.version || '1.1.0');
@@ -489,6 +523,200 @@ export default function SuperAdminPortal() {
     }
   };
 
+  // Pilot Testing Handlers
+  const handleTogglePilotSuspension = async () => {
+    const nextSuspended = !pilotConfig.isSuspended;
+    const updatedPilot = {
+      ...pilotConfig,
+      isSuspended: nextSuspended,
+    };
+    setPilotConfig(updatedPilot);
+    try {
+      setSavingPilotConfig(true);
+      const res = await adminApi.updateAppVersionConfig({
+        ...appVersionConfig,
+        pilotTesting: updatedPilot,
+      });
+      if (res.success) {
+        triggerToast(
+          nextSuspended ? 'warning' : 'success',
+          nextSuspended
+            ? 'Pilot release suspended. Targeted pilot users will not receive pilot updates.'
+            : 'Pilot release resumed. Targeted pilot users will receive pilot updates.',
+          nextSuspended ? 'Pilot Suspended ⏸️' : 'Pilot Resumed ▶️'
+        );
+        if (res.pilotTesting) {
+          setPilotConfig((prev) => ({
+            ...prev,
+            ...res.pilotTesting,
+            isSuspended: Boolean(res.pilotTesting.isSuspended),
+          }));
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to toggle pilot release suspension', 'Error');
+    } finally {
+      setSavingPilotConfig(false);
+    }
+  };
+
+  const handleTogglePilotEnabled = async () => {
+    const nextEnabled = !pilotConfig.enabled;
+    const updatedPilot = {
+      ...pilotConfig,
+      enabled: nextEnabled,
+    };
+    setPilotConfig(updatedPilot);
+    try {
+      setSavingPilotConfig(true);
+      const res = await adminApi.updateAppVersionConfig({
+        ...appVersionConfig,
+        pilotTesting: updatedPilot,
+      });
+      if (res.success) {
+        triggerToast(
+          nextEnabled ? 'success' : 'info',
+          nextEnabled ? 'Pilot Testing program enabled.' : 'Pilot Testing program disabled.',
+          'Pilot Status'
+        );
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update pilot status', 'Error');
+    } finally {
+      setSavingPilotConfig(false);
+    }
+  };
+
+  const handleSavePilotConfig = async (e) => {
+    if (e) e.preventDefault();
+    setSavingPilotConfig(true);
+    try {
+      const res = await adminApi.updateAppVersionConfig({
+        ...appVersionConfig,
+        pilotTesting: pilotConfig,
+      });
+      if (res.success) {
+        triggerToast('success', 'Pilot testing release parameters saved successfully', 'Pilot Updated');
+        if (res.pilotTesting) {
+          setPilotConfig((prev) => ({
+            ...prev,
+            ...res.pilotTesting,
+            isSuspended: Boolean(res.pilotTesting.isSuspended),
+            enabled: Boolean(res.pilotTesting.enabled),
+          }));
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to save pilot configuration', 'Save Error');
+    } finally {
+      setSavingPilotConfig(false);
+    }
+  };
+
+  const handleSearchPilotUsers = async (query) => {
+    setPilotSearchQuery(query);
+    if (!query || query.trim().length < 2) {
+      setPilotSearchResults([]);
+      return;
+    }
+    try {
+      setSearchingPilotUsers(true);
+      const res = await adminApi.getUsers({ search: query.trim(), limit: 6 });
+      if (res.success && res.users) {
+        setPilotSearchResults(res.users);
+      }
+    } catch (e) {
+      console.warn('Failed searching users for pilot:', e);
+    } finally {
+      setSearchingPilotUsers(false);
+    }
+  };
+
+  const handleAddPilotTester = async (userOrReg) => {
+    const reg = typeof userOrReg === 'string'
+      ? userOrReg.trim().toUpperCase()
+      : userOrReg.registrationNumber?.trim().toUpperCase();
+    if (!reg) return;
+
+    const existing = pilotConfig.targetedRegistrationNumbers || [];
+    if (existing.includes(reg)) {
+      triggerToast('info', `User ${reg} is already in the pilot group`, 'Already Added');
+      setPilotSearchQuery('');
+      setPilotSearchResults([]);
+      setPilotManualReg('');
+      return;
+    }
+
+    const updatedPilot = {
+      ...pilotConfig,
+      targetedRegistrationNumbers: [...existing, reg],
+    };
+
+    setPilotConfig(updatedPilot);
+    setPilotSearchQuery('');
+    setPilotSearchResults([]);
+    setPilotManualReg('');
+
+    try {
+      const res = await adminApi.updateAppVersionConfig({
+        ...appVersionConfig,
+        pilotTesting: updatedPilot,
+      });
+      if (res.success) {
+        triggerToast('success', `Added ${reg} to pilot testing group`, 'Pilot Tester Added');
+      }
+    } catch (e) {
+      triggerToast('error', e.message || 'Failed adding pilot tester', 'Error');
+    }
+  };
+
+  const handleRemovePilotTester = async (reg) => {
+    const updatedPilot = {
+      ...pilotConfig,
+      targetedRegistrationNumbers: (pilotConfig.targetedRegistrationNumbers || []).filter((r) => r !== reg),
+    };
+    setPilotConfig(updatedPilot);
+    try {
+      const res = await adminApi.updateAppVersionConfig({
+        ...appVersionConfig,
+        pilotTesting: updatedPilot,
+      });
+      if (res.success) {
+        triggerToast('success', `Removed ${reg} from pilot testing group`, 'Pilot Tester Removed');
+      }
+    } catch (e) {
+      triggerToast('error', e.message || 'Failed removing pilot tester', 'Error');
+    }
+  };
+
+  const handleRunPilotTestVerification = async () => {
+    if (!pilotTestQuery || !pilotTestQuery.trim()) {
+      triggerToast('warning', 'Please enter a registration number to verify', 'Validation');
+      return;
+    }
+    setTestingPilotUser(true);
+    setPilotTestResult(null);
+    try {
+      const res = await adminApi.testPilotUserEligibility(pilotTestQuery.trim().toUpperCase());
+      setPilotTestResult(res);
+      if (res.success) {
+        if (res.verdict?.isEligible) {
+          triggerToast('success', `${pilotTestQuery} is ELIGIBLE for pilot release v${res.pilotConfig?.version}`, 'Verification Result');
+        } else {
+          triggerToast('info', `${pilotTestQuery}: ${res.verdict?.reason || 'Not currently eligible'}`, 'Verification Result');
+        }
+      }
+    } catch (err) {
+      setPilotTestResult({
+        success: false,
+        message: err.message || 'Failed to verify eligibility',
+      });
+      triggerToast('error', err.message || 'Verification failed', 'Verification Error');
+    } finally {
+      setTestingPilotUser(false);
+    }
+  };
+
   // Initial load according to active tab
   useEffect(() => {
     if (activeTab === 'overview') loadOverview();
@@ -499,7 +727,7 @@ export default function SuperAdminPortal() {
     else if (activeTab === 'sessions') loadSessions(1);
     else if (activeTab === 'limits') loadConfig();
     else if (activeTab === 'maintenance') loadMaintenance();
-    else if (activeTab === 'appversion') loadAppVersion();
+    else if (activeTab === 'appversion' || activeTab === 'pilottesting') loadAppVersion();
     else if (activeTab === 'notifications') loadCampaigns();
     else if (activeTab === 'audit') loadAuditLogs(1);
   }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadAuditLogs]);
@@ -877,6 +1105,7 @@ export default function SuperAdminPortal() {
             { id: 'limits', label: '⚙️ Login Limits' },
             { id: 'maintenance', label: '🛠️ Maintenance' },
             { id: 'appversion', label: '📲 App Updates' },
+            { id: 'pilottesting', label: '🧪 Pilot Testing' },
             { id: 'notifications', label: '🔔 Push Broadcast' },
             { id: 'audit', label: '📜 Audit Logs' },
           ].map((tab) => (
@@ -3901,6 +4130,823 @@ export default function SuperAdminPortal() {
                   >
                     {appVersionConfig.forceUpdate ? 'Update Now (Required)' : 'Update Now'}
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6c. TAB: DEDICATED PILOT TESTING SECTION */}
+      {activeTab === 'pilottesting' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Top Info Banner */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.25rem 1.5rem',
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.6rem' }}>🧪</span>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Pilot Testing & Canary Rollouts
+                </h2>
+                <span
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: '12px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    background: pilotConfig.isSuspended
+                      ? 'rgba(239, 68, 68, 0.15)'
+                      : pilotConfig.enabled
+                      ? 'rgba(16, 185, 129, 0.15)'
+                      : 'rgba(156, 163, 175, 0.15)',
+                    border: pilotConfig.isSuspended
+                      ? '1px solid rgba(239, 68, 68, 0.3)'
+                      : pilotConfig.enabled
+                      ? '1px solid rgba(16, 185, 129, 0.3)'
+                      : '1px solid rgba(156, 163, 175, 0.3)',
+                    color: pilotConfig.isSuspended
+                      ? '#ef4444'
+                      : pilotConfig.enabled
+                      ? '#10b981'
+                      : '#9ca3af',
+                  }}
+                >
+                  {pilotConfig.isSuspended
+                    ? '⏸️ PILOT SUSPENDED'
+                    : pilotConfig.enabled
+                    ? '🟢 PILOT ACTIVE (ROLLING OUT)'
+                    : '⚪ PILOT DISABLED'}
+                </span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Deploy pre-release APK versions (e.g. <strong>v{pilotConfig.version || '1.2.2.1'}</strong>) strictly to selected students like <strong>24E122A11</strong> before public rollout.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              {/* Suspend / Resume Button */}
+              <button
+                type="button"
+                disabled={savingPilotConfig}
+                onClick={handleTogglePilotSuspension}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: pilotConfig.isSuspended
+                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                    : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  cursor: savingPilotConfig ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: pilotConfig.isSuspended
+                    ? '0 4px 12px rgba(16, 185, 129, 0.3)'
+                    : '0 4px 12px rgba(239, 68, 68, 0.3)',
+                }}
+                title={pilotConfig.isSuspended ? 'Resume this pilot release' : 'Suspend this release immediately'}
+              >
+                <span>{pilotConfig.isSuspended ? '▶️ Resume Pilot Release' : '⏸️ Suspend this Release'}</span>
+              </button>
+
+              {/* Enable / Disable Pilot Toggle */}
+              <button
+                type="button"
+                disabled={savingPilotConfig}
+                onClick={handleTogglePilotEnabled}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  background: pilotConfig.enabled ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-secondary)',
+                  color: pilotConfig.enabled ? '#3b82f6' : 'var(--text-secondary)',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  cursor: savingPilotConfig ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {pilotConfig.enabled ? '⚡ Pilot Enabled' : '💤 Pilot Disabled'}
+              </button>
+
+              <button
+                type="button"
+                onClick={loadAppVersion}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
+
+          {/* Diagnostic & User Verification Card */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.25rem 1.5rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '0.75rem' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🔍 Live Student Pilot Diagnostic & Verification Tool</span>
+                </h3>
+                <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Test if a specific student (e.g. <strong>24E122A11</strong>) will receive the pilot update when their app requests an update check.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={pilotTestQuery}
+                onChange={(e) => setPilotTestQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleRunPilotTestVerification();
+                  }
+                }}
+                placeholder="Enter Student Reg No (e.g. 24E122A11)..."
+                style={{
+                  flex: '1 1 260px',
+                  padding: '0.6rem 0.85rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                }}
+              />
+              <button
+                type="button"
+                disabled={testingPilotUser}
+                onClick={handleRunPilotTestVerification}
+                style={{
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: testingPilotUser ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                }}
+              >
+                {testingPilotUser ? '⏳ Diagnosing...' : '🚀 Verify Eligibility'}
+              </button>
+            </div>
+
+            {/* Diagnostic Results Box */}
+            {pilotTestResult && (
+              <div
+                style={{
+                  marginTop: '1rem',
+                  padding: '1rem',
+                  borderRadius: '10px',
+                  background: pilotTestResult.verdict?.isEligible ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                  border: pilotTestResult.verdict?.isEligible ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.25rem' }}>{pilotTestResult.verdict?.isEligible ? '✅' : '⚠️'}</span>
+                    <strong style={{ fontSize: '0.95rem', color: pilotTestResult.verdict?.isEligible ? '#10b981' : '#ef4444' }}>
+                      {pilotTestResult.verdict?.isEligible
+                        ? `ELIGIBLE: User will receive Pilot Release v${pilotTestResult.pilotConfig?.version}`
+                        : `NOT ELIGIBLE: ${pilotTestResult.verdict?.reason || 'Criteria not met'}`}
+                    </strong>
+                  </div>
+                  {!pilotTestResult.checks?.inPilotGroup && (
+                    <button
+                      type="button"
+                      onClick={() => handleAddPilotTester(pilotTestResult.student?.registrationNumber || pilotTestQuery)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: '#10b981',
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      + Add to Pilot Testers Now
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <div>
+                    <strong>User Found:</strong> {pilotTestResult.student ? `${pilotTestResult.student.name} (${pilotTestResult.student.role})` : '❌ Not registered'}
+                  </div>
+                  <div>
+                    <strong>In Pilot Group:</strong> {pilotTestResult.checks?.inPilotGroup ? '✅ YES' : '❌ NO'}
+                  </div>
+                  <div>
+                    <strong>Pilot Enabled:</strong> {pilotTestResult.checks?.pilotEnabled ? '✅ YES' : '❌ NO'}
+                  </div>
+                  <div>
+                    <strong>Release Suspended:</strong> {pilotTestResult.checks?.isSuspended ? '⏸️ YES (Suspended)' : '🟢 NO (Active)'}
+                  </div>
+                  <div>
+                    <strong>Active IP Mapped:</strong> {pilotTestResult.checks?.ipTracked ? `✅ YES (${pilotTestResult.checks.detectedIp})` : 'ℹ️ No active session IP'}
+                  </div>
+                  <div>
+                    <strong>Target Version:</strong> v{pilotTestResult.pilotConfig?.version || '1.2.2.1'}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="sa-two-col-grid">
+            {/* Left Column: Pilot Release Parameters Form */}
+            <form
+              onSubmit={handleSavePilotConfig}
+              className="sa-config-card"
+              style={{ gap: '1rem' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  ⚙️ Pilot Release Parameters
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: v{pilotConfig.version || '1.2.2.1'}</span>
+              </div>
+
+              {/* Prominent Per-Release Suspension Card */}
+              <div
+                style={{
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  background: pilotConfig.isSuspended ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.08)',
+                  border: pilotConfig.isSuspended ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(16, 185, 129, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.25rem' }}>{pilotConfig.isSuspended ? '⏸️' : '🟢'}</span>
+                    <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                      Pilot Release: {pilotConfig.isSuspended ? 'SUSPENDED (PAUSED)' : 'ACTIVE (DELIVERING)'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {pilotConfig.isSuspended
+                      ? '⚠️ This release is suspended. When testers check for updates, they will NOT receive update notifications.'
+                      : 'Active pilot testers will receive this release update prompt immediately.'}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={savingPilotConfig}
+                  onClick={handleTogglePilotSuspension}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: pilotConfig.isSuspended
+                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                      : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: savingPilotConfig ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  {pilotConfig.isSuspended ? '▶️ Resume this Release' : '⏸️ Suspend this Release'}
+                </button>
+              </div>
+
+              <div className="sa-form-grid-2col">
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Pilot Version *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={pilotConfig.version}
+                    onChange={(e) => setPilotConfig((prev) => ({ ...prev, version: e.target.value }))}
+                    placeholder="e.g. 1.2.2.1"
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Version delivered to pilot testers (e.g. 1.2.2.1).
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Pilot Enforce Immediate Update
+                  </label>
+                  <div
+                    style={{
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {pilotConfig.forceUpdate ? 'Immediate Blocking' : 'Flexible (Can Skip)'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPilotConfig((prev) => ({ ...prev, forceUpdate: !prev.forceUpdate }))}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: pilotConfig.forceUpdate ? '#ef4444' : 'var(--border-color)',
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '0.7rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {pilotConfig.forceUpdate ? 'Forced' : 'Flexible'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct APK Link */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Pilot APK Direct Download URL (HTTPS)
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={pilotConfig.updateUrl}
+                  onChange={(e) => setPilotConfig((prev) => ({ ...prev, updateUrl: e.target.value }))}
+                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.1/hostelcare-v1.2.2.1.apk"
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Direct GitHub Release or CDN link for APK download.
+                </div>
+              </div>
+
+              {/* Pilot Message */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Update Dialog Header / Banner Message
+                </label>
+                <input
+                  type="text"
+                  value={pilotConfig.updateMessage}
+                  onChange={(e) => setPilotConfig((prev) => ({ ...prev, updateMessage: e.target.value }))}
+                  placeholder="You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features."
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Pilot Release Notes */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Release Notes / What's New for Pilot Testers
+                </label>
+                <textarea
+                  rows={4}
+                  value={pilotConfig.releaseNotes}
+                  onChange={(e) => setPilotConfig((prev) => ({ ...prev, releaseNotes: e.target.value }))}
+                  placeholder="- Fixed IP & Registration Number pilot update detection&#10;- Added one-click release suspension control&#10;- In-app complaint resolution improvements"
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingPilotConfig}
+                style={{
+                  marginTop: '0.5rem',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  cursor: savingPilotConfig ? 'not-allowed' : 'pointer',
+                  opacity: savingPilotConfig ? 0.7 : 1,
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                }}
+              >
+                {savingPilotConfig ? 'Saving Pilot Release...' : '🚀 Save & Deploy Pilot Release'}
+              </button>
+            </form>
+
+            {/* Right Column: Testers Management & Live In-App Dialog Preview */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Testers Management Card */}
+              <div className="sa-config-card" style={{ gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    👥 Designated Pilot Testers ({pilotConfig.targetedRegistrationNumbers?.length || 0})
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Only these users get v{pilotConfig.version}</span>
+                </div>
+
+                {/* Search & Add User */}
+                <div style={{ position: 'relative' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Search & Add Student by Name or Registration Number:
+                  </label>
+                  <input
+                    type="text"
+                    value={pilotSearchQuery}
+                    onChange={(e) => handleSearchPilotUsers(e.target.value)}
+                    placeholder="Search student name or reg no (e.g. Om Verma or 24E122A11)..."
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  {searchingPilotUsers && (
+                    <span style={{ position: 'absolute', right: '12px', top: '32px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Searching...
+                    </span>
+                  )}
+                  {pilotSearchResults.length > 0 && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        zIndex: 40,
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        marginTop: '4px',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                        maxHeight: '220px',
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {pilotSearchResults.map((u) => {
+                        const isAdded = (pilotConfig.targetedRegistrationNumbers || []).includes(u.registrationNumber?.toUpperCase());
+                        return (
+                          <div
+                            key={u._id}
+                            onClick={() => !isAdded && handleAddPilotTester(u)}
+                            style={{
+                              padding: '8px 12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              cursor: isAdded ? 'default' : 'pointer',
+                              opacity: isAdded ? 0.6 : 1,
+                              borderBottom: '1px solid var(--border-color)',
+                            }}
+                            onMouseEnter={(e) => !isAdded && (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                            onMouseLeave={(e) => !isAdded && (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                                {u.name}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                {u.registrationNumber} • {u.role} {u.hostel ? `(${u.hostel})` : ''}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isAdded ? '#10b981' : 'var(--primary)' }}>
+                              {isAdded ? 'Added ✓' : '+ Add Tester'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Direct Manual Entry */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={pilotManualReg}
+                    onChange={(e) => setPilotManualReg(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (pilotManualReg.trim()) handleAddPilotTester(pilotManualReg);
+                      }
+                    }}
+                    placeholder="Or enter Reg No directly (e.g. 24E122A11)..."
+                    style={{
+                      flex: 1,
+                      padding: '0.45rem 0.65rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => pilotManualReg.trim() && handleAddPilotTester(pilotManualReg)}
+                    style={{
+                      padding: '0.45rem 0.95rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: 'var(--primary)',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                {/* Active Testers Chips */}
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                    Active Pilot Group Members:
+                  </div>
+                  {(!pilotConfig.targetedRegistrationNumbers || pilotConfig.targetedRegistrationNumbers.length === 0) ? (
+                    <div style={{ fontSize: '0.8rem', color: '#f59e0b', fontStyle: 'italic' }}>
+                      ⚠️ No testers added yet. Add <strong>24E122A11</strong> to begin testing.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {pilotConfig.targetedRegistrationNumbers.map((reg) => (
+                        <span
+                          key={reg}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '4px 10px',
+                            borderRadius: '16px',
+                            background: reg === '24E122A11' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(245, 158, 11, 0.15)',
+                            border: reg === '24E122A11' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid rgba(245, 158, 11, 0.4)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          <span>👤 {reg}</span>
+                          {reg === '24E122A11' && (
+                            <span style={{ fontSize: '0.65rem', background: '#4f46e5', color: '#fff', padding: '1px 5px', borderRadius: '8px' }}>
+                              TARGET
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePilotTester(reg)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ef4444',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              padding: '0 2px',
+                              fontSize: '0.85rem',
+                              lineHeight: 1,
+                            }}
+                            title="Remove from pilot group"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Mobile In-App Dialog Preview for Pilot */}
+              <div className="sa-config-card" style={{ gap: '0.75rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  📱 In-App Dialog Preview for Pilot Testers
+                </h3>
+
+                <div
+                  style={{
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    background: '#0d152c',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
+                    color: '#ffffff',
+                    maxWidth: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  {pilotConfig.isSuspended && (
+                    <div
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.25)',
+                        border: '1px solid rgba(239, 68, 68, 0.6)',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        marginBottom: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: '#fca5a5',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>⏸️</span>
+                      <span>PILOT RELEASE SUSPENDED — Dialog will NOT appear for testers until resumed.</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        background: 'rgba(99, 102, 241, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.1rem',
+                      }}
+                    >
+                      🧪
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#a5b4fc' }}>
+                        PILOT CANARY RELEASE
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>
+                        HostelCare Beta Update Available
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '8px',
+                      padding: '0.5rem 0.75rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '6px',
+                      fontSize: '0.75rem',
+                      marginBottom: '0.75rem',
+                    }}
+                  >
+                    <span>Target: <strong>v{pilotConfig.version || '1.2.2.1'}</strong></span>
+                    <span style={{ color: '#38bdf8' }}>Channel: Pilot Beta</span>
+                  </div>
+
+                  <div style={{ fontSize: '0.8rem', lineHeight: 1.4, color: 'rgba(255, 255, 255, 0.85)', marginBottom: '0.75rem' }}>
+                    {pilotConfig.updateMessage || 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.'}
+                  </div>
+
+                  {pilotConfig.releaseNotes && (
+                    <div
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        borderRadius: '6px',
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.75rem',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        lineHeight: 1.5,
+                        marginBottom: '0.75rem',
+                        whiteSpace: 'pre-wrap',
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '2px' }}>What's New in v{pilotConfig.version}:</div>
+                      {pilotConfig.releaseNotes}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {!pilotConfig.forceUpdate && (
+                      <button
+                        type="button"
+                        disabled
+                        style={{
+                          flex: '1 1 110px',
+                          padding: '0.5rem',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: 'transparent',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Later
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled
+                      style={{
+                        flex: '1 1 110px',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                        color: '#ffffff',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Download & Update Now
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

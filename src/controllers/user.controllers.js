@@ -5,6 +5,7 @@ const Argon = require("argon2");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const argonLimiter = require("../../utils/argonLimiter");
+const { recordClientIdentity } = require("../utils/clientTracker");
 
 /**
  * Safely parse User Agent string into device category, OS, and browser
@@ -520,6 +521,10 @@ const loggedInUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
+
+    // Track client IP to user identity for legacy app version check recognition
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress;
+    recordClientIdentity(clientIp, user.registrationNumber);
 
     return res.status(200).json({
       success: true,

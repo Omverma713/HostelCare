@@ -173,4 +173,11 @@ export const adminApi = {
       body: JSON.stringify(versionData),
     });
   },
+
+  testPilotUserEligibility(registrationNumber) {
+    return adminRequest('/superadmin/pilot-testing/test-user', {
+      method: 'POST',
+      body: JSON.stringify({ registrationNumber }),
+    });
+  },
 };

@@ -3,6 +3,9 @@ const cors           = require("cors");
 const compression    = require("compression");
 const rateLimit      = require("express-rate-limit");
 
+const jwt              = require("jsonwebtoken");
+const { recordClientIdentity } = require("./src/utils/clientTracker");
+
 const complaintRouter   = require("./src/routes/complaints.router");
 const UserRouters       = require("./src/routes/user.route");
 const feedbackRouter    = require("./src/routes/feedback.route");
@@ -56,6 +59,27 @@ app.use(compression({
 // Limit request body to 50 KB — no legitimate complaint submission needs more.
 // Prevents memory exhaustion from oversized payloads.
 app.use(express.json({ limit: "50kb" }));
+
+// ─── 3.1 Client Identity Tracker ──────────────────────────────────────────────
+// Maps client IP addresses to active user registration numbers so that legacy APK clients
+// (e.g. v1.2.2.0) that do not send auth headers during version checks can be reliably identified
+// for targeted pilot testing rollouts.
+app.use((req, res, next) => {
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith("Bearer ")) {
+        try {
+            const decoded = jwt.decode(auth.substring(7).trim());
+            if (decoded && (decoded.registrationNumber || decoded.regNo || decoded.username)) {
+                const reg = decoded.registrationNumber || decoded.regNo || decoded.username;
+                const ip = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress;
+                recordClientIdentity(ip, reg);
+            }
+        } catch (e) {
+            // Ignore token decode errors
+        }
+    }
+    next();
+});
 
 // ─── 4. Login Rate Limiter ────────────────────────────────────────────────────
 // Applies only to the login endpoint.
