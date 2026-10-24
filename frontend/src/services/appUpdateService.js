@@ -79,6 +79,14 @@ class AppUpdateService {
     }
   }
 
+  getState() {
+    return { ...this.updateState };
+  }
+
+  addListener(listener) {
+    return this.subscribe(listener);
+  }
+
   subscribe(listener) {
     this.listeners.add(listener);
     listener({ ...this.updateState });

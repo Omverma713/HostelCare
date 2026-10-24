@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { appUpdateService } from '../services/appUpdateService';
@@ -9,6 +9,18 @@ import { appUpdateService } from '../services/appUpdateService';
 export default function Navbar({ onToggleSidebar }) {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
+  const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
+
+  useEffect(() => {
+    const unsub = appUpdateService.addListener((state) => {
+      setUpdateAvailable(Boolean(state.updateAvailable));
+      if (state.latestVersion) {
+        setLatestVersion(state.latestVersion);
+      }
+    });
+    return unsub;
+  }, []);
 
   if (!user) return null;
 
@@ -37,6 +49,17 @@ export default function Navbar({ onToggleSidebar }) {
         🛡️ HostelCare
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {updateAvailable && (
+          <button
+            type="button"
+            onClick={() => appUpdateService.checkForUpdates({ manual: true })}
+            className="navbar-update-pill-blink"
+            title={`New update v${latestVersion} is ready! Tap to install.`}
+          >
+            <span className="blink-pulsing-dot" />
+            <span>v{latestVersion} Update</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={handleQuickRefresh}

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/ThemeContext';
@@ -16,6 +16,19 @@ export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
   const { user, logout, setDirectToken } = useAuth();
   const { theme, setTheme } = useTheme();
+
+  const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
+  const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
+
+  useEffect(() => {
+    const unsub = appUpdateService.addListener((state) => {
+      setUpdateAvailable(Boolean(state.updateAvailable));
+      if (state.latestVersion) {
+        setLatestVersion(state.latestVersion);
+      }
+    });
+    return unsub;
+  }, []);
 
   // Lock background body/html scrolling cleanly and prevent touch scroll chaining when drawer is open
   useEffect(() => {
@@ -299,33 +312,49 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
           </div>
 
-          {/* App Update Check Button (Native Mobile APK Only) */}
-          {Capacitor.isNativePlatform() && (
-            <div style={{ padding: '0 0.5rem 0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => appUpdateService.checkForUpdates({ manual: true })}
-                style={{
-                  width: '100%',
-                  padding: '0.45rem 0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  color: 'var(--text-secondary, rgba(255, 255, 255, 0.7))',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
+          {/* App Update Check Button (Web & Native Mobile APK) */}
+          <div style={{ padding: '0 0.5rem 0.5rem' }}>
+            {updateAvailable && (
+              <div
+                className="update-available-pill-blink"
+                onClick={() => {
+                  onClose?.();
+                  appUpdateService.checkForUpdates({ manual: true });
                 }}
-                title="Check if a newer version of HostelCare is available"
+                title={`New version v${latestVersion} is available! Tap to install.`}
               >
-                <span>📲 App Version</span>
-                <span style={{ fontSize: '0.7rem', color: '#818cf8', fontWeight: 700 }}>Check for Update</span>
-              </button>
-            </div>
-          )}
+                <span className="blink-pulsing-dot" />
+                <span>⚡ UPDATE READY: v{latestVersion}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                onClose?.();
+                appUpdateService.checkForUpdates({ manual: true });
+              }}
+              style={{
+                width: '100%',
+                padding: '0.45rem 0.75rem',
+                borderRadius: '8px',
+                border: updateAvailable ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                background: updateAvailable ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+                color: updateAvailable ? 'var(--text-primary)' : 'var(--text-secondary, rgba(255, 255, 255, 0.7))',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+              }}
+              title="Check if a newer version of HostelCare is available"
+            >
+              <span>📲 App Version</span>
+              <span style={{ fontSize: '0.7rem', color: updateAvailable ? '#10b981' : '#818cf8', fontWeight: 700 }}>
+                {updateAvailable ? '⚡ New Version Ready' : 'Check for Update'}
+              </span>
+            </button>
+          </div>
 
           {/* 5. Theme Switcher & Logout */}
           <div className="sidebar-controls-row">

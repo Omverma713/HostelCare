@@ -52,6 +52,18 @@ export default function StudentDashboard() {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
+  const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
+
+  useEffect(() => {
+    const unsub = appUpdateService.addListener((state) => {
+      setUpdateAvailable(Boolean(state.updateAvailable));
+      if (state.latestVersion) {
+        setLatestVersion(state.latestVersion);
+      }
+    });
+    return unsub;
+  }, []);
 
   const fetchComplaints = useCallback(async () => {
     setLoading(true);
@@ -196,6 +208,18 @@ export default function StudentDashboard() {
             flexWrap: 'wrap',
           }}
         >
+          {updateAvailable && (
+            <button
+              type="button"
+              onClick={() => appUpdateService.checkForUpdates({ manual: true })}
+              className="navbar-update-pill-blink"
+              title={`New version v${latestVersion} is ready! Tap to update.`}
+              style={{ padding: '0.65rem 0.95rem', minHeight: '44px', borderRadius: '12px' }}
+            >
+              <span className="blink-pulsing-dot" />
+              <span>⚡ Update Ready (v{latestVersion})</span>
+            </button>
+          )}
           <button
             type="button"
             className="btn-spatial-refresh"

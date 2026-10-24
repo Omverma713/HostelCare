@@ -122,9 +122,12 @@ public class ApkInstallerPlugin extends Plugin {
                     URL u = new URL(currentUrl);
                     connection = (HttpURLConnection) u.openConnection();
                     connection.setInstanceFollowRedirects(true);
-                    connection.setConnectTimeout(20000);
-                    connection.setReadTimeout(30000);
-                    connection.setRequestProperty("User-Agent", "HostelCare-Android/" + Build.VERSION.RELEASE);
+                    connection.setConnectTimeout(30000);
+                    connection.setReadTimeout(60000);
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android " + Build.VERSION.RELEASE + "; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 HostelCare-Updater");
+                    connection.setRequestProperty("Accept", "*/*");
+                    connection.setRequestProperty("Accept-Encoding", "identity");
+                    connection.setRequestProperty("Connection", "keep-alive");
                     connection.connect();
 
                     int responseCode = connection.getResponseCode();
@@ -147,12 +150,12 @@ public class ApkInstallerPlugin extends Plugin {
                 }
 
                 long totalBytes = connection.getContentLengthLong();
-                inputStream = new BufferedInputStream(connection.getInputStream(), 16384);
+                inputStream = new BufferedInputStream(connection.getInputStream(), 65536);
                 outputStream = new FileOutputStream(tempFile);
 
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-                byte[] buffer = new byte[16384];
+                byte[] buffer = new byte[65536];
                 long bytesDownloaded = 0;
                 int bytesRead;
                 long lastProgressEmitTime = 0;

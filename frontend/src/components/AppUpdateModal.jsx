@@ -13,6 +13,7 @@ import {
   RefreshCw,
   ArrowDownCircle,
   PackageCheck,
+  ExternalLink,
 } from 'lucide-react';
 
 /**
@@ -408,6 +409,11 @@ export default function AppUpdateModal() {
     appUpdateService.startInAppDownload();
   };
 
+  const handleOpenBrowserDownload = () => {
+    const url = state?.updateUrl || 'https://github.com/Omverma713/HostelCare/releases/latest';
+    window.open(url, '_blank');
+  };
+
   const handleRecheck = async () => {
     setRechecking(true);
     try {
@@ -755,25 +761,47 @@ export default function AppUpdateModal() {
                 </span>
               </div>
 
-              {/* Cancel Button */}
-              <button
-                type="button"
-                onClick={handleCancelDownload}
-                style={{
-                  width: '100%',
-                  padding: '0.7rem',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  color: 'rgba(255, 255, 255, 0.75)',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s',
-                }}
-              >
-                Cancel Download
-              </button>
+              {/* Cancel Button & Direct Browser Mirror */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                <button
+                  type="button"
+                  onClick={handleCancelDownload}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    color: 'rgba(255, 255, 255, 0.75)',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  Cancel Download
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenBrowserDownload}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#38bdf8',
+                    fontSize: '0.74rem',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <ExternalLink size={13} />
+                  Taking too long on hostel network? Download directly via browser
+                </button>
+              </div>
             </div>
           )}
 
@@ -978,6 +1006,31 @@ export default function AppUpdateModal() {
                   Retry Download
                 </button>
               </div>
+
+              {/* Direct Browser High-Speed Mirror Fallback */}
+              <button
+                type="button"
+                onClick={handleOpenBrowserDownload}
+                style={{
+                  width: '100%',
+                  marginTop: '10px',
+                  padding: '0.72rem',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  background: 'rgba(56, 189, 248, 0.12)',
+                  color: '#38bdf8',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <ExternalLink size={16} />
+                Download via Browser (Direct Mirror)
+              </button>
             </div>
           )}
 
