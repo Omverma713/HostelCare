@@ -523,7 +523,6 @@ const loggedInUser = async (req, res) => {
     );
 
     // Track client IP to user identity for legacy app version check recognition
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress;
     recordClientIdentity(clientIp, user.registrationNumber);
 
     return res.status(200).json({
