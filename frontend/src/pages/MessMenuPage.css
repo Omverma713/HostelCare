@@ -1090,265 +1090,350 @@
 }
 
 /* ==========================================================================
-   Dark Theme (html.dark-theme) Dedicated High-Contrast Palette
+   Dark Theme (html.dark-theme, body.login-dark-theme, .mess-menu-root.dark-theme)
+   Cohesive Slate / Emerald / Navy Palette
    ========================================================================== */
-html.dark-theme .mess-menu-page {
-  background: var(--bg-primary, #0b0d19);
-  color: var(--text-primary, #f8fafc);
+html.dark-theme .mess-menu-root,
+body.login-dark-theme .mess-menu-root,
+.mess-menu-root.dark-theme {
+  --mess-bg-page: #0b0d19;
+  --mess-bg-card: #13162b;
+  --mess-bg-chip: #191c36;
+  --mess-border: rgba(255, 255, 255, 0.08);
+  --mess-border-subtle: rgba(255, 255, 255, 0.05);
+  --mess-text-heading: #f8fafc;
+  --mess-text-body: #cbd5e1;
+  --mess-text-muted: #94a3b8;
+  --mess-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+
+  background: #0b0d19 !important;
+  background-image: radial-gradient(circle at 50% 0%, #171b36 0%, #0b0d19 75%) !important;
+  color: #f8fafc !important;
 }
 
-html.dark-theme .mess-back-btn {
+html.dark-theme .mess-menu-root .mess-ambient-bg,
+body.login-dark-theme .mess-menu-root .mess-ambient-bg,
+.mess-menu-root.dark-theme .mess-ambient-bg {
+  background: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.12), transparent 60%),
+              radial-gradient(circle at 85% 15%, rgba(99, 102, 241, 0.12), transparent 50%),
+              radial-gradient(circle at 15% 35%, rgba(56, 189, 248, 0.08), transparent 60%);
+}
+
+html.dark-theme .mess-back-btn,
+.mess-menu-root.dark-theme .mess-back-btn {
   background: var(--bg-card, #13162b);
   border-color: rgba(255, 255, 255, 0.08);
   color: #f1f5f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-html.dark-theme .mess-back-btn:hover {
+html.dark-theme .mess-back-btn:hover,
+.mess-menu-root.dark-theme .mess-back-btn:hover {
   background: var(--bg-tertiary, #191c36);
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-html.dark-theme .mess-chip-toggle {
+html.dark-theme .mess-chip-toggle,
+.mess-menu-root.dark-theme .mess-chip-toggle {
   background: var(--bg-card, #13162b);
   border-color: rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
-html.dark-theme .mess-chip-toggle:hover {
+html.dark-theme .mess-chip-toggle:hover,
+.mess-menu-root.dark-theme .mess-chip-toggle:hover {
   background: var(--bg-tertiary, #191c36);
   color: #f8fafc;
 }
 
-html.dark-theme .mess-chip-toggle.active {
+html.dark-theme .mess-chip-toggle.active,
+.mess-menu-root.dark-theme .mess-chip-toggle.active {
   background: rgba(30, 58, 43, 0.9);
   color: #6ee7b7;
   border-color: #2d5a43;
 }
 
-html.dark-theme .mess-season-badge {
+html.dark-theme .mess-season-badge,
+.mess-menu-root.dark-theme .mess-season-badge {
   background: rgba(52, 211, 153, 0.12);
   color: #6ee7b7;
   border: 1px solid rgba(52, 211, 153, 0.25);
 }
 
-html.dark-theme .mess-live-clock-pill {
+html.dark-theme .mess-live-clock-pill,
+.mess-menu-root.dark-theme .mess-live-clock-pill {
   color: #34d399;
   background: rgba(16, 185, 129, 0.14);
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-html.dark-theme .mess-freshness-badge {
+html.dark-theme .mess-freshness-badge,
+.mess-menu-root.dark-theme .mess-freshness-badge {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.08);
   color: #6ee7b7;
 }
 
-html.dark-theme .mess-day-pill {
+html.dark-theme .mess-day-pill,
+.mess-menu-root.dark-theme .mess-day-pill {
   background: var(--bg-card, #13162b);
   border-color: rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
-html.dark-theme .mess-day-pill:hover {
+html.dark-theme .mess-day-pill:hover,
+.mess-menu-root.dark-theme .mess-day-pill:hover {
   background: var(--bg-tertiary, #191c36);
   border-color: rgba(52, 211, 153, 0.35);
 }
 
-html.dark-theme .mess-day-pill.active {
+html.dark-theme .mess-day-pill.active,
+.mess-menu-root.dark-theme .mess-day-pill.active {
   background: linear-gradient(135deg, #1b3d2b 0%, #132a1e 100%);
   color: #f8fafc;
   border-color: #2d5a43;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
 
-html.dark-theme .mess-day-pill.active .day-pill-short {
+html.dark-theme .mess-day-pill.active .day-pill-short,
+.mess-menu-root.dark-theme .mess-day-pill.active .day-pill-short {
   color: #6ee7b7;
+  font-weight: 700;
 }
 
-html.dark-theme .day-pill-short {
-  color: #64748b;
+html.dark-theme .day-pill-short,
+.mess-menu-root.dark-theme .day-pill-short {
+  color: #94a3b8;
 }
 
-html.dark-theme .mess-stepper-row {
+html.dark-theme .mess-stepper-row,
+.mess-menu-root.dark-theme .mess-stepper-row {
   background: var(--bg-card, #13162b);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-html.dark-theme .mess-step-btn {
+html.dark-theme .mess-step-btn,
+.mess-menu-root.dark-theme .mess-step-btn {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.1);
   color: #f1f5f9;
 }
 
-html.dark-theme .mess-step-btn:hover {
+html.dark-theme .mess-step-btn:hover,
+.mess-menu-root.dark-theme .mess-step-btn:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-html.dark-theme .mess-day-title-text {
+html.dark-theme .mess-day-title-text,
+.mess-menu-root.dark-theme .mess-day-title-text {
   color: #f8fafc;
 }
 
-html.dark-theme .mess-badge-today {
+html.dark-theme .mess-badge-today,
+.mess-menu-root.dark-theme .mess-badge-today {
   color: #6ee7b7;
   background: rgba(16, 185, 129, 0.2);
   border-color: rgba(16, 185, 129, 0.4);
 }
 
 html.dark-theme .mess-schedule-tag.sunday,
-html.dark-theme .mess-schedule-tag.holiday {
+html.dark-theme .mess-schedule-tag.holiday,
+.mess-menu-root.dark-theme .mess-schedule-tag.sunday,
+.mess-menu-root.dark-theme .mess-schedule-tag.holiday {
   color: #fde047;
   background: rgba(234, 179, 8, 0.16);
-  border-color: rgba(234, 179, 8, 0.35);
+  border: 1px solid rgba(234, 179, 8, 0.35);
 }
 
-html.dark-theme .mess-schedule-tag.override {
+html.dark-theme .mess-schedule-tag.override,
+.mess-menu-root.dark-theme .mess-schedule-tag.override {
   color: #fb923c;
   background: rgba(249, 115, 22, 0.18);
-  border-color: rgba(249, 115, 22, 0.4);
+  border: 1px solid rgba(249, 115, 22, 0.4);
 }
 
-html.dark-theme .mess-schedule-tag.working {
-  color: #38bdf8;
-  background: rgba(14, 165, 233, 0.16);
-  border-color: rgba(14, 165, 233, 0.35);
+html.dark-theme .mess-schedule-tag.working,
+.mess-menu-root.dark-theme .mess-schedule-tag.working {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 /* Dark mode meal cards */
-html.dark-theme .mess-meal-card {
+html.dark-theme .mess-meal-card,
+.mess-menu-root.dark-theme .mess-meal-card {
   background: var(--bg-card, #13162b);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
 }
 
-html.dark-theme .mess-meal-card.now-serving-card {
-  border-color: rgba(52, 211, 153, 0.4);
-  box-shadow: 0 4px 24px rgba(16, 185, 129, 0.18);
+html.dark-theme .mess-meal-card.now-serving-card,
+.mess-menu-root.dark-theme .mess-meal-card.now-serving-card {
+  border-color: rgba(52, 211, 153, 0.35);
+  background: linear-gradient(180deg, #161b36 0%, #13162b 100%);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.12);
 }
 
-html.dark-theme .meal-slot-icon-box {
+html.dark-theme .meal-slot-icon-box,
+.mess-menu-root.dark-theme .meal-slot-icon-box {
   background: rgba(255, 255, 255, 0.05);
   color: #6ee7b7;
 }
 
-html.dark-theme .meal-title-block h3 {
+html.dark-theme .meal-title-block h3,
+.mess-menu-root.dark-theme .meal-title-block h3 {
   color: #f8fafc;
 }
 
-html.dark-theme .meal-time-tag {
+html.dark-theme .meal-time-tag,
+.mess-menu-root.dark-theme .meal-time-tag {
   color: #94a3b8;
 }
 
-html.dark-theme .meal-status-pill.now-serving {
+html.dark-theme .meal-status-pill.now-serving,
+.mess-menu-root.dark-theme .meal-status-pill.now-serving {
   background: rgba(16, 185, 129, 0.18);
   color: #6ee7b7;
-  border-color: rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
-html.dark-theme .meal-status-pill.upcoming {
+html.dark-theme .meal-status-pill.upcoming,
+.mess-menu-root.dark-theme .meal-status-pill.upcoming {
   background: rgba(59, 130, 246, 0.18);
   color: #93c5fd;
-  border-color: rgba(59, 130, 246, 0.4);
+  border: 1px solid rgba(59, 130, 246, 0.4);
 }
 
-html.dark-theme .food-chip {
+html.dark-theme .mess-section-eyebrow,
+.mess-menu-root.dark-theme .mess-section-eyebrow {
+  color: #64748b;
+}
+
+html.dark-theme .food-chip,
+.mess-menu-root.dark-theme .food-chip {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.08);
   color: #f1f5f9;
 }
 
-html.dark-theme .food-chip.highlight-veg {
+html.dark-theme .food-chip:hover,
+.mess-menu-root.dark-theme .food-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+html.dark-theme .food-chip.highlight-veg,
+.mess-menu-root.dark-theme .food-chip.highlight-veg {
   background: rgba(34, 197, 94, 0.15);
   border-color: rgba(74, 222, 128, 0.4);
   color: #86efac;
 }
 
 /* Dark mode choice & alternative cards */
-html.dark-theme .meal-option-card {
+html.dark-theme .meal-option-card,
+.mess-menu-root.dark-theme .meal-option-card {
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-html.dark-theme .meal-option-name {
+html.dark-theme .meal-option-name,
+.mess-menu-root.dark-theme .meal-option-name {
   color: #f8fafc;
 }
 
-html.dark-theme .meal-option-portion {
+html.dark-theme .meal-option-portion,
+.mess-menu-root.dark-theme .meal-option-portion {
   color: #94a3b8;
 }
 
-html.dark-theme .meal-option-card.option-veg {
+html.dark-theme .meal-option-card.option-veg,
+.mess-menu-root.dark-theme .meal-option-card.option-veg {
   background: rgba(34, 197, 94, 0.12);
   border-color: rgba(74, 222, 128, 0.45);
 }
 
-html.dark-theme .meal-option-card.option-nonveg {
+html.dark-theme .meal-option-card.option-nonveg,
+.mess-menu-root.dark-theme .meal-option-card.option-nonveg {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(248, 113, 113, 0.45);
 }
 
-html.dark-theme .meal-option-card.option-egg {
+html.dark-theme .meal-option-card.option-egg,
+.mess-menu-root.dark-theme .meal-option-card.option-egg {
   background: rgba(245, 158, 11, 0.12);
   border-color: rgba(251, 191, 36, 0.45);
 }
 
-html.dark-theme .option-badge.veg {
+html.dark-theme .option-badge.veg,
+.mess-menu-root.dark-theme .option-badge.veg {
   background: rgba(34, 197, 94, 0.22);
   color: #4ade80;
   border-color: rgba(74, 222, 128, 0.4);
 }
 
-html.dark-theme .option-badge.nonveg {
+html.dark-theme .option-badge.nonveg,
+.mess-menu-root.dark-theme .option-badge.nonveg {
   background: rgba(239, 68, 68, 0.22);
   color: #f87171;
   border-color: rgba(248, 113, 113, 0.4);
 }
 
-html.dark-theme .option-badge.egg {
+html.dark-theme .option-badge.egg,
+.mess-menu-root.dark-theme .option-badge.egg {
   background: rgba(245, 158, 11, 0.22);
   color: #fbbf24;
   border-color: rgba(251, 191, 36, 0.4);
 }
 
-html.dark-theme .meal-special-note {
+html.dark-theme .meal-special-note,
+.mess-menu-root.dark-theme .meal-special-note {
   color: #94a3b8;
 }
 
 /* Dark mode matrix table */
-html.dark-theme .mess-matrix-wrapper {
+html.dark-theme .mess-matrix-wrapper,
+.mess-menu-root.dark-theme .mess-matrix-wrapper {
   background: var(--bg-card, #13162b);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-html.dark-theme .mess-matrix-table td {
+html.dark-theme .mess-matrix-table td,
+.mess-menu-root.dark-theme .mess-matrix-table td {
   border-color: rgba(255, 255, 255, 0.06);
   color: #cbd5e1;
 }
 
-html.dark-theme .matrix-day-cell {
+html.dark-theme .matrix-day-cell,
+.mess-menu-root.dark-theme .matrix-day-cell {
   background: var(--bg-card, #13162b) !important;
   color: #f8fafc;
 }
 
-html.dark-theme .current-day-row td {
+html.dark-theme .current-day-row td,
+.mess-menu-root.dark-theme .current-day-row td {
   background: rgba(34, 197, 94, 0.05);
 }
 
 /* Dark mode guidelines card */
-html.dark-theme .mess-guidelines-card {
+html.dark-theme .mess-guidelines-card,
+.mess-menu-root.dark-theme .mess-guidelines-card {
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-html.dark-theme .guidelines-header {
+html.dark-theme .guidelines-header,
+.mess-menu-root.dark-theme .guidelines-header {
   color: #f8fafc;
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-html.dark-theme .guidelines-list li {
+html.dark-theme .guidelines-list li,
+.mess-menu-root.dark-theme .guidelines-list li {
   color: #94a3b8;
 }
 
-html.dark-theme .guidelines-list li strong {
+html.dark-theme .guidelines-list li strong,
+.mess-menu-root.dark-theme .guidelines-list li strong {
   color: #f1f5f9;
 }

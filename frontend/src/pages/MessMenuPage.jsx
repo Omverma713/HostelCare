@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/ThemeContext';
 import { api } from '../services/api';
 import { triggerToast } from '../components/Toast';
 import {
@@ -19,6 +20,7 @@ const STAFF_MESS_ROLES = ['superadmin', 'caretaker', 'warden', 'superintendent',
 export default function MessMenuPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   // Current Kolkata Time & Day
   const [kolkataTime, setKolkataTime] = useState(() => getKolkataTime());
@@ -231,7 +233,7 @@ export default function MessMenuPage() {
   };
 
   return (
-    <div className="mess-menu-root">
+    <div className={`mess-menu-root ${theme === 'dark' ? 'dark-theme' : 'light-theme'}`}>
       <div className="mess-ambient-bg" />
 
       <main className="mess-container">
@@ -292,6 +294,18 @@ export default function MessMenuPage() {
               title="Filter pure vegetarian selections"
             >
               🟢 {vegOnly ? 'Veg Only' : 'All Diets'}
+            </button>
+
+            {/* Quick Dark/Light Theme Toggle */}
+            <button
+              type="button"
+              className="mess-chip-toggle"
+              onClick={toggleTheme}
+              id="btn-mess-theme-toggle"
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              aria-label="Toggle display theme"
+            >
+              {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
             </button>
 
             {/* Staff Management Action */}
@@ -451,7 +465,7 @@ export default function MessMenuPage() {
 
                     {isNowServing && (
                       <span className="meal-status-pill now-serving">
-                        🔴 NOW SERVING
+                        ● NOW SERVING
                       </span>
                     )}
 
