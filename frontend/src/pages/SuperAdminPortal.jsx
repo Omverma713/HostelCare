@@ -3191,6 +3191,7 @@ export default function SuperAdminPortal() {
       {activeTab === 'limits' && (
         <form
           onSubmit={handleSaveConfig}
+          className="sa-limits-form"
           style={{
             background: 'var(--bg-card)',
             borderRadius: 'var(--border-radius-lg)',
@@ -3364,16 +3365,12 @@ export default function SuperAdminPortal() {
                       <button
                         key={mins}
                         type="button"
+                        className="sa-preset-chip"
                         onClick={() => setConfig((prev) => ({ ...prev, lockoutDurationMinutes: mins }))}
                         style={{
-                          padding: '3px 8px',
-                          borderRadius: '6px',
                           border: config.lockoutDurationMinutes === mins ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                           background: config.lockoutDurationMinutes === mins ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-secondary)',
                           color: config.lockoutDurationMinutes === mins ? 'var(--primary)' : 'var(--text-secondary)',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
                         }}
                       >
                         {mins === 60 ? '1 hour' : mins === 1440 ? '24 hours' : `${mins} min`}
@@ -3411,16 +3408,12 @@ export default function SuperAdminPortal() {
                       <button
                         key={days}
                         type="button"
+                        className="sa-preset-chip"
                         onClick={() => setConfig((prev) => ({ ...prev, jwtLifespanDays: days }))}
                         style={{
-                          padding: '3px 8px',
-                          borderRadius: '6px',
                           border: config.jwtLifespanDays === days ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                           background: config.jwtLifespanDays === days ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-secondary)',
                           color: config.jwtLifespanDays === days ? 'var(--primary)' : 'var(--text-secondary)',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
                         }}
                       >
                         {days} days

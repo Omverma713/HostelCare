@@ -1623,8 +1623,22 @@ html.dark-theme .autonotice-action-btn.btn-secondary,
 
 @media (max-width: 640px) {
   .mess-autonotice-panel {
-    padding: 1rem;
+    padding: 0.95rem;
     border-radius: 12px;
+    gap: 0.85rem;
+  }
+
+  .autonotice-header {
+    gap: 0.65rem;
+  }
+
+  .autonotice-title {
+    font-size: 1.05rem;
+  }
+
+  .autonotice-subtitle {
+    font-size: 0.8rem;
+    line-height: 1.4;
   }
 
   .autonotice-timings-grid {
@@ -1632,13 +1646,58 @@ html.dark-theme .autonotice-action-btn.btn-secondary,
     gap: 0.5rem;
   }
 
+  .autonotice-slot-item {
+    padding: 0.65rem 0.75rem;
+    gap: 0.5rem;
+    border-radius: 10px;
+  }
+
+  .autonotice-slot-item .slot-emoji {
+    font-size: 1.2rem;
+  }
+
+  .autonotice-slot-item .slot-time {
+    font-size: 0.82rem;
+  }
+
+  .autonotice-actions-row {
+    padding-top: 0.75rem;
+    margin-top: 0.15rem;
+    gap: 0.5rem;
+  }
+
   .autonotice-actions-row button {
     flex: 1 1 100%;
     justify-content: center;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.82rem;
   }
 
   .autonotice-action-btn.btn-admin {
     margin-left: 0;
+  }
+
+  .mess-guidelines-card {
+    padding: 0.95rem 1rem;
+    border-radius: 12px;
+    margin-top: 0.85rem;
+  }
+
+  .guidelines-header {
+    font-size: 0.88rem;
+    line-height: 1.4;
+    gap: 6px;
+    margin-bottom: 0.6rem;
+  }
+
+  .guidelines-list {
+    padding-left: 1.15rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .guidelines-list li {
+    margin-bottom: 0.35rem;
   }
 }
 

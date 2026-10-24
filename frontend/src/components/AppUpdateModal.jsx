@@ -459,6 +459,7 @@ export default function AppUpdateModal() {
       }}
     >
       <div
+        className="app-update-modal-dialog"
         style={{
           width: '100%',
           maxWidth: '430px',
@@ -551,7 +552,10 @@ export default function AppUpdateModal() {
           </div>
         )}
 
-        <div style={{ padding: '1.25rem 1.5rem', flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div
+          className="app-update-modal-body"
+          style={{ padding: '1.25rem 1.5rem', flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+        >
           {/* ============================================================== */}
           {/* CASE 1: Manual Check - Up to date */}
           {/* ============================================================== */}
@@ -1039,6 +1043,7 @@ export default function AppUpdateModal() {
               {/* Release Notes with Media (Screenshots / GIFs / Videos) */}
               {(state.releaseNotes || (state.releaseMedia && state.releaseMedia.length > 0)) && (
                 <div
+                  className="app-update-whats-new-box"
                   style={{
                     background: 'rgba(0, 0, 0, 0.35)',
                     borderRadius: '12px',

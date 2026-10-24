@@ -10036,29 +10036,36 @@ html:not(.dark-theme) .link-linkedin {
   display: flex;
   align-items: center;
   width: 100%;
+  box-sizing: border-box;
 }
 
-.auth-password-wrapper .form-input {
-  width: 100%;
-  padding-right: 44px !important;
+.auth-password-wrapper .form-input,
+.concept4-card .auth-password-wrapper .form-input,
+.auth-page-container .auth-password-wrapper .form-input,
+.concept4-mode .auth-password-wrapper .form-input {
+  width: 100% !important;
+  padding-right: 48px !important;
+  box-sizing: border-box !important;
 }
 
 .auth-password-toggle-btn {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 6px;
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   color: var(--text-secondary, #94a3b8);
   transition: all 0.2s ease;
-  z-index: 2;
+  z-index: 5;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .auth-password-toggle-btn:hover {
@@ -10078,4 +10085,28 @@ html:not(.dark-theme) .link-linkedin {
   color: #0f172a;
   background: rgba(15, 23, 42, 0.08);
 }
+
+/* =======================================================
+   IN-APP UPDATE MODAL & WHAT'S NEW MOBILE RESPONSIVE
+   ======================================================= */
+.app-update-modal-dialog {
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .app-update-modal-dialog {
+    max-width: 95vw !important;
+    border-radius: 16px !important;
+  }
+
+  .app-update-modal-body {
+    padding: 1rem 0.95rem !important;
+  }
+
+  .app-update-whats-new-box {
+    padding: 0.65rem 0.75rem !important;
+    border-radius: 10px !important;
+  }
+}
+
 
