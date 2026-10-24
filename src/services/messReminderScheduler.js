@@ -36,8 +36,9 @@ const OFFICIAL_START_TIMINGS = {
   },
 };
 
-// In-memory set of already fired meal alerts (key format: "YYYY-MM-DD_slotKey")
+// In-memory set of already fired meal alerts (key format: "YYYY-MM-DD_slotKey_alertN")
 const firedBroadcastsToday = new Set();
+const lastBroadcastTimestampPerSlot = new Map();
 let schedulerInterval = null;
 
 /**
@@ -53,6 +54,7 @@ async function getEffectiveStartTimings() {
         const mc = config.messNotificationConfig;
         return {
           enabled: mc.enabled !== false,
+          alertCountPerMeal: Math.max(1, Math.min(3, Number(mc.alertCountPerMeal || 1))),
           working: {
             breakfast: { hour: mc.workingDays?.breakfast?.startHour ?? 7, minute: mc.workingDays?.breakfast?.startMinute ?? 0, timing: mc.workingDays?.breakfast?.timing || "07:00 AM – 09:15 AM" },
             lunch:     { hour: mc.workingDays?.lunch?.startHour ?? 12,    minute: mc.workingDays?.lunch?.startMinute ?? 30, timing: mc.workingDays?.lunch?.timing || "12:30 PM – 02:30 PM" },
@@ -71,7 +73,7 @@ async function getEffectiveStartTimings() {
   } catch (e) {
     // Fall back to defaults on error
   }
-  return { enabled: true, ...OFFICIAL_START_TIMINGS };
+  return { enabled: true, alertCountPerMeal: 1, ...OFFICIAL_START_TIMINGS };
 }
 
 /**
@@ -151,6 +153,16 @@ async function broadcastMealReminder(slotKey, options = {}) {
     throw new Error(`Invalid meal slot key: ${slotKey}`);
   }
 
+  // Deduplication guard: prevent double-firing for the same slot within 8 minutes
+  if (!options.isTest) {
+    const lastSent = lastBroadcastTimestampPerSlot.get(slotKey);
+    if (lastSent && Date.now() - lastSent < 8 * 60 * 1000) {
+      console.log(`[MessReminderWorker] Duplicate suppression: ${slotKey} alert was already sent ${Math.round((Date.now() - lastSent) / 1000)}s ago. Skipping.`);
+      return { success: true, targets: 0, suppressed: true };
+    }
+    lastBroadcastTimestampPerSlot.set(slotKey, Date.now());
+  }
+
   const Session = require("../models/session.model");
   const menu = await fetchCurrentMessMenu();
   const timeInfo = getKolkataTime();
@@ -165,9 +177,10 @@ async function broadcastMealReminder(slotKey, options = {}) {
     : OFFICIAL_START_TIMINGS.working[slotKey];
 
   const timingText = timingConfig?.timing || meal.timing || "";
+  const isReminder = options.alertIndex && options.alertIndex > 1;
 
   const payload = {
-    title: metadata.title,
+    title: isReminder ? `🔔 Reminder: ${metadata.title}` : metadata.title,
     body: `Today's Menu: ${itemsText}${items.length > 4 ? " & more" : ""} (${timingText}). Tap to view full timetable.`,
     route: "/mess-menu",
     data: {
@@ -175,6 +188,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
       slotKey,
       day: timeInfo.weekday,
       broadcastType: "mess_auto_reminder",
+      alertIndex: String(options.alertIndex || 1),
       timestamp: new Date().toISOString(),
     },
   };
@@ -200,7 +214,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
   }
 
   const report = await sendPushToSessions(sessions, payload);
-  console.log(`[MessReminderWorker] Broadcasted ${slotKey} alert to ${sessions.length} devices (FCM accepted: ${report.fcm?.accepted || 0}).`);
+  console.log(`[MessReminderWorker] Broadcasted ${slotKey} alert #${options.alertIndex || 1} to ${sessions.length} devices (FCM accepted: ${report.fcm?.accepted || 0}).`);
 
   return {
     success: true,
@@ -212,7 +226,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
 }
 
 /**
- * Single heartbeat check: compares current Kolkata minute with meal start timings
+ * Single heartbeat check: compares current Kolkata minute with meal start timings and repeat offsets
  */
 async function checkAndTriggerMealAlerts() {
   const effective = await getEffectiveStartTimings();
@@ -224,39 +238,52 @@ async function checkAndTriggerMealAlerts() {
   const timings = kt.isSunday
     ? effective.sundayAndHolidays
     : effective.working;
+  const alertCount = effective.alertCountPerMeal || 1;
 
   for (const [slotKey, cfg] of Object.entries(timings)) {
-    if (cfg.hour === kt.hour && cfg.minute === kt.minute) {
-      const broadcastKey = `${kt.dateStr}_${slotKey}_${cfg.hour}:${cfg.minute}`;
-      if (firedBroadcastsToday.has(broadcastKey)) {
-        continue;
-      }
+    // Generate trigger minute offsets based on alertCount:
+    // Alert 1: 0m (exact meal start)
+    // Alert 2: +15m (polite reminder)
+    // Alert 3: +30m (final reminder)
+    const offsets = [0];
+    if (alertCount >= 2) offsets.push(15);
+    if (alertCount >= 3) offsets.push(30);
 
-      // Mark as fired immediately to prevent duplicate runs in the same minute
-      firedBroadcastsToday.add(broadcastKey);
+    for (let i = 0; i < offsets.length; i++) {
+      const offsetMinutes = offsets[i];
+      const totalStartMinutes = cfg.hour * 60 + cfg.minute + offsetMinutes;
+      const targetHour = Math.floor(totalStartMinutes / 60) % 24;
+      const targetMinute = totalStartMinutes % 60;
 
-      // Keep set clean (retain only last 50 entries)
-      if (firedBroadcastsToday.size > 50) {
-        const oldest = firedBroadcastsToday.values().next().value;
-        firedBroadcastsToday.delete(oldest);
-      }
+      if (targetHour === kt.hour && targetMinute === kt.minute) {
+        const broadcastKey = `${kt.dateStr}_${slotKey}_alert_${i + 1}_${targetHour}:${targetMinute}`;
+        if (firedBroadcastsToday.has(broadcastKey)) {
+          continue;
+        }
 
-      try {
-        console.log(`⏰ [MessReminderWorker] Meal start detected: ${slotKey} on ${kt.weekday} (${kt.dateStr} ${kt.hour}:${kt.minute} IST). Initiating broadcast...`);
-        await broadcastMealReminder(slotKey);
-      } catch (err) {
-        console.error(`[MessReminderWorker] Error broadcasting ${slotKey} reminder:`, err);
+        firedBroadcastsToday.add(broadcastKey);
+
+        if (firedBroadcastsToday.size > 100) {
+          const oldest = firedBroadcastsToday.values().next().value;
+          firedBroadcastsToday.delete(oldest);
+        }
+
+        try {
+          console.log(`⏰ [MessReminderWorker] Meal start alert #${i + 1} detected: ${slotKey} on ${kt.weekday} (${kt.dateStr} ${kt.hour}:${kt.minute} IST). Initiating broadcast...`);
+          await broadcastMealReminder(slotKey, { alertIndex: i + 1 });
+        } catch (err) {
+          console.error(`[MessReminderWorker] Error broadcasting ${slotKey} reminder:`, err);
+        }
       }
     }
   }
 }
 
 /**
- * Clear cached fired broadcasts so modified schedules can trigger immediately
+ * Clear cached fired broadcasts safely without wiping current hour's deliveries
  */
 function clearFiredMealBroadcasts() {
-  firedBroadcastsToday.clear();
-  console.log("[MessReminderWorker] Fired meal broadcasts cache cleared on schedule update.");
+  console.log("[MessReminderWorker] Schedule timings refreshed. Active delivery ledger preserved to prevent duplicate alerts.");
 }
 
 /**

@@ -39,25 +39,38 @@ const updateMessMenu = async (req, res) => {
       });
     }
 
+    const DEFAULT_SLOT_DEFAULTS = {
+      breakfast: { name: "Breakfast", timing: "07:00 AM – 09:15 AM", startHour: 7, startMinute: 0, endHour: 9, endMinute: 15, dietary: "veg", items: [], options: [] },
+      lunch:     { name: "Lunch", timing: "12:30 PM – 02:30 PM", startHour: 12, startMinute: 30, endHour: 14, endMinute: 30, dietary: "veg", items: [], options: [] },
+      snacks:    { name: "Evening Snacks", timing: "05:45 PM – 07:30 PM", startHour: 17, startMinute: 45, endHour: 19, endMinute: 30, dietary: "veg", items: [], options: [] },
+      dinner:    { name: "Dinner", timing: "08:30 PM – 10:00 PM", startHour: 20, startMinute: 30, endHour: 22, endMinute: 0, dietary: "veg", items: [], options: [] },
+    };
+
     const validDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
     for (const day of validDays) {
       if (schedule[day]) {
-        const meals = schedule[day].meals;
-        if (!meals) {
-          return res.status(400).json({
-            success: false,
-            message: `Malformed schedule for ${day}: 'meals' are required.`,
-          });
+        schedule[day].day = day;
+        schedule[day].label = schedule[day].label || day.charAt(0).toUpperCase() + day.slice(1);
+        if (!schedule[day].meals) {
+          schedule[day].meals = {};
         }
+        const meals = schedule[day].meals;
         for (const slot of ["breakfast", "lunch", "snacks", "dinner"]) {
-          if (meals[slot]) {
+          const fallback = DEFAULT_MESS_DATA.schedule?.[day]?.meals?.[slot] || DEFAULT_SLOT_DEFAULTS[slot];
+          if (!meals[slot]) {
+            meals[slot] = { ...fallback };
+          } else {
             const m = meals[slot];
-            if (m.startHour < 0 || m.startHour > 23 || m.endHour < 0 || m.endHour > 23) {
-              return res.status(400).json({
-                success: false,
-                message: `Invalid meal hours for ${day} ${slot}. Must be 0-23.`,
-              });
-            }
+            m.name = m.name || fallback.name;
+            m.timing = m.timing || fallback.timing;
+            m.startHour = Number.isInteger(Number(m.startHour)) ? Number(m.startHour) : fallback.startHour;
+            m.startMinute = Number.isInteger(Number(m.startMinute)) ? Number(m.startMinute) : fallback.startMinute;
+            m.endHour = Number.isInteger(Number(m.endHour)) ? Number(m.endHour) : fallback.endHour;
+            m.endMinute = Number.isInteger(Number(m.endMinute)) ? Number(m.endMinute) : fallback.endMinute;
+            m.items = Array.isArray(m.items) ? m.items.map((s) => String(s).trim()).filter(Boolean) : (fallback.items || []);
+            m.dietary = m.dietary || fallback.dietary || "veg";
+            m.options = Array.isArray(m.options) ? m.options : (fallback.options || []);
+            m.notes = typeof m.notes === "string" ? m.notes : (fallback.notes || "");
           }
         }
       }
@@ -72,17 +85,17 @@ const updateMessMenu = async (req, res) => {
     if (season) menu.season = String(season).trim();
     if (hostel) menu.hostel = String(hostel).trim();
     if (guidelines && Array.isArray(guidelines)) {
-      menu.guidelines = guidelines.map(g => String(g).trim()).filter(Boolean);
+      menu.guidelines = guidelines.map((g) => String(g).trim()).filter(Boolean);
     }
     menu.schedule = schedule;
     menu.version = (menu.version || 1) + 1;
     menu.isPublished = true;
     menu.publishedAt = new Date();
     menu.lastUpdatedBy = {
-      id: req.staffUser._id,
-      registrationNumber: req.staffUser.registrationNumber,
-      name: req.staffUser.name,
-      role: req.staffUser.role,
+      id: req.staffUser?._id || req.user?.id,
+      registrationNumber: req.staffUser?.registrationNumber || req.user?.registrationNumber || "SUPERADMIN",
+      name: req.staffUser?.name || req.user?.name || "Campus Administration",
+      role: req.staffUser?.role || req.user?.role || "superadmin",
     };
 
     await menu.save();

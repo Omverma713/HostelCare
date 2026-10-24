@@ -5,6 +5,7 @@ import { adminApi } from '../services/adminApi';
 import { appUpdateService } from '../services/appUpdateService';
 import { triggerToast } from '../components/Toast';
 import { scheduleWeeklyMealReminders } from '../services/messNotificationService';
+import { DEFAULT_MESS_DATA, DAYS_ORDER, MEAL_SLOTS } from '../constants/messMenuData';
 import './SuperAdminPortal.css';
 
 export default function SuperAdminPortal() {
@@ -115,6 +116,7 @@ export default function SuperAdminPortal() {
   // Mess Auto-Notification Schedule & Test State
   const [messAlertConfig, setMessAlertConfig] = useState({
     enabled: true,
+    alertCountPerMeal: 1,
     workingDays: {
       breakfast: { startHour: 7, startMinute: 0, timing: '07:00 AM – 09:15 AM' },
       lunch:     { startHour: 12, startMinute: 30, timing: '12:30 PM – 02:30 PM' },
@@ -128,6 +130,20 @@ export default function SuperAdminPortal() {
       dinner:    { startHour: 20, startMinute: 30, timing: '08:30 PM – 10:00 PM' },
     },
   });
+
+  // Food Menu Editor Modal State
+  const [isFoodEditorModalOpen, setIsFoodEditorModalOpen] = useState(false);
+  const [foodMenuData, setFoodMenuData] = useState(null);
+  const [foodEditorDay, setFoodEditorDay] = useState('monday');
+  const [foodEditorSlot, setFoodEditorSlot] = useState('lunch');
+  const [foodItemsList, setFoodItemsList] = useState([]);
+  const [newDishInput, setNewDishInput] = useState('');
+  const [foodTimingInput, setFoodTimingInput] = useState('');
+  const [foodBulkMode, setFoodBulkMode] = useState(false);
+  const [foodBulkText, setFoodBulkText] = useState('');
+  const [savingFoodMenu, setSavingFoodMenu] = useState(false);
+  const [loadingFoodMenu, setLoadingFoodMenu] = useState(false);
+
   const [messAlertTelemetry, setMessAlertTelemetry] = useState({
     serverTime: null,
     activePushSessionsCount: 0,
@@ -968,6 +984,7 @@ export default function SuperAdminPortal() {
       if (res.success && res.config) {
         setMessAlertConfig((prev) => ({
           enabled: Boolean(res.config.enabled),
+          alertCountPerMeal: res.config.alertCountPerMeal || prev.alertCountPerMeal || 1,
           workingDays: res.config.workingDays || prev.workingDays,
           sundayAndHolidays: res.config.sundayAndHolidays || prev.sundayAndHolidays,
         }));
@@ -992,6 +1009,7 @@ export default function SuperAdminPortal() {
         if (res.config) {
           setMessAlertConfig({
             enabled: Boolean(res.config.enabled),
+            alertCountPerMeal: res.config.alertCountPerMeal || 1,
             workingDays: res.config.workingDays,
             sundayAndHolidays: res.config.sundayAndHolidays,
           });
@@ -1006,6 +1024,125 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to update mess notification schedule', 'Error');
     } finally {
       setSavingMessAlerts(false);
+    }
+  };
+
+  // Food Menu Editor Handlers
+  const handleOpenFoodEditor = async (day = null, slot = null) => {
+    setIsFoodEditorModalOpen(true);
+    setLoadingFoodMenu(true);
+    try {
+      const res = await adminApi.getMessMenu();
+      const menu = res.menu || DEFAULT_MESS_DATA;
+      setFoodMenuData(menu);
+      const targetDay = day || foodEditorDay;
+      const targetSlot = slot || foodEditorSlot;
+      setFoodEditorDay(targetDay);
+      setFoodEditorSlot(targetSlot);
+      const schedule = menu.schedule || DEFAULT_MESS_DATA.schedule;
+      const meal = schedule[targetDay]?.meals?.[targetSlot] || {};
+      const items = Array.isArray(meal.items) ? [...meal.items] : [];
+      setFoodItemsList(items);
+      setFoodBulkText(items.join('\n'));
+      setFoodTimingInput(meal.timing || '');
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to fetch current mess menu', 'Food Menu');
+    } finally {
+      setLoadingFoodMenu(false);
+    }
+  };
+
+  const handleSelectFoodDaySlot = (day, slot) => {
+    setFoodEditorDay(day);
+    setFoodEditorSlot(slot);
+    if (!foodMenuData) return;
+    const schedule = foodMenuData.schedule || DEFAULT_MESS_DATA.schedule;
+    const meal = schedule[day]?.meals?.[slot] || {};
+    const items = Array.isArray(meal.items) ? [...meal.items] : [];
+    setFoodItemsList(items);
+    setFoodBulkText(items.join('\n'));
+    setFoodTimingInput(meal.timing || '');
+  };
+
+  const handleAddDish = () => {
+    const val = newDishInput.trim();
+    if (!val) return;
+    if (foodItemsList.includes(val)) {
+      triggerToast('warning', `'${val}' is already in this meal's list.`, 'Duplicate Item');
+      return;
+    }
+    const updated = [...foodItemsList, val];
+    setFoodItemsList(updated);
+    setFoodBulkText(updated.join('\n'));
+    setNewDishInput('');
+  };
+
+  const handleRemoveDish = (indexToRemove) => {
+    const updated = foodItemsList.filter((_, idx) => idx !== indexToRemove);
+    setFoodItemsList(updated);
+    setFoodBulkText(updated.join('\n'));
+  };
+
+  const handleSaveFoodMenu = async () => {
+    setSavingFoodMenu(true);
+    try {
+      const scheduleCopy = JSON.parse(JSON.stringify(foodMenuData?.schedule || DEFAULT_MESS_DATA.schedule));
+      if (!scheduleCopy[foodEditorDay]) {
+        scheduleCopy[foodEditorDay] = { day: foodEditorDay, label: foodEditorDay.charAt(0).toUpperCase() + foodEditorDay.slice(1), meals: {} };
+      }
+      if (!scheduleCopy[foodEditorDay].meals) {
+        scheduleCopy[foodEditorDay].meals = {};
+      }
+      const existingMeal = scheduleCopy[foodEditorDay].meals[foodEditorSlot] || {};
+
+      const finalItems = foodBulkMode
+        ? foodBulkText.split('\n').map((s) => s.trim()).filter(Boolean)
+        : [...foodItemsList];
+
+      scheduleCopy[foodEditorDay].meals[foodEditorSlot] = {
+        ...existingMeal,
+        name: existingMeal.name || foodEditorSlot.charAt(0).toUpperCase() + foodEditorSlot.slice(1),
+        timing: foodTimingInput.trim() || existingMeal.timing || '',
+        items: finalItems,
+      };
+
+      const payload = {
+        title: foodMenuData?.title || DEFAULT_MESS_DATA.title,
+        season: foodMenuData?.season || DEFAULT_MESS_DATA.season,
+        hostel: foodMenuData?.hostel || DEFAULT_MESS_DATA.hostel,
+        schedule: scheduleCopy,
+        guidelines: foodMenuData?.guidelines || DEFAULT_MESS_DATA.guidelines,
+      };
+
+      const res = await adminApi.updateMessMenu(payload);
+      if (res.success && res.menu) {
+        setFoodMenuData(res.menu);
+        triggerToast('success', `Updated ${foodEditorSlot} items for ${foodEditorDay.toUpperCase()}!`, 'Menu Saved 🍽️');
+        setIsFoodEditorModalOpen(false);
+      } else {
+        triggerToast('error', res.message || 'Failed to update mess menu', 'Error');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to save food items', 'Error');
+    } finally {
+      setSavingFoodMenu(false);
+    }
+  };
+
+  const handleResetFoodMenu = async () => {
+    if (!window.confirm('Reset all days and meal items back to official 2026 default timetable?')) return;
+    setSavingFoodMenu(true);
+    try {
+      const res = await adminApi.resetMessMenu();
+      if (res.success && res.menu) {
+        setFoodMenuData(res.menu);
+        handleSelectFoodDaySlot(foodEditorDay, foodEditorSlot);
+        triggerToast('info', 'Restored verified 2026 mess timetable.', 'Reset Complete');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to reset menu', 'Error');
+    } finally {
+      setSavingFoodMenu(false);
     }
   };
 
@@ -6601,8 +6738,8 @@ export default function SuperAdminPortal() {
 
                 <button
                   type="button"
-                  onClick={() => navigate('/mess-menu')}
-                  title="Open live Mess Menu to change dishes and items for any day"
+                  onClick={() => handleOpenFoodEditor()}
+                  title="Open live Daily Food Items Manager to add, edit or customize dishes for any day"
                   style={{
                     padding: '0.55rem 0.85rem',
                     borderRadius: '8px',
@@ -6616,6 +6753,65 @@ export default function SuperAdminPortal() {
                 >
                   🍽️ Edit Daily Food Items
                 </button>
+              </div>
+
+              {/* Notification Delivery Frequency Selector */}
+              <div
+                style={{
+                  marginTop: '0.75rem',
+                  padding: '0.75rem 0.95rem',
+                  borderRadius: '10px',
+                  background: 'rgba(67, 97, 238, 0.06)',
+                  border: '1px solid rgba(67, 97, 238, 0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '10px',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 750, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📢 Auto-Alert Delivery Frequency per Meal:</span>
+                    <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 800 }}>
+                      {messAlertConfig.alertCountPerMeal === 3 ? '3x Alerts' : messAlertConfig.alertCountPerMeal === 2 ? '2x Alerts' : '1x Single Alert'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                    Decide how many push notifications are delivered to student devices per meal (prevents duplicate alarms).
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  {[
+                    { count: 1, label: '1x (Start only)' },
+                    { count: 2, label: '2x (+15m)' },
+                    { count: 3, label: '3x (+15m & +30m)' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.count}
+                      type="button"
+                      onClick={() => {
+                        setMessAlertConfig((prev) => ({ ...prev, alertCountPerMeal: opt.count }));
+                        handleSaveMessAlertConfig({ ...messAlertConfig, alertCountPerMeal: opt.count });
+                      }}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid',
+                        borderColor: (messAlertConfig.alertCountPerMeal || 1) === opt.count ? 'var(--primary)' : 'var(--border-color)',
+                        background: (messAlertConfig.alertCountPerMeal || 1) === opt.count ? 'var(--primary)' : 'var(--bg-secondary)',
+                        color: (messAlertConfig.alertCountPerMeal || 1) === opt.count ? '#ffffff' : 'var(--text-primary)',
+                        fontWeight: 700,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.18s ease',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -7273,6 +7469,405 @@ export default function SuperAdminPortal() {
               >
                 Confirm & Enable Global Maintenance
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Food Items Editor Modal */}
+      {isFoodEditorModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(7, 10, 22, 0.82)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            zIndex: 100000,
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card, #0f172a)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '16px',
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.65)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '1.1rem 1.4rem',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(255, 255, 255, 0.02)',
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🍽️ Daily Mess Food Items Manager</span>
+                </h3>
+                <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  Add, modify, or customize dishes for any day of the week. Changes automatically expand to fit.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFoodEditorModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div
+              style={{
+                padding: '1.25rem 1.4rem',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+                flex: 1,
+              }}
+            >
+              {loadingFoodMenu ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                  Loading campus timetable...
+                </div>
+              ) : (
+                <>
+                  {/* Day Selector Pills */}
+                  <div>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      1. Select Day of Week
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {DAYS_ORDER.map((d) => (
+                        <button
+                          key={d.key}
+                          type="button"
+                          onClick={() => handleSelectFoodDaySlot(d.key, foodEditorSlot)}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '8px',
+                            border: '1px solid',
+                            borderColor: foodEditorDay === d.key ? 'var(--primary)' : 'var(--border-color)',
+                            background: foodEditorDay === d.key ? 'var(--primary)' : 'var(--bg-secondary)',
+                            color: foodEditorDay === d.key ? '#ffffff' : 'var(--text-primary)',
+                            fontWeight: 700,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Meal Slot Selector Pills */}
+                  <div>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      2. Select Meal Slot
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {MEAL_SLOTS.map((s) => (
+                        <button
+                          key={s.key}
+                          type="button"
+                          onClick={() => handleSelectFoodDaySlot(foodEditorDay, s.key)}
+                          style={{
+                            padding: '0.45rem 0.95rem',
+                            borderRadius: '8px',
+                            border: '1px solid',
+                            borderColor: foodEditorSlot === s.key ? '#10b981' : 'var(--border-color)',
+                            background: foodEditorSlot === s.key ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-secondary)',
+                            color: foodEditorSlot === s.key ? '#10b981' : 'var(--text-primary)',
+                            fontWeight: 700,
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span>{s.icon}</span>
+                          <span>{s.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Meal Timing Input */}
+                  <div>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      Meal Timing String (Display Banner)
+                    </label>
+                    <input
+                      type="text"
+                      value={foodTimingInput}
+                      onChange={(e) => setFoodTimingInput(e.target.value)}
+                      placeholder="e.g. 12:30 PM – 02:30 PM"
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  {/* Food Items Editor Section */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <label style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        3. Food Items & Dishes ({foodItemsList.length} items currently)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setFoodBulkMode(!foodBulkMode)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--primary)',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {foodBulkMode ? '🏷️ Switch to Tag Chips View' : '📝 Switch to Multi-line Text Editor'}
+                      </button>
+                    </div>
+
+                    {/* Mode 1: Interactive Chips & Quick Add */}
+                    {!foodBulkMode && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {/* Live Chips Container (Dynamic Auto-Wrap & Responsive Growth) */}
+                        <div
+                          style={{
+                            minHeight: '80px',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                            padding: '10px',
+                            borderRadius: '10px',
+                            background: 'rgba(0, 0, 0, 0.22)',
+                            border: '1px solid var(--border-color)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '8px',
+                            alignContent: 'flex-start',
+                          }}
+                        >
+                          {foodItemsList.length === 0 ? (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: 'auto' }}>
+                              No items added yet. Type a dish name below and tap Add Dish.
+                            </span>
+                          ) : (
+                            foodItemsList.map((dish, idx) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '5px 10px',
+                                  borderRadius: '8px',
+                                  background: 'linear-gradient(135deg, rgba(67, 97, 238, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
+                                  border: '1px solid rgba(67, 97, 238, 0.35)',
+                                  color: 'var(--text-primary)',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 650,
+                                  maxWidth: '100%',
+                                  wordBreak: 'break-word',
+                                }}
+                              >
+                                <span>{dish}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDish(idx)}
+                                  title={`Remove ${dish}`}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#ef4444',
+                                    cursor: 'pointer',
+                                    fontWeight: 800,
+                                    fontSize: '0.85rem',
+                                    padding: '0 2px',
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Fast Add Input */}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            value={newDishInput}
+                            onChange={(e) => setNewDishInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddDish();
+                              }
+                            }}
+                            placeholder="Type new dish name (e.g. Paneer Butter Masala, Gulab Jamun, Dal Tadka)..."
+                            style={{
+                              flex: 1,
+                              padding: '0.65rem 0.85rem',
+                              borderRadius: '8px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-secondary)',
+                              color: 'var(--text-primary)',
+                              fontSize: '0.85rem',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddDish}
+                            style={{
+                              padding: '0.65rem 1.15rem',
+                              borderRadius: '8px',
+                              border: 'none',
+                              background: 'var(--primary)',
+                              color: '#ffffff',
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            ➕ Add Dish
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mode 2: Multi-line Bulk Textarea */}
+                    {foodBulkMode && (
+                      <textarea
+                        rows={6}
+                        value={foodBulkText}
+                        onChange={(e) => setFoodBulkText(e.target.value)}
+                        placeholder="Paste or type food items (one dish per line)&#10;Rice (Usuna / Arua)&#10;Roti&#10;Dal Tadka&#10;Paneer Butter Masala"
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.85rem',
+                          fontFamily: 'inherit',
+                          lineHeight: 1.5,
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div
+              style={{
+                padding: '0.9rem 1.4rem',
+                borderTop: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                background: 'rgba(255, 255, 255, 0.02)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleResetFoodMenu}
+                disabled={savingFoodMenu || loadingFoodMenu}
+                style={{
+                  padding: '0.6rem 0.95rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  color: '#ef4444',
+                  fontWeight: 650,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                }}
+              >
+                ↺ Restore 2026 Default
+              </button>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsFoodEditorModalOpen(false)}
+                  style={{
+                    padding: '0.6rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-secondary)',
+                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveFoodMenu}
+                  disabled={savingFoodMenu || loadingFoodMenu}
+                  style={{
+                    padding: '0.6rem 1.35rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    fontWeight: 750,
+                    fontSize: '0.85rem',
+                    cursor: savingFoodMenu ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                  }}
+                >
+                  {savingFoodMenu ? 'Saving...' : `💾 Save ${foodEditorDay.toUpperCase()} Menu`}
+                </button>
+              </div>
             </div>
           </div>
         </div>

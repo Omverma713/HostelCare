@@ -225,4 +225,22 @@ export const adminApi = {
       body: JSON.stringify(payload),
     });
   },
+
+  // Mess Timetable Food Items Manager
+  getMessMenu() {
+    return adminRequest('/mess-menu');
+  },
+
+  updateMessMenu(payload) {
+    return adminRequest('/mess-menu', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  resetMessMenu() {
+    return adminRequest('/mess-menu/reset', {
+      method: 'POST',
+    });
+  },
 };

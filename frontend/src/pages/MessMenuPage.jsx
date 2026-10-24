@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/ThemeContext';
 import { api } from '../services/api';
@@ -25,6 +25,7 @@ const STAFF_MESS_ROLES = ['superadmin', 'caretaker', 'warden', 'superintendent',
 
 export default function MessMenuPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
@@ -77,6 +78,13 @@ export default function MessMenuPage() {
   const isStaff = useMemo(() => {
     return isAuthenticated && user && STAFF_MESS_ROLES.includes(user.role);
   }, [isAuthenticated, user]);
+
+  // If navigated with ?edit=true, automatically open the staff management modal
+  useEffect(() => {
+    if (location.search.includes('edit=true') && isStaff) {
+      setIsManageModalOpen(true);
+    }
+  }, [location.search, isStaff]);
 
   // Keep Asia/Kolkata clock updated every 30 seconds
   useEffect(() => {
@@ -561,6 +569,21 @@ export default function MessMenuPage() {
                       <span className="meal-status-pill upcoming">
                         ⏳ UPCOMING NEXT
                       </span>
+                    )}
+
+                    {isStaff && (
+                      <button
+                        type="button"
+                        className="mess-card-edit-btn"
+                        onClick={() => {
+                          setEditDay(selectedDay);
+                          setEditSlot(slot.key);
+                          setIsManageModalOpen(true);
+                        }}
+                        title={`Edit ${slot.label} dishes for ${selectedDay}`}
+                      >
+                        ✏️ Edit Dishes
+                      </button>
                     )}
                   </div>
 

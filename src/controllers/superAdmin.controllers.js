@@ -2355,7 +2355,7 @@ async function getMessNotificationSchedule(req, res) {
  */
 async function updateMessNotificationSchedule(req, res) {
   try {
-    const { enabled, workingDays, sundayAndHolidays } = req.body;
+    const { enabled, workingDays, sundayAndHolidays, alertCountPerMeal } = req.body;
     const config = await SystemConfig.getEffectiveConfig();
 
     if (!config.messNotificationConfig) {
@@ -2364,6 +2364,10 @@ async function updateMessNotificationSchedule(req, res) {
 
     if (typeof enabled === "boolean") {
       config.messNotificationConfig.enabled = enabled;
+    }
+
+    if (typeof alertCountPerMeal === "number" && alertCountPerMeal >= 1 && alertCountPerMeal <= 3) {
+      config.messNotificationConfig.alertCountPerMeal = Math.round(alertCountPerMeal);
     }
 
     if (workingDays && typeof workingDays === "object") {

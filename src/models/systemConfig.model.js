@@ -243,6 +243,12 @@ const systemConfigSchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
+      alertCountPerMeal: {
+        type: Number,
+        default: 1,
+        min: 1,
+        max: 3,
+      },
       workingDays: {
         breakfast: {
           startHour: { type: Number, default: 7 },
