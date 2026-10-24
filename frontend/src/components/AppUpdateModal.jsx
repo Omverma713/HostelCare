@@ -89,21 +89,90 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
     return { textLines, mediaItems };
   }, [releaseNotes, releaseMedia]);
 
+  const renderFormattedText = (text) => {
+    if (!text) return null;
+    const parts = String(text).split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+        return (
+          <strong key={i} style={{ color: '#ffffff', fontWeight: 700 }}>
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <div style={{ width: '100%', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
       {/* Text bullet items */}
       {parsed.textLines.length > 0 && (
         <div style={{ marginBottom: parsed.mediaItems.length > 0 ? '0.75rem' : 0 }}>
           {parsed.textLines.map((line, idx) => {
+            // Header 1: # Title
+            if (line.startsWith('# ')) {
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    fontSize: '0.925rem',
+                    fontWeight: 800,
+                    color: '#ffffff',
+                    marginTop: idx > 0 ? '10px' : '2px',
+                    marginBottom: '4px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+                    paddingBottom: '3px',
+                  }}
+                >
+                  {renderFormattedText(line.replace(/^#\s+/, ''))}
+                </div>
+              );
+            }
+            // Header 2: ## Subtitle
+            if (line.startsWith('## ')) {
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    color: '#e0e7ff',
+                    marginTop: idx > 0 ? '8px' : '2px',
+                    marginBottom: '3px',
+                  }}
+                >
+                  {renderFormattedText(line.replace(/^##\s+/, ''))}
+                </div>
+              );
+            }
+            // Header 3: ### Section
+            if (line.startsWith('### ')) {
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: '#38bdf8',
+                    marginTop: idx > 0 ? '6px' : '2px',
+                    marginBottom: '3px',
+                  }}
+                >
+                  {renderFormattedText(line.replace(/^###\s+/, ''))}
+                </div>
+              );
+            }
+
             const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*');
             return (
               <div
                 key={idx}
                 style={{
-                  fontSize: '0.775rem',
-                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '0.78rem',
+                  color: 'rgba(255, 255, 255, 0.85)',
                   lineHeight: 1.45,
-                  marginBottom: '4px',
+                  marginBottom: '5px',
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '6px',
@@ -111,11 +180,11 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
               >
                 {isBullet ? (
                   <>
-                    <span style={{ color: '#818cf8', fontWeight: 800, flexShrink: 0 }}>•</span>
-                    <span>{line.replace(/^[•\-*]\s*/, '')}</span>
+                    <span style={{ color: '#818cf8', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>•</span>
+                    <span style={{ flex: 1 }}>{renderFormattedText(line.replace(/^[•\-*]\s*/, ''))}</span>
                   </>
                 ) : (
-                  <span>{line}</span>
+                  <span>{renderFormattedText(line)}</span>
                 )}
               </div>
             );
@@ -394,6 +463,9 @@ export default function AppUpdateModal() {
         style={{
           width: '100%',
           maxWidth: '430px',
+          maxHeight: 'min(92vh, 700px)',
+          display: 'flex',
+          flexDirection: 'column',
           background: 'linear-gradient(150deg, #131d3b 0%, #0c1328 100%)',
           borderRadius: '20px',
           border: state.forceUpdate
@@ -480,7 +552,7 @@ export default function AppUpdateModal() {
           </div>
         )}
 
-        <div style={{ padding: '1.25rem 1.5rem', maxHeight: '82vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ padding: '1.25rem 1.5rem', flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {/* ============================================================== */}
           {/* CASE 1: Manual Check - Up to date */}
           {/* ============================================================== */}
@@ -895,23 +967,56 @@ export default function AppUpdateModal() {
               {(state.releaseNotes || (state.releaseMedia && state.releaseMedia.length > 0)) && (
                 <div
                   style={{
-                    background: 'rgba(0, 0, 0, 0.3)',
+                    background: 'rgba(0, 0, 0, 0.35)',
                     borderRadius: '12px',
-                    padding: '0.8rem 1rem',
-                    marginBottom: '1.25rem',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    maxHeight: '260px',
-                    overflowY: 'auto',
-                    WebkitOverflowScrolling: 'touch',
+                    padding: '0.75rem 0.9rem',
+                    marginBottom: '1rem',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                   }}
                 >
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>✨ What's New:</span>
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: '#38bdf8',
+                      marginBottom: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span>✨ What's New:</span>
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        color: 'rgba(255, 255, 255, 0.65)',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        padding: '2px 7px',
+                        borderRadius: '6px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      ↕️ Scroll to view all
+                    </span>
                   </div>
-                  <ChangelogMediaRenderer
-                    releaseNotes={state.releaseNotes}
-                    releaseMedia={state.releaseMedia}
-                  />
+
+                  {/* Scroller Box for Notes & Media */}
+                  <div
+                    style={{
+                      maxHeight: 'min(195px, 26vh)',
+                      overflowY: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                      overscrollBehavior: 'contain',
+                      paddingRight: '4px',
+                    }}
+                  >
+                    <ChangelogMediaRenderer
+                      releaseNotes={state.releaseNotes}
+                      releaseMedia={state.releaseMedia}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -957,8 +1062,24 @@ export default function AppUpdateModal() {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {/* Action Buttons - Sticky at Bottom */}
+              <div
+                style={{
+                  position: 'sticky',
+                  bottom: '-1.25rem',
+                  left: 0,
+                  right: 0,
+                  margin: '0.5rem -1.5rem -1.25rem -1.5rem',
+                  padding: '0.85rem 1.5rem 1.15rem',
+                  background: 'linear-gradient(to top, #0c1328 92%, rgba(12, 19, 40, 0.95) 100%)',
+                  display: 'flex',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                  zIndex: 20,
+                  borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                  boxShadow: '0 -10px 25px rgba(0, 0, 0, 0.6)',
+                }}
+              >
                 {!state.forceUpdate && (
                   <button
                     type="button"

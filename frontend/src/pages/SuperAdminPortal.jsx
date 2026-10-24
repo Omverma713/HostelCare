@@ -120,20 +120,22 @@ export default function SuperAdminPortal() {
 
   // App Version State
   const [appVersionConfig, setAppVersionConfig] = useState({
-    latestVersion: '1.0.0',
+    latestVersion: '1.2.2.2',
     minimumSupportedVersion: '1.0.0',
     updateMessage: '',
-    updateUrl: 'https://play.google.com/store/apps/details?id=com.hostelcare.app',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.2/hostelcare-v1.2.2.2.apk',
     forceUpdate: false,
     isSuspended: false,
     suspendedReason: '',
     releaseNotes: '',
+    releaseMedia: [],
     apkSha256: '',
     targetAudience: 'all',
     targetedRegistrationNumbers: [],
     targetedRoles: [],
     targetedHostels: [],
   });
+  const [appMediaInput, setAppMediaInput] = useState('');
   const [targetUserSearch, setTargetUserSearch] = useState('');
   const [targetUserSearchResults, setTargetUserSearchResults] = useState([]);
   const [searchingTargetUsers, setSearchingTargetUsers] = useState(false);
@@ -148,14 +150,16 @@ export default function SuperAdminPortal() {
     enabled: true,
     isSuspended: false,
     suspendedReason: '',
-    version: '1.2.2.1',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.1/hostelcare-v1.2.2.1.apk',
+    version: '1.2.2.2',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.2/hostelcare-v1.2.2.2.apk',
     updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
     releaseNotes: '',
+    releaseMedia: [],
     forceUpdate: false,
     apkSha256: '',
     targetedRegistrationNumbers: ['24E122A11'],
   });
+  const [pilotMediaInput, setPilotMediaInput] = useState('');
   const [pilotTestQuery, setPilotTestQuery] = useState('24E122A11');
   const [pilotTestResult, setPilotTestResult] = useState(null);
   const [testingPilotUser, setTestingPilotUser] = useState(false);
@@ -301,6 +305,7 @@ export default function SuperAdminPortal() {
           setAppVersionConfig((prev) => ({
             ...prev,
             ...res.appVersion,
+            releaseMedia: res.appVersion.releaseMedia || [],
             isSuspended: Boolean(res.appVersion.isSuspended),
             suspendedReason: res.appVersion.suspendedReason || '',
             targetAudience: res.appVersion.targetAudience || 'all',
@@ -311,9 +316,10 @@ export default function SuperAdminPortal() {
           setPilotConfig((prev) => ({
             ...prev,
             ...res.pilotTesting,
+            releaseMedia: res.pilotTesting.releaseMedia || [],
             enabled: Boolean(res.pilotTesting.enabled),
             isSuspended: Boolean(res.pilotTesting.isSuspended),
-            version: res.pilotTesting.version || '1.2.2.1',
+            version: res.pilotTesting.version || '1.2.2.2',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
           }));
         }
@@ -514,13 +520,82 @@ export default function SuperAdminPortal() {
           'success',
           isTargeted
             ? `Removed ${u.name || reg} from targeted pilot release`
-            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.1'})`,
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.2'})`,
           'Pilot Rollout'
         );
       }
     } catch (err) {
       triggerToast('error', err.message || 'Failed updating app version rollout', 'Error');
     }
+  };
+
+  // Media Management Handlers for App Updates & Pilot Testing
+  const handleAddAppMedia = () => {
+    if (!appMediaInput || !appMediaInput.trim()) return;
+    const url = appMediaInput.trim();
+    const existing = appVersionConfig.releaseMedia || [];
+    if (existing.includes(url)) {
+      triggerToast('info', 'Media URL is already added', 'Already Added');
+      setAppMediaInput('');
+      return;
+    }
+    setAppVersionConfig((prev) => ({
+      ...prev,
+      releaseMedia: [...existing, url],
+    }));
+    setAppMediaInput('');
+    triggerToast('success', 'Added media attachment to changelog', 'Media Added');
+  };
+
+  const handleRemoveAppMedia = (url) => {
+    setAppVersionConfig((prev) => ({
+      ...prev,
+      releaseMedia: (prev.releaseMedia || []).filter((m) => m !== url),
+    }));
+  };
+
+  const handleInsertAppMediaToNotes = (url) => {
+    const isVideo = /\.(mp4|webm|mov)(\?.*)?$/i.test(url);
+    const snippet = isVideo ? `\n${url}\n` : `\n![Screenshot Preview](${url})\n`;
+    setAppVersionConfig((prev) => ({
+      ...prev,
+      releaseNotes: (prev.releaseNotes || '') + snippet,
+    }));
+    triggerToast('success', 'Inserted media snippet into changelog notes', 'Markdown Inserted');
+  };
+
+  const handleAddPilotMedia = () => {
+    if (!pilotMediaInput || !pilotMediaInput.trim()) return;
+    const url = pilotMediaInput.trim();
+    const existing = pilotConfig.releaseMedia || [];
+    if (existing.includes(url)) {
+      triggerToast('info', 'Media URL is already added', 'Already Added');
+      setPilotMediaInput('');
+      return;
+    }
+    setPilotConfig((prev) => ({
+      ...prev,
+      releaseMedia: [...existing, url],
+    }));
+    setPilotMediaInput('');
+    triggerToast('success', 'Added media attachment to pilot changelog', 'Media Added');
+  };
+
+  const handleRemovePilotMedia = (url) => {
+    setPilotConfig((prev) => ({
+      ...prev,
+      releaseMedia: (prev.releaseMedia || []).filter((m) => m !== url),
+    }));
+  };
+
+  const handleInsertPilotMediaToNotes = (url) => {
+    const isVideo = /\.(mp4|webm|mov)(\?.*)?$/i.test(url);
+    const snippet = isVideo ? `\n${url}\n` : `\n![Screenshot Preview](${url})\n`;
+    setPilotConfig((prev) => ({
+      ...prev,
+      releaseNotes: (prev.releaseNotes || '') + snippet,
+    }));
+    triggerToast('success', 'Inserted media snippet into pilot changelog text', 'Markdown Inserted');
   };
 
   // Pilot Testing Handlers
@@ -3945,6 +4020,129 @@ export default function SuperAdminPortal() {
                 </div>
               </div>
 
+              {/* Changelog Media Attachments UI */}
+              <div
+                style={{
+                  background: 'var(--bg-card)',
+                  borderRadius: '10px',
+                  padding: '0.85rem 1rem',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🖼️ Changelog Media Attachments ({appVersionConfig.releaseMedia?.length || 0})</span>
+                  </label>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Screenshots, GIFs & Videos</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input
+                    type="url"
+                    value={appMediaInput}
+                    onChange={(e) => setAppMediaInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAppMedia())}
+                    placeholder="Paste image/GIF/video HTTPS link (e.g. https://.../demo.gif)..."
+                    style={{
+                      flex: 1,
+                      padding: '0.45rem 0.65rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8rem',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddAppMedia}
+                    style={{
+                      padding: '0.45rem 0.9rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: 'var(--primary)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    + Add Media
+                  </button>
+                </div>
+
+                {/* Media items list */}
+                {appVersionConfig.releaseMedia && appVersionConfig.releaseMedia.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {appVersionConfig.releaseMedia.map((url, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '10px',
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.75rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                          <span style={{ fontSize: '1rem', flexShrink: 0 }}>
+                            {/\.(mp4|webm|mov)(\?.*)?$/i.test(url) ? '🎥' : '🖼️'}
+                          </span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)', direction: 'rtl', textAlign: 'left' }}>
+                            {url}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleInsertAppMediaToNotes(url)}
+                            title="Insert Markdown snippet into notes"
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-card)',
+                              color: 'var(--primary)',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            + Insert in Notes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAppMedia(url)}
+                            title="Remove attachment"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ef4444',
+                              fontWeight: 800,
+                              fontSize: '0.9rem',
+                              cursor: 'pointer',
+                              padding: '0 4px',
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    No media attached yet. Enter an image, screenshot, or video URL above to showcase inside the app's changelog.
+                  </div>
+                )}
+              </div>
+
               <button
                 type="submit"
                 disabled={savingAppVersion}
@@ -4192,7 +4390,7 @@ export default function SuperAdminPortal() {
                 </span>
               </div>
               <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Deploy pre-release APK versions (e.g. <strong>v{pilotConfig.version || '1.2.2.1'}</strong>) strictly to selected students like <strong>24E122A11</strong> before public rollout.
+                Deploy pre-release APK versions (e.g. <strong>v{pilotConfig.version || '1.2.2.2'}</strong>) strictly to selected students like <strong>24E122A11</strong> before public rollout.
               </p>
             </div>
 
@@ -4385,7 +4583,7 @@ export default function SuperAdminPortal() {
                     <strong>Active IP Mapped:</strong> {pilotTestResult.checks?.ipTracked ? `✅ YES (${pilotTestResult.checks.detectedIp})` : 'ℹ️ No active session IP'}
                   </div>
                   <div>
-                    <strong>Target Version:</strong> v{pilotTestResult.pilotConfig?.version || '1.2.2.1'}
+                    <strong>Target Version:</strong> v{pilotTestResult.pilotConfig?.version || '1.2.2.2'}
                   </div>
                 </div>
               </div>
@@ -4403,7 +4601,7 @@ export default function SuperAdminPortal() {
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   ⚙️ Pilot Release Parameters
                 </h3>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: v{pilotConfig.version || '1.2.2.1'}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: v{pilotConfig.version || '1.2.2.2'}</span>
               </div>
 
               {/* Prominent Per-Release Suspension Card */}
@@ -4468,7 +4666,7 @@ export default function SuperAdminPortal() {
                     required
                     value={pilotConfig.version}
                     onChange={(e) => setPilotConfig((prev) => ({ ...prev, version: e.target.value }))}
-                    placeholder="e.g. 1.2.2.1"
+                    placeholder="e.g. 1.2.2.2"
                     style={{
                       width: '100%',
                       padding: '0.55rem 0.75rem',
@@ -4481,7 +4679,7 @@ export default function SuperAdminPortal() {
                     }}
                   />
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Version delivered to pilot testers (e.g. 1.2.2.1).
+                    Version delivered to pilot testers (e.g. 1.2.2.2).
                   </div>
                 </div>
 
@@ -4533,7 +4731,7 @@ export default function SuperAdminPortal() {
                   required
                   value={pilotConfig.updateUrl}
                   onChange={(e) => setPilotConfig((prev) => ({ ...prev, updateUrl: e.target.value }))}
-                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.1/hostelcare-v1.2.2.1.apk"
+                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.2/hostelcare-v1.2.2.2.apk"
                   style={{
                     width: '100%',
                     padding: '0.55rem 0.75rem',
@@ -4595,6 +4793,129 @@ export default function SuperAdminPortal() {
                     boxSizing: 'border-box',
                   }}
                 />
+              </div>
+
+              {/* Pilot Changelog Media Attachments UI */}
+              <div
+                style={{
+                  background: 'var(--bg-card)',
+                  borderRadius: '10px',
+                  padding: '0.85rem 1rem',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🖼️ Pilot Changelog Media Attachments ({pilotConfig.releaseMedia?.length || 0})</span>
+                  </label>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Screenshots, GIFs & Videos</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input
+                    type="url"
+                    value={pilotMediaInput}
+                    onChange={(e) => setPilotMediaInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPilotMedia())}
+                    placeholder="Paste pilot screenshot/GIF/video HTTPS link..."
+                    style={{
+                      flex: 1,
+                      padding: '0.45rem 0.65rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8rem',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddPilotMedia}
+                    style={{
+                      padding: '0.45rem 0.9rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: 'var(--primary)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    + Add Media
+                  </button>
+                </div>
+
+                {/* Media items list */}
+                {pilotConfig.releaseMedia && pilotConfig.releaseMedia.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {pilotConfig.releaseMedia.map((url, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '10px',
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.75rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                          <span style={{ fontSize: '1rem', flexShrink: 0 }}>
+                            {/\.(mp4|webm|mov)(\?.*)?$/i.test(url) ? '🎥' : '🖼️'}
+                          </span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)', direction: 'rtl', textAlign: 'left' }}>
+                            {url}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleInsertPilotMediaToNotes(url)}
+                            title="Insert Markdown snippet into pilot changelog"
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-card)',
+                              color: 'var(--primary)',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            + Insert in Notes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePilotMedia(url)}
+                            title="Remove attachment"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ef4444',
+                              fontWeight: 800,
+                              fontSize: '0.9rem',
+                              cursor: 'pointer',
+                              padding: '0 4px',
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    No media attached yet. Enter an image, screenshot, or video URL above for beta testers to view.
+                  </div>
+                )}
               </div>
 
               <button
@@ -4885,7 +5206,7 @@ export default function SuperAdminPortal() {
                       marginBottom: '0.75rem',
                     }}
                   >
-                    <span>Target: <strong>v{pilotConfig.version || '1.2.2.1'}</strong></span>
+                    <span>Target: <strong>v{pilotConfig.version || '1.2.2.2'}</strong></span>
                     <span style={{ color: '#38bdf8' }}>Channel: Pilot Beta</span>
                   </div>
 
