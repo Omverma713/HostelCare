@@ -6177,6 +6177,24 @@ export default function SuperAdminPortal() {
                 >
                   🔄 Refresh Status
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate('/mess-menu')}
+                  title="Open live Mess Menu to change dishes and items for any day"
+                  style={{
+                    padding: '0.55rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(67, 97, 238, 0.4)',
+                    background: 'rgba(67, 97, 238, 0.12)',
+                    color: 'var(--primary)',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  🍽️ Edit Daily Food Items
+                </button>
               </div>
             </div>
 
