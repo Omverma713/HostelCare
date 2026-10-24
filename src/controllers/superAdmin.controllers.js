@@ -1935,6 +1935,22 @@ const testPilotUserEligibility = async (req, res) => {
     const appVersionConfig = config.appVersion || {};
     const pilotConfig = config.pilotTesting || {};
 
+    // Check if user is registered in the system
+    const student = await User.findOne({
+      registrationNumber: { $regex: new RegExp(`^${cleanReg}$`, "i") },
+    }).select("name role hostel roomNumber registrationNumber email accountStatus");
+
+    let activeSessionIp = null;
+    if (student) {
+      const activeSession = await Session.findOne({
+        userId: student._id,
+        status: "active",
+      }).sort({ lastActivityAt: -1 });
+      if (activeSession && activeSession.ip) {
+        activeSessionIp = activeSession.ip;
+      }
+    }
+
     const allTargets = Array.from(new Set([
       ...(pilotConfig.targetedRegistrationNumbers || []),
       ...(appVersionConfig.targetedRegistrationNumbers || []),
@@ -1949,19 +1965,45 @@ const testPilotUserEligibility = async (req, res) => {
     let reason = "";
 
     if (!isTargeted) {
-      reason = `Student ${cleanReg} is NOT in the pilot target list. They will only receive standard global updates.`;
+      reason = `Student ${cleanReg} is NOT in the pilot target list. Click '+ Add to Pilot Testers Now' to add them.`;
     } else if (!isPilotActive) {
-      reason = `Student ${cleanReg} is in the list, but Pilot Testing is currently DISABLED.`;
+      reason = `Student ${cleanReg} is in the list, but Pilot Testing is currently DISABLED. Toggle Pilot Testing to ON.`;
     } else if (isPilotSuspended) {
-      reason = `Student ${cleanReg} is in the list, but the Pilot Release is currently SUSPENDED (Paused).`;
+      reason = `Student ${cleanReg} is in the list, but the Pilot Release is currently SUSPENDED (Paused). Click Resume.`;
     } else {
       updateWillTrigger = true;
       reason = `Student ${cleanReg} is ELIGIBLE! They will receive Pilot Release v${pilotVersion}.`;
     }
 
+    const verdict = {
+      isEligible: updateWillTrigger,
+      reason,
+    };
+
+    const checks = {
+      userFound: Boolean(student),
+      inPilotGroup: isTargeted,
+      pilotEnabled: isPilotActive,
+      isSuspended: isPilotSuspended,
+      activeSessionIp,
+    };
+
     return res.status(200).json({
       success: true,
       registrationNumber: cleanReg,
+      student: student
+        ? {
+            name: student.name,
+            role: student.role,
+            hostel: student.hostel,
+            roomNumber: student.roomNumber,
+            registrationNumber: student.registrationNumber,
+            email: student.email,
+            accountStatus: student.accountStatus,
+          }
+        : null,
+      verdict,
+      checks,
       isTargeted,
       isPilotActive,
       isPilotSuspended,
