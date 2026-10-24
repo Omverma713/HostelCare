@@ -362,48 +362,55 @@ export default function MessMenuPage() {
           </div>
         </nav>
 
-        {/* Day Stepper Control */}
+        {/* Day Stepper & Schedule Status Bar */}
         <div className="mess-stepper-row">
           <button
             type="button"
             className="mess-step-btn"
             onClick={handlePrevDay}
             id="btn-prev-day"
+            aria-label="Previous Day"
           >
-            ← Previous Day
+            ← Previous
           </button>
-          <div className="mess-current-day-label">
-            <span>{currentDaySchedule.label}</span>
-            {selectedDay === kolkataTime.dayOfWeek && (
-              <span style={{ fontSize: '0.75rem', color: '#047857', background: '#ecfdf5', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>
-                TODAY
-              </span>
-            )}
-            {selectedDay === 'sunday' ? (
-              <span style={{ fontSize: '0.75rem', color: '#b45309', background: '#fffbeb', padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>
-                🎉 Sunday Schedule (Official)
-              </span>
-            ) : selectedDay === kolkataTime.dayOfWeek && kolkataTime.isHoliday ? (
-              <span style={{ fontSize: '0.75rem', color: '#b45309', background: '#fffbeb', padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>
-                🎉 Gazetted Campus Holiday (Official)
-              </span>
-            ) : manualHolidayOverride === true ? (
-              <span style={{ fontSize: '0.75rem', color: '#9a3412', background: '#ffedd5', padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>
-                ⚠️ Institute Holiday / Preview Timings Active
-              </span>
-            ) : (
-              <span style={{ fontSize: '0.75rem', color: '#0369a1', background: '#e0f2fe', padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>
-                💼 Working Day Schedule (Official)
-              </span>
-            )}
+
+          <div className="mess-current-day-center">
+            <div className="mess-day-title-row">
+              <span className="mess-day-title-text">{currentDaySchedule.label}</span>
+              {selectedDay === kolkataTime.dayOfWeek && (
+                <span className="mess-badge-today">TODAY</span>
+              )}
+            </div>
+
+            <div className="mess-schedule-tag-wrap">
+              {selectedDay === 'sunday' ? (
+                <span className="mess-schedule-tag sunday">
+                  🎉 Sunday Schedule (Official)
+                </span>
+              ) : selectedDay === kolkataTime.dayOfWeek && kolkataTime.isHoliday ? (
+                <span className="mess-schedule-tag holiday">
+                  🎉 Gazetted Campus Holiday (Official)
+                </span>
+              ) : manualHolidayOverride === true ? (
+                <span className="mess-schedule-tag override">
+                  ⚠️ Holiday Preview Timings Active
+                </span>
+              ) : (
+                <span className="mess-schedule-tag working">
+                  💼 Working Day Schedule (Official)
+                </span>
+              )}
+            </div>
           </div>
+
           <button
             type="button"
             className="mess-step-btn"
             onClick={handleNextDay}
             id="btn-next-day"
+            aria-label="Next Day"
           >
-            Next Day →
+            Next →
           </button>
         </div>
 
@@ -485,12 +492,12 @@ export default function MessMenuPage() {
                             key={oIdx}
                             className={`meal-option-card option-${opt.type}`}
                           >
-                            <div>
-                              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                            <div className="meal-option-details">
+                              <div className="meal-option-name">
                                 {opt.name}
                               </div>
                               {opt.portion && (
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                <div className="meal-option-portion">
                                   Portion: {opt.portion}
                                 </div>
                               )}

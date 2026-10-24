@@ -253,7 +253,7 @@
   box-shadow: 0 0 6px #10b981;
 }
 
-/* Day Stepper Control (Prev / Next) */
+/* Day Stepper Control (Prev / Next & Day Header) */
 .mess-stepper-row {
   display: flex;
   align-items: center;
@@ -261,36 +261,118 @@
   margin-bottom: 1.25rem;
   background: var(--bg-card, #ffffff);
   border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
-  border-radius: 14px;
-  padding: 0.5rem 0.75rem;
+  border-radius: 16px;
+  padding: 0.65rem 0.85rem;
+  gap: 10px;
+  box-shadow: var(--shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.04));
 }
 
 .mess-step-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 0.45rem 0.85rem;
+  padding: 0.5rem 0.85rem;
   border-radius: 10px;
   background: var(--bg-tertiary, #f1f5f9);
-  border: none;
+  border: 1px solid var(--border-color, transparent);
   color: var(--text-primary, #1e293b);
   font-size: 0.825rem;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .mess-step-btn:hover {
   background: var(--border-color, #e2e8f0);
 }
 
-.mess-current-day-label {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary, #0f172a);
+.mess-step-btn:active {
+  transform: scale(0.97);
+}
+
+.mess-current-day-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mess-day-title-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mess-day-title-text {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+.mess-badge-today {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #047857;
+  background: #ecfdf5;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+  letter-spacing: 0.04em;
+}
+
+.mess-schedule-tag-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.mess-schedule-tag {
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.3;
+  text-align: center;
+  max-width: 100%;
+}
+
+.mess-schedule-tag.sunday {
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.mess-schedule-tag.holiday {
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.mess-schedule-tag.override {
+  color: #c2410c;
+  background: #ffedd5;
+  border: 1px solid #fed7aa;
+}
+
+.mess-schedule-tag.working {
+  color: #0369a1;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
 }
 
 /* Timeline Cards Container */
@@ -469,49 +551,76 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 0.85rem;
+  padding: 0.65rem 0.9rem;
   border-radius: 12px;
   background: var(--bg-tertiary, #f8fafc);
   border: 1px dashed var(--border-color, #cbd5e1);
   font-size: 0.85rem;
+  transition: all 0.2s ease;
+  gap: 8px;
+}
+
+.meal-option-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.meal-option-name {
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.meal-option-portion {
+  font-size: 0.725rem;
+  color: var(--text-secondary, #64748b);
+  margin-top: 2px;
 }
 
 .meal-option-card.option-veg {
-  background: #f0fdf4;
-  border-color: #86efac;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px dashed rgba(22, 163, 74, 0.4);
 }
 
 .meal-option-card.option-nonveg {
-  background: #fef2f2;
-  border-color: #fca5a5;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px dashed rgba(220, 38, 38, 0.4);
 }
 
 .meal-option-card.option-egg {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: rgba(217, 119, 6, 0.08);
+  border: 1px dashed rgba(217, 119, 6, 0.4);
 }
 
 .option-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.675rem;
+  font-weight: 800;
   text-transform: uppercase;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 6px;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
 }
 
 .option-badge.veg {
-  background: #dcfce7;
+  background: rgba(22, 163, 74, 0.16);
   color: #15803d;
+  border: 1px solid rgba(22, 163, 74, 0.3);
 }
 
 .option-badge.nonveg {
-  background: #fee2e2;
+  background: rgba(220, 38, 38, 0.16);
   color: #b91c1c;
+  border: 1px solid rgba(220, 38, 38, 0.3);
 }
 
 .option-badge.egg {
-  background: #fef3c7;
+  background: rgba(217, 119, 6, 0.16);
   color: #b45309;
+  border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
 .meal-special-note {
@@ -825,8 +934,9 @@
 
   /* Stepper Row on Mobile */
   .mess-stepper-row {
-    gap: 6px;
-    margin-bottom: 1rem;
+    padding: 0.55rem 0.65rem;
+    gap: 8px;
+    margin-bottom: 0.85rem;
   }
 
   .mess-step-btn {
@@ -836,12 +946,14 @@
     touch-action: manipulation;
   }
 
-  .mess-current-day-label {
-    font-size: 0.825rem;
-    gap: 4px;
-    text-align: center;
-    flex-wrap: wrap;
-    justify-content: center;
+  .mess-day-title-text {
+    font-size: 1.025rem;
+  }
+
+  .mess-schedule-tag {
+    font-size: 0.685rem;
+    padding: 2px 7px;
+    letter-spacing: 0.01em;
   }
 
   /* Meal Cards on Mobile */
@@ -961,4 +1073,268 @@
   .day-pill-label {
     display: none; /* Hide full label on micro screens, keep short 3-letter day */
   }
+}
+
+/* ==========================================================================
+   Dark Theme (html.dark-theme) Dedicated High-Contrast Palette
+   ========================================================================== */
+html.dark-theme .mess-menu-page {
+  background: var(--bg-primary, #0b0d19);
+  color: var(--text-primary, #f8fafc);
+}
+
+html.dark-theme .mess-back-btn {
+  background: var(--bg-card, #13162b);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+html.dark-theme .mess-back-btn:hover {
+  background: var(--bg-tertiary, #191c36);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+html.dark-theme .mess-chip-toggle {
+  background: var(--bg-card, #13162b);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+html.dark-theme .mess-chip-toggle:hover {
+  background: var(--bg-tertiary, #191c36);
+  color: #f8fafc;
+}
+
+html.dark-theme .mess-chip-toggle.active {
+  background: rgba(30, 58, 43, 0.9);
+  color: #6ee7b7;
+  border-color: #2d5a43;
+}
+
+html.dark-theme .mess-season-badge {
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+html.dark-theme .mess-live-clock-pill {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+html.dark-theme .mess-freshness-badge {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #6ee7b7;
+}
+
+html.dark-theme .mess-day-pill {
+  background: var(--bg-card, #13162b);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+html.dark-theme .mess-day-pill:hover {
+  background: var(--bg-tertiary, #191c36);
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+html.dark-theme .mess-day-pill.active {
+  background: linear-gradient(135deg, #1b3d2b 0%, #132a1e 100%);
+  color: #f8fafc;
+  border-color: #2d5a43;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+html.dark-theme .mess-day-pill.active .day-pill-short {
+  color: #6ee7b7;
+}
+
+html.dark-theme .day-pill-short {
+  color: #64748b;
+}
+
+html.dark-theme .mess-stepper-row {
+  background: var(--bg-card, #13162b);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+html.dark-theme .mess-step-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+}
+
+html.dark-theme .mess-step-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html.dark-theme .mess-day-title-text {
+  color: #f8fafc;
+}
+
+html.dark-theme .mess-badge-today {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+html.dark-theme .mess-schedule-tag.sunday,
+html.dark-theme .mess-schedule-tag.holiday {
+  color: #fde047;
+  background: rgba(234, 179, 8, 0.16);
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
+html.dark-theme .mess-schedule-tag.override {
+  color: #fb923c;
+  background: rgba(249, 115, 22, 0.18);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
+html.dark-theme .mess-schedule-tag.working {
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.16);
+  border-color: rgba(14, 165, 233, 0.35);
+}
+
+/* Dark mode meal cards */
+html.dark-theme .mess-meal-card {
+  background: var(--bg-card, #13162b);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+html.dark-theme .mess-meal-card.now-serving-card {
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 4px 24px rgba(16, 185, 129, 0.18);
+}
+
+html.dark-theme .meal-slot-icon-box {
+  background: rgba(255, 255, 255, 0.05);
+  color: #6ee7b7;
+}
+
+html.dark-theme .meal-title-block h3 {
+  color: #f8fafc;
+}
+
+html.dark-theme .meal-time-tag {
+  color: #94a3b8;
+}
+
+html.dark-theme .meal-status-pill.now-serving {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+html.dark-theme .meal-status-pill.upcoming {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+html.dark-theme .food-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+html.dark-theme .food-chip.highlight-veg {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(74, 222, 128, 0.4);
+  color: #86efac;
+}
+
+/* Dark mode choice & alternative cards */
+html.dark-theme .meal-option-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-theme .meal-option-name {
+  color: #f8fafc;
+}
+
+html.dark-theme .meal-option-portion {
+  color: #94a3b8;
+}
+
+html.dark-theme .meal-option-card.option-veg {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+html.dark-theme .meal-option-card.option-nonveg {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+html.dark-theme .meal-option-card.option-egg {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+html.dark-theme .option-badge.veg {
+  background: rgba(34, 197, 94, 0.22);
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+html.dark-theme .option-badge.nonveg {
+  background: rgba(239, 68, 68, 0.22);
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+html.dark-theme .option-badge.egg {
+  background: rgba(245, 158, 11, 0.22);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+html.dark-theme .meal-special-note {
+  color: #94a3b8;
+}
+
+/* Dark mode matrix table */
+html.dark-theme .mess-matrix-wrapper {
+  background: var(--bg-card, #13162b);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-theme .mess-matrix-table td {
+  border-color: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+
+html.dark-theme .matrix-day-cell {
+  background: var(--bg-card, #13162b) !important;
+  color: #f8fafc;
+}
+
+html.dark-theme .current-day-row td {
+  background: rgba(34, 197, 94, 0.05);
+}
+
+/* Dark mode guidelines card */
+html.dark-theme .mess-guidelines-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-theme .guidelines-header {
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-theme .guidelines-list li {
+  color: #94a3b8;
+}
+
+html.dark-theme .guidelines-list li strong {
+  color: #f1f5f9;
 }
