@@ -415,6 +415,16 @@ const loggedInUser = async (req, res) => {
     // Super Admins are exempt from concurrent session limits to allow simultaneous multi-user / multi-device management
     const isSuperAdmin = user.role === "superadmin";
 
+    // 4a. Same-Device session replacement:
+    // If user is logging in again on the same device/browser installation, supersede previous session on that device
+    // so repeated logins on the same device do NOT count against the concurrent device limit.
+    if (!isSuperAdmin && installationId) {
+      await Session.updateMany(
+        { userId: user._id, installationId, status: "active" },
+        { $set: { status: "expired", revokedAt: new Date(), revokedBy: "device_relogin" } }
+      ).catch(() => {});
+    }
+
     if (!isSuperAdmin) {
       // Per-user device limit override (maxDevices) takes precedence over system default
       const effectiveLimit =
@@ -455,7 +465,7 @@ const loggedInUser = async (req, res) => {
 
     // 5. Create Persistent Session Record
     const sessionId = crypto.randomUUID();
-    const timeoutMinutes = config.sessionInactivityTimeoutMinutes || 10080;
+    const timeoutMinutes = config.sessionInactivityTimeoutMinutes || 43200; // 30 days default
     const expiresAt = new Date(Date.now() + timeoutMinutes * 60 * 1000);
 
     const newSession = await Session.create({
@@ -519,7 +529,7 @@ const loggedInUser = async (req, res) => {
         roomNumber: user.roomNumber,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "90d" }
     );
 
     // Track client IP to user identity for legacy app version check recognition

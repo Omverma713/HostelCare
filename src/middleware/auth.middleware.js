@@ -53,10 +53,16 @@ const authMiddleware = async (req, res, next) => {
         });
       }
 
-      // Update lastActivityAt once every 60 seconds to avoid database write amplification
+      // Update lastActivityAt and slide session expiresAt forward once every 60 seconds
       const now = Date.now();
       if (!session.lastActivityAt || now - new Date(session.lastActivityAt).getTime() > 60_000) {
-        Session.updateOne({ _id: session._id }, { $set: { lastActivityAt: new Date() } }).catch((err) =>
+        // Slide session expiration forward 30 days so active users are never logged out
+        const slideMs = 30 * 24 * 60 * 60 * 1000;
+        const newExpiresAt = new Date(now + slideMs);
+        Session.updateOne(
+          { _id: session._id },
+          { $set: { lastActivityAt: new Date(), expiresAt: newExpiresAt } }
+        ).catch((err) =>
           console.error("Failed to update session activity:", err.message)
         );
       }

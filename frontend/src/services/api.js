@@ -15,6 +15,19 @@ const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_U
 /**
  * Generic request helper with automatic JWT injection and 401 handling.
  */
+function getInstallationId() {
+  try {
+    let id = localStorage.getItem('hostelcare_device_install_id');
+    if (!id) {
+      id = 'inst_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now().toString(36);
+      localStorage.setItem('hostelcare_device_install_id', id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem('token');
   const headers = {
@@ -37,8 +50,11 @@ async function request(endpoint, options = {}) {
 
     if (!response.ok) {
       if (response.status === 401) {
-        localStorage.removeItem('token');
-        window.dispatchEvent(new CustomEvent('auth-session-expired'));
+        // Only trigger session expired logout for authenticated calls, NOT for wrong password on /users/login
+        if (!endpoint.includes('/users/login') && !endpoint.includes('/users/activate')) {
+          localStorage.removeItem('token');
+          window.dispatchEvent(new CustomEvent('auth-session-expired'));
+        }
       }
       if (response.status === 503 && data.code === 'MAINTENANCE_MODE_ACTIVE') {
         window.dispatchEvent(new CustomEvent('maintenance-mode-active', { detail: data.maintenance }));
@@ -61,10 +77,16 @@ async function request(endpoint, options = {}) {
 
 export const api = {
   // --- AUTHENTICATION ---
-  login(registrationNumber, password) {
+  login(registrationNumber, password, extra = {}) {
+    const installationId = getInstallationId();
     return request('/users/login', {
       method: 'POST',
-      body: JSON.stringify({ registrationNumber, password }),
+      body: JSON.stringify({
+        registrationNumber,
+        password,
+        installationId,
+        ...extra,
+      }),
     });
   },
 

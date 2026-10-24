@@ -11,14 +11,14 @@ const systemConfigSchema = new mongoose.Schema(
 
     maxConcurrentSessions: {
       type: Number,
-      default: 3,
+      default: 5,
       min: 1,
       max: 20,
     },
 
     maxRegisteredDevices: {
       type: Number,
-      default: 5,
+      default: 10,
       min: 1,
       max: 50,
     },
@@ -35,7 +35,7 @@ const systemConfigSchema = new mongoose.Schema(
 
     sessionInactivityTimeoutMinutes: {
       type: Number,
-      default: 10080, // 7 days
+      default: 43200, // 30 days
       min: 15,
       max: 43200, // 30 days
     },
