@@ -366,3 +366,112 @@ test("Super Admin Unlock: Unlocks account locked by multiple wrong passwords", a
   assert.equal(unlockLog.targetIdentifier, TEST_STUDENT.registrationNumber);
 });
 
+test("Super Admin Exemption: Wrong password attempts never lock SuperAdmin accounts", async () => {
+  // Try 7 consecutive wrong password attempts on SuperAdmin
+  for (let i = 0; i < 7; i++) {
+    const wrongRes = await fetch(`${baseUrl}/api/v1/users/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        registrationNumber: TEST_SUPERADMIN.registrationNumber,
+        password: "WrongPassword!999",
+      }),
+    });
+    assert.equal(wrongRes.status, 401, "Wrong password must return 401, not 429");
+  }
+
+  // SuperAdmin must still be able to log in with correct credentials without being locked
+  const correctRes = await fetch(`${baseUrl}/api/v1/users/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      registrationNumber: TEST_SUPERADMIN.registrationNumber,
+      password: TEST_SUPERADMIN.password,
+    }),
+  });
+  assert.equal(correctRes.status, 200, "SuperAdmin must log in successfully without lock");
+  const data = await correctRes.json();
+  assert.equal(data.success, true);
+});
+
+test("Super Admin API: Configures failedLoginThreshold, lockoutDurationMinutes, and jwtLifespanDays", async () => {
+  const updateRes = await fetch(`${baseUrl}/api/v1/superadmin/config`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${superAdminToken}`,
+    },
+    body: JSON.stringify({
+      failedLoginThreshold: 3,
+      lockoutDurationMinutes: 30,
+      jwtLifespanDays: 60,
+    }),
+  });
+  assert.equal(updateRes.status, 200);
+  const updateData = await updateRes.json();
+  assert.equal(updateData.success, true);
+  assert.equal(updateData.config.failedLoginThreshold, 3);
+  assert.equal(updateData.config.lockoutDurationMinutes, 30);
+  assert.equal(updateData.config.jwtLifespanDays, 60);
+
+  // Verify GET /api/v1/superadmin/config returns the saved parameters
+  const getRes = await fetch(`${baseUrl}/api/v1/superadmin/config`, {
+    headers: { Authorization: `Bearer ${superAdminToken}` },
+  });
+  assert.equal(getRes.status, 200);
+  const getData = await getRes.json();
+  assert.equal(getData.config.failedLoginThreshold, 3);
+  assert.equal(getData.config.lockoutDurationMinutes, 30);
+  assert.equal(getData.config.jwtLifespanDays, 60);
+});
+
+test("Super Admin API: Manually locks user and adjusts lock duration", async () => {
+  // 1. Manually lock student for 45 minutes
+  const lockRes = await fetch(`${baseUrl}/api/v1/superadmin/users/${studentUserId}/lock`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${superAdminToken}`,
+    },
+    body: JSON.stringify({
+      durationMinutes: 45,
+      reason: "Security inspection",
+    }),
+  });
+  assert.equal(lockRes.status, 200);
+  const lockData = await lockRes.json();
+  assert.equal(lockData.success, true);
+  assert.equal(lockData.user.isLocked, true);
+  assert.ok(lockData.user.lockMinutesRemaining >= 40, "Remaining lock time must be around 45 mins");
+
+  // 2. Extend lock by +15 minutes
+  const extendRes = await fetch(`${baseUrl}/api/v1/superadmin/users/${studentUserId}/lock-duration`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${superAdminToken}`,
+    },
+    body: JSON.stringify({ adjustMinutes: 15 }),
+  });
+  assert.equal(extendRes.status, 200);
+  const extendData = await extendRes.json();
+  assert.equal(extendData.success, true);
+  assert.ok(extendData.user.lockMinutesRemaining >= 55, "Extended lock time must be around 60 mins");
+
+  // 3. Reduce lock past 0 minutes to immediately unlock
+  const reduceRes = await fetch(`${baseUrl}/api/v1/superadmin/users/${studentUserId}/lock-duration`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${superAdminToken}`,
+    },
+    body: JSON.stringify({ adjustMinutes: -120 }),
+  });
+  assert.equal(reduceRes.status, 200);
+  const reduceData = await reduceRes.json();
+  assert.equal(reduceData.success, true);
+  assert.equal(reduceData.user.isLocked, false);
+  assert.equal(reduceData.user.lockMinutesRemaining, 0);
+});
+
+

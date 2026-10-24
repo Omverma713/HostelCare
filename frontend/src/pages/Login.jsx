@@ -82,6 +82,31 @@ function MessMenuGuestCard() {
   );
 }
 
+function PasswordToggleEye({ visible, onToggle, label = "Toggle password visibility" }) {
+  return (
+    <button
+      type="button"
+      className="auth-password-toggle-btn"
+      onClick={onToggle}
+      aria-label={label}
+      title={visible ? "Hide password" : "Show password"}
+      tabIndex={-1}
+    >
+      {visible ? (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        </svg>
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export default function Login() {
   const { login, logout } = useAuth();
   const navigate = useNavigate();
@@ -101,6 +126,11 @@ export default function Login() {
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'activate'
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null); // 'admin' | 'student' | null
+
+  // Password Visibility States (Web & APK)
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Login Fields State
   const [regNum, setRegNum] = useState('');
@@ -430,16 +460,22 @@ export default function Login() {
 
                   <div className="form-group">
                     <label className="form-label" htmlFor="password1">Password</label>
-                    <input
-                      id="password1"
-                      type="password"
-                      className="form-input"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={loading}
-                      required
-                    />
+                    <div className="auth-password-wrapper">
+                      <input
+                        id="password1"
+                        type={showPassword ? 'text' : 'password'}
+                        className="form-input"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                        required
+                      />
+                      <PasswordToggleEye
+                        visible={showPassword}
+                        onToggle={() => setShowPassword(!showPassword)}
+                      />
+                    </div>
                   </div>
 
                   <button
@@ -498,30 +534,42 @@ export default function Login() {
 
                   <div className="form-group">
                     <label className="form-label" htmlFor="newPassword1">New Password</label>
-                    <input
-                      id="newPassword1"
-                      type="password"
-                      className="form-input"
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      disabled={loading}
-                      required
-                    />
+                    <div className="auth-password-wrapper">
+                      <input
+                        id="newPassword1"
+                        type={showNewPassword ? 'text' : 'password'}
+                        className="form-input"
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        disabled={loading}
+                        required
+                      />
+                      <PasswordToggleEye
+                        visible={showNewPassword}
+                        onToggle={() => setShowNewPassword(!showNewPassword)}
+                      />
+                    </div>
                   </div>
 
                   <div className="form-group">
                     <label className="form-label" htmlFor="confirmPassword1">Confirm Password</label>
-                    <input
-                      id="confirmPassword1"
-                      type="password"
-                      className="form-input"
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={loading}
-                      required
-                    />
+                    <div className="auth-password-wrapper">
+                      <input
+                        id="confirmPassword1"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className="form-input"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={loading}
+                        required
+                      />
+                      <PasswordToggleEye
+                        visible={showConfirmPassword}
+                        onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                      />
+                    </div>
                   </div>
 
                   <button
@@ -654,16 +702,22 @@ export default function Login() {
 
                     <div className="form-group">
                       <label className="form-label" htmlFor="password2">Password</label>
-                      <input
-                        id="password2"
-                        type="password"
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={loading}
-                        required
-                      />
+                      <div className="auth-password-wrapper">
+                        <input
+                          id="password2"
+                          type={showPassword ? 'text' : 'password'}
+                          className="form-input"
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          disabled={loading}
+                          required
+                        />
+                        <PasswordToggleEye
+                          visible={showPassword}
+                          onToggle={() => setShowPassword(!showPassword)}
+                        />
+                      </div>
                     </div>
 
                     <button
@@ -722,30 +776,42 @@ export default function Login() {
 
                     <div className="form-group">
                       <label className="form-label" htmlFor="newPassword2">New Password</label>
-                      <input
-                        id="newPassword2"
-                        type="password"
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        disabled={loading}
-                        required
-                      />
+                      <div className="auth-password-wrapper">
+                        <input
+                          id="newPassword2"
+                          type={showNewPassword ? 'text' : 'password'}
+                          className="form-input"
+                          placeholder="••••••••"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          disabled={loading}
+                          required
+                        />
+                        <PasswordToggleEye
+                          visible={showNewPassword}
+                          onToggle={() => setShowNewPassword(!showNewPassword)}
+                        />
+                      </div>
                     </div>
 
                     <div className="form-group">
                       <label className="form-label" htmlFor="confirmPassword2">Confirm Password</label>
-                      <input
-                        id="confirmPassword2"
-                        type="password"
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        disabled={loading}
-                        required
-                      />
+                      <div className="auth-password-wrapper">
+                        <input
+                          id="confirmPassword2"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          className="form-input"
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          disabled={loading}
+                          required
+                        />
+                        <PasswordToggleEye
+                          visible={showConfirmPassword}
+                          onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                        />
+                      </div>
                     </div>
 
                     <div className="form-group">
@@ -905,18 +971,24 @@ export default function Login() {
                       Password
                       {isTypingPassword && <span className="lamp-peek-hint">🙈 Lamp is peeking away!</span>}
                     </label>
-                    <input
-                      id="password3"
-                      type="password"
-                      className="form-input"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onFocus={() => setIsTypingPassword(true)}
-                      onBlur={() => setIsTypingPassword(false)}
-                      disabled={loading || !isLampOn}
-                      required
-                    />
+                    <div className="auth-password-wrapper">
+                      <input
+                        id="password3"
+                        type={showPassword ? 'text' : 'password'}
+                        className="form-input"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onFocus={() => setIsTypingPassword(true)}
+                        onBlur={() => setIsTypingPassword(false)}
+                        disabled={loading || !isLampOn}
+                        required
+                      />
+                      <PasswordToggleEye
+                        visible={showPassword}
+                        onToggle={() => setShowPassword(!showPassword)}
+                      />
+                    </div>
                   </div>
 
                   <button
@@ -975,30 +1047,42 @@ export default function Login() {
 
                   <div className="form-group">
                     <label className="form-label" htmlFor="newPassword3">New Password</label>
-                    <input
-                      id="newPassword3"
-                      type="password"
-                      className="form-input"
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      disabled={loading || !isLampOn}
-                      required
-                    />
+                    <div className="auth-password-wrapper">
+                      <input
+                        id="newPassword3"
+                        type={showNewPassword ? 'text' : 'password'}
+                        className="form-input"
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        disabled={loading || !isLampOn}
+                        required
+                      />
+                      <PasswordToggleEye
+                        visible={showNewPassword}
+                        onToggle={() => setShowNewPassword(!showNewPassword)}
+                      />
+                    </div>
                   </div>
 
                   <div className="form-group">
                     <label className="form-label" htmlFor="confirmPassword3">Confirm Password</label>
-                    <input
-                      id="confirmPassword3"
-                      type="password"
-                      className="form-input"
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={loading || !isLampOn}
-                      required
-                    />
+                    <div className="auth-password-wrapper">
+                      <input
+                        id="confirmPassword3"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className="form-input"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={loading || !isLampOn}
+                        required
+                      />
+                      <PasswordToggleEye
+                        visible={showConfirmPassword}
+                        onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                      />
+                    </div>
                   </div>
 
                   <button

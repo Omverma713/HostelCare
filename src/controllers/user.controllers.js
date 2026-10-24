@@ -296,7 +296,7 @@ const loggedInUser = async (req, res) => {
       });
     }
 
-    // 1. Account Status and Lockout Verification
+    // 1. Account Status and Lockout Verification (SuperAdmin accounts are permanently exempt from lockout)
     if (user.accountStatus === "deactivated" || user.accountStatus === "suspended") {
       return res.status(403).json({
         success: false,
@@ -305,7 +305,7 @@ const loggedInUser = async (req, res) => {
       });
     }
 
-    if (user.lockUntil && user.lockUntil > new Date()) {
+    if (user.role !== "superadmin" && user.lockUntil && user.lockUntil > new Date()) {
       const waitMinutes = Math.ceil((user.lockUntil - new Date()) / (60 * 1000));
       return res.status(429).json({
         success: false,
@@ -327,11 +327,18 @@ const loggedInUser = async (req, res) => {
     );
 
     if (!isPasswordCorrect) {
-      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
-      if (user.failedLoginAttempts >= 5) {
-        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15-minute lockout
+      // SuperAdmin accounts are exempt from login lockouts
+      if (user.role !== "superadmin") {
+        const config = await SystemConfig.getEffectiveConfig();
+        const maxAttempts = config.failedLoginThreshold || 5;
+        const lockoutMinutes = config.lockoutDurationMinutes || 15;
+
+        user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+        if (user.failedLoginAttempts >= maxAttempts) {
+          user.lockUntil = new Date(Date.now() + lockoutMinutes * 60 * 1000);
+        }
+        await user.save();
       }
-      await user.save();
 
       return res.status(401).json({
         success: false,
@@ -518,6 +525,7 @@ const loggedInUser = async (req, res) => {
     }
 
     // 6. Sign JWT with embedded sessionId for immediate revocation enforcement
+    const jwtLifespan = config.jwtLifespanDays ? `${config.jwtLifespanDays}d` : "90d";
     const token = jwt.sign(
       {
         id: user._id,
@@ -529,7 +537,7 @@ const loggedInUser = async (req, res) => {
         roomNumber: user.roomNumber,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "90d" }
+      { expiresIn: jwtLifespan }
     );
 
     // Track client IP to user identity for legacy app version check recognition

@@ -50,11 +50,14 @@ export default function SuperAdminPortal() {
 
   // System Configuration State
   const [config, setConfig] = useState({
-    maxConcurrentSessions: 3,
-    maxRegisteredDevices: 5,
+    maxConcurrentSessions: 5,
+    maxRegisteredDevices: 10,
     requireDeviceApproval: false,
     revokeOldestOnLimit: true,
-    sessionInactivityTimeoutMinutes: 10080,
+    sessionInactivityTimeoutMinutes: 43200,
+    failedLoginThreshold: 5,
+    lockoutDurationMinutes: 15,
+    jwtLifespanDays: 90,
   });
 
   const handleImpersonateUser = async (targetUser) => {
@@ -1209,6 +1212,78 @@ export default function SuperAdminPortal() {
     }
   };
 
+  // Lock user account handler
+  const handleLockUser = async (userId, durationMinutes = 15, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await adminApi.lockUser(userId, durationMinutes);
+      if (res.success) {
+        triggerToast('success', res.message, 'Account Locked');
+        loadUsers(userPagination.page);
+        if (selectedUser && selectedUser._id === userId) {
+          const updated = res.user || {};
+          setSelectedUser((prev) => ({
+            ...prev,
+            isLocked: true,
+            lockUntil: updated.lockUntil,
+            lockMinutesRemaining: updated.lockMinutesRemaining || durationMinutes,
+            failedLoginAttempts: updated.failedLoginAttempts || 5,
+          }));
+          if (userDetails?.user) {
+            setUserDetails((prev) => ({
+              ...prev,
+              user: {
+                ...prev.user,
+                isLocked: true,
+                lockUntil: updated.lockUntil,
+                lockMinutesRemaining: updated.lockMinutesRemaining || durationMinutes,
+                failedLoginAttempts: updated.failedLoginAttempts || 5,
+              },
+            }));
+          }
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message, 'Lock Failed');
+    }
+  };
+
+  // Adjust lock duration handler (extend or reduce lock time)
+  const handleAdjustUserLock = async (userId, adjustMinutes, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await adminApi.adjustUserLock(userId, adjustMinutes);
+      if (res.success) {
+        triggerToast('success', res.message, adjustMinutes > 0 ? 'Lock Extended' : 'Lock Reduced');
+        loadUsers(userPagination.page);
+        if (selectedUser && selectedUser._id === userId) {
+          const updated = res.user || {};
+          setSelectedUser((prev) => ({
+            ...prev,
+            isLocked: updated.isLocked,
+            lockUntil: updated.lockUntil,
+            lockMinutesRemaining: updated.lockMinutesRemaining || 0,
+            failedLoginAttempts: updated.failedLoginAttempts || 0,
+          }));
+          if (userDetails?.user) {
+            setUserDetails((prev) => ({
+              ...prev,
+              user: {
+                ...prev.user,
+                isLocked: updated.isLocked,
+                lockUntil: updated.lockUntil,
+                lockMinutesRemaining: updated.lockMinutesRemaining || 0,
+                failedLoginAttempts: updated.failedLoginAttempts || 0,
+              },
+            }));
+          }
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message, 'Adjustment Failed');
+    }
+  };
+
   // Reset password execution
   const handleExecutePasswordReset = async (e) => {
     e.preventDefault();
@@ -1780,27 +1855,65 @@ export default function SuperAdminPortal() {
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                             {u.isLocked && (
-                              <button
-                                type="button"
-                                onClick={(e) => handleUnlockUser(u._id, e)}
-                                style={{
-                                  padding: '0.35rem 0.65rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid rgba(16, 185, 129, 0.5)',
-                                  background: 'rgba(16, 185, 129, 0.12)',
-                                  color: '#059669',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  whiteSpace: 'nowrap',
-                                }}
-                                title="Unlock user account immediately"
-                              >
-                                🔓 Unlock
-                              </button>
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleUnlockUser(u._id, e)}
+                                  style={{
+                                    padding: '0.35rem 0.65rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(16, 185, 129, 0.5)',
+                                    background: 'rgba(16, 185, 129, 0.12)',
+                                    color: '#059669',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                  title="Unlock user account immediately"
+                                >
+                                  🔓 Unlock
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleAdjustUserLock(u._id, 15, e)}
+                                  style={{
+                                    padding: '0.35rem 0.5rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-secondary)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                  title="Extend lock time by 15 minutes"
+                                >
+                                  +15m
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleAdjustUserLock(u._id, -15, e)}
+                                  style={{
+                                    padding: '0.35rem 0.5rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-secondary)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                  title="Reduce lock time by 15 minutes"
+                                >
+                                  -15m
+                                </button>
+                              </>
                             )}
                             {u._id !== currentUser?.id && u.role !== 'superadmin' && u.accountStatus === 'active' && (
                               <button
@@ -1936,25 +2049,61 @@ export default function SuperAdminPortal() {
 
                     <div className="sa-user-card-actions">
                       {u.isLocked && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleUnlockUser(u._id, e)}
-                          style={{
-                            padding: '0.4rem 0.75rem',
-                            borderRadius: '6px',
-                            border: '1px solid rgba(16, 185, 129, 0.5)',
-                            background: 'rgba(16, 185, 129, 0.12)',
-                            color: '#059669',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          🔓 Unlock
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => handleUnlockUser(u._id, e)}
+                            style={{
+                              padding: '0.4rem 0.75rem',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(16, 185, 129, 0.5)',
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              color: '#059669',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            🔓 Unlock
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleAdjustUserLock(u._id, 15, e)}
+                            style={{
+                              padding: '0.4rem 0.6rem',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-secondary)',
+                              color: 'var(--text-primary)',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            title="Extend lock by 15 mins"
+                          >
+                            +15m
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleAdjustUserLock(u._id, -15, e)}
+                            style={{
+                              padding: '0.4rem 0.6rem',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-secondary)',
+                              color: 'var(--text-primary)',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            title="Reduce lock by 15 mins"
+                          >
+                            -15m
+                          </button>
+                        </>
                       )}
                       {u._id !== currentUser?.id && u.role !== 'superadmin' && u.accountStatus === 'active' && (
                         <button
@@ -2150,45 +2299,86 @@ export default function SuperAdminPortal() {
                 <div
                   style={{
                     marginBottom: '1rem',
-                    padding: '0.75rem 1rem',
+                    padding: '0.85rem 1rem',
                     borderRadius: '8px',
                     background: 'rgba(239, 68, 68, 0.1)',
                     border: '1px solid rgba(239, 68, 68, 0.3)',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                    flexWrap: 'wrap',
+                    flexDirection: 'column',
+                    gap: '10px',
                   }}
                 >
-                  <div>
-                    <div style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>🔒</span> Account Temporarily Locked
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <div style={{ color: '#ef4444', fontWeight: 800, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>🔒</span> Account Temporarily Locked
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', marginTop: '2px' }}>
+                        Remaining: ~<strong>{selectedUser.lockMinutesRemaining || 1} min</strong> (failed attempts: {selectedUser.failedLoginAttempts || 5})
+                      </div>
                     </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '2px' }}>
-                      Locked due to multiple wrong passwords ({selectedUser.failedLoginAttempts || '5+'} attempts). Expires in ~{selectedUser.lockMinutesRemaining || 15}m.
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleUnlockUser(selectedUser._id)}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #10b981',
+                        background: '#10b981',
+                        color: '#ffffff',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
+                      }}
+                    >
+                      🔓 Unlock Account Now
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleUnlockUser(selectedUser._id)}
-                    style={{
-                      padding: '0.45rem 0.85rem',
-                      borderRadius: '6px',
-                      border: '1px solid #10b981',
-                      background: '#10b981',
-                      color: '#ffffff',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
-                    }}
-                  >
-                    🔓 Unlock Account Now
-                  </button>
+
+                  <div style={{ borderTop: '1px solid rgba(239, 68, 68, 0.2)', paddingTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      Adjust Lock Time:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustUserLock(selectedUser._id, 15)}
+                      style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      +15m
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustUserLock(selectedUser._id, 30)}
+                      style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      +30m
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustUserLock(selectedUser._id, 60)}
+                      style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      +1 Hour
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustUserLock(selectedUser._id, -15)}
+                      style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      -15m
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustUserLock(selectedUser._id, -30)}
+                      style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      -30m
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -2379,45 +2569,137 @@ export default function SuperAdminPortal() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                 <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>ADMINISTRATIVE ACTIONS</div>
 
-                {selectedUser.isLocked ? (
-                  <button
-                    type="button"
-                    onClick={() => handleUnlockUser(selectedUser._id)}
+                {selectedUser.role === 'superadmin' ? (
+                  <div
                     style={{
-                      padding: '0.55rem',
+                      padding: '0.6rem 0.85rem',
                       borderRadius: '6px',
-                      border: '1px solid #10b981',
                       background: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
                       color: '#059669',
+                      fontSize: '0.78rem',
                       fontWeight: 700,
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
                       gap: '6px',
                     }}
                   >
-                    <span>🔓</span> Unlock Account (Clear Login Lockout)
-                  </button>
-                ) : (selectedUser.failedLoginAttempts > 0) ? (
-                  <button
-                    type="button"
-                    onClick={() => handleUnlockUser(selectedUser._id)}
-                    style={{
-                      padding: '0.5rem',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-secondary)',
-                      fontWeight: 600,
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    🔄 Reset Failed Attempts ({selectedUser.failedLoginAttempts})
-                  </button>
-                ) : null}
+                    <span>🛡️</span> SuperAdmin accounts are permanently exempt from all login lockouts.
+                  </div>
+                ) : selectedUser.isLocked ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleUnlockUser(selectedUser._id)}
+                      style={{
+                        padding: '0.55rem',
+                        borderRadius: '6px',
+                        border: '1px solid #10b981',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        color: '#059669',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>🔓</span> Unlock Account (Clear Login Lockout)
+                    </button>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustUserLock(selectedUser._id, 15)}
+                        style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        ⏱️ +15m
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustUserLock(selectedUser._id, 60)}
+                        style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        ⏱️ +1h
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustUserLock(selectedUser._id, -15)}
+                        style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        ⏱️ -15m
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {selectedUser.failedLoginAttempts > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleUnlockUser(selectedUser._id)}
+                        style={{
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-secondary)',
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🔄 Reset Failed Attempts ({selectedUser.failedLoginAttempts})
+                      </button>
+                    )}
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleLockUser(selectedUser._id, config.lockoutDurationMinutes || 15)}
+                        style={{
+                          flex: 1,
+                          padding: '0.55rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(239, 68, 68, 0.4)',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#ef4444',
+                          fontWeight: 700,
+                          fontSize: '0.82rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                        }}
+                        title={`Lock account for ${config.lockoutDurationMinutes || 15} minutes`}
+                      >
+                        <span>🔒</span> Lock Account ({config.lockoutDurationMinutes || 15}m)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mins = window.prompt("Enter lock duration in minutes:", "60");
+                          if (mins && !isNaN(parseInt(mins))) {
+                            handleLockUser(selectedUser._id, parseInt(mins));
+                          }
+                        }}
+                        style={{
+                          padding: '0.55rem 0.75rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          fontWeight: 700,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                        }}
+                        title="Lock for custom duration"
+                      >
+                        Custom...
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {selectedUser.accountStatus === 'active' ? (
                   <button
@@ -3016,6 +3298,140 @@ export default function SuperAdminPortal() {
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 10080 minutes = 7 days. Sessions without activity beyond this duration will be marked expired.
               </span>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem', marginTop: '0.25rem' }}>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🛡️</span> Failed Login Lockout & Token Lifespan
+              </div>
+              <p style={{ margin: '0 0 1rem 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Configure protection against brute-force password guessing and decide client session token longevity.
+                <strong style={{ color: '#10b981', display: 'block', marginTop: '4px' }}>
+                  ✓ SuperAdmin accounts are permanently exempt from all login lockouts.
+                </strong>
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    Failed Password Attempts Threshold
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={config.failedLoginThreshold ?? 5}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, failedLoginThreshold: parseInt(e.target.value) || 5 }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.9rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Number of consecutive wrong password entries before account is locked (Default: 5 attempts).
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    Global Account Lockout Duration (Minutes)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1440"
+                    value={config.lockoutDurationMinutes ?? 15}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, lockoutDurationMinutes: parseInt(e.target.value) || 15 }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.9rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                    {[5, 10, 15, 30, 60, 1440].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => setConfig((prev) => ({ ...prev, lockoutDurationMinutes: mins }))}
+                        style={{
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          border: config.lockoutDurationMinutes === mins ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                          background: config.lockoutDurationMinutes === mins ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-secondary)',
+                          color: config.lockoutDurationMinutes === mins ? 'var(--primary)' : 'var(--text-secondary)',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {mins === 60 ? '1 hour' : mins === 1440 ? '24 hours' : `${mins} min`}
+                      </button>
+                    ))}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                    Default lockout duration applied automatically when a user exceeds failed password attempts.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    JWT Authentication Token Lifespan (Days)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={config.jwtLifespanDays ?? 90}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, jwtLifespanDays: parseInt(e.target.value) || 90 }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.9rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                    {[7, 14, 30, 60, 90, 180, 365].map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => setConfig((prev) => ({ ...prev, jwtLifespanDays: days }))}
+                        style={{
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          border: config.jwtLifespanDays === days ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                          background: config.jwtLifespanDays === days ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-secondary)',
+                          color: config.jwtLifespanDays === days ? 'var(--primary)' : 'var(--text-secondary)',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {days} days
+                      </button>
+                    ))}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                    How long client login JWT tokens stay valid before requiring re-authentication (Default: 90 days).
+                  </span>
+                </div>
+              </div>
             </div>
 
             <button

@@ -40,6 +40,27 @@ const systemConfigSchema = new mongoose.Schema(
       max: 43200, // 30 days
     },
 
+    failedLoginThreshold: {
+      type: Number,
+      default: 5,
+      min: 1,
+      max: 20,
+    },
+
+    lockoutDurationMinutes: {
+      type: Number,
+      default: 15,
+      min: 1,
+      max: 1440, // 24 hours
+    },
+
+    jwtLifespanDays: {
+      type: Number,
+      default: 90,
+      min: 1,
+      max: 365,
+    },
+
     updatedBy: {
       type: String,
       default: "system",

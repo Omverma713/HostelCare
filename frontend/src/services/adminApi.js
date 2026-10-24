@@ -99,6 +99,20 @@ export const adminApi = {
     });
   },
 
+  lockUser(userId, durationMinutes = 15, reason = '') {
+    return adminRequest(`/superadmin/users/${userId}/lock`, {
+      method: 'POST',
+      body: JSON.stringify({ durationMinutes, reason }),
+    });
+  },
+
+  adjustUserLock(userId, adjustMinutes) {
+    return adminRequest(`/superadmin/users/${userId}/lock-duration`, {
+      method: 'PATCH',
+      body: JSON.stringify({ adjustMinutes }),
+    });
+  },
+
   // Sessions & Devices
   getSessions({ page = 1, limit = 20, status = '', deviceType = '', search = '' } = {}) {
     const params = new URLSearchParams({ page, limit });

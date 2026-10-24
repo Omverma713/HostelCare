@@ -748,6 +748,176 @@ const unlockUserAccount = async (req, res) => {
   }
 };
 
+// ─── LOCK USER ACCOUNT MANUALLY ─────────────────────────────────────────────
+// POST /api/v1/superadmin/users/:userId/lock
+const lockUserAccount = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { durationMinutes = 15, reason = "" } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.role === "superadmin") {
+      return res.status(400).json({
+        success: false,
+        message: "SuperAdmin accounts are exempt from lockouts and cannot be locked.",
+      });
+    }
+
+    const config = await SystemConfig.getEffectiveConfig();
+    const duration = Math.min(10080, Math.max(1, parseInt(durationMinutes) || config.lockoutDurationMinutes || 15));
+    const lockUntil = new Date(Date.now() + duration * 60 * 1000);
+
+    user.lockUntil = lockUntil;
+    user.failedLoginAttempts = Math.max(user.failedLoginAttempts || 0, config.failedLoginThreshold || 5);
+    await user.save();
+
+    await recordAudit({
+      req,
+      action: "ACCOUNT_LOCKED_MANUALLY",
+      targetType: "USER",
+      targetId: user._id,
+      targetIdentifier: user.registrationNumber,
+      summary: `Manually locked account for user ${user.registrationNumber} for ${duration} minute(s). Reason: ${reason || "Admin discretion"}`,
+      details: {
+        durationMinutes: duration,
+        lockUntil,
+        reason,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Account for ${user.registrationNumber} locked for ${duration} minute(s).`,
+      user: {
+        _id: user._id,
+        registrationNumber: user.registrationNumber,
+        failedLoginAttempts: user.failedLoginAttempts,
+        lockUntil: user.lockUntil,
+        isLocked: true,
+        lockMinutesRemaining: duration,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to lock user account",
+      error: error.message,
+    });
+  }
+};
+
+// ─── ADJUST USER LOCK DURATION ──────────────────────────────────────────────
+// PATCH /api/v1/superadmin/users/:userId/lock-duration
+const adjustUserLockDuration = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { adjustMinutes } = req.body;
+
+    const delta = parseInt(adjustMinutes);
+    if (isNaN(delta) || delta === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "adjustMinutes must be a valid non-zero integer (positive to extend, negative to reduce).",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.role === "superadmin") {
+      return res.status(400).json({
+        success: false,
+        message: "SuperAdmin accounts are exempt from lockouts and cannot be locked.",
+      });
+    }
+
+    const now = Date.now();
+    const baseTime = (user.lockUntil && new Date(user.lockUntil) > new Date(now))
+      ? new Date(user.lockUntil).getTime()
+      : now;
+
+    const newLockTimeMs = baseTime + delta * 60 * 1000;
+
+    if (newLockTimeMs <= now) {
+      // Lock has been reduced to zero or negative -> unlock immediately
+      user.lockUntil = null;
+      user.failedLoginAttempts = 0;
+      await user.save();
+
+      await recordAudit({
+        req,
+        action: "ACCOUNT_LOCK_DURATION_ADJUSTED",
+        targetType: "USER",
+        targetId: user._id,
+        targetIdentifier: user.registrationNumber,
+        summary: `Adjusted lock duration by ${delta}m for user ${user.registrationNumber}. Lock time expired, account unlocked.`,
+        details: { adjustMinutes: delta, newLockUntil: null, isLocked: false },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: `Account for ${user.registrationNumber} has been unlocked as lock duration was reduced past 0.`,
+        user: {
+          _id: user._id,
+          registrationNumber: user.registrationNumber,
+          failedLoginAttempts: 0,
+          lockUntil: null,
+          isLocked: false,
+          lockMinutesRemaining: 0,
+        },
+      });
+    } else {
+      user.lockUntil = new Date(newLockTimeMs);
+      const config = await SystemConfig.getEffectiveConfig();
+      user.failedLoginAttempts = Math.max(user.failedLoginAttempts || 0, config.failedLoginThreshold || 5);
+      await user.save();
+
+      const remainingMins = Math.max(1, Math.ceil((newLockTimeMs - now) / (60 * 1000)));
+
+      await recordAudit({
+        req,
+        action: "ACCOUNT_LOCK_DURATION_ADJUSTED",
+        targetType: "USER",
+        targetId: user._id,
+        targetIdentifier: user.registrationNumber,
+        summary: `Adjusted lock duration by ${delta > 0 ? `+${delta}` : delta}m for user ${user.registrationNumber}. New remaining time: ~${remainingMins}m.`,
+        details: { adjustMinutes: delta, newLockUntil: user.lockUntil, lockMinutesRemaining: remainingMins, isLocked: true },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: `Lock duration for ${user.registrationNumber} adjusted by ${delta > 0 ? `+${delta}` : delta} minute(s). Remaining: ~${remainingMins}m.`,
+        user: {
+          _id: user._id,
+          registrationNumber: user.registrationNumber,
+          failedLoginAttempts: user.failedLoginAttempts,
+          lockUntil: user.lockUntil,
+          isLocked: true,
+          lockMinutesRemaining: remainingMins,
+        },
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to adjust user lock duration",
+      error: error.message,
+    });
+  }
+};
+
 // ─── SESSIONS DIRECTORY ──────────────────────────────────────────────────────
 // GET /api/v1/superadmin/sessions
 const getSessionsDirectory = async (req, res) => {
@@ -894,6 +1064,9 @@ const updateSystemConfig = async (req, res) => {
       requireDeviceApproval,
       revokeOldestOnLimit,
       sessionInactivityTimeoutMinutes,
+      failedLoginThreshold,
+      lockoutDurationMinutes,
+      jwtLifespanDays,
     } = req.body;
 
     const config = await SystemConfig.getEffectiveConfig();
@@ -903,6 +1076,9 @@ const updateSystemConfig = async (req, res) => {
       requireDeviceApproval: config.requireDeviceApproval,
       revokeOldestOnLimit: config.revokeOldestOnLimit,
       sessionInactivityTimeoutMinutes: config.sessionInactivityTimeoutMinutes,
+      failedLoginThreshold: config.failedLoginThreshold,
+      lockoutDurationMinutes: config.lockoutDurationMinutes,
+      jwtLifespanDays: config.jwtLifespanDays,
     };
 
     if (maxConcurrentSessions && maxConcurrentSessions >= 1 && maxConcurrentSessions <= 20) {
@@ -927,6 +1103,33 @@ const updateSystemConfig = async (req, res) => {
       sessionInactivityTimeoutMinutes <= 43200
     ) {
       config.sessionInactivityTimeoutMinutes = sessionInactivityTimeoutMinutes;
+    }
+
+    if (
+      failedLoginThreshold !== undefined &&
+      !isNaN(parseInt(failedLoginThreshold)) &&
+      parseInt(failedLoginThreshold) >= 1 &&
+      parseInt(failedLoginThreshold) <= 20
+    ) {
+      config.failedLoginThreshold = parseInt(failedLoginThreshold);
+    }
+
+    if (
+      lockoutDurationMinutes !== undefined &&
+      !isNaN(parseInt(lockoutDurationMinutes)) &&
+      parseInt(lockoutDurationMinutes) >= 1 &&
+      parseInt(lockoutDurationMinutes) <= 1440
+    ) {
+      config.lockoutDurationMinutes = parseInt(lockoutDurationMinutes);
+    }
+
+    if (
+      jwtLifespanDays !== undefined &&
+      !isNaN(parseInt(jwtLifespanDays)) &&
+      parseInt(jwtLifespanDays) >= 1 &&
+      parseInt(jwtLifespanDays) <= 365
+    ) {
+      config.jwtLifespanDays = parseInt(jwtLifespanDays);
     }
 
     config.updatedBy = req.user.registrationNumber;
@@ -2269,6 +2472,8 @@ module.exports = {
   resetUserPassword,
   forceLogoutUser,
   unlockUserAccount,
+  lockUserAccount,
+  adjustUserLockDuration,
   getSessionsDirectory,
   revokeSessionById,
   getSystemConfig,

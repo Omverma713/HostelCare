@@ -30,6 +30,8 @@ const auditLogSchema = new mongoose.Schema(
         "ACCOUNT_DEACTIVATED",
         "ACCOUNT_SUSPENDED",
         "ACCOUNT_UNLOCKED",
+        "ACCOUNT_LOCKED_MANUALLY",
+        "ACCOUNT_LOCK_DURATION_ADJUSTED",
         "PASSWORD_RESET",
         "SESSION_REVOKED",
         "SESSIONS_REVOKED_ALL",

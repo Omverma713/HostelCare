@@ -10029,3 +10029,53 @@ html:not(.dark-theme) .link-linkedin {
     justify-content: center;
   }
 }
+
+/* Password Visibility Toggle for Web & APK */
+.auth-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.auth-password-wrapper .form-input {
+  width: 100%;
+  padding-right: 44px !important;
+}
+
+.auth-password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--text-secondary, #94a3b8);
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.auth-password-toggle-btn:hover {
+  color: var(--text-primary, #ffffff);
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.auth-password-toggle-btn:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.auth-page-container.light-theme .auth-password-toggle-btn {
+  color: #64748b;
+}
+
+.auth-page-container.light-theme .auth-password-toggle-btn:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.08);
+}
+

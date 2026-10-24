@@ -14,6 +14,8 @@ const {
   resetUserPassword,
   forceLogoutUser,
   unlockUserAccount,
+  lockUserAccount,
+  adjustUserLockDuration,
   getSessionsDirectory,
   revokeSessionById,
   getSystemConfig,
@@ -77,6 +79,8 @@ router.post("/users/:userId/reset-password", sensitiveActionLimiter, resetUserPa
 router.post("/users/:userId/force-logout", sensitiveActionLimiter, forceLogoutUser);
 router.post("/users/:userId/impersonate", sensitiveActionLimiter, impersonateUser);
 router.post("/users/:userId/unlock", sensitiveActionLimiter, unlockUserAccount);
+router.post("/users/:userId/lock", sensitiveActionLimiter, lockUserAccount);
+router.patch("/users/:userId/lock-duration", sensitiveActionLimiter, adjustUserLockDuration);
 
 // Session & Device Management
 router.get("/sessions", getSessionsDirectory);
