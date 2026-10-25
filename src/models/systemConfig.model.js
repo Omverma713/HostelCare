@@ -249,6 +249,12 @@ const systemConfigSchema = new mongoose.Schema(
         min: 1,
         max: 3,
       },
+      frequencies: {
+        breakfast: { type: Number, default: 1, min: 1, max: 3 },
+        lunch: { type: Number, default: 1, min: 1, max: 3 },
+        snacks: { type: Number, default: 1, min: 1, max: 3 },
+        dinner: { type: Number, default: 1, min: 1, max: 3 },
+      },
       workingDays: {
         breakfast: {
           startHour: { type: Number, default: 7 },

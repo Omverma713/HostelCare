@@ -117,6 +117,12 @@ export default function SuperAdminPortal() {
   const [messAlertConfig, setMessAlertConfig] = useState({
     enabled: true,
     alertCountPerMeal: 1,
+    frequencies: {
+      breakfast: 1,
+      lunch: 1,
+      snacks: 1,
+      dinner: 1,
+    },
     workingDays: {
       breakfast: { startHour: 7, startMinute: 0, timing: '07:00 AM – 09:15 AM' },
       lunch:     { startHour: 12, startMinute: 30, timing: '12:30 PM – 02:30 PM' },
@@ -982,14 +988,22 @@ export default function SuperAdminPortal() {
       setLoading(true);
       const res = await adminApi.getMessNotificationSchedule();
       if (res.success && res.config) {
+        const rawFreq = res.config.frequencies || {};
+        const fallbackCount = res.config.alertCountPerMeal || 1;
         setMessAlertConfig((prev) => ({
           enabled: Boolean(res.config.enabled),
-          alertCountPerMeal: res.config.alertCountPerMeal || prev.alertCountPerMeal || 1,
+          alertCountPerMeal: fallbackCount,
+          frequencies: {
+            breakfast: Number(rawFreq.breakfast ?? fallbackCount ?? prev.frequencies?.breakfast ?? 1),
+            lunch:     Number(rawFreq.lunch ?? fallbackCount ?? prev.frequencies?.lunch ?? 1),
+            snacks:    Number(rawFreq.snacks ?? fallbackCount ?? prev.frequencies?.snacks ?? 1),
+            dinner:    Number(rawFreq.dinner ?? fallbackCount ?? prev.frequencies?.dinner ?? 1),
+          },
           workingDays: res.config.workingDays || prev.workingDays,
           sundayAndHolidays: res.config.sundayAndHolidays || prev.sundayAndHolidays,
         }));
         setMessAlertTelemetry({
-          serverTime: res.serverTimeIST || null,
+          serverTime: res.serverTimeIST || res.serverTime || null,
           activePushSessionsCount: res.activePushSessionsCount || 0,
         });
       }
@@ -1005,20 +1019,22 @@ export default function SuperAdminPortal() {
       setSavingMessAlerts(true);
       const payload = overrideConfig || messAlertConfig;
       const res = await adminApi.updateMessNotificationSchedule(payload);
-      if (res.success) {
-        if (res.config) {
-          setMessAlertConfig({
-            enabled: Boolean(res.config.enabled),
-            alertCountPerMeal: res.config.alertCountPerMeal || 1,
-            workingDays: res.config.workingDays,
-            sundayAndHolidays: res.config.sundayAndHolidays,
-          });
-        }
-        // Immediately sync local background alarms in Android OS & Web watcher
-        await scheduleWeeklyMealReminders(null, res.config || payload).catch((e) => {
-          console.warn('Local reminder sync note:', e);
+      if (res.success && res.config) {
+        const rawFreq = res.config.frequencies || {};
+        const fallbackCount = res.config.alertCountPerMeal || 1;
+        setMessAlertConfig({
+          enabled: Boolean(res.config.enabled),
+          alertCountPerMeal: fallbackCount,
+          frequencies: {
+            breakfast: Number(rawFreq.breakfast ?? fallbackCount ?? 1),
+            lunch:     Number(rawFreq.lunch ?? fallbackCount ?? 1),
+            snacks:    Number(rawFreq.snacks ?? fallbackCount ?? 1),
+            dinner:    Number(rawFreq.dinner ?? fallbackCount ?? 1),
+          },
+          workingDays: res.config.workingDays,
+          sundayAndHolidays: res.config.sundayAndHolidays,
         });
-        triggerToast('success', 'Mess notification schedule updated and synchronized across all active daemons!', 'Mess Schedule Saved 🍱');
+        triggerToast('success', 'Mess notification schedule & frequencies saved in MongoDB!', 'Schedule Saved 🍱');
       }
     } catch (err) {
       triggerToast('error', err.message || 'Failed to update mess notification schedule', 'Error');
@@ -6755,62 +6771,128 @@ export default function SuperAdminPortal() {
                 </button>
               </div>
 
-              {/* Notification Delivery Frequency Selector */}
+              {/* Independent Per-Meal Notification Frequency Configurator */}
               <div
                 style={{
-                  marginTop: '0.75rem',
-                  padding: '0.75rem 0.95rem',
-                  borderRadius: '10px',
-                  background: 'rgba(67, 97, 238, 0.06)',
-                  border: '1px solid rgba(67, 97, 238, 0.18)',
+                  marginTop: '0.95rem',
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  background: 'rgba(67, 97, 238, 0.05)',
+                  border: '1px solid rgba(67, 97, 238, 0.16)',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '10px',
+                  flexDirection: 'column',
+                  gap: '12px',
                 }}
               >
-                <div>
-                  <div style={{ fontSize: '0.84rem', fontWeight: 750, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>📢 Auto-Alert Delivery Frequency per Meal:</span>
-                    <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 800 }}>
-                      {messAlertConfig.alertCountPerMeal === 3 ? '3x Alerts' : messAlertConfig.alertCountPerMeal === 2 ? '2x Alerts' : '1x Single Alert'}
-                    </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 750, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>📢 Notification Delivery Frequency (Independent per Meal)</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      Configure how many notifications are scheduled for each meal. Changes apply to future occurrences only; past alerts are never resent.
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                    Decide how many push notifications are delivered to student devices per meal (prevents duplicate alarms).
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveMessAlertConfig()}
+                    disabled={savingMessAlerts}
+                    style={{
+                      padding: '0.45rem 0.95rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'var(--primary)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: savingMessAlerts ? 'not-allowed' : 'pointer',
+                      boxShadow: 'var(--shadow-sm)',
+                    }}
+                  >
+                    {savingMessAlerts ? 'Saving...' : '💾 Save Frequencies'}
+                  </button>
                 </div>
 
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
                   {[
-                    { count: 1, label: '1x (Start only)' },
-                    { count: 2, label: '2x (+15m)' },
-                    { count: 3, label: '3x (+15m & +30m)' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.count}
-                      type="button"
-                      onClick={() => {
-                        setMessAlertConfig((prev) => ({ ...prev, alertCountPerMeal: opt.count }));
-                        handleSaveMessAlertConfig({ ...messAlertConfig, alertCountPerMeal: opt.count });
-                      }}
-                      style={{
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '8px',
-                        border: '1px solid',
-                        borderColor: (messAlertConfig.alertCountPerMeal || 1) === opt.count ? 'var(--primary)' : 'var(--border-color)',
-                        background: (messAlertConfig.alertCountPerMeal || 1) === opt.count ? 'var(--primary)' : 'var(--bg-secondary)',
-                        color: (messAlertConfig.alertCountPerMeal || 1) === opt.count ? '#ffffff' : 'var(--text-primary)',
-                        fontWeight: 700,
-                        fontSize: '0.78rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.18s ease',
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                    { key: 'breakfast', label: 'Breakfast', emoji: '🍳' },
+                    { key: 'lunch',     label: 'Lunch',     emoji: '🍛' },
+                    { key: 'snacks',    label: 'Snacks',    emoji: '☕' },
+                    { key: 'dinner',    label: 'Dinner',    emoji: '🍲' },
+                  ].map((meal) => {
+                    const currentFreq = messAlertConfig.frequencies?.[meal.key] || messAlertConfig.alertCountPerMeal || 1;
+                    return (
+                      <div
+                        key={meal.key}
+                        style={{
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '10px',
+                          padding: '0.75rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                            {meal.emoji} {meal.label}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              color: currentFreq === 3 ? '#ef4444' : currentFreq === 2 ? '#f59e0b' : '#10b981',
+                              background: currentFreq === 3 ? 'rgba(239, 68, 68, 0.12)' : currentFreq === 2 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                            }}
+                          >
+                            Saved: {currentFreq}x {currentFreq === 3 ? '(Start + 15m + 30m)' : currentFreq === 2 ? '(Start + 15m)' : '(Start only)'}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                          {[
+                            { count: 1, label: '1x (Start)' },
+                            { count: 2, label: '2x (+15m)' },
+                            { count: 3, label: '3x (+30m)' },
+                          ].map((opt) => (
+                            <button
+                              key={opt.count}
+                              type="button"
+                              onClick={() => {
+                                const nextFrequencies = {
+                                  ...messAlertConfig.frequencies,
+                                  [meal.key]: opt.count,
+                                };
+                                setMessAlertConfig((prev) => ({
+                                  ...prev,
+                                  frequencies: nextFrequencies,
+                                }));
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: '0.4rem 0.2rem',
+                                borderRadius: '6px',
+                                border: '1px solid',
+                                borderColor: currentFreq === opt.count ? 'var(--primary)' : 'var(--border-color)',
+                                background: currentFreq === opt.count ? 'var(--primary)' : 'var(--bg-card)',
+                                color: currentFreq === opt.count ? '#ffffff' : 'var(--text-primary)',
+                                fontWeight: 700,
+                                fontSize: '0.74rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                                textAlign: 'center',
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

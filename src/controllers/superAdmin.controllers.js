@@ -2351,26 +2351,111 @@ async function getMessNotificationSchedule(req, res) {
 
 /**
  * PUT /api/v1/superadmin/mess-notifications
- * Updates mess auto-notification schedule timings & enabled status
+ * Updates mess auto-notification schedule timings, enabled status, and independent meal frequencies
  */
 async function updateMessNotificationSchedule(req, res) {
   try {
-    const { enabled, workingDays, sundayAndHolidays, alertCountPerMeal } = req.body;
+    // 1. Strict Role Authorization
+    if (req.user?.role !== "superadmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only Super Admin is authorized to configure mess notification settings.",
+      });
+    }
+
+    const { enabled, workingDays, sundayAndHolidays, alertCountPerMeal, frequencies } = req.body;
     const config = await SystemConfig.getEffectiveConfig();
 
     if (!config.messNotificationConfig) {
       config.messNotificationConfig = {};
     }
 
-    if (typeof enabled === "boolean") {
+    // 2. Validate & Update Enabled Status
+    if (enabled !== undefined) {
+      if (typeof enabled !== "boolean") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid 'enabled' parameter. Must be a boolean.",
+        });
+      }
       config.messNotificationConfig.enabled = enabled;
     }
 
-    if (typeof alertCountPerMeal === "number" && alertCountPerMeal >= 1 && alertCountPerMeal <= 3) {
-      config.messNotificationConfig.alertCountPerMeal = Math.round(alertCountPerMeal);
+    // 3. Validate & Update Independent Per-Meal Frequencies
+    const validSlots = ["breakfast", "lunch", "snacks", "dinner"];
+    if (frequencies !== undefined) {
+      if (typeof frequencies !== "object" || frequencies === null || Array.isArray(frequencies)) {
+        return res.status(400).json({
+          success: false,
+          message: "Frequencies must be an object with meal slots (breakfast, lunch, snacks, dinner).",
+        });
+      }
+
+      if (!config.messNotificationConfig.frequencies) {
+        config.messNotificationConfig.frequencies = {
+          breakfast: 1,
+          lunch: 1,
+          snacks: 1,
+          dinner: 1,
+        };
+      }
+
+      for (const [slot, freq] of Object.entries(frequencies)) {
+        if (!validSlots.includes(slot)) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid meal slot in frequencies: '${slot}'. Must be one of: ${validSlots.join(", ")}`,
+          });
+        }
+        const num = Number(freq);
+        if (!Number.isInteger(num) || num < 1 || num > 3) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid notification frequency for '${slot}': ${freq}. Must be an integer between 1 and 3.`,
+          });
+        }
+        config.messNotificationConfig.frequencies[slot] = num;
+      }
     }
 
+    // Backward compatibility for single alertCountPerMeal
+    if (alertCountPerMeal !== undefined) {
+      const num = Number(alertCountPerMeal);
+      if (!Number.isInteger(num) || num < 1 || num > 3) {
+        return res.status(400).json({
+          success: false,
+          message: "alertCountPerMeal must be an integer between 1 and 3.",
+        });
+      }
+      config.messNotificationConfig.alertCountPerMeal = num;
+    }
+
+    // 4. Validate Timings for Working Days & Sundays/Holidays
+    const validateScheduleSlots = (scheduleObj, scheduleName) => {
+      if (!scheduleObj || typeof scheduleObj !== "object") return null;
+      for (const [slot, timeDef] of Object.entries(scheduleObj)) {
+        if (!validSlots.includes(slot)) {
+          return `Invalid slot '${slot}' in ${scheduleName}.`;
+        }
+        if (timeDef.startHour !== undefined) {
+          const h = Number(timeDef.startHour);
+          if (!Number.isInteger(h) || h < 0 || h > 23) {
+            return `Invalid startHour for '${slot}' in ${scheduleName}: ${timeDef.startHour}. Must be 0-23.`;
+          }
+        }
+        if (timeDef.startMinute !== undefined) {
+          const m = Number(timeDef.startMinute);
+          if (!Number.isInteger(m) || m < 0 || m > 59) {
+            return `Invalid startMinute for '${slot}' in ${scheduleName}: ${timeDef.startMinute}. Must be 0-59.`;
+          }
+        }
+      }
+      return null;
+    };
+
     if (workingDays && typeof workingDays === "object") {
+      const err = validateScheduleSlots(workingDays, "workingDays");
+      if (err) return res.status(400).json({ success: false, message: err });
       config.messNotificationConfig.workingDays = {
         ...config.messNotificationConfig.workingDays,
         ...workingDays,
@@ -2378,6 +2463,8 @@ async function updateMessNotificationSchedule(req, res) {
     }
 
     if (sundayAndHolidays && typeof sundayAndHolidays === "object") {
+      const err = validateScheduleSlots(sundayAndHolidays, "sundayAndHolidays");
+      if (err) return res.status(400).json({ success: false, message: err });
       config.messNotificationConfig.sundayAndHolidays = {
         ...config.messNotificationConfig.sundayAndHolidays,
         ...sundayAndHolidays,
@@ -2387,7 +2474,7 @@ async function updateMessNotificationSchedule(req, res) {
     config.updatedBy = req.user?.id || req.user?.registrationNumber || "superadmin";
     await config.save();
 
-    // Invalidate previously fired meal tracking so newly set times trigger immediately
+    // Preserve active delivery ledgers and notify worker of schedule change
     const { clearFiredMealBroadcasts } = require("../services/messReminderScheduler");
     clearFiredMealBroadcasts();
 
@@ -2399,6 +2486,7 @@ async function updateMessNotificationSchedule(req, res) {
       summary: `Super Admin updated mess auto-notification schedule (Status: ${config.messNotificationConfig.enabled ? "ENABLED" : "DISABLED"})`,
       details: {
         enabled: config.messNotificationConfig.enabled,
+        frequencies: config.messNotificationConfig.frequencies,
         workingDays: config.messNotificationConfig.workingDays,
         sundayAndHolidays: config.messNotificationConfig.sundayAndHolidays,
       },
@@ -2421,10 +2509,17 @@ async function updateMessNotificationSchedule(req, res) {
 
 /**
  * POST /api/v1/superadmin/mess-notifications/test
- * Triggers a live test broadcast for a meal slot to test phone notifications
+ * Triggers an isolated manual test broadcast for a meal slot without altering scheduled production dispatches
  */
 async function testMessNotificationBroadcast(req, res) {
   try {
+    if (req.user?.role !== "superadmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only Super Admin can trigger test broadcasts.",
+      });
+    }
+
     const { slotKey = "breakfast" } = req.body;
     const validSlots = ["breakfast", "lunch", "snacks", "dinner"];
     if (!validSlots.includes(slotKey)) {
@@ -2435,24 +2530,24 @@ async function testMessNotificationBroadcast(req, res) {
     }
 
     const { broadcastMealReminder } = require("../services/messReminderScheduler");
-    const result = await broadcastMealReminder(slotKey);
+    // Pass isManualTest: true to guarantee separation from production dispatch ledger
+    const result = await broadcastMealReminder(slotKey, { isManualTest: true, isTest: true });
 
     await recordAudit({
       req,
       action: "MESS_NOTIFICATION_TEST_TRIGGERED",
       targetType: "NOTIFICATION",
-      summary: `Super Admin triggered live test alert for ${slotKey} (Targets: ${result.targets || 0})`,
+      summary: `Super Admin triggered manual test alert for ${slotKey} (Targets: ${result.targets || 0})`,
       details: {
         slotKey,
         targets: result.targets,
         report: result.report,
-        payload: result.payload,
       },
     });
 
     return res.status(200).json({
       success: true,
-      message: `Live test notification for ${slotKey.toUpperCase()} broadcasted successfully to ${result.targets || 0} active devices.`,
+      message: `Manual test notification for ${slotKey.toUpperCase()} broadcasted successfully to ${result.targets || 0} active devices.`,
       result,
     });
   } catch (error) {
