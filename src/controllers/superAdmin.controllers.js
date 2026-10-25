@@ -2630,6 +2630,32 @@ const createGlobalNotice = async (req, res) => {
       console.warn("Notice socket broadcast warning:", e.message);
     }
 
+    // Multi-Channel Push broadcast (So older installed APKs & background phones receive it in Android notification bar)
+    try {
+      const { sendPushToSessions } = require("../services/notificationService");
+      const Session = require("../models/session.model");
+      let sessionQuery = { status: "active" };
+      if (targetRole && targetRole !== "ALL") {
+        const User = require("../models/user.model");
+        const userMatches = await User.find({ role: targetRole }).select("_id");
+        sessionQuery.userId = { $in: userMatches.map((u) => u._id) };
+      }
+      const targetSessions = await Session.find(sessionQuery).select("+pushToken +webPushSubscription");
+      if (targetSessions && targetSessions.length > 0) {
+        sendPushToSessions(targetSessions, {
+          title: `${priority === "urgent" ? "🚨" : "📢"} ${notice.title}`,
+          body: notice.message,
+          route: "/dashboard",
+          data: {
+            noticeId: notice._id.toString(),
+            priority: notice.priority,
+          },
+        }).catch((err) => console.warn("Global notice push dispatch error:", err.message));
+      }
+    } catch (pushErr) {
+      console.warn("Global notice push broadcast warning:", pushErr.message);
+    }
+
     return res.status(201).json({ success: true, message: "Global Notice published successfully", notice });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to create notice", error: error.message });
