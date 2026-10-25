@@ -2342,12 +2342,17 @@ async function getMessNotificationSchedule(req, res) {
       ],
     });
 
+    // Query today's recorded dispatches for delivery counter
+    const MessNotificationDispatch = require("../models/messNotificationDispatch.model");
+    const todayDispatches = await MessNotificationDispatch.find({ dateStr: timeInfo.dateStr }).lean();
+
     return res.status(200).json({
       success: true,
       config: config.messNotificationConfig,
       effectiveTimings: effective,
       serverTime: timeInfo,
       activePushSessionsCount,
+      todayDispatches,
     });
   } catch (error) {
     console.error("getMessNotificationSchedule error:", error);
@@ -2570,6 +2575,43 @@ async function testMessNotificationBroadcast(req, res) {
   }
 }
 
+/**
+ * DELETE /api/v1/superadmin/mess-notifications/dispatches
+ * Clears recorded mess notification dispatches so Super Admin can cancel repeats, clear logs, or re-test cleanly
+ */
+async function purgeMessNotificationDispatches(req, res) {
+  try {
+    if (req.user?.role !== "superadmin") {
+      return res.status(403).json({ success: false, message: "Access denied." });
+    }
+    const { dateStr } = req.query;
+    const MessNotificationDispatch = require("../models/messNotificationDispatch.model");
+    const filter = dateStr ? { dateStr } : {};
+    const result = await MessNotificationDispatch.deleteMany(filter);
+
+    await recordAudit({
+      req,
+      action: "MESS_NOTIFICATION_DISPATCHES_PURGED",
+      targetType: "NOTIFICATION",
+      summary: `Super Admin purged ${result.deletedCount} mess notification dispatch records${dateStr ? ` for ${dateStr}` : ""}`,
+      details: { deletedCount: result.deletedCount, dateStr },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully purged ${result.deletedCount} mess notification record(s).`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error("purgeMessNotificationDispatches error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to purge dispatches",
+      error: error.message,
+    });
+  }
+}
+
 // ─── GLOBAL EMERGENCY / ANNOUNCEMENT NOTICES ─────────────────────────────────
 const getGlobalNotices = async (req, res) => {
   try {
@@ -2720,6 +2762,7 @@ module.exports = {
   getMessNotificationSchedule,
   updateMessNotificationSchedule,
   testMessNotificationBroadcast,
+  purgeMessNotificationDispatches,
   getGlobalNotices,
   getActiveGlobalNotice,
   createGlobalNotice,

@@ -178,6 +178,8 @@ export default function SuperAdminPortal() {
     activePushSessionsCount: 0,
   });
   const [savingMessAlerts, setSavingMessAlerts] = useState(false);
+  const [todayDispatches, setTodayDispatches] = useState([]);
+  const [purgingDispatches, setPurgingDispatches] = useState(false);
   const [testSlotKey, setTestSlotKey] = useState('breakfast');
   const [testingMessAlert, setTestingMessAlert] = useState(false);
   const [testAlertResult, setTestAlertResult] = useState(null);
@@ -1137,6 +1139,7 @@ export default function SuperAdminPortal() {
           serverTime: res.serverTimeIST || res.serverTime || null,
           activePushSessionsCount: res.activePushSessionsCount || 0,
         });
+        setTodayDispatches(res.todayDispatches || []);
       }
     } catch (err) {
       triggerToast('error', err.message || 'Failed to load mess notification schedule', 'Mess Alerts');
@@ -1144,6 +1147,37 @@ export default function SuperAdminPortal() {
       setLoading(false);
     }
   }, []);
+
+  const handlePurgeDispatches = async () => {
+    if (!window.confirm("Are you sure you want to clear/delete today's dispatched mess alert records? This will purge all logged delivery records and reset duplicate counters.")) return;
+    try {
+      setPurgingDispatches(true);
+      const res = await adminApi.purgeMessNotificationDispatches();
+      if (res.success) {
+        triggerToast('success', res.message || 'Dispatched alert records purged successfully!', 'Records Purged 🗑️');
+        loadMessNotifications();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to purge dispatches', 'Error');
+    } finally {
+      setPurgingDispatches(false);
+    }
+  };
+
+  const handleSetStrictSingleAlert = async () => {
+    const singleAlertConfig = {
+      ...messAlertConfig,
+      alertCountPerMeal: 1,
+      frequencies: {
+        breakfast: 1,
+        lunch: 1,
+        snacks: 1,
+        dinner: 1,
+      },
+    };
+    setMessAlertConfig(singleAlertConfig);
+    await handleSaveMessAlertConfig(singleAlertConfig);
+  };
 
   const handleSaveMessAlertConfig = async (overrideConfig = null) => {
     try {
@@ -7646,24 +7680,119 @@ export default function SuperAdminPortal() {
                       Configure how many notifications are scheduled for each meal. Changes apply to future occurrences only; past alerts are never resent.
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSaveMessAlertConfig()}
-                    disabled={savingMessAlerts}
-                    style={{
-                      padding: '0.45rem 0.95rem',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: 'var(--primary)',
-                      color: '#ffffff',
-                      fontWeight: 700,
-                      fontSize: '0.8rem',
-                      cursor: savingMessAlerts ? 'not-allowed' : 'pointer',
-                      boxShadow: 'var(--shadow-sm)',
-                    }}
-                  >
-                    {savingMessAlerts ? 'Saving...' : '💾 Save Frequencies'}
-                  </button>
+
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={handleSetStrictSingleAlert}
+                      disabled={savingMessAlerts}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#10b981',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                      }}
+                      title="Set all meals to exactly 1 notification each with 1 click"
+                    >
+                      ⚡ Set Strict 1x (Single Alert Per Meal)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handlePurgeDispatches}
+                      disabled={purgingDispatches}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        color: '#ef4444',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: purgingDispatches ? 'not-allowed' : 'pointer',
+                      }}
+                      title="Clear today's dispatched alerts from database to reset or cancel repeats"
+                    >
+                      {purgingDispatches ? 'Purging...' : "🗑️ Clear Today's Dispatched Alerts"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSaveMessAlertConfig()}
+                      disabled={savingMessAlerts}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'var(--primary)',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: savingMessAlerts ? 'not-allowed' : 'pointer',
+                        boxShadow: 'var(--shadow-sm)',
+                      }}
+                    >
+                      {savingMessAlerts ? 'Saving...' : '💾 Save Frequencies'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Delivery Counter Summary Strip */}
+                <div
+                  style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '10px',
+                    fontSize: '0.82rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>
+                      📊 Current Delivery Total:
+                    </span>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        background: 'rgba(59, 130, 246, 0.15)',
+                        color: '#3b82f6',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {(Number(messAlertConfig.frequencies?.breakfast || 1) +
+                        Number(messAlertConfig.frequencies?.lunch || 1) +
+                        Number(messAlertConfig.frequencies?.snacks || 1) +
+                        Number(messAlertConfig.frequencies?.dinner || 1))} Alerts / Day Total
+                    </span>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      (Breakfast: {messAlertConfig.frequencies?.breakfast || 1}x, Lunch: {messAlertConfig.frequencies?.lunch || 1}x, Snacks: {messAlertConfig.frequencies?.snacks || 1}x, Dinner: {messAlertConfig.frequencies?.dinner || 1}x)
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Today Dispatched So Far:</span>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        background: todayDispatches.length > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(156, 163, 175, 0.15)',
+                        color: todayDispatches.length > 0 ? '#10b981' : '#9ca3af',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {todayDispatches.length} Alert(s)
+                    </span>
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>

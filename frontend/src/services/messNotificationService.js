@@ -203,11 +203,10 @@ export async function scheduleWeeklyMealReminders(customMenu = null, customConfi
       console.warn('Permission check error in scheduleWeeklyMealReminders:', e);
     }
 
-    // Cancel existing scheduled meal reminders before rescheduling fresh set
+    // Cancel existing scheduled local meal reminders to prevent double notifications:
+    // The central backend server daemon handles high-priority FCM & WebPush delivery
     await cancelAllMealReminders();
-
-    const notificationsToSchedule = [];
-    const now = Date.now();
+    return { scheduled: 0, reason: 'handled_by_backend_push_daemon' };
 
     // Schedule for the next 7 days (today through day + 6)
     for (let dayOffset = 0; dayOffset < 7; dayOffset++) {

@@ -226,6 +226,13 @@ export const adminApi = {
     });
   },
 
+  purgeMessNotificationDispatches(dateStr = '') {
+    const query = dateStr ? `?dateStr=${encodeURIComponent(dateStr)}` : '';
+    return adminRequest(`/superadmin/mess-notifications/dispatches${query}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Mess Timetable Food Items Manager
   getMessMenu() {
     return adminRequest('/mess-menu');

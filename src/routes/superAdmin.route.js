@@ -34,6 +34,7 @@ const {
   getMessNotificationSchedule,
   updateMessNotificationSchedule,
   testMessNotificationBroadcast,
+  purgeMessNotificationDispatches,
   getGlobalNotices,
   getActiveGlobalNotice,
   createGlobalNotice,
@@ -114,6 +115,7 @@ router.get("/notifications", getNotificationHistory);
 router.get("/mess-notifications", getMessNotificationSchedule);
 router.put("/mess-notifications", sensitiveActionLimiter, updateMessNotificationSchedule);
 router.post("/mess-notifications/test", sensitiveActionLimiter, testMessNotificationBroadcast);
+router.delete("/mess-notifications/dispatches", sensitiveActionLimiter, purgeMessNotificationDispatches);
 
 // Emergency / Global Broadcast Notices
 router.get("/notices", getGlobalNotices);
