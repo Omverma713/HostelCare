@@ -58,11 +58,18 @@ export default function DevChatPage() {
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const textareaRef = useRef(null);
 
   // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    if (partnerTyping) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [partnerTyping]);
 
   // 1. Initialize Socket.IO connection
   useEffect(() => {
@@ -275,6 +282,9 @@ export default function DevChatPage() {
 
     const textToSend = inputText.trim();
     setInputText('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '42px';
+    }
     sendTypingIndicator(activeTicket.ticketId, false);
     setSending(true);
 
@@ -356,16 +366,31 @@ export default function DevChatPage() {
     }
   };
 
-  // Typing change handler
+  // Typing change handler with auto-growing textarea
   const handleInputChange = (e) => {
-    setInputText(e.target.value);
+    const val = e.target.value;
+    setInputText(val);
+
+    // Auto-grow textarea height dynamically based on content (min 42px, max 140px)
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollH = textareaRef.current.scrollHeight;
+      const nextH = Math.min(Math.max(scrollH, 42), 140);
+      textareaRef.current.style.height = `${nextH}px`;
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }
+
     if (!activeTicket) return;
 
-    sendTypingIndicator(activeTicket.ticketId, true);
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
+    if (val.trim()) {
+      sendTypingIndicator(activeTicket.ticketId, true);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        sendTypingIndicator(activeTicket.ticketId, false);
+      }, 2500);
+    } else {
       sendTypingIndicator(activeTicket.ticketId, false);
-    }, 2000);
+    }
   };
 
   // 6. Handle Create Support Ticket
@@ -586,9 +611,9 @@ export default function DevChatPage() {
                           <span className="ticket-badge-id" style={{ fontSize: '0.75rem' }}>
                             ({activeTicket.ticketId})
                           </span>
-                          <span className={`partner-online-chip ${partnerOnline ? 'online' : 'offline'}`}>
+                          <span className={`partner-online-chip ${partnerTyping ? 'online typing' : partnerOnline ? 'online' : 'offline'}`}>
                             <span className="pulse-dot" />
-                            {partnerOnline ? 'Online' : 'Offline'}
+                            {partnerTyping ? 'typing...' : partnerOnline ? 'Online' : 'Offline'}
                           </span>
                         </h3>
                         <p>
@@ -671,29 +696,30 @@ export default function DevChatPage() {
                       );
                     })
                   )}
+                  {/* Partner Live Typing Indicator with Animated Bouncing Dots inside timeline */}
+                  {partnerTyping && (
+                    <div className="chat-bubble-row theirs typing-bubble-row">
+                      <span className="chat-sender-name">
+                        {isDeveloper ? activeTicket.studentName : activeTicket.developerName}
+                      </span>
+                      <div className="chat-bubble typing-bubble">
+                        <span className="typing-pulse-dot" />
+                        <span className="typing-text">typing</span>
+                        <span className="typing-dots">
+                          <span className="dot dot-1" />
+                          <span className="dot dot-2" />
+                          <span className="dot dot-3" />
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
-
-                {/* Partner Live Typing Indicator with Animated Bouncing Dots */}
-                {partnerTyping && (
-                  <div className="typing-indicator-row">
-                    <div className="typing-bubble">
-                      <span className="typing-pulse-dot" />
-                      <span className="typing-text">
-                        {isDeveloper ? 'Student is typing' : 'Developer is typing'}
-                      </span>
-                      <span className="typing-dots">
-                        <span className="dot dot-1" />
-                        <span className="dot dot-2" />
-                        <span className="dot dot-3" />
-                      </span>
-                    </div>
-                  </div>
-                )}
 
                 {/* Input Bar */}
                 <form className="devchat-input-bar" onSubmit={handleSendMessage}>
                   <textarea
+                    ref={textareaRef}
                     value={inputText}
                     onChange={handleInputChange}
                     onKeyDown={(e) => {

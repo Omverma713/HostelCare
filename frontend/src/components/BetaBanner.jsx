@@ -8,9 +8,10 @@ import { useLocation } from 'react-router-dom';
 export default function BetaBanner() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const isChatPage = location.pathname === '/chat' || location.pathname === '/feedback';
 
-  // On Login page, the banner is rendered within the login header
-  if (isLoginPage) return null;
+  // Do not show hanging banner on login or full-screen dev chat pages
+  if (isLoginPage || isChatPage) return null;
 
   return (
     <div className="beta-banner-container on-dashboard" aria-label="Beta Version Notice">

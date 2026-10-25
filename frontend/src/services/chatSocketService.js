@@ -1,17 +1,32 @@
 import { io } from "socket.io-client";
+import { Capacitor } from "@capacitor/core";
 
 let socket = null;
 const listeners = new Map();
 
 /**
  * Resolves the Socket.IO backend connection URL
+ * In Android Capacitor APK, window.location.hostname is 'localhost',
+ * so we must detect Capacitor native platform to prevent connecting to mobile localhost!
  */
 function getSocketUrl() {
-  const currentHost = window.location.hostname;
-  if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+  const isNative = typeof window !== "undefined" && (
+    (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
+    Capacitor.isNativePlatform()
+  );
+
+  if (isNative) {
+    return "https://hostelcare-api.duckdns.org";
+  }
+
+  const currentHost = typeof window !== "undefined" ? window.location.hostname : "";
+  const isLocalDev = currentHost === "localhost" || currentHost === "127.0.0.1";
+
+  if (!import.meta.env.PROD && isLocalDev) {
     return "http://localhost:3000";
   }
-  // Production or mobile webview
+
+  // Production web or remote server
   return "https://hostelcare-api.duckdns.org";
 }
 
