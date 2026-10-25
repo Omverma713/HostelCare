@@ -350,7 +350,11 @@ body.light-theme {
 .devchat-room-pane {
   display: flex;
   flex-direction: column;
-  background: var(--timeline-bg);
+  background-color: var(--timeline-bg);
+  background-image: var(--doodle-url);
+  background-repeat: repeat;
+  background-size: 400px 400px;
+  background-position: center top;
   position: relative;
   height: 100%;
   min-height: 0;
@@ -434,21 +438,9 @@ body.light-theme {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background-color: var(--timeline-bg);
+  background: transparent !important;
   position: relative;
   scroll-behavior: smooth;
-}
-
-/* Watermark Doodles rendered via pseudo-element */
-.devchat-messages-timeline::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: var(--doodle-url);
-  background-repeat: repeat;
-  background-size: 360px 360px;
-  pointer-events: none;
-  z-index: 0;
 }
 
 .e2ee-notice-pill {
