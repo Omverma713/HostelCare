@@ -396,6 +396,22 @@ export default function DevChatPage() {
       );
     });
 
+    const removeFlushListener = addChatListener('ticket_flushed', (data) => {
+      if (data?.ticketId) {
+        setTickets((prev) => prev.filter((t) => t.ticketId !== data.ticketId));
+        if (activeTicket && activeTicket.ticketId === data.ticketId) {
+          setActiveTicket(null);
+          triggerToast('info', 'This ticket was permanently flushed by Super Admin.', 'Room Closed');
+        }
+      }
+    });
+
+    const removeChatNotifListener = addChatListener('chat_notification', (data) => {
+      if (!activeTicket || activeTicket.ticketId !== data.ticketId) {
+        triggerToast('info', `${data.title}: ${data.body}`, 'New Message');
+      }
+    });
+
     return () => {
       removeMsgListener();
       removeJoinedListener();
@@ -405,6 +421,8 @@ export default function DevChatPage() {
       removeEditListener();
       removeDeleteListener();
       removeActivityListener();
+      removeFlushListener();
+      removeChatNotifListener();
       if (partnerTypingTimer.current) clearTimeout(partnerTypingTimer.current);
     };
   }, [activeTicket, user, isDeveloper]);
@@ -748,17 +766,39 @@ export default function DevChatPage() {
   const handleResolveTicket = async () => {
     if (!activeTicket) return;
     try {
-      const nextStatus = activeTicket.status === 'resolved' ? 'open' : 'resolved';
+      const isCurrentlyResolved = activeTicket.status === 'resolved';
+      const nextStatus = isCurrentlyResolved ? 'open' : 'resolved';
       const res = await api.updateChatTicketStatus(activeTicket.ticketId, nextStatus);
       if (res.success) {
         setActiveTicket((prev) => ({ ...prev, status: nextStatus }));
         setTickets((prev) =>
           prev.map((t) => (t.ticketId === activeTicket.ticketId ? { ...t, status: nextStatus } : t))
         );
-        triggerToast('success', `Ticket marked as ${nextStatus.toUpperCase()}`, 'Ticket Updated');
+        triggerToast('success', isCurrentlyResolved ? 'Ticket reopened' : 'Ticket marked as RESOLVED', 'Ticket Updated');
       }
     } catch (err) {
       triggerToast('error', err.message || 'Failed to update ticket status', 'Error');
+    }
+  };
+
+  // 8. Super Admin Flush Ticket (Permanent Memory & Storage Purge)
+  const handleFlushTicket = async () => {
+    if (!activeTicket) return;
+    const ok = window.confirm(
+      `Flush Ticket #${activeTicket.ticketId}?\n\nThis will permanently delete the ticket, all encrypted messages, and media attachments from the database to save storage and server memory.`
+    );
+    if (!ok) return;
+
+    try {
+      const res = await api.flushChatTicket(activeTicket.ticketId);
+      if (res.success) {
+        triggerToast('success', `Ticket #${activeTicket.ticketId} purged. Storage freed!`, 'Flush Complete');
+        const flushedId = activeTicket.ticketId;
+        setActiveTicket(null);
+        setTickets((prev) => prev.filter((t) => t.ticketId !== flushedId));
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to flush ticket', 'Flush Error');
     }
   };
 
@@ -948,14 +988,47 @@ export default function DevChatPage() {
                       {activeTicket.status.replace('_', ' ')}
                     </span>
 
-                    <button
-                      type="button"
-                      className="btn-resolve-ticket"
-                      onClick={handleResolveTicket}
-                      id="btn-resolve-ticket-action"
-                    >
-                      {activeTicket.status === 'resolved' ? '🔄 Reopen Ticket' : '✓ Mark Resolved'}
-                    </button>
+                    {/* ONLY Super Admin can mark a ticket as resolved */}
+                    {activeTicket.status !== 'resolved' && isDeveloper && (
+                      <button
+                        type="button"
+                        className="btn-resolve-ticket"
+                        onClick={handleResolveTicket}
+                        id="btn-resolve-ticket-action"
+                      >
+                        ✓ Mark Resolved
+                      </button>
+                    )}
+
+                    {/* ONLY Student can reopen a resolved ticket */}
+                    {activeTicket.status === 'resolved' && !isDeveloper && (
+                      <button
+                        type="button"
+                        className="btn-resolve-ticket reopen"
+                        onClick={handleResolveTicket}
+                        id="btn-reopen-ticket-action"
+                      >
+                        🔄 Reopen Ticket
+                      </button>
+                    )}
+
+                    {/* Super Admin can flush a resolved ticket to save memory and storage */}
+                    {activeTicket.status === 'resolved' && isDeveloper && (
+                      <button
+                        type="button"
+                        className="btn-resolve-ticket danger"
+                        onClick={handleFlushTicket}
+                        id="btn-flush-ticket-action"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.18)',
+                          borderColor: 'rgba(239, 68, 68, 0.4)',
+                          color: '#ef4444',
+                        }}
+                        title="Permanently purge ticket and messages to free server memory and storage"
+                      >
+                        🗑️ Flush Ticket
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1174,20 +1247,8 @@ export default function DevChatPage() {
                       id="chat-camera-input"
                     />
 
-                    {/* WhatsApp-Style Input Capsule */}
+                    {/* WhatsApp-Style Input Capsule (Emoji removed per user request) */}
                     <div className="whatsapp-input-capsule">
-                      <button
-                        type="button"
-                        className="btn-input-emoji"
-                        onClick={() => {
-                          setInputText((prev) => prev + '😊');
-                          textareaRef.current?.focus();
-                        }}
-                        title="Emoji"
-                      >
-                        😊
-                      </button>
-
                       <textarea
                         ref={textareaRef}
                         value={inputText}
@@ -1226,20 +1287,15 @@ export default function DevChatPage() {
                       </button>
                     </div>
 
-                    {/* Separate Floating Circular Action Button */}
+                    {/* Separate Floating Circular Action Button (Pure Send Button All The Time) */}
                     <button
                       type="submit"
                       className="btn-send-message"
                       id="btn-send-chat-msg"
-                      title={inputText.trim() || selectedImage ? 'Send message' : 'Voice note'}
+                      disabled={(!inputText.trim() && !selectedImage) || sending}
+                      title="Send message"
                     >
-                      {sending ? (
-                        '...'
-                      ) : inputText.trim() || selectedImage ? (
-                        <span className="send-arrow-icon">➤</span>
-                      ) : (
-                        '🎙️'
-                      )}
+                      {sending ? '...' : <span className="send-arrow-icon">➤</span>}
                     </button>
                   </div>
                 </form>

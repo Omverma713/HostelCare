@@ -108,6 +108,41 @@ export function connectChatSocket(token) {
     emitLocalEvent("message_deleted", data);
   });
 
+  socket.on("chat_notification", async (data) => {
+    emitLocalEvent("chat_notification", data);
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const { LocalNotifications } = await import("@capacitor/local-notifications");
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: data.title || "HostelCare Support",
+              body: data.body || "New support chat update",
+              id: Math.floor(Math.random() * 100000),
+              channelId: "hostelcare_custom_channel",
+              extra: { route: "/chat", ticketId: data.ticketId },
+            },
+          ],
+        });
+      } else if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+        new Notification(data.title || "HostelCare Support", {
+          body: data.body,
+          icon: "/favicon.ico",
+        });
+      }
+    } catch (e) {
+      console.warn("Local chat notification trigger notice:", e.message);
+    }
+  });
+
+  socket.on("ticket_flushed", (data) => {
+    emitLocalEvent("ticket_flushed", data);
+  });
+
+  socket.on("global_notice_published", (data) => {
+    emitLocalEvent("global_notice_published", data);
+  });
+
   socket.on("error_message", (data) => {
     emitLocalEvent("error_message", data);
   });

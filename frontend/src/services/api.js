@@ -332,5 +332,15 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+
+  flushChatTicket(ticketId) {
+    return request(`/chat/tickets/${ticketId}/flush`, {
+      method: 'DELETE',
+    });
+  },
+
+  getActiveNotice() {
+    return request('/users/active-notice');
+  },
 };
 

@@ -3,6 +3,7 @@ const Session = require("../models/session.model");
 const SystemConfig = require("../models/systemConfig.model");
 const AuditLog = require("../models/auditLog.model");
 const NotificationCampaign = require("../models/notification.model");
+const GlobalNotice = require("../models/globalNotice.model");
 const { sendPushToSessions } = require("../services/pushService");
 const Argon = require("argon2");
 const argonLimiter = require("../../utils/argonLimiter");
@@ -1447,11 +1448,12 @@ const provisionUser = async (req, res) => {
     const {
       registrationNumber,
       name,
-      role = "superadmin",
+      role = "student",
       hostel,
       roomNumber,
       email,
       password,
+      activateImmediately = false,
       adminPassword,
     } = req.body;
 
@@ -1525,12 +1527,23 @@ const provisionUser = async (req, res) => {
       });
     }
 
-    // Password validation (min 8 chars)
-    if (!password || typeof password !== "string" || password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: "Password is required and must be at least 8 characters long.",
-      });
+    // Password & Activation mode logic
+    const shouldActivate = Boolean(
+      activateImmediately === true ||
+      activateImmediately === "true" ||
+      req.body.isActivated === true ||
+      req.body.isActivated === "true"
+    );
+
+    let hashedPassword = undefined;
+    if (shouldActivate) {
+      if (!password || typeof password !== "string" || password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password is required and must be at least 6 characters long when activating an account immediately.",
+        });
+      }
+      hashedPassword = await argonLimiter.schedule(() => Argon.hash(password));
     }
 
     // Email validation (if provided)
@@ -1567,10 +1580,7 @@ const provisionUser = async (req, res) => {
       });
     }
 
-    // 4. Hash password with Argon2
-    const hashedPassword = await argonLimiter.schedule(() => Argon.hash(password));
-
-    // 5. Create user record safely (handling possible race conditions on unique index)
+    // 4. Create user record safely (handling possible race conditions on unique index)
     let newUser;
     try {
       newUser = await User.create({
@@ -1580,8 +1590,8 @@ const provisionUser = async (req, res) => {
         hostel: cleanHostel,
         roomNumber: typeof roomNumber === "string" && roomNumber.trim() ? roomNumber.trim() : null,
         email: cleanEmail,
-        password: hashedPassword,
-        isActivated: true,
+        ...(hashedPassword ? { password: hashedPassword } : {}),
+        isActivated: shouldActivate,
         accountStatus: "active",
       });
     } catch (createErr) {
@@ -2560,6 +2570,99 @@ async function testMessNotificationBroadcast(req, res) {
   }
 }
 
+// ─── GLOBAL EMERGENCY / ANNOUNCEMENT NOTICES ─────────────────────────────────
+const getGlobalNotices = async (req, res) => {
+  try {
+    const notices = await GlobalNotice.find().sort({ createdAt: -1 }).limit(50).lean();
+    return res.status(200).json({ success: true, notices });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch notices", error: error.message });
+  }
+};
+
+const getActiveGlobalNotice = async (req, res) => {
+  try {
+    const notice = await GlobalNotice.findOne({ isActive: true }).sort({ createdAt: -1 }).lean();
+    return res.status(200).json({ success: true, notice: notice || null });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch active notice", error: error.message });
+  }
+};
+
+const createGlobalNotice = async (req, res) => {
+  try {
+    const { title, message, priority = "urgent", targetRole = "ALL", deactivatePrevious = true } = req.body;
+    if (!title || !title.trim() || !message || !message.trim()) {
+      return res.status(400).json({ success: false, message: "Notice title and message are required." });
+    }
+
+    if (deactivatePrevious) {
+      await GlobalNotice.updateMany({ isActive: true }, { $set: { isActive: false } });
+    }
+
+    const notice = await GlobalNotice.create({
+      title: title.trim(),
+      message: message.trim(),
+      priority,
+      targetRole,
+      isActive: true,
+      createdBy: req.user.id,
+      createdByName: req.user.name || "Super Admin",
+    });
+
+    await recordAudit({
+      req,
+      action: "NOTIFICATION_SENT",
+      targetType: "NOTIFICATION",
+      targetId: notice._id,
+      summary: `Super Admin published Global Notice: "${notice.title}"`,
+      details: { priority, targetRole },
+    });
+
+    // Real-time Socket broadcast
+    try {
+      const { getChatIO } = require("../sockets/chatSocket");
+      const io = getChatIO ? getChatIO() : null;
+      if (io) {
+        io.emit("global_notice_published", notice);
+      }
+    } catch (e) {
+      console.warn("Notice socket broadcast warning:", e.message);
+    }
+
+    return res.status(201).json({ success: true, message: "Global Notice published successfully", notice });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to create notice", error: error.message });
+  }
+};
+
+const toggleGlobalNoticeStatus = async (req, res) => {
+  try {
+    const { noticeId } = req.params;
+    const { isActive } = req.body;
+    const notice = await GlobalNotice.findByIdAndUpdate(noticeId, { isActive: Boolean(isActive) }, { new: true });
+    if (!notice) {
+      return res.status(404).json({ success: false, message: "Notice not found" });
+    }
+    return res.status(200).json({ success: true, message: "Notice status updated", notice });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to update notice status", error: error.message });
+  }
+};
+
+const deleteGlobalNotice = async (req, res) => {
+  try {
+    const { noticeId } = req.params;
+    const notice = await GlobalNotice.findByIdAndDelete(noticeId);
+    if (!notice) {
+      return res.status(404).json({ success: false, message: "Notice not found" });
+    }
+    return res.status(200).json({ success: true, message: "Notice deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to delete notice", error: error.message });
+  }
+};
+
 module.exports = {
   getSystemOverview,
   getUsersDirectory,
@@ -2591,5 +2694,10 @@ module.exports = {
   getMessNotificationSchedule,
   updateMessNotificationSchedule,
   testMessNotificationBroadcast,
+  getGlobalNotices,
+  getActiveGlobalNotice,
+  createGlobalNotice,
+  toggleGlobalNoticeStatus,
+  deleteGlobalNotice,
 };
 

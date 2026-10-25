@@ -1,0 +1,201 @@
+/* Global Notice Popup Overlay & Modal */
+.global-notice-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(11, 20, 26, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: noticeBackdropFade 0.25s ease-out;
+}
+
+@keyframes noticeBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.global-notice-modal {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  background: #111b21;
+  color: #e9edef;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 1.6rem 1.4rem 1.2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: noticeModalPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+html.light-theme .global-notice-modal {
+  background: #ffffff;
+  color: #111b21;
+  box-shadow: 0 20px 60px rgba(11, 20, 26, 0.25), 0 0 25px rgba(11, 20, 26, 0.1);
+}
+
+@keyframes noticeModalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Corner Cross Dismiss Button */
+.global-notice-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #aebac1;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+html.light-theme .global-notice-close-btn {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.06);
+  color: #54656f;
+}
+
+.global-notice-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: scale(1.08) rotate(90deg);
+}
+
+.global-notice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid;
+  width: fit-content;
+}
+
+html.light-theme .global-notice-badge {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.global-notice-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: inherit;
+  padding-right: 28px;
+  word-break: break-word;
+}
+
+.global-notice-body {
+  max-height: 320px;
+  overflow-y: auto;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #d1d7db;
+  padding: 4px 0;
+  scrollbar-width: thin;
+}
+
+html.light-theme .global-notice-body {
+  color: #3b4a54;
+}
+
+.global-notice-line {
+  margin: 0 0 6px 0;
+  word-break: break-word;
+}
+
+.global-notice-line:last-child {
+  margin-bottom: 0;
+}
+
+.global-notice-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html.light-theme .global-notice-footer {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+.global-notice-sender {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #8696a0;
+  flex-wrap: wrap;
+}
+
+.global-notice-acknowledge-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  background: #00a884;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.global-notice-acknowledge-btn:hover {
+  background: #008f6f;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .global-notice-modal {
+    padding: 1.25rem 1rem 1rem;
+    border-radius: 16px;
+  }
+  .global-notice-title {
+    font-size: 1.1rem;
+  }
+  .global-notice-body {
+    max-height: 250px;
+    font-size: 0.88rem;
+  }
+  .global-notice-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .global-notice-acknowledge-btn {
+    text-align: center;
+    width: 100%;
+  }
+}

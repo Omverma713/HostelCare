@@ -13,6 +13,7 @@ const {
   deleteMessage,
   getChatNotificationConfig,
   updateChatNotificationConfig,
+  flushChatTicket,
 } = require("../controllers/chatTicket.controller");
 
 // All chat ticket operations require authenticated user sessions
@@ -26,6 +27,7 @@ router.post("/tickets/:ticketId/messages", sendTicketMessage);
 router.patch("/tickets/:ticketId/messages/:messageId", editMessage);
 router.delete("/tickets/:ticketId/messages/:messageId", deleteMessage);
 router.patch("/tickets/:ticketId/status", updateTicketStatus);
+router.delete("/tickets/:ticketId/flush", flushChatTicket);
 router.post("/tickets/:ticketId/rating", rateTicket);
 
 // Super Admin Dev Chat Notification Controls

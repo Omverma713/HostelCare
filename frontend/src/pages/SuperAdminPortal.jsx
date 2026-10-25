@@ -44,6 +44,26 @@ export default function SuperAdminPortal() {
   const [editUserData, setEditUserData] = useState({ name: '', email: '', role: '', hostel: '', roomNumber: '' });
   const [resetPasswordModal, setResetPasswordModal] = useState({ open: false, userId: null, newPassword: '', adminPassword: '' });
 
+  // User Provisioning State (Immediate vs Pending Activation)
+  const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
+  const [createUserData, setCreateUserData] = useState({
+    name: '',
+    registrationNumber: '',
+    role: 'student',
+    hostel: 'BH-1',
+    roomNumber: '',
+    email: '',
+    activateImmediately: true,
+    password: '',
+    adminPassword: '',
+  });
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  // Global Notices State
+  const [notices, setNotices] = useState([]);
+  const [newNotice, setNewNotice] = useState({ title: '', message: '', priority: 'urgent', targetRole: 'ALL' });
+  const [publishingNotice, setPublishingNotice] = useState(false);
+
   // Sessions State
   const [sessions, setSessions] = useState([]);
   const [sessionPagination, setSessionPagination] = useState({ page: 1, limit: 15, total: 0, totalPages: 1 });
@@ -335,6 +355,114 @@ export default function SuperAdminPortal() {
       setLoading(false);
     }
   }, [auditFilters, auditPagination.limit]);
+
+  // Load Global Emergency / Announcement Notices
+  const loadNotices = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await adminApi.getGlobalNotices();
+      if (res.success) {
+        setNotices(res.notices || []);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to load notices', 'Notices');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Handle User Provisioning (Direct vs Pending Activation)
+  const handleCreateUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!createUserData.name.trim() || !createUserData.registrationNumber.trim()) {
+      triggerToast('error', 'Name and Registration Number are required', 'Validation');
+      return;
+    }
+    if (!createUserData.adminPassword) {
+      triggerToast('error', 'Super Admin re-authentication password is required', 'Security Auth');
+      return;
+    }
+    if (createUserData.activateImmediately && (!createUserData.password || createUserData.password.length < 6)) {
+      triggerToast('error', 'Password (min 6 chars) is required when activating account immediately', 'Validation');
+      return;
+    }
+
+    setCreatingUser(true);
+    try {
+      const res = await adminApi.provisionUser(createUserData);
+      if (res.success) {
+        triggerToast('success', res.message || 'User account provisioned successfully', 'User Created');
+        setCreateUserModalOpen(false);
+        setCreateUserData({
+          name: '',
+          registrationNumber: '',
+          role: 'student',
+          hostel: 'BH-1',
+          roomNumber: '',
+          email: '',
+          activateImmediately: true,
+          password: '',
+          adminPassword: '',
+        });
+        loadUsers(1);
+      } else {
+        triggerToast('error', res.message || 'Failed to create user', 'Creation Failed');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to create user account', 'Error');
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  // Handle Publishing a Global Notice
+  const handlePublishNotice = async (e) => {
+    e.preventDefault();
+    if (!newNotice.title.trim() || !newNotice.message.trim()) {
+      triggerToast('error', 'Title and message are required', 'Validation');
+      return;
+    }
+    setPublishingNotice(true);
+    try {
+      const res = await adminApi.createGlobalNotice(newNotice);
+      if (res.success) {
+        triggerToast('success', 'Global Notice published and broadcasted to all devices!', 'Notice Live');
+        setNewNotice({ title: '', message: '', priority: 'urgent', targetRole: 'ALL' });
+        loadNotices();
+      } else {
+        triggerToast('error', res.message || 'Failed to broadcast notice', 'Error');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to broadcast notice', 'Error');
+    } finally {
+      setPublishingNotice(false);
+    }
+  };
+
+  const handleToggleNoticeStatus = async (noticeId, currentStatus) => {
+    try {
+      const res = await adminApi.toggleGlobalNoticeStatus(noticeId, !currentStatus);
+      if (res.success) {
+        triggerToast('success', `Notice ${!currentStatus ? 'Activated' : 'Deactivated'}`, 'Status Updated');
+        loadNotices();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update notice status', 'Error');
+    }
+  };
+
+  const handleDeleteNotice = async (noticeId) => {
+    if (!window.confirm('Are you sure you want to delete this global notice?')) return;
+    try {
+      const res = await adminApi.deleteGlobalNotice(noticeId);
+      if (res.success) {
+        triggerToast('success', 'Notice deleted successfully', 'Deleted');
+        loadNotices();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to delete notice', 'Error');
+    }
+  };
 
   // Load Maintenance Configuration
   const loadMaintenance = useCallback(async () => {
@@ -1226,9 +1354,10 @@ export default function SuperAdminPortal() {
     else if (activeTab === 'maintenance') loadMaintenance();
     else if (activeTab === 'appversion' || activeTab === 'pilottesting') loadAppVersion();
     else if (activeTab === 'notifications') loadCampaigns();
+    else if (activeTab === 'notices') loadNotices();
     else if (activeTab === 'messalerts') loadMessNotifications();
     else if (activeTab === 'audit') loadAuditLogs(1);
-  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadMessNotifications, loadAuditLogs]);
+  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadNotices, loadMessNotifications, loadAuditLogs]);
 
   // Fetch full details for a selected user
   const handleSelectUser = async (user) => {
@@ -1677,6 +1806,7 @@ export default function SuperAdminPortal() {
             { id: 'appversion', label: '📲 App Updates' },
             { id: 'pilottesting', label: '🧪 Pilot Testing' },
             { id: 'notifications', label: '🔔 Push Broadcast' },
+            { id: 'notices', label: '🚨 Global Notices' },
             { id: 'messalerts', label: '🍱 Mess Auto-Alerts' },
             { id: 'audit', label: '📜 Audit Logs' },
           ].map((tab) => (
@@ -1875,6 +2005,25 @@ export default function SuperAdminPortal() {
                 className="sa-filter-btn"
               >
                 Search
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCreateUserModalOpen(true)}
+                className="sa-filter-btn"
+                style={{
+                  background: 'var(--primary)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginLeft: 'auto',
+                }}
+                id="btn-open-create-user-modal"
+              >
+                <span>➕</span>
+                <span>Create User</span>
               </button>
             </div>
 
@@ -3117,6 +3266,329 @@ export default function SuperAdminPortal() {
                     }}
                   >
                     Confirm & Reset
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Create / Provision User Account Modal */}
+          {createUserModalOpen && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.65)',
+                backdropFilter: 'blur(4px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999,
+                padding: '1rem',
+              }}
+              onClick={() => setCreateUserModalOpen(false)}
+            >
+              <form
+                onSubmit={handleCreateUserSubmit}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: 'var(--bg-card)',
+                  borderRadius: '16px',
+                  border: '1px solid var(--border-color)',
+                  padding: '1.5rem',
+                  maxWidth: '500px',
+                  width: '100%',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                  boxShadow: 'var(--shadow-lg)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    ➕ Create User Account
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setCreateUserModalOpen(false)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      fontSize: '1.2rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Create an account for any role. You can choose whether to activate immediately with a password or leave inactive for student activation.
+                </p>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Rahul Sharma"
+                    value={createUserData.name}
+                    onChange={(e) => setCreateUserData((prev) => ({ ...prev, name: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                      marginTop: '4px',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Registration # *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 2101297001"
+                      value={createUserData.registrationNumber}
+                      onChange={(e) => setCreateUserData((prev) => ({ ...prev, registrationNumber: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        marginTop: '4px',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Account Role *</label>
+                    <select
+                      value={createUserData.role}
+                      onChange={(e) => setCreateUserData((prev) => ({ ...prev, role: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        marginTop: '4px',
+                      }}
+                    >
+                      <option value="student">Student</option>
+                      <option value="caretaker">Caretaker</option>
+                      <option value="warden">Warden</option>
+                      <option value="superintendent">Superintendent</option>
+                      <option value="chiefHostelWarden">Chief Hostel Warden</option>
+                      <option value="superadmin">Super Admin</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Hostel Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. BH-1, BH-2, GH-1"
+                      value={createUserData.hostel}
+                      onChange={(e) => setCreateUserData((prev) => ({ ...prev, hostel: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        marginTop: '4px',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Room # (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. A-304"
+                      value={createUserData.roomNumber}
+                      onChange={(e) => setCreateUserData((prev) => ({ ...prev, roomNumber: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        marginTop: '4px',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Email (Optional)</label>
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    value={createUserData.email}
+                    onChange={(e) => setCreateUserData((prev) => ({ ...prev, email: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                      marginTop: '4px',
+                    }}
+                  />
+                </div>
+
+                {/* Activation Mode Switch */}
+                <div
+                  style={{
+                    padding: '0.85rem',
+                    borderRadius: '10px',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={createUserData.activateImmediately}
+                      onChange={(e) =>
+                        setCreateUserData((prev) => ({ ...prev, activateImmediately: e.target.checked }))
+                      }
+                    />
+                    <span>Activate Account Immediately?</span>
+                  </label>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {createUserData.activateImmediately
+                      ? '✅ Account will be active immediately. You can set the user password below.'
+                      : '⏳ Account will be saved in pending activation state. User will set password during student activation.'}
+                  </span>
+                </div>
+
+                {createUserData.activateImmediately && (
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      Initial User Password (min 6 chars) *
+                    </label>
+                    <input
+                      type="password"
+                      required={createUserData.activateImmediately}
+                      minLength={6}
+                      placeholder="Set password for user"
+                      value={createUserData.password}
+                      onChange={(e) => setCreateUserData((prev) => ({ ...prev, password: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        marginTop: '4px',
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--danger-text)' }}>
+                    Your Super Admin Password (Re-authentication) *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Enter your superadmin password"
+                    value={createUserData.adminPassword}
+                    onChange={(e) => setCreateUserData((prev) => ({ ...prev, adminPassword: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                      marginTop: '4px',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCreateUserModalOpen(false)}
+                    style={{
+                      padding: '0.55rem 1rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creatingUser}
+                    style={{
+                      padding: '0.55rem 1.25rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'var(--primary)',
+                      color: '#ffffff',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {creatingUser ? 'Provisioning...' : '🚀 Provision User'}
                   </button>
                 </div>
               </form>
@@ -6676,6 +7148,359 @@ export default function SuperAdminPortal() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 7.5. TAB: GLOBAL POP-UP NOTICES */}
+      {activeTab === 'notices' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Header Card */}
+          <div
+            style={{
+              padding: '1.25rem 1.5rem',
+              borderRadius: '16px',
+              background: 'var(--card-bg, #1e293b)',
+              border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🚨</span> Real-time Global Pop-up Notice Manager
+              </h2>
+              <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Broadcast emergency alerts and campus announcements that instantly pop up over mobile APK and web screens with a dismiss cross (✕).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={loadNotices}
+              style={{
+                padding: '0.55rem 1rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              🔄 Refresh Notices
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '1.5rem',
+              alignItems: 'start',
+            }}
+          >
+            {/* Left Column: Create / Broadcast Notice Form */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderRadius: '16px',
+                background: 'var(--card-bg, #1e293b)',
+                border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📢</span> Broadcast New Pop-up Notice
+              </h3>
+
+              <form onSubmit={handlePublishNotice} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                    Notice Headline / Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 🚨 Emergency Maintenance: Water Supply Disruption"
+                    value={newNotice.title}
+                    onChange={(e) => setNewNotice((prev) => ({ ...prev, title: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.9rem',
+                      boxSizing: 'border-box',
+                      marginTop: '4px',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      Priority Level *
+                    </label>
+                    <select
+                      value={newNotice.priority}
+                      onChange={(e) => setNewNotice((prev) => ({ ...prev, priority: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        marginTop: '4px',
+                      }}
+                    >
+                      <option value="urgent">🚨 Urgent / Critical Alert</option>
+                      <option value="warning">⚠️ Important Notice</option>
+                      <option value="info">📢 General Campus Info</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      Target Audience *
+                    </label>
+                    <select
+                      value={newNotice.targetRole}
+                      onChange={(e) => setNewNotice((prev) => ({ ...prev, targetRole: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        marginTop: '4px',
+                      }}
+                    >
+                      <option value="ALL">Everyone (All Users)</option>
+                      <option value="student">Students Only</option>
+                      <option value="staff">Staff & Wardens</option>
+                      <option value="caretaker">Caretakers Only</option>
+                      <option value="warden">Wardens Only</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                    Notice Message Content (Detailed Instructions) *
+                  </label>
+                  <textarea
+                    required
+                    rows={5}
+                    placeholder="Provide full details. This message will immediately show inside a prominent pop-up on all students' and staffs' mobile apps and web screens..."
+                    value={newNotice.message}
+                    onChange={(e) => setNewNotice((prev) => ({ ...prev, message: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                      marginTop: '4px',
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                <div
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    fontSize: '0.78rem',
+                    color: '#fca5a5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span>⚡</span>
+                  Publishing will immediately trigger real-time WebSockets and set the active pop-up banner on mobile APKs.
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={publishingNotice}
+                  style={{
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    cursor: publishingNotice ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+                  }}
+                >
+                  {publishingNotice ? 'Broadcasting...' : '📢 Publish & Pop-up on All Devices'}
+                </button>
+              </form>
+            </div>
+
+            {/* Right Column: Existing Notices History & Status Controls */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderRadius: '16px',
+                background: 'var(--card-bg, #1e293b)',
+                border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📜</span> Active & Broadcasted Notices ({notices.length})
+              </h3>
+
+              {notices.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  No global notices published yet. Use the form on the left to broadcast an emergency or campus announcement.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', maxHeight: '600px', overflowY: 'auto' }}>
+                  {notices.map((n) => (
+                    <div
+                      key={n._id}
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        background: n.isActive ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-secondary)',
+                        border: n.isActive ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-color)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '20px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              background: n.isActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(156, 163, 175, 0.2)',
+                              color: n.isActive ? '#34d399' : '#9ca3af',
+                            }}
+                          >
+                            {n.isActive ? '🔴 POP-UP ACTIVE' : '⚪ INACTIVE'}
+                          </span>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '20px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              background:
+                                n.priority === 'urgent'
+                                  ? 'rgba(239, 68, 68, 0.2)'
+                                  : n.priority === 'warning'
+                                  ? 'rgba(245, 158, 11, 0.2)'
+                                  : 'rgba(59, 130, 246, 0.2)',
+                              color:
+                                n.priority === 'urgent'
+                                  ? '#f87171'
+                                  : n.priority === 'warning'
+                                  ? '#fbbf24'
+                                  : '#60a5fa',
+                            }}
+                          >
+                            {n.priority?.toUpperCase()}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                            Audience: <strong>{n.targetRole || 'ALL'}</strong>
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                        </span>
+                      </div>
+
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {n.title}
+                      </h4>
+
+                      <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                        {n.message}
+                      </p>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', borderTop: '1px solid var(--border-color)', paddingTop: '6px' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          By: {n.createdByName || 'Super Admin'}
+                        </span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleNoticeStatus(n._id, n.isActive)}
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border-color)',
+                              background: n.isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                              color: n.isActive ? '#f87171' : '#34d399',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {n.isActive ? '⏹ Deactivate' : '▶ Activate'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteNotice(n._id)}
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              background: 'transparent',
+                              color: '#ef4444',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            title="Delete notice"
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -34,6 +34,11 @@ const {
   getMessNotificationSchedule,
   updateMessNotificationSchedule,
   testMessNotificationBroadcast,
+  getGlobalNotices,
+  getActiveGlobalNotice,
+  createGlobalNotice,
+  toggleGlobalNoticeStatus,
+  deleteGlobalNotice,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -109,6 +114,13 @@ router.get("/notifications", getNotificationHistory);
 router.get("/mess-notifications", getMessNotificationSchedule);
 router.put("/mess-notifications", sensitiveActionLimiter, updateMessNotificationSchedule);
 router.post("/mess-notifications/test", sensitiveActionLimiter, testMessNotificationBroadcast);
+
+// Emergency / Global Broadcast Notices
+router.get("/notices", getGlobalNotices);
+router.get("/notices/active", getActiveGlobalNotice);
+router.post("/notices", sensitiveActionLimiter, createGlobalNotice);
+router.patch("/notices/:noticeId/status", sensitiveActionLimiter, toggleGlobalNoticeStatus);
+router.delete("/notices/:noticeId", sensitiveActionLimiter, deleteGlobalNotice);
 
 // Audit Logs
 router.get("/audit-logs", getAuditLogs);

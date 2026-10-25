@@ -292,9 +292,19 @@ async function updateTicketStatus(req, res) {
       });
     }
 
+    // Requirement: ONLY Super Admin can mark a ticket as resolved
+    if (status === "resolved" && !isDeveloper) {
+      return res.status(403).json({
+        success: false,
+        message: "Only Super Admin has permission to mark tickets as resolved.",
+      });
+    }
+
     ticket.status = status;
     if (status === "resolved" || status === "closed") {
       ticket.resolvedAt = new Date();
+    } else if (status === "open" || status === "in_progress") {
+      ticket.resolvedAt = null;
     }
     await ticket.save();
 
@@ -308,6 +318,61 @@ async function updateTicketStatus(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to update ticket status",
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * DELETE /api/v1/chat/tickets/:ticketId/flush
+ * Permanently flushes a resolved ticket and its messages to free up storage and server memory.
+ */
+async function flushChatTicket(req, res) {
+  try {
+    const { ticketId } = req.params;
+    const user = req.user;
+
+    if (user.role !== "superadmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only Super Admin is authorized to flush support tickets.",
+      });
+    }
+
+    const ticket = await ChatTicket.findOne({ ticketId });
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: `Ticket ${ticketId} not found.`,
+      });
+    }
+
+    const delMessages = await ChatMessage.deleteMany({ ticketId });
+    await ChatTicket.deleteOne({ ticketId });
+
+    try {
+      const { getChatIO } = require("../sockets/chatSocket");
+      const io = getChatIO ? getChatIO() : null;
+      if (io) {
+        io.to(`room_${ticketId}`).emit("ticket_flushed", {
+          ticketId,
+          message: "Ticket permanently purged by Super Admin.",
+        });
+      }
+    } catch (socketErr) {
+      console.warn("Socket broadcast error during ticket flush:", socketErr.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Ticket ${ticketId} and ${delMessages.deletedCount || 0} messages permanently purged. Storage & memory freed.`,
+      deletedCount: delMessages.deletedCount || 0,
+    });
+  } catch (error) {
+    console.error("flushChatTicket error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to flush ticket",
       error: error.message,
     });
   }
@@ -637,4 +702,5 @@ module.exports = {
   deleteMessage,
   getChatNotificationConfig,
   updateChatNotificationConfig,
+  flushChatTicket,
 };

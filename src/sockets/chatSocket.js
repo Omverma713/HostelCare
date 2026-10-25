@@ -29,12 +29,11 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType)
       notifySuperAdmin: true,
     };
 
-    if (!chatNotifConfig.enabled) {
+    if (chatNotifConfig.enabled === false) {
       return; // Disabled by Super Admin
     }
 
     const isStudentSender = String(ticket.student) === String(sender.id);
-    const targetUserId = isStudentSender ? ticket.developer : ticket.student;
 
     if (isStudentSender && chatNotifConfig.notifySuperAdmin === false) {
       return;
@@ -43,8 +42,43 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType)
       return;
     }
 
+    // Determine target user IDs & notification wording requested by user
+    let targetUserIds = [];
+    let notifBody = "";
+
+    if (isStudentSender) {
+      // Student sent message -> Super Admin receives: "You got a message from <name>"
+      const superAdmins = await User.find({ role: "superadmin" }, "_id").lean();
+      targetUserIds = superAdmins.map((sa) => String(sa._id));
+      if (ticket.developer && !targetUserIds.includes(String(ticket.developer))) {
+        targetUserIds.push(String(ticket.developer));
+      }
+      notifBody = `You got a message from ${sender.name || "Student"}`;
+    } else {
+      // Super Admin sent message -> Student receives: "You got the reply from Super Admin"
+      targetUserIds = [String(ticket.student)];
+      notifBody = "You got the reply from Super Admin";
+    }
+
+    // 1. Real-time Socket Event (triggers instant in-app toast and local Android notification)
+    if (ioInstance) {
+      const socketPayload = {
+        title: "HostelCare Support",
+        body: notifBody,
+        ticketId: ticket.ticketId,
+        senderName: sender.name,
+        isStudentSender,
+        createdAt: new Date().toISOString(),
+      };
+
+      targetUserIds.forEach((uid) => {
+        ioInstance.to(`user_${uid}`).emit("chat_notification", socketPayload);
+      });
+    }
+
+    // 2. Push Notification to registered mobile/desktop sessions (FCM & WebPush)
     const targetSessions = await Session.find({
-      userId: targetUserId,
+      userId: { $in: targetUserIds },
       $or: [
         { pushToken: { $ne: null } },
         { webPushSubscription: { $ne: null } },
@@ -52,16 +86,9 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType)
     }).lean();
 
     if (targetSessions.length > 0) {
-      const senderRoleLabel = sender.role === "superadmin" ? "Developer Support" : "Student";
-      const title = `💬 ${sender.name} (${senderRoleLabel})`;
-      const body =
-        contentType === "image"
-          ? "📷 Sent a photo in support chat"
-          : `New message in ticket #${ticket.ticketId}`;
-
       sendPushToSessions(targetSessions, {
-        title,
-        body,
+        title: "HostelCare Support",
+        body: notifBody,
         route: "/chat",
         data: {
           ticketId: ticket.ticketId,

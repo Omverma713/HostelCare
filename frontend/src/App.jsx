@@ -18,8 +18,8 @@ import { MobileBackHandler } from './hooks/useMobileBackHandler';
 import { initPushNotifications } from './services/notificationService';
 import { initMessAutoNotifications } from './services/messNotificationService';
 
-// Immediate Load
 import Login from './pages/Login';
+import GlobalNoticePopup from './components/GlobalNoticePopup';
 
 // Lazy Loaded Routes for Instant Startup and Smooth Transitions
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
@@ -264,6 +264,9 @@ export default function App() {
 
           {/* Signature Hanging Beta Banner */}
           <BetaBanner />
+
+          {/* Emergency / Global Pop-up Notice with corner cross */}
+          <GlobalNoticePopup />
           </MaintenanceManager>
         </BrowserRouter>
       </AuthProvider>

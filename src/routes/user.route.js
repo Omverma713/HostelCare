@@ -47,4 +47,15 @@ router.get(
   staffPerformance
 );
 
+// Global Emergency / Announcement Notice for any user/app
+router.get("/active-notice", async (req, res) => {
+  try {
+    const GlobalNotice = require("../models/globalNotice.model");
+    const notice = await GlobalNotice.findOne({ isActive: true }).sort({ createdAt: -1 }).lean();
+    return res.status(200).json({ success: true, notice: notice || null });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch active notice", error: error.message });
+  }
+});
+
 module.exports = router;

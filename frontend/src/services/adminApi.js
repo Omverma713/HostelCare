@@ -243,4 +243,37 @@ export const adminApi = {
       method: 'POST',
     });
   },
+
+  // User Provisioning (Create account with immediate or pending activation)
+  provisionUser(userData) {
+    return adminRequest('/superadmin/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  },
+
+  // Global Emergency / Announcement Notices
+  getGlobalNotices() {
+    return adminRequest('/superadmin/notices');
+  },
+
+  createGlobalNotice(payload) {
+    return adminRequest('/superadmin/notices', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  toggleGlobalNoticeStatus(noticeId, isActive) {
+    return adminRequest(`/superadmin/notices/${noticeId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isActive }),
+    });
+  },
+
+  deleteGlobalNotice(noticeId) {
+    return adminRequest(`/superadmin/notices/${noticeId}`, {
+      method: 'DELETE',
+    });
+  },
 };
