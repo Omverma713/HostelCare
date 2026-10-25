@@ -29,7 +29,7 @@
   --wa-blue-ticks: #53bdeb;
   
   --timeline-bg: #0b141a;
-  --doodle-opacity: 0.08;
+  --doodle-url: url('/whatsapp-doodle-dark.svg');
 }
 
 /* WhatsApp Light Warm & Soothing Theme (Classic Sand #efeae2 & Mint #d9fdd3) */
@@ -59,15 +59,15 @@ body.light-theme {
   --wa-blue-ticks: #53bdeb;
   
   --timeline-bg: #efeae2;
-  --doodle-opacity: 0.06; /* Delicate, non-muddy watermark pattern */
+  --doodle-url: url('/whatsapp-doodle-light.svg');
 }
 
 /* ─── 2. Fullscreen Container Layout ──────────────────────────────────────── */
 .devchat-root {
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100dvh;
+  height: 100%;
   width: 100%;
+  flex: 1 1 0%;
+  min-height: 0;
   background: var(--wa-bg-deep);
   color: var(--wa-text-primary);
   display: flex;
@@ -83,6 +83,8 @@ body.light-theme {
 .devchat-container {
   width: 100%;
   height: 100%;
+  flex: 1 1 0%;
+  min-height: 0;
   margin: 0;
   padding: 0;
   position: relative;
@@ -90,8 +92,6 @@ body.light-theme {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  flex: 1 1 0%;
-  min-height: 0;
   overflow: hidden;
 }
 
@@ -439,15 +439,14 @@ body.light-theme {
   scroll-behavior: smooth;
 }
 
-/* Watermark Doodles rendered via pseudo-element to control exact opacity & prevent brown muddy tint */
+/* Watermark Doodles rendered via pseudo-element */
 .devchat-messages-timeline::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/chat-doodle-pattern.png');
+  background-image: var(--doodle-url);
   background-repeat: repeat;
-  background-size: 380px auto;
-  opacity: var(--doodle-opacity);
+  background-size: 360px 360px;
   pointer-events: none;
   z-index: 0;
 }
@@ -706,6 +705,7 @@ html.light-theme .e2ee-notice-pill {
   flex-direction: column;
   gap: 8px;
   z-index: 2;
+  margin: 0 !important;
 }
 
 /* Media Attachment Preview Bar above Textarea */
@@ -1008,9 +1008,8 @@ html.light-theme .chat-image-preview-bar {
 /* ─── 11. Mobile Responsive UI (Edge-to-Edge Fullscreen) ─────────────────── */
 @media (max-width: 768px) {
   .devchat-root {
-    height: 100vh;
-    height: 100dvh;
-    max-height: 100dvh;
+    height: 100%;
+    max-height: 100%;
     padding: 0;
     margin: 0;
   }
@@ -1020,6 +1019,7 @@ html.light-theme .chat-image-preview-bar {
     margin: 0;
     width: 100%;
     height: 100%;
+    flex: 1 1 0%;
   }
 
   .devchat-header {
@@ -1086,7 +1086,8 @@ html.light-theme .chat-image-preview-bar {
   }
 
   .devchat-input-bar {
-    padding: 0.5rem 0.65rem calc(0.5rem + env(safe-area-inset-bottom, 8px));
+    padding: 0.5rem 0.65rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    margin: 0 !important;
   }
 
   .devchat-input-field {

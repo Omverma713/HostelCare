@@ -268,7 +268,7 @@ textarea {
 
 @media (min-width: 1025px) {
   .main-content {
-    margin-left: 260px;
+    margin-left: 275px;
     padding: 36px 40px;
   }
 }
@@ -284,6 +284,7 @@ textarea {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  background: var(--wa-bg-deep, #f0f2f5) !important;
 }
 
 .app-container.is-chat-layout .main-content {
@@ -292,19 +293,22 @@ textarea {
   width: 100% !important;
   max-width: 100% !important;
   height: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  background-color: transparent !important;
+  background: var(--wa-bg-deep, #f0f2f5) !important;
 }
 
 @media (min-width: 1025px) {
   .app-container.is-chat-layout .main-content {
-    margin-left: 260px !important;
-    width: calc(100% - 260px) !important;
+    margin-left: 275px !important;
+    width: calc(100% - 275px) !important;
     height: 100vh !important;
     height: 100dvh !important;
     padding: 0 !important;
+    border-left: 1px solid var(--wa-border, rgba(0, 0, 0, 0.08));
   }
 }
 
@@ -313,6 +317,20 @@ textarea {
     padding-top: 60px !important;
     height: calc(100vh - 60px) !important;
     height: calc(100dvh - 60px) !important;
+  }
+
+  /* When a chat ticket room is open on mobile, go 100% pure edge-to-edge fullscreen */
+  body.devchat-room-open .mobile-navbar,
+  .app-container.is-chat-layout:has(.chat-active) .mobile-navbar {
+    display: none !important;
+  }
+
+  body.devchat-room-open .app-container.is-chat-layout .main-content,
+  .app-container.is-chat-layout:has(.chat-active) .main-content {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
   }
 }
 

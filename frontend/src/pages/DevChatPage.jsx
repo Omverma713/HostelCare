@@ -136,6 +136,17 @@ export default function DevChatPage() {
     }
   }, [partnerTyping]);
 
+  useEffect(() => {
+    if (activeTicket) {
+      document.body.classList.add('devchat-room-open');
+    } else {
+      document.body.classList.remove('devchat-room-open');
+    }
+    return () => {
+      document.body.classList.remove('devchat-room-open');
+    };
+  }, [activeTicket]);
+
   // 1. Initialize Socket.IO connection
   useEffect(() => {
     if (!token) return;
