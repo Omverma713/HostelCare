@@ -6,6 +6,7 @@ const {
   getTickets,
   getTicketById,
   getTicketMessages,
+  sendTicketMessage,
   updateTicketStatus,
   rateTicket,
 } = require("../controllers/chatTicket.controller");
@@ -17,6 +18,7 @@ router.post("/tickets", createTicket);
 router.get("/tickets", getTickets);
 router.get("/tickets/:ticketId", getTicketById);
 router.get("/tickets/:ticketId/messages", getTicketMessages);
+router.post("/tickets/:ticketId/messages", sendTicketMessage);
 router.patch("/tickets/:ticketId/status", updateTicketStatus);
 router.post("/tickets/:ticketId/rating", rateTicket);
 

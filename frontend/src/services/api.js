@@ -288,6 +288,13 @@ export const api = {
     return request(`/chat/tickets/${ticketId}/messages`);
   },
 
+  sendChatTicketMessage(ticketId, payload) {
+    return request(`/chat/tickets/${ticketId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
   updateChatTicketStatus(ticketId, status) {
     return request(`/chat/tickets/${ticketId}/status`, {
       method: 'PATCH',

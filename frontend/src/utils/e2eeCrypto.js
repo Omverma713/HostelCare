@@ -118,25 +118,49 @@ export async function encryptMessage(plainText, ticketId, e2eeSalt) {
  * @param {string} e2eeSalt
  * @returns {Promise<string>} Plaintext message
  */
-export async function decryptMessage(encryptedContent, ivBase64, ticketId, e2eeSalt) {
+export async function decryptMessage(encryptedContent, ivBase64, ticketId, e2eeSalt = "hostelcare_default_salt") {
   try {
-    if (!encryptedContent || !ivBase64) return "";
+    if (!encryptedContent) return "";
+    if (!ivBase64) return encryptedContent; // plaintext fallback
 
-    const key = await getDerivedTicketKey(ticketId, e2eeSalt);
-    const cipherBytes = base64ToBuffer(encryptedContent);
-    const ivBytes = base64ToBuffer(ivBase64);
+    // Helper to attempt AES-GCM decryption with given key material
+    const tryDecrypt = async (tId, salt) => {
+      const key = await getDerivedTicketKey(tId, salt);
+      const cipherBytes = base64ToBuffer(encryptedContent);
+      const ivBytes = base64ToBuffer(ivBase64);
 
-    const decryptedBuffer = await window.crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: ivBytes,
-      },
-      key,
-      cipherBytes
-    );
+      const decryptedBuffer = await window.crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: ivBytes,
+        },
+        key,
+        cipherBytes
+      );
 
-    const dec = new TextDecoder();
-    return dec.decode(decryptedBuffer);
+      const dec = new TextDecoder();
+      return dec.decode(decryptedBuffer);
+    };
+
+    // 1. Primary: Try active ticketId + ticket's e2eeSalt
+    try {
+      return await tryDecrypt(ticketId, e2eeSalt);
+    } catch (err1) {
+      // 2. Fallback: Try with 'INIT' and 'initial_salt' (for initial ticket messages created during ticket creation)
+      try {
+        return await tryDecrypt("INIT", "initial_salt");
+      } catch (err2) {
+        // 3. Fallback: Try with ticketId and default salt
+        if (e2eeSalt !== "hostelcare_default_salt") {
+          try {
+            return await tryDecrypt(ticketId, "hostelcare_default_salt");
+          } catch (err3) {
+            // pass
+          }
+        }
+        throw err1;
+      }
+    }
   } catch (err) {
     console.warn(`[E2EE] Decryption warning for ticket ${ticketId}:`, err.message);
     return "[🔒 Encrypted Message: Key verification pending]";

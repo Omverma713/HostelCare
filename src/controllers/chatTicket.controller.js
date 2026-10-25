@@ -349,11 +349,91 @@ async function rateTicket(req, res) {
   }
 }
 
+/**
+ * POST /api/v1/chat/tickets/:ticketId/messages
+ * Sends an encrypted message via REST API
+ */
+async function sendTicketMessage(req, res) {
+  try {
+    const { ticketId } = req.params;
+    const { encryptedContent, iv, contentType = "text" } = req.body;
+    const user = req.user;
+
+    if (!ticketId || !encryptedContent || !iv) {
+      return res.status(400).json({
+        success: false,
+        message: "ticketId, encryptedContent, and iv are required.",
+      });
+    }
+
+    const ticket = await ChatTicket.findOne({ ticketId });
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: `Ticket ${ticketId} not found.`,
+      });
+    }
+
+    const isStudent = String(ticket.student) === String(user.id || user._id);
+    const isDeveloper = user.role === "superadmin";
+
+    if (!isStudent && !isDeveloper) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized to send messages in this ticket.",
+      });
+    }
+
+    const message = await ChatMessage.create({
+      ticketId,
+      sender: user.id || user._id,
+      senderRole: user.role,
+      senderName: user.name,
+      encryptedContent,
+      iv,
+      contentType,
+      read: false,
+    });
+
+    ticket.lastMessage = {
+      preview: "Encrypted Message",
+      senderRole: user.role,
+      senderName: user.name,
+      at: new Date(),
+    };
+
+    if (isStudent) {
+      ticket.unreadDeveloper = (ticket.unreadDeveloper || 0) + 1;
+    } else {
+      ticket.unreadStudent = (ticket.unreadStudent || 0) + 1;
+    }
+
+    if (ticket.status === "open" && isDeveloper) {
+      ticket.status = "in_progress";
+    }
+
+    await ticket.save();
+
+    return res.status(201).json({
+      success: true,
+      message,
+    });
+  } catch (error) {
+    console.error("sendTicketMessage error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to post message",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   createTicket,
   getTickets,
   getTicketById,
   getTicketMessages,
+  sendTicketMessage,
   updateTicketStatus,
   rateTicket,
 };

@@ -203,6 +203,7 @@ export default function DevChatPage() {
   }, [activeTicket, user]);
 
   // 5. Handle Send Message
+  // 5. Handle Send Message
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     if (!inputText.trim() || !activeTicket || sending) return;
@@ -220,12 +221,28 @@ export default function DevChatPage() {
         activeTicket.e2eeSalt
       );
 
-      await sendChatMessage({
-        ticketId: activeTicket.ticketId,
-        encryptedContent,
-        iv,
-        contentType: 'text',
-      });
+      try {
+        await sendChatMessage({
+          ticketId: activeTicket.ticketId,
+          encryptedContent,
+          iv,
+          contentType: 'text',
+        });
+      } catch (socketErr) {
+        console.warn('Socket delivery failed, using REST fallback:', socketErr.message);
+        const res = await api.sendChatTicketMessage(activeTicket.ticketId, {
+          encryptedContent,
+          iv,
+          contentType: 'text',
+        });
+        if (res.success && res.message) {
+          setMessages((prev) => {
+            if (prev.some((m) => String(m._id) === String(res.message._id))) return prev;
+            return [...prev, { ...res.message, text: textToSend }];
+          });
+          setTimeout(scrollToBottom, 60);
+        }
+      }
     } catch (err) {
       console.error('Failed to send encrypted message:', err);
       triggerToast('error', err.message || 'Failed to deliver message', 'Error');
@@ -254,26 +271,34 @@ export default function DevChatPage() {
 
     setCreatingTicket(true);
     try {
-      let initialEncryptedMessage = null;
-      let iv = null;
-
-      if (newInitialMsg.trim()) {
-        // Encrypt initial message
-        const tempKey = 'initial_salt';
-        const encrypted = await encryptMessage(newInitialMsg.trim(), 'INIT', tempKey);
-        initialEncryptedMessage = encrypted.encryptedContent;
-        iv = encrypted.iv;
-      }
+      const initialText = newInitialMsg.trim();
 
       const res = await api.createChatTicket({
         subject: newSubject.trim(),
         category: newCategory,
         priority: newPriority,
-        initialEncryptedMessage,
-        iv,
       });
 
       if (res.success && res.ticket) {
+        // If student provided an initial message, encrypt it with the newly created ticketId & e2eeSalt!
+        if (initialText) {
+          try {
+            const encrypted = await encryptMessage(
+              initialText,
+              res.ticket.ticketId,
+              res.ticket.e2eeSalt
+            );
+
+            await api.sendChatTicketMessage(res.ticket.ticketId, {
+              encryptedContent: encrypted.encryptedContent,
+              iv: encrypted.iv,
+              contentType: 'text',
+            });
+          } catch (initMsgErr) {
+            console.warn('Initial message encryption or delivery error:', initMsgErr);
+          }
+        }
+
         triggerToast('success', `Ticket ${res.ticket.ticketId} created! Developer assigned.`, 'Ticket Opened 🚀');
         setIsNewTicketModalOpen(false);
         setNewSubject('');
