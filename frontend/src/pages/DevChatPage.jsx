@@ -46,8 +46,10 @@ export default function DevChatPage() {
   const [ticketFilter, setTicketFilter] = useState('all'); // 'all' | 'open' | 'resolved'
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Input & Modal State
+  // Input & Media Attachment State
   const [inputText, setInputText] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null); // { dataUrl, name, size }
+  const [zoomedImage, setZoomedImage] = useState(null); // Fullscreen lightbox
   const [sending, setSending] = useState(false);
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
   const [newSubject, setNewSubject] = useState('');
@@ -59,10 +61,73 @@ export default function DevChatPage() {
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Image Processing & Compression for Fast E2EE Transfer
+  const processImageFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) {
+      triggerToast('error', 'Please choose a valid image file (PNG, JPG, WebP)', 'Invalid Media');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        const maxDim = 1200;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setSelectedImage({
+          dataUrl: compressedDataUrl,
+          name: file.name || 'screenshot.jpg',
+          size: Math.round((compressedDataUrl.length * 3) / 4),
+        });
+        setTimeout(scrollToBottom, 60);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+    e.target.value = '';
+  };
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          processImageFile(file);
+          return;
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -275,13 +340,29 @@ export default function DevChatPage() {
     };
   }, [activeTicket, user, isDeveloper]);
 
-  // 5. Handle Send Message (Optimistic Live UI + E2EE + Dual Delivery)
+  // 5. Handle Send Message (Optimistic Live UI + E2EE + Dual Delivery + Image Support)
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
-    if (!inputText.trim() || !activeTicket || sending) return;
+    const hasText = Boolean(inputText.trim());
+    const hasImage = Boolean(selectedImage);
+    if ((!hasText && !hasImage) || !activeTicket || sending) return;
 
-    const textToSend = inputText.trim();
+    let textToSend = inputText.trim();
+    const imageToSend = selectedImage ? selectedImage.dataUrl : null;
+    const isImageMessage = Boolean(imageToSend);
+
+    let rawPayload = textToSend;
+    let previewText = textToSend;
+    if (isImageMessage) {
+      rawPayload = JSON.stringify({
+        image: imageToSend,
+        caption: textToSend,
+      });
+      previewText = textToSend ? `📷 ${textToSend}` : '📷 Shared Screenshot';
+    }
+
     setInputText('');
+    setSelectedImage(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = '42px';
     }
@@ -296,7 +377,8 @@ export default function DevChatPage() {
       sender: user?.id || user?._id,
       senderRole: user?.role || 'student',
       senderName: user?.name || 'You',
-      text: textToSend,
+      text: rawPayload,
+      contentType: isImageMessage ? 'image' : 'text',
       read: false,
       createdAt: new Date().toISOString(),
     };
@@ -311,7 +393,7 @@ export default function DevChatPage() {
           ? {
               ...t,
               lastMessage: {
-                preview: textToSend,
+                preview: previewText,
                 senderRole: user?.role || 'student',
                 senderName: user?.name || 'You',
                 at: new Date(),
@@ -324,7 +406,7 @@ export default function DevChatPage() {
     try {
       // 2. Client-side E2EE encryption using Web Crypto AES-256-GCM
       const { encryptedContent, iv } = await encryptMessage(
-        textToSend,
+        rawPayload,
         activeTicket.ticketId,
         activeTicket.e2eeSalt
       );
@@ -334,7 +416,7 @@ export default function DevChatPage() {
           ticketId: activeTicket.ticketId,
           encryptedContent,
           iv,
-          contentType: 'text',
+          contentType: isImageMessage ? 'image' : 'text',
         });
         if (ack && ack.messageId) {
           setMessages((prev) =>
@@ -346,11 +428,11 @@ export default function DevChatPage() {
         const res = await api.sendChatTicketMessage(activeTicket.ticketId, {
           encryptedContent,
           iv,
-          contentType: 'text',
+          contentType: isImageMessage ? 'image' : 'text',
         });
         if (res.success && res.message) {
           setMessages((prev) =>
-            prev.map((m) => (m._id === tempId ? { ...res.message, text: textToSend } : m))
+            prev.map((m) => (m._id === tempId ? { ...res.message, text: rawPayload } : m))
           );
           setTimeout(scrollToBottom, 60);
         }
@@ -360,7 +442,7 @@ export default function DevChatPage() {
       triggerToast('error', err.message || 'Failed to deliver message', 'Error');
       // Rollback optimistic message if encryption completely failed
       setMessages((prev) => prev.filter((m) => m._id !== tempId));
-      setInputText(textToSend); // Restore unsent message
+      if (!isImageMessage) setInputText(textToSend); // Restore unsent text
     } finally {
       setSending(false);
     }
@@ -472,7 +554,7 @@ export default function DevChatPage() {
             <div>
               <h1 className="devchat-header-title">
                 HostelCare Developer Support Chat
-                <span className="e2ee-shield-pill">🔒 AES-256 E2EE</span>
+                <span className="e2ee-shield-pill">🔒 End-to-end encrypted</span>
               </h1>
               <p className="devchat-header-subtitle">
                 <span>Real-time direct chat between Students & Developers</span>
@@ -644,28 +726,19 @@ export default function DevChatPage() {
                 {/* Messages Timeline */}
                 <div className="devchat-messages-timeline">
                   {/* System E2EE Notice */}
-                  <div style={{ textAlign: 'center', margin: '0.5rem 0' }}>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        color: '#94a3b8',
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        padding: '4px 12px',
-                        borderRadius: '999px',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                      }}
-                    >
-                      🔒 Messages in this room are End-to-End Encrypted via AES-256-GCM.
+                  <div style={{ textAlign: 'center', margin: '0.4rem 0' }}>
+                    <span className="e2ee-notice-pill">
+                      🔒 Messages in this room are end-to-end encrypted.
                     </span>
                   </div>
 
                   {loadingMessages ? (
-                    <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                    <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
                       Decrypting conversation history...
                     </div>
                   ) : messages.length === 0 ? (
-                    <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
-                      No messages yet. Send a message to start real-time conversation with developer.
+                    <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+                      No messages yet. Send a message or screenshot to start real-time chat with developer.
                     </div>
                   ) : (
                     messages.map((msg) => {
@@ -675,18 +748,52 @@ export default function DevChatPage() {
                         minute: '2-digit',
                       });
 
+                      // Detect media / screenshot payload
+                      let mediaData = null;
+                      let displayText = msg.text;
+
+                      if (msg.contentType === 'image' || (typeof msg.text === 'string' && msg.text.startsWith('{"image":'))) {
+                        try {
+                          const parsed = JSON.parse(msg.text);
+                          if (parsed && parsed.image) {
+                            mediaData = parsed;
+                          }
+                        } catch (e) {
+                          if (msg.text?.startsWith('data:image/')) {
+                            mediaData = { image: msg.text, caption: '' };
+                          }
+                        }
+                      } else if (typeof msg.text === 'string' && msg.text.startsWith('data:image/')) {
+                        mediaData = { image: msg.text, caption: '' };
+                      }
+
                       return (
                         <div
                           key={msg._id || msg.createdAt}
                           className={`chat-bubble-row ${isMine ? 'mine' : 'theirs'}`}
                         >
                           {!isMine && <span className="chat-sender-name">{msg.senderName}</span>}
-                          <div className="chat-bubble">
-                            <div>{msg.text || '[Encrypted Content]'}</div>
+                          <div className={`chat-bubble ${mediaData ? 'has-media' : ''}`}>
+                            {mediaData ? (
+                              <div className="chat-media-wrapper">
+                                <img
+                                  src={mediaData.image}
+                                  alt="Shared Screenshot"
+                                  className="chat-bubble-image"
+                                  onClick={() => setZoomedImage(mediaData.image)}
+                                />
+                                {mediaData.caption && (
+                                  <p className="chat-media-caption">{mediaData.caption}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="chat-bubble-text">{displayText || '[Encrypted Content]'}</div>
+                            )}
+
                             <div className="chat-bubble-meta">
                               <span>{timeStr}</span>
                               {isMine && (
-                                <span style={{ color: msg.read ? '#34d399' : '#94a3b8', fontWeight: 800 }}>
+                                <span className={`read-ticks ${msg.read ? 'read' : 'unread'}`}>
                                   {msg.read ? '✓✓' : '✓'}
                                 </span>
                               )}
@@ -716,32 +823,76 @@ export default function DevChatPage() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Bar */}
+                {/* Input Bar Container with Media Preview & Attach Button */}
                 <form className="devchat-input-bar" onSubmit={handleSendMessage}>
-                  <textarea
-                    ref={textareaRef}
-                    value={inputText}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder={`Type an encrypted message to ${isDeveloper ? 'student' : 'developer'} (Press Enter to send)...`}
-                    className="devchat-input-field"
-                    rows={1}
-                    id="chat-message-input"
-                  />
+                  {selectedImage && (
+                    <div className="chat-image-preview-bar">
+                      <div className="preview-thumb-container">
+                        <img src={selectedImage.dataUrl} alt="Preview" className="preview-thumb" />
+                        <button
+                          type="button"
+                          className="btn-remove-preview"
+                          onClick={() => setSelectedImage(null)}
+                          title="Remove media"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="preview-meta">
+                        <span className="preview-filename">{selectedImage.name}</span>
+                        <span className="preview-filesize">
+                          {Math.round(selectedImage.size / 1024)} KB • Ready to send
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
-                  <button
-                    type="submit"
-                    className="btn-send-message"
-                    disabled={!inputText.trim() || sending}
-                    id="btn-send-chat-msg"
-                  >
-                    {sending ? '...' : '➤'}
-                  </button>
+                  <div className="devchat-input-row">
+                    <button
+                      type="button"
+                      className="btn-attach-media"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Attach image or screenshot"
+                      id="btn-attach-chat-media"
+                    >
+                      📎
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleFileSelect}
+                      id="chat-file-input"
+                    />
+
+                    <textarea
+                      ref={textareaRef}
+                      value={inputText}
+                      onChange={handleInputChange}
+                      onPaste={handlePaste}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      placeholder={selectedImage ? "Add a caption (optional)..." : `Type a message to ${isDeveloper ? 'student' : 'developer'} (Press Enter to send)...`}
+                      className="devchat-input-field"
+                      rows={1}
+                      id="chat-message-input"
+                    />
+
+                    <button
+                      type="submit"
+                      className="btn-send-message"
+                      disabled={(!inputText.trim() && !selectedImage) || sending}
+                      id="btn-send-chat-msg"
+                      title="Send message"
+                    >
+                      {sending ? '...' : '➤'}
+                    </button>
+                  </div>
                 </form>
               </>
             ) : (
@@ -896,6 +1047,33 @@ export default function DevChatPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Media Lightbox Viewer */}
+      {zoomedImage && (
+        <div className="chat-lightbox-modal" onClick={() => setZoomedImage(null)}>
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <img src={zoomedImage} alt="Enlarged Screenshot" className="lightbox-img" />
+            <div className="lightbox-toolbar">
+              <a
+                href={zoomedImage}
+                download={`hostelcare-attachment-${Date.now()}.jpg`}
+                className="btn-lightbox-download"
+                target="_blank"
+                rel="noreferrer"
+              >
+                ⬇ Download Full Resolution
+              </a>
+              <button
+                type="button"
+                className="btn-lightbox-close"
+                onClick={() => setZoomedImage(null)}
+              >
+                ✕ Close
+              </button>
+            </div>
           </div>
         </div>
       )}

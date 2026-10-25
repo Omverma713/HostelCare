@@ -56,10 +56,9 @@ app.use(compression({
     }
 }));
 
-// ─── 3. Body Parser ───────────────────────────────────────────────────────────
-// Limit request body to 50 KB — no legitimate complaint submission needs more.
-// Prevents memory exhaustion from oversized payloads.
-app.use(express.json({ limit: "50kb" }));
+// Limit request body to 15 MB to accommodate client-encrypted image & screenshot transfers.
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 // ─── 3.1 Client Identity Tracker ──────────────────────────────────────────────
 // Maps client IP addresses to active user registration numbers so that legacy APK clients

@@ -33,6 +33,7 @@ function initChatSocket(httpServer) {
       methods: ["GET", "POST", "PATCH", "PUT"],
       credentials: true,
     },
+    maxHttpBufferSize: 15e6, // 15 MB for image/media transfers
     pingTimeout: 30000,
     pingInterval: 15000,
   });

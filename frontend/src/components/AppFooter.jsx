@@ -1,10 +1,15 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Modern High-Tech App Footer
  * Highlights backend creator credentials with interactive links to Portfolio & LinkedIn.
  */
 export default function AppFooter() {
+  const location = useLocation();
+  const isChatPage = location.pathname === '/chat' || location.pathname === '/feedback';
+  if (isChatPage) return null;
+
   return (
     <footer className="spatial-app-footer">
       <div className="footer-glass-pod">

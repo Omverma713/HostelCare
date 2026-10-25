@@ -42,7 +42,7 @@ const chatMessageSchema = new mongoose.Schema(
     },
     contentType: {
       type: String,
-      enum: ["text", "code", "system"],
+      enum: ["text", "code", "system", "image"],
       default: "text",
     },
     read: {

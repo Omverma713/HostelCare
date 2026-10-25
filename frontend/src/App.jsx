@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider, useTheme } from './hooks/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -54,6 +54,9 @@ function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme } = useTheme();
   const { user } = useAuth();
+  const location = useLocation();
+
+  const isChatRoute = location.pathname === '/chat' || location.pathname === '/feedback';
 
   useEffect(() => {
     if (user) {
@@ -62,15 +65,15 @@ function DashboardLayout() {
   }, [user]);
 
   return (
-    <div className="app-container">
-      <Canvas3DBackground theme={theme} role="student" />
+    <div className={`app-container ${isChatRoute ? 'is-chat-layout' : ''}`}>
+      {!isChatRoute && <Canvas3DBackground theme={theme} role="student" />}
       <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="main-content">
         <Suspense fallback={<PageFallback />}>
           <Outlet />
         </Suspense>
-        <AppFooter />
+        {!isChatRoute && <AppFooter />}
       </main>
     </div>
   );

@@ -279,6 +279,43 @@ textarea {
   }
 }
 
+/* ─── Dev Chat Full-Screen Edge-to-Edge Overrides ────────────────────────── */
+.app-container.is-chat-layout {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-container.is-chat-layout .main-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background-color: transparent !important;
+}
+
+@media (min-width: 1025px) {
+  .app-container.is-chat-layout .main-content {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-container.is-chat-layout .main-content {
+    padding-top: 60px !important;
+    height: calc(100vh - 60px) !important;
+    height: calc(100dvh - 60px) !important;
+  }
+}
+
 /* ==========================================================================
    Scrollbars
    ========================================================================== */

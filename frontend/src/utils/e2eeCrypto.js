@@ -158,11 +158,27 @@ export async function decryptMessage(encryptedContent, ivBase64, ticketId, e2eeS
             // pass
           }
         }
+        
+        // 4. Fallback: Check if message is already plaintext or readable JSON
+        if (typeof encryptedContent === "string") {
+          if (
+            encryptedContent.startsWith("{") ||
+            encryptedContent.startsWith("[") ||
+            encryptedContent.startsWith("data:image/") ||
+            /\s/.test(encryptedContent)
+          ) {
+            return encryptedContent;
+          }
+        }
         throw err1;
       }
     }
   } catch (err) {
     console.warn(`[E2EE] Decryption warning for ticket ${ticketId}:`, err.message);
+    // If it's a readable string, return it instead of error notice
+    if (typeof encryptedContent === "string" && !/^[A-Za-z0-9+/=]{40,}$/.test(encryptedContent)) {
+      return encryptedContent;
+    }
     return "[🔒 Encrypted Message: Key verification pending]";
   }
 }
