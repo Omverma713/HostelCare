@@ -1800,13 +1800,13 @@ export default function SuperAdminPortal() {
           {[
             { id: 'overview', label: '📊 Overview' },
             { id: 'users', label: '👥 User Directory' },
+            { id: 'notices', label: '🚨 Global Notices' },
             { id: 'sessions', label: '📱 Sessions & Devices' },
             { id: 'limits', label: '⚙️ Login Limits' },
             { id: 'maintenance', label: '🛠️ Maintenance' },
             { id: 'appversion', label: '📲 App Updates' },
             { id: 'pilottesting', label: '🧪 Pilot Testing' },
             { id: 'notifications', label: '🔔 Push Broadcast' },
-            { id: 'notices', label: '🚨 Global Notices' },
             { id: 'messalerts', label: '🍱 Mess Auto-Alerts' },
             { id: 'audit', label: '📜 Audit Logs' },
           ].map((tab) => (

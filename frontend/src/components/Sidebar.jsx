@@ -244,6 +244,32 @@ export default function Sidebar({ isOpen, onClose }) {
             {userRole === 'superadmin' && (
               <>
                 <NavLink
+                  to="/superadmin?tab=notices"
+                  onClick={onClose}
+                  id="sidebar-link-global-notices"
+                  className={() =>
+                    `sidebar-dock-link ${
+                      location.pathname === '/superadmin' && location.search.includes('tab=notices')
+                        ? 'active'
+                        : ''
+                    }`
+                  }
+                >
+                  <div className="dock-link-icon-wrap" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
+                    🚨
+                  </div>
+
+                  <div className="dock-link-content">
+                    <span className="dock-link-title">Global Notices</span>
+                    <span className="dock-link-subtitle">Pop-up alert manager</span>
+                  </div>
+
+                  <div className="dock-link-indicator-chip">
+                    <span className="indicator-ray" />
+                  </div>
+                </NavLink>
+
+                <NavLink
                   to="/superadmin?tab=messalerts"
                   onClick={onClose}
                   id="sidebar-link-mess-alerts"
