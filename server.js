@@ -1,6 +1,8 @@
+const http      = require("http");
 const app       = require("./app");
 const connectDB = require("./src/db/db");
 const { startMessReminderScheduler, stopMessReminderScheduler } = require("./src/services/messReminderScheduler");
+const { initChatSocket } = require("./src/sockets/chatSocket");
 require("dotenv").config();
 
 const PORT = process.env.PORT || 3000;
@@ -11,8 +13,13 @@ async function start() {
     // Start autonomous mess menu meal start notification daemon
     startMessReminderScheduler();
 
-    const server = app.listen(PORT, () => {
-        console.log(`HostelCare server running on port ${PORT}`);
+    const server = http.createServer(app);
+
+    // Initialize real-time Socket.IO chat engine for Student <-> Developer messaging
+    initChatSocket(server);
+
+    server.listen(PORT, () => {
+        console.log(`HostelCare server with Real-Time Socket.IO running on port ${PORT}`);
     });
 
     // ─── Graceful Shutdown ────────────────────────────────────────────────────

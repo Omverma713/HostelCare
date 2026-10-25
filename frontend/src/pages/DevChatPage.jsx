@@ -1,0 +1,736 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { api } from '../services/api';
+import { triggerToast } from '../components/Toast';
+import {
+  connectChatSocket,
+  disconnectChatSocket,
+  joinTicketRoom,
+  leaveTicketRoom,
+  sendChatMessage,
+  sendTypingIndicator,
+  markTicketMessagesRead,
+  addChatListener,
+} from '../services/chatSocketService';
+import { encryptMessage, decryptMessage } from '../utils/e2eeCrypto';
+import './DevChatPage.css';
+
+const CATEGORIES = [
+  { id: 'Bug Report', label: 'Bug Report', icon: '🐞', color: '#ef4444' },
+  { id: 'Feature Request', label: 'Feature Request', icon: '✨', color: '#8b5cf6' },
+  { id: 'Technical Help', label: 'Technical Help', icon: '🛠️', color: '#3b82f6' },
+  { id: 'UI/UX Suggestion', label: 'UI/UX Design', icon: '🎨', color: '#ec4899' },
+  { id: 'Account & Access', label: 'Account / Passwords', icon: '🔐', color: '#f59e0b' },
+  { id: 'Other', label: 'General Dev Query', icon: '💬', color: '#10b981' },
+];
+
+export default function DevChatPage() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+
+  const isDeveloper = user?.role === 'superadmin';
+  const token = localStorage.getItem('token');
+
+  // Socket & Connection State
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [partnerTyping, setPartnerTyping] = useState(false);
+  const [partnerOnline, setPartnerOnline] = useState(false);
+
+  // Tickets & Active Chat Room State
+  const [tickets, setTickets] = useState([]);
+  const [loadingTickets, setLoadingTickets] = useState(true);
+  const [activeTicket, setActiveTicket] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [ticketFilter, setTicketFilter] = useState('all'); // 'all' | 'open' | 'resolved'
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Input & Modal State
+  const [inputText, setInputText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
+  const [newSubject, setNewSubject] = useState('');
+  const [newCategory, setNewCategory] = useState('Technical Help');
+  const [newPriority, setNewPriority] = useState('medium');
+  const [newInitialMsg, setNewInitialMsg] = useState('');
+  const [creatingTicket, setCreatingTicket] = useState(false);
+
+  const messagesEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+
+  // Auto-scroll to bottom of chat
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // 1. Initialize Socket.IO connection
+  useEffect(() => {
+    if (!token) return;
+
+    const socket = connectChatSocket(token);
+    setSocketConnected(Boolean(socket?.connected));
+
+    const removeConnListener = addChatListener('connection_status', ({ connected }) => {
+      setSocketConnected(connected);
+    });
+
+    return () => {
+      removeConnListener();
+    };
+  }, [token]);
+
+  // 2. Fetch Tickets List
+  const loadTickets = useCallback(async () => {
+    try {
+      setLoadingTickets(true);
+      const res = await api.getChatTickets({
+        status: ticketFilter !== 'all' ? ticketFilter : undefined,
+        search: searchQuery.trim() || undefined,
+      });
+
+      if (res.success) {
+        setTickets(res.tickets || []);
+        // Auto-select first ticket on desktop if none selected
+        if (!activeTicket && res.tickets && res.tickets.length > 0 && window.innerWidth > 768) {
+          selectTicket(res.tickets[0]);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load tickets:', err);
+      triggerToast('error', err.message || 'Failed to fetch support tickets', 'Dev Chat');
+    } finally {
+      setLoadingTickets(false);
+    }
+  }, [ticketFilter, searchQuery]);
+
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
+
+  // 3. Select Ticket & Load Decrypted Messages
+  const selectTicket = async (ticket) => {
+    if (activeTicket && activeTicket.ticketId !== ticket.ticketId) {
+      leaveTicketRoom(activeTicket.ticketId);
+    }
+
+    setActiveTicket(ticket);
+    setLoadingMessages(true);
+    joinTicketRoom(ticket.ticketId);
+    markTicketMessagesRead(ticket.ticketId);
+
+    try {
+      const res = await api.getChatTicketMessages(ticket.ticketId);
+      if (res.success && Array.isArray(res.messages)) {
+        // Decrypt messages client-side with ticket's unique E2EE salt
+        const decryptedList = await Promise.all(
+          res.messages.map(async (msg) => {
+            const plainText = await decryptMessage(
+              msg.encryptedContent,
+              msg.iv,
+              ticket.ticketId,
+              res.e2eeSalt || ticket.e2eeSalt
+            );
+            return {
+              ...msg,
+              text: plainText,
+            };
+          })
+        );
+        setMessages(decryptedList);
+        setTimeout(scrollToBottom, 80);
+      }
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+      triggerToast('error', 'Failed to retrieve encrypted messages', 'E2EE Chat');
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  // 4. Real-Time Socket Event Listeners for Active Ticket
+  useEffect(() => {
+    if (!activeTicket) return;
+
+    const removeMsgListener = addChatListener('new_message', async (incoming) => {
+      if (incoming.ticketId === activeTicket.ticketId) {
+        const plainText = await decryptMessage(
+          incoming.encryptedContent,
+          incoming.iv,
+          activeTicket.ticketId,
+          activeTicket.e2eeSalt
+        );
+
+        setMessages((prev) => {
+          // Prevent duplicates
+          if (prev.some((m) => String(m._id) === String(incoming._id))) return prev;
+          return [...prev, { ...incoming, text: plainText }];
+        });
+
+        // Mark as read if from other user
+        if (String(incoming.sender) !== String(user?.id || user?._id)) {
+          markTicketMessagesRead(activeTicket.ticketId);
+        }
+
+        setTimeout(scrollToBottom, 60);
+      }
+    });
+
+    const removeTypingListener = addChatListener('typing_change', (data) => {
+      if (data.ticketId === activeTicket.ticketId && data.userId !== (user?.id || user?._id)) {
+        setPartnerTyping(Boolean(data.isTyping));
+      }
+    });
+
+    const removePresenceListener = addChatListener('user_presence', (data) => {
+      if (data.userId !== (user?.id || user?._id)) {
+        setPartnerOnline(data.status === 'online');
+      }
+    });
+
+    const removeReadListener = addChatListener('messages_read', (data) => {
+      if (data.ticketId === activeTicket.ticketId) {
+        setMessages((prev) => prev.map((m) => ({ ...m, read: true })));
+      }
+    });
+
+    return () => {
+      removeMsgListener();
+      removeTypingListener();
+      removePresenceListener();
+      removeReadListener();
+    };
+  }, [activeTicket, user]);
+
+  // 5. Handle Send Message
+  const handleSendMessage = async (e) => {
+    if (e) e.preventDefault();
+    if (!inputText.trim() || !activeTicket || sending) return;
+
+    const textToSend = inputText.trim();
+    setInputText('');
+    sendTypingIndicator(activeTicket.ticketId, false);
+    setSending(true);
+
+    try {
+      // Client-side E2EE encryption using Web Crypto AES-256-GCM
+      const { encryptedContent, iv } = await encryptMessage(
+        textToSend,
+        activeTicket.ticketId,
+        activeTicket.e2eeSalt
+      );
+
+      await sendChatMessage({
+        ticketId: activeTicket.ticketId,
+        encryptedContent,
+        iv,
+        contentType: 'text',
+      });
+    } catch (err) {
+      console.error('Failed to send encrypted message:', err);
+      triggerToast('error', err.message || 'Failed to deliver message', 'Error');
+      setInputText(textToSend); // Restore unsent message
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Typing change handler
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+    if (!activeTicket) return;
+
+    sendTypingIndicator(activeTicket.ticketId, true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      sendTypingIndicator(activeTicket.ticketId, false);
+    }, 2000);
+  };
+
+  // 6. Handle Create Support Ticket
+  const handleCreateTicketSubmit = async (e) => {
+    e.preventDefault();
+    if (!newSubject.trim() || creatingTicket) return;
+
+    setCreatingTicket(true);
+    try {
+      let initialEncryptedMessage = null;
+      let iv = null;
+
+      if (newInitialMsg.trim()) {
+        // Encrypt initial message
+        const tempKey = 'initial_salt';
+        const encrypted = await encryptMessage(newInitialMsg.trim(), 'INIT', tempKey);
+        initialEncryptedMessage = encrypted.encryptedContent;
+        iv = encrypted.iv;
+      }
+
+      const res = await api.createChatTicket({
+        subject: newSubject.trim(),
+        category: newCategory,
+        priority: newPriority,
+        initialEncryptedMessage,
+        iv,
+      });
+
+      if (res.success && res.ticket) {
+        triggerToast('success', `Ticket ${res.ticket.ticketId} created! Developer assigned.`, 'Ticket Opened 🚀');
+        setIsNewTicketModalOpen(false);
+        setNewSubject('');
+        setNewInitialMsg('');
+        await loadTickets();
+        selectTicket(res.ticket);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to create ticket', 'Error');
+    } finally {
+      setCreatingTicket(false);
+    }
+  };
+
+  // 7. Resolve / Close Ticket
+  const handleResolveTicket = async () => {
+    if (!activeTicket) return;
+    try {
+      const nextStatus = activeTicket.status === 'resolved' ? 'open' : 'resolved';
+      const res = await api.updateChatTicketStatus(activeTicket.ticketId, nextStatus);
+      if (res.success) {
+        setActiveTicket((prev) => ({ ...prev, status: nextStatus }));
+        setTickets((prev) =>
+          prev.map((t) => (t.ticketId === activeTicket.ticketId ? { ...t, status: nextStatus } : t))
+        );
+        triggerToast('success', `Ticket marked as ${nextStatus.toUpperCase()}`, 'Ticket Updated');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update ticket status', 'Error');
+    }
+  };
+
+  return (
+    <div className="devchat-root">
+      <div className="devchat-ambient-glow" />
+
+      <div className="devchat-container">
+        {/* Header Bar */}
+        <header className="devchat-header">
+          <div className="devchat-title-group">
+            <div className="devchat-icon-badge">💬</div>
+            <div>
+              <h1 className="devchat-header-title">
+                HostelCare Developer Support Chat
+                <span className="e2ee-shield-pill">🔒 AES-256 E2EE</span>
+              </h1>
+              <p className="devchat-header-subtitle">
+                <span>Real-time direct chat between Students & Developers</span>
+                <span style={{ opacity: 0.5 }}>•</span>
+                <span style={{ color: socketConnected ? '#10b981' : '#f59e0b', fontWeight: 600 }}>
+                  {socketConnected ? '● Socket Live' : '○ Connecting...'}
+                </span>
+                <span style={{ opacity: 0.5 }}>•</span>
+                <span style={{ color: '#a5b4fc', fontSize: '0.72rem' }}>v1.2.2.9 Pre-Release</span>
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn-new-ticket"
+              onClick={() => setIsNewTicketModalOpen(true)}
+              id="btn-open-new-ticket-modal"
+            >
+              ➕ New Support Ticket
+            </button>
+          </div>
+        </header>
+
+        {/* Main Split View */}
+        <div className={`devchat-split-view ${activeTicket ? 'chat-active' : ''}`}>
+          {/* LEFT: Tickets Pane */}
+          <aside className="devchat-tickets-pane">
+            <div className="devchat-tickets-header">
+              <div className="devchat-tickets-header-top">
+                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                  Support Tickets ({tickets.length})
+                </span>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="tickets-filter-tabs">
+                {['all', 'open', 'resolved'].map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={`tickets-filter-tab ${ticketFilter === tab ? 'active' : ''}`}
+                    onClick={() => setTicketFilter(tab)}
+                  >
+                    {tab.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Bar */}
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search ticket # or subject..."
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.78rem',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* Tickets List */}
+            <div className="devchat-tickets-list">
+              {loadingTickets ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                  Loading support tickets...
+                </div>
+              ) : tickets.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                  No tickets found. Click "New Support Ticket" to start.
+                </div>
+              ) : (
+                tickets.map((tkt) => {
+                  const isSelected = activeTicket?.ticketId === tkt.ticketId;
+                  const hasUnread = isDeveloper ? tkt.unreadDeveloper > 0 : tkt.unreadStudent > 0;
+
+                  return (
+                    <div
+                      key={tkt.ticketId}
+                      className={`ticket-item-card ${isSelected ? 'active' : ''}`}
+                      onClick={() => selectTicket(tkt)}
+                      id={`ticket-card-${tkt.ticketId}`}
+                    >
+                      <div className="ticket-card-top">
+                        <span className="ticket-badge-id">{tkt.ticketId}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className={`ticket-status-chip ${tkt.status}`}>
+                            {tkt.status.replace('_', ' ')}
+                          </span>
+                          {hasUnread && <span className="ticket-unread-dot" title="Unread messages" />}
+                        </div>
+                      </div>
+
+                      <div className="ticket-subject-text">{tkt.subject}</div>
+
+                      <div className="ticket-card-meta">
+                        <span>
+                          {isDeveloper ? `👤 ${tkt.studentName} (${tkt.studentRegNo})` : `👨‍💻 ${tkt.developerName}`}
+                        </span>
+                        <span>{new Date(tkt.updatedAt || tkt.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </aside>
+
+          {/* RIGHT: Active Chat Room */}
+          <main className="devchat-room-pane">
+            {activeTicket ? (
+              <>
+                {/* Room Header */}
+                <div className="devchat-room-header">
+                  <div className="room-identity-group">
+                    <button
+                      type="button"
+                      className="room-back-btn"
+                      onClick={() => setActiveTicket(null)}
+                      title="Back to Tickets"
+                    >
+                      ←
+                    </button>
+                    <div>
+                      <div className="room-participant-details">
+                        <h3>
+                          <span>{activeTicket.subject}</span>
+                          <span className="ticket-badge-id" style={{ fontSize: '0.75rem' }}>
+                            ({activeTicket.ticketId})
+                          </span>
+                        </h3>
+                        <p>
+                          {isDeveloper
+                            ? `Student: ${activeTicket.studentName} • ${activeTicket.studentRegNo} • Room: ${activeTicket.studentRoom || 'N/A'}`
+                            : `Allotted Developer: ${activeTicket.developerName} (Super Admin) • Category: ${activeTicket.category}`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="room-actions">
+                    <span className={`ticket-status-chip ${activeTicket.status}`}>
+                      {activeTicket.status.replace('_', ' ')}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="btn-resolve-ticket"
+                      onClick={handleResolveTicket}
+                      id="btn-resolve-ticket-action"
+                    >
+                      {activeTicket.status === 'resolved' ? '🔄 Reopen Ticket' : '✓ Mark Resolved'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Messages Timeline */}
+                <div className="devchat-messages-timeline">
+                  {/* System E2EE Notice */}
+                  <div style={{ textAlign: 'center', margin: '0.5rem 0' }}>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        color: '#94a3b8',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        padding: '4px 12px',
+                        borderRadius: '999px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                      }}
+                    >
+                      🔒 Messages in this room are End-to-End Encrypted via AES-256-GCM.
+                    </span>
+                  </div>
+
+                  {loadingMessages ? (
+                    <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                      Decrypting conversation history...
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                      No messages yet. Send a message to start real-time conversation with developer.
+                    </div>
+                  ) : (
+                    messages.map((msg) => {
+                      const isMine = String(msg.sender) === String(user?.id || user?._id);
+                      const timeStr = new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      });
+
+                      return (
+                        <div
+                          key={msg._id || msg.createdAt}
+                          className={`chat-bubble-row ${isMine ? 'mine' : 'theirs'}`}
+                        >
+                          {!isMine && <span className="chat-sender-name">{msg.senderName}</span>}
+                          <div className="chat-bubble">
+                            <div>{msg.text || '[Encrypted Content]'}</div>
+                            <div className="chat-bubble-meta">
+                              <span>{timeStr}</span>
+                              {isMine && (
+                                <span style={{ color: msg.read ? '#34d399' : '#94a3b8', fontWeight: 800 }}>
+                                  {msg.read ? '✓✓' : '✓'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Partner Typing Indicator */}
+                {partnerTyping && (
+                  <div className="typing-indicator-row">
+                    <span>✍️</span>
+                    <span>{isDeveloper ? 'Student is typing...' : 'Developer is typing...'}</span>
+                  </div>
+                )}
+
+                {/* Input Bar */}
+                <form className="devchat-input-bar" onSubmit={handleSendMessage}>
+                  <textarea
+                    value={inputText}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder={`Type an encrypted message to ${isDeveloper ? 'student' : 'developer'} (Press Enter to send)...`}
+                    className="devchat-input-field"
+                    rows={1}
+                    id="chat-message-input"
+                  />
+
+                  <button
+                    type="submit"
+                    className="btn-send-message"
+                    disabled={!inputText.trim() || sending}
+                    id="btn-send-chat-msg"
+                  >
+                    {sending ? '...' : '➤'}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: 'var(--text-secondary)',
+                  gap: '12px',
+                  padding: '2rem',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '3rem' }}>🛡️</div>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.2rem' }}>
+                  Select or Create a Support Ticket
+                </h3>
+                <p style={{ margin: 0, maxWidth: '400px', fontSize: '0.85rem' }}>
+                  Connect with the system developer in real-time. Messages are encrypted client-side with zero plaintext leakage.
+                </p>
+                <button
+                  type="button"
+                  className="btn-new-ticket"
+                  onClick={() => setIsNewTicketModalOpen(true)}
+                  style={{ marginTop: '8px' }}
+                >
+                  ➕ Open New Ticket
+                </button>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+
+      {/* MODAL: New Support Ticket */}
+      {isNewTicketModalOpen && (
+        <div className="devchat-modal-backdrop" onClick={() => setIsNewTicketModalOpen(false)}>
+          <div className="devchat-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="devchat-modal-header">
+              <h3 className="devchat-modal-title">
+                <span>🎫 Open Developer Support Ticket</span>
+              </h3>
+              <button
+                type="button"
+                className="devchat-modal-close"
+                onClick={() => setIsNewTicketModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              A unique Ticket ID will be generated and a developer will be allotted automatically.
+            </p>
+
+            <form onSubmit={handleCreateTicketSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Ticket Subject / Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                  placeholder="Brief summary of the issue or feature"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    marginTop: '4px',
+                    boxSizing: 'border-box',
+                  }}
+                  id="input-ticket-subject"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Issue Category
+                </label>
+                <div className="category-chips-grid" style={{ marginTop: '4px' }}>
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={`category-chip-btn ${newCategory === cat.id ? 'selected' : ''}`}
+                      onClick={() => setNewCategory(cat.id)}
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Initial Message / Context (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={newInitialMsg}
+                  onChange={(e) => setNewInitialMsg(e.target.value)}
+                  placeholder="Explain your problem, steps to reproduce, or suggestions..."
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    marginTop: '4px',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                  }}
+                  id="input-ticket-initial-msg"
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsNewTicketModalOpen(false)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'transparent',
+                    color: 'var(--text-secondary)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newSubject.trim() || creatingTicket}
+                  className="btn-new-ticket"
+                  id="btn-submit-create-ticket"
+                >
+                  {creatingTicket ? 'Generating Ticket...' : '🚀 Generate Ticket & Chat'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

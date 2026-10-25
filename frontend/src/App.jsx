@@ -26,7 +26,7 @@ const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
 const CaretakerDashboard = lazy(() => import('./pages/CaretakerDashboard'));
 const WardenDashboard = lazy(() => import('./pages/WardenDashboard'));
 const SuperintendentDashboard = lazy(() => import('./pages/SuperintendentDashboard'));
-const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
+const DevChatPage = lazy(() => import('./pages/DevChatPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const SuperAdminPortal = lazy(() => import('./pages/SuperAdminPortal'));
 const MessMenuPage = lazy(() => import('./pages/MessMenuPage'));
@@ -248,8 +248,9 @@ export default function App() {
                   <Route path="/notifications" element={<NotificationsPage />} />
                 </Route>
 
-                {/* Shared Protected Pages */}
-                <Route path="/feedback" element={<FeedbackPage />} />
+                {/* Shared Protected Pages: Real-time Developer Support Chat */}
+                <Route path="/feedback" element={<DevChatPage />} />
+                <Route path="/chat" element={<DevChatPage />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
               </Route>
             </Route>

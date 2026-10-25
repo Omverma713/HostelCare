@@ -263,5 +263,43 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+
+  // ─── Real-Time Student <-> Developer Chat Tickets (E2EE) ────────────────
+  createChatTicket(payload) {
+    return request('/chat/tickets', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getChatTickets(params = {}) {
+    const q = new URLSearchParams();
+    if (params.status) q.append('status', params.status);
+    if (params.search) q.append('search', params.search);
+    const queryStr = q.toString() ? `?${q.toString()}` : '';
+    return request(`/chat/tickets${queryStr}`);
+  },
+
+  getChatTicketById(ticketId) {
+    return request(`/chat/tickets/${ticketId}`);
+  },
+
+  getChatTicketMessages(ticketId) {
+    return request(`/chat/tickets/${ticketId}/messages`);
+  },
+
+  updateChatTicketStatus(ticketId, status) {
+    return request(`/chat/tickets/${ticketId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  rateChatTicket(ticketId, ratingData) {
+    return request(`/chat/tickets/${ticketId}/rating`, {
+      method: 'POST',
+      body: JSON.stringify(ratingData),
+    });
+  },
 };
 

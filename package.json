@@ -1,6 +1,6 @@
 {
   "name": "hostelcare",
-  "version": "1.2.2.8",
+  "version": "1.2.2.9",
   "description": "my 1s production-level project",
   "main": "index.js",
   "scripts": {
@@ -25,6 +25,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.4",
     "nodemailer": "^9.0.6",
+    "socket.io": "^4.8.4",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

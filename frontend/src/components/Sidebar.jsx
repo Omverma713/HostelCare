@@ -212,8 +212,8 @@ export default function Sidebar({ isOpen, onClose }) {
               <div className="dock-link-icon-wrap icon-purple">💬</div>
 
               <div className="dock-link-content">
-                <span className="dock-link-title">Feedback & Ideas</span>
-                <span className="dock-link-subtitle">Suggestions box</span>
+                <span className="dock-link-title">Dev Support Chat</span>
+                <span className="dock-link-subtitle">Real-time E2EE messaging</span>
               </div>
 
               <div className="dock-link-indicator-chip">

@@ -190,10 +190,10 @@ export default function SuperAdminPortal() {
 
   // App Version State
   const [appVersionConfig, setAppVersionConfig] = useState({
-    latestVersion: '1.2.2.8',
+    latestVersion: '1.2.2.9',
     minimumSupportedVersion: '1.0.0',
     updateMessage: '',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.8/hostelcare-v1.2.2.8.apk',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.9/hostelcare-v1.2.2.9.apk',
     forceUpdate: false,
     isSuspended: false,
     suspendedReason: '',
@@ -221,8 +221,8 @@ export default function SuperAdminPortal() {
     enabled: true,
     isSuspended: false,
     suspendedReason: '',
-    version: '1.2.2.8',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.8/hostelcare-v1.2.2.8.apk',
+    version: '1.2.2.9',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.9/hostelcare-v1.2.2.9.apk',
     updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
     releaseNotes: '',
     releaseMedia: [],
@@ -393,7 +393,7 @@ export default function SuperAdminPortal() {
             releaseMedia: res.pilotTesting.releaseMedia || [],
             enabled: Boolean(res.pilotTesting.enabled),
             isSuspended: Boolean(res.pilotTesting.isSuspended),
-            version: res.pilotTesting.version || '1.2.2.8',
+            version: res.pilotTesting.version || '1.2.2.9',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
           }));
         }
@@ -620,7 +620,7 @@ export default function SuperAdminPortal() {
           'success',
           isTargeted
             ? `Removed ${u.name || reg} from targeted pilot release`
-            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.8'})`,
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.9'})`,
           'Pilot Rollout'
         );
       }

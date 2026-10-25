@@ -1,0 +1,147 @@
+import { io } from "socket.io-client";
+
+let socket = null;
+const listeners = new Map();
+
+/**
+ * Resolves the Socket.IO backend connection URL
+ */
+function getSocketUrl() {
+  const currentHost = window.location.hostname;
+  if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+    return "http://localhost:3000";
+  }
+  // Production or mobile webview
+  return "https://hostelcare-api.duckdns.org";
+}
+
+/**
+ * Initializes and connects Socket.io with JWT token
+ */
+export function connectChatSocket(token) {
+  if (socket && socket.connected) {
+    return socket;
+  }
+
+  const socketUrl = getSocketUrl();
+  console.log(`🔌 [ChatSocketService] Connecting to ${socketUrl}...`);
+
+  socket = io(socketUrl, {
+    auth: { token },
+    transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 2000,
+  });
+
+  socket.on("connect", () => {
+    console.log("✅ [ChatSocketService] Socket connected successfully:", socket.id);
+    emitLocalEvent("connection_status", { connected: true, socketId: socket.id });
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("❌ [ChatSocketService] Socket disconnected:", reason);
+    emitLocalEvent("connection_status", { connected: false, reason });
+  });
+
+  socket.on("connect_error", (err) => {
+    console.warn("⚠️ [ChatSocketService] Connection error:", err.message);
+    emitLocalEvent("connection_status", { connected: false, error: err.message });
+  });
+
+  socket.on("new_message", (msg) => {
+    emitLocalEvent("new_message", msg);
+  });
+
+  socket.on("typing_change", (data) => {
+    emitLocalEvent("typing_change", data);
+  });
+
+  socket.on("user_presence", (data) => {
+    emitLocalEvent("user_presence", data);
+  });
+
+  socket.on("messages_read", (data) => {
+    emitLocalEvent("messages_read", data);
+  });
+
+  socket.on("error_message", (data) => {
+    emitLocalEvent("error_message", data);
+  });
+
+  return socket;
+}
+
+export function disconnectChatSocket() {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+    listeners.clear();
+  }
+}
+
+export function joinTicketRoom(ticketId) {
+  if (socket && socket.connected) {
+    socket.emit("join_ticket", { ticketId });
+  }
+}
+
+export function leaveTicketRoom(ticketId) {
+  if (socket && socket.connected) {
+    socket.emit("leave_ticket", { ticketId });
+  }
+}
+
+export function sendChatMessage(data) {
+  return new Promise((resolve, reject) => {
+    if (!socket || !socket.connected) {
+      return reject(new Error("Chat socket is currently disconnected. Retrying..."));
+    }
+    socket.emit("send_message", data, (ack) => {
+      if (ack && ack.success) {
+        resolve(ack);
+      } else {
+        reject(new Error(ack?.error || "Failed to deliver message"));
+      }
+    });
+  });
+}
+
+export function sendTypingIndicator(ticketId, isTyping) {
+  if (!socket || !socket.connected) return;
+  if (isTyping) {
+    socket.emit("typing_start", { ticketId });
+  } else {
+    socket.emit("typing_stop", { ticketId });
+  }
+}
+
+export function markTicketMessagesRead(ticketId) {
+  if (socket && socket.connected) {
+    socket.emit("mark_read", { ticketId });
+  }
+}
+
+// Local pub/sub listener registry
+export function addChatListener(event, callback) {
+  if (!listeners.has(event)) {
+    listeners.set(event, new Set());
+  }
+  listeners.get(event).add(callback);
+  return () => {
+    listeners.get(event)?.delete(callback);
+  };
+}
+
+function emitLocalEvent(event, data) {
+  const set = listeners.get(event);
+  if (set) {
+    for (const cb of set) {
+      try {
+        cb(data);
+      } catch (e) {
+        console.error(`Error in listener for ${event}:`, e);
+      }
+    }
+  }
+}
