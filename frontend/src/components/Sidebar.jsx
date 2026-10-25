@@ -244,6 +244,32 @@ export default function Sidebar({ isOpen, onClose }) {
             {userRole === 'superadmin' && (
               <>
                 <NavLink
+                  to="/superadmin?tab=users&action=create"
+                  onClick={onClose}
+                  id="sidebar-link-user-directory"
+                  className={() =>
+                    `sidebar-dock-link ${
+                      location.pathname === '/superadmin' && location.search.includes('tab=users')
+                        ? 'active'
+                        : ''
+                    }`
+                  }
+                >
+                  <div className="dock-link-icon-wrap" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
+                    👥
+                  </div>
+
+                  <div className="dock-link-content">
+                    <span className="dock-link-title">User Directory</span>
+                    <span className="dock-link-subtitle">Create & manage accounts</span>
+                  </div>
+
+                  <div className="dock-link-indicator-chip">
+                    <span className="indicator-ray" />
+                  </div>
+                </NavLink>
+
+                <NavLink
                   to="/superadmin?tab=notices"
                   onClick={onClose}
                   id="sidebar-link-global-notices"
