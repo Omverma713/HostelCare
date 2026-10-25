@@ -100,6 +100,14 @@ export function connectChatSocket(token) {
     emitLocalEvent("messages_read", data);
   });
 
+  socket.on("message_edited", (data) => {
+    emitLocalEvent("message_edited", data);
+  });
+
+  socket.on("message_deleted", (data) => {
+    emitLocalEvent("message_deleted", data);
+  });
+
   socket.on("error_message", (data) => {
     emitLocalEvent("error_message", data);
   });
@@ -142,6 +150,36 @@ export function sendChatMessage(data) {
         resolve(ack);
       } else {
         reject(new Error(ack?.error || "Failed to deliver message"));
+      }
+    });
+  });
+}
+
+export function editChatMessage(data) {
+  return new Promise((resolve, reject) => {
+    if (!socket || !socket.connected) {
+      return reject(new Error("Chat socket is currently disconnected."));
+    }
+    socket.emit("edit_message", data, (ack) => {
+      if (ack && ack.success) {
+        resolve(ack);
+      } else {
+        reject(new Error(ack?.error || "Failed to edit message"));
+      }
+    });
+  });
+}
+
+export function deleteChatMessage(data) {
+  return new Promise((resolve, reject) => {
+    if (!socket || !socket.connected) {
+      return reject(new Error("Chat socket is currently disconnected."));
+    }
+    socket.emit("delete_message", data, (ack) => {
+      if (ack && ack.success) {
+        resolve(ack);
+      } else {
+        reject(new Error(ack?.error || "Failed to delete message"));
       }
     });
   });

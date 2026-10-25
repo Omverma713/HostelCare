@@ -300,6 +300,21 @@ const systemConfigSchema = new mongoose.Schema(
         },
       },
     },
+
+    devChatNotifications: {
+      enabled: {
+        type: Boolean,
+        default: true,
+      },
+      notifyStudent: {
+        type: Boolean,
+        default: true,
+      },
+      notifySuperAdmin: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
   {
     timestamps: true,

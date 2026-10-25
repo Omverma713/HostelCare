@@ -3,19 +3,76 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 const ChatTicket = require("../models/chatTicket.model");
 const ChatMessage = require("../models/chatMessage.model");
+const SystemConfig = require("../models/systemConfig.model");
+const Session = require("../models/session.model");
+const { sendPushToSessions } = require("../services/pushService");
 
 let ioInstance = null;
 
-/**
- * Initializes Socket.IO with CORS, JWT handshake authentication,
- * and real-time room messaging for Chat Tickets.
- */
 // Global active user socket tracking: userId -> Set<socketId>
 const activeUsers = new Map();
 
 function isUserOnline(userId) {
   const set = activeUsers.get(String(userId));
   return Boolean(set && set.size > 0);
+}
+
+/**
+ * Dispatches Push Notifications (FCM / WebPush) if enabled in Super Admin settings
+ */
+async function dispatchDevChatPushNotification(ticket, msg, sender, contentType) {
+  try {
+    const config = await SystemConfig.getEffectiveConfig();
+    const chatNotifConfig = config.devChatNotifications || {
+      enabled: true,
+      notifyStudent: true,
+      notifySuperAdmin: true,
+    };
+
+    if (!chatNotifConfig.enabled) {
+      return; // Disabled by Super Admin
+    }
+
+    const isStudentSender = String(ticket.student) === String(sender.id);
+    const targetUserId = isStudentSender ? ticket.developer : ticket.student;
+
+    if (isStudentSender && chatNotifConfig.notifySuperAdmin === false) {
+      return;
+    }
+    if (!isStudentSender && chatNotifConfig.notifyStudent === false) {
+      return;
+    }
+
+    const targetSessions = await Session.find({
+      userId: targetUserId,
+      $or: [
+        { pushToken: { $ne: null } },
+        { webPushSubscription: { $ne: null } },
+      ],
+    }).lean();
+
+    if (targetSessions.length > 0) {
+      const senderRoleLabel = sender.role === "superadmin" ? "Developer Support" : "Student";
+      const title = `💬 ${sender.name} (${senderRoleLabel})`;
+      const body =
+        contentType === "image"
+          ? "📷 Sent a photo in support chat"
+          : `New message in ticket #${ticket.ticketId}`;
+
+      sendPushToSessions(targetSessions, {
+        title,
+        body,
+        route: "/chat",
+        data: {
+          ticketId: ticket.ticketId,
+          type: "chat_message",
+          senderName: sender.name,
+        },
+      }).catch((err) => console.warn("Chat push notification notice:", err.message));
+    }
+  } catch (err) {
+    console.warn("Error in dispatchDevChatPushNotification:", err.message);
+  }
 }
 
 /**
@@ -167,7 +224,7 @@ function initChatSocket(httpServer) {
      */
     socket.on("send_message", async (data, ack) => {
       try {
-        const { ticketId, encryptedContent, iv, authTag, contentType = "text" } = data;
+        const { ticketId, encryptedContent, iv, authTag, contentType = "text", mediaSize = 0 } = data;
 
         if (!ticketId || !encryptedContent || !iv) {
           if (ack) ack({ success: false, error: "Missing required encrypted message payload" });
@@ -198,12 +255,13 @@ function initChatSocket(httpServer) {
           iv,
           authTag: authTag || "",
           contentType,
+          mediaSize: Number(mediaSize) || 0,
           read: false,
         });
 
         // Update ticket preview & unread counts
         ticket.lastMessage = {
-          preview: "Encrypted Message",
+          preview: contentType === "image" ? "📷 Image" : "Encrypted Message",
           senderRole: user.role,
           senderName: user.name,
           at: new Date(),
@@ -231,6 +289,9 @@ function initChatSocket(httpServer) {
           iv: msg.iv,
           authTag: msg.authTag,
           contentType: msg.contentType,
+          mediaSize: msg.mediaSize,
+          isEdited: false,
+          isDeleted: false,
           read: msg.read,
           createdAt: msg.createdAt,
         };
@@ -251,9 +312,136 @@ function initChatSocket(httpServer) {
           unreadCount: isStudent ? ticket.unreadDeveloper : ticket.unreadStudent,
         });
 
+        // 4. Trigger Real-time Push Notification (FCM / WebPush)
+        dispatchDevChatPushNotification(ticket, msg, user, contentType);
+
         if (ack) ack({ success: true, messageId: msg._id, message: broadcastPayload });
       } catch (err) {
         console.error("send_message socket error:", err);
+        if (ack) ack({ success: false, error: err.message });
+      }
+    });
+
+    /**
+     * edit_message: Student (own message) or Super Admin edits encrypted message content
+     */
+    socket.on("edit_message", async (data, ack) => {
+      try {
+        const { ticketId, messageId, encryptedContent, iv, authTag } = data;
+
+        if (!ticketId || !messageId || !encryptedContent || !iv) {
+          if (ack) ack({ success: false, error: "Missing required edit message payload" });
+          return;
+        }
+
+        const msg = await ChatMessage.findById(messageId);
+        if (!msg || msg.ticketId !== ticketId) {
+          if (ack) ack({ success: false, error: "Message not found" });
+          return;
+        }
+
+        if (msg.isDeleted) {
+          if (ack) ack({ success: false, error: "Cannot edit a deleted message" });
+          return;
+        }
+
+        const isSuperAdmin = user.role === "superadmin";
+        const isSender = String(msg.sender) === String(user.id);
+
+        if (!isSuperAdmin && !isSender) {
+          if (ack) ack({ success: false, error: "You can only edit your own messages" });
+          return;
+        }
+
+        msg.encryptedContent = encryptedContent;
+        msg.iv = iv;
+        msg.authTag = authTag || "";
+        msg.isEdited = true;
+        msg.editedAt = new Date();
+        await msg.save();
+
+        const payload = {
+          _id: msg._id,
+          ticketId: msg.ticketId,
+          encryptedContent: msg.encryptedContent,
+          iv: msg.iv,
+          authTag: msg.authTag,
+          isEdited: true,
+          editedAt: msg.editedAt,
+        };
+
+        const roomName = `ticket_${ticketId}`;
+        io.to(roomName).emit("message_edited", payload);
+
+        try {
+          const ticket = await ChatTicket.findOne({ ticketId }).select("student developer").lean();
+          if (ticket) {
+            const targetUserId = String(ticket.student) === String(user.id) ? String(ticket.developer) : String(ticket.student);
+            io.to(`user_${targetUserId}`).emit("message_edited", payload);
+          }
+        } catch (e) {
+          // pass
+        }
+
+        if (ack) ack({ success: true, message: payload });
+      } catch (err) {
+        console.error("edit_message error:", err);
+        if (ack) ack({ success: false, error: err.message });
+      }
+    });
+
+    /**
+     * delete_message: Super Admin deletes a message in ticket
+     */
+    socket.on("delete_message", async (data, ack) => {
+      try {
+        const { ticketId, messageId } = data;
+
+        if (!ticketId || !messageId) {
+          if (ack) ack({ success: false, error: "Missing required delete message payload" });
+          return;
+        }
+
+        const msg = await ChatMessage.findById(messageId);
+        if (!msg || msg.ticketId !== ticketId) {
+          if (ack) ack({ success: false, error: "Message not found" });
+          return;
+        }
+
+        const isSuperAdmin = user.role === "superadmin";
+        if (!isSuperAdmin) {
+          if (ack) ack({ success: false, error: "Only Super Admin has permission to delete messages" });
+          return;
+        }
+
+        msg.isDeleted = true;
+        msg.deletedAt = new Date();
+        msg.deletedBy = user.id;
+        await msg.save();
+
+        const payload = {
+          _id: msg._id,
+          ticketId: msg.ticketId,
+          isDeleted: true,
+          deletedAt: msg.deletedAt,
+        };
+
+        const roomName = `ticket_${ticketId}`;
+        io.to(roomName).emit("message_deleted", payload);
+
+        try {
+          const ticket = await ChatTicket.findOne({ ticketId }).select("student developer").lean();
+          if (ticket) {
+            const targetUserId = String(ticket.student) === String(user.id) ? String(ticket.developer) : String(ticket.student);
+            io.to(`user_${targetUserId}`).emit("message_deleted", payload);
+          }
+        } catch (e) {
+          // pass
+        }
+
+        if (ack) ack({ success: true, message: payload });
+      } catch (err) {
+        console.error("delete_message error:", err);
         if (ack) ack({ success: false, error: err.message });
       }
     });

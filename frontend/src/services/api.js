@@ -308,5 +308,29 @@ export const api = {
       body: JSON.stringify(ratingData),
     });
   },
+
+  editChatMessage(ticketId, messageId, payload) {
+    return request(`/chat/tickets/${ticketId}/messages/${messageId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteChatMessage(ticketId, messageId) {
+    return request(`/chat/tickets/${ticketId}/messages/${messageId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getChatNotificationConfig() {
+    return request('/chat/notifications/config');
+  },
+
+  updateChatNotificationConfig(payload) {
+    return request('/chat/notifications/config', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
 };
 

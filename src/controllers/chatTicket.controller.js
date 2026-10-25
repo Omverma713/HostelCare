@@ -459,6 +459,172 @@ async function sendTicketMessage(req, res) {
   }
 }
 
+/**
+ * PATCH /api/v1/chat/tickets/:ticketId/messages/:messageId
+ * Edit message content (Student for own message, Super Admin for any)
+ */
+async function editMessage(req, res) {
+  try {
+    const { ticketId, messageId } = req.params;
+    const { encryptedContent, iv, authTag } = req.body;
+    const user = req.user;
+
+    if (!encryptedContent || !iv) {
+      return res.status(400).json({ success: false, message: "Encrypted content and IV are required" });
+    }
+
+    const msg = await ChatMessage.findById(messageId);
+    if (!msg || msg.ticketId !== ticketId) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    if (msg.isDeleted) {
+      return res.status(400).json({ success: false, message: "Cannot edit a deleted message" });
+    }
+
+    const isSuperAdmin = user.role === "superadmin";
+    const isSender = String(msg.sender) === String(user.id || user._id);
+
+    if (!isSuperAdmin && !isSender) {
+      return res.status(403).json({ success: false, message: "Unauthorized to edit this message" });
+    }
+
+    msg.encryptedContent = encryptedContent;
+    msg.iv = iv;
+    msg.authTag = authTag || "";
+    msg.isEdited = true;
+    msg.editedAt = new Date();
+    await msg.save();
+
+    const payload = {
+      _id: msg._id,
+      ticketId: msg.ticketId,
+      encryptedContent: msg.encryptedContent,
+      iv: msg.iv,
+      authTag: msg.authTag,
+      isEdited: true,
+      editedAt: msg.editedAt,
+    };
+
+    try {
+      const { getChatIO } = require("../sockets/chatSocket");
+      const io = getChatIO();
+      if (io) {
+        io.to(`ticket_${ticketId}`).emit("message_edited", payload);
+      }
+    } catch (e) {
+      // pass
+    }
+
+    return res.status(200).json({ success: true, message: payload });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+/**
+ * DELETE /api/v1/chat/tickets/:ticketId/messages/:messageId
+ * Delete a message (Super Admin only)
+ */
+async function deleteMessage(req, res) {
+  try {
+    const { ticketId, messageId } = req.params;
+    const user = req.user;
+
+    const isSuperAdmin = user.role === "superadmin";
+    if (!isSuperAdmin) {
+      return res.status(403).json({ success: false, message: "Only Super Admin can delete messages" });
+    }
+
+    const msg = await ChatMessage.findById(messageId);
+    if (!msg || msg.ticketId !== ticketId) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    msg.isDeleted = true;
+    msg.deletedAt = new Date();
+    msg.deletedBy = user.id || user._id;
+    await msg.save();
+
+    const payload = {
+      _id: msg._id,
+      ticketId: msg.ticketId,
+      isDeleted: true,
+      deletedAt: msg.deletedAt,
+    };
+
+    try {
+      const { getChatIO } = require("../sockets/chatSocket");
+      const io = getChatIO();
+      if (io) {
+        io.to(`ticket_${ticketId}`).emit("message_deleted", payload);
+      }
+    } catch (e) {
+      // pass
+    }
+
+    return res.status(200).json({ success: true, message: payload });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+/**
+ * GET /api/v1/chat/notifications/config
+ * Get notification configuration for chat
+ */
+async function getChatNotificationConfig(req, res) {
+  try {
+    const SystemConfig = require("../models/systemConfig.model");
+    const config = await SystemConfig.getEffectiveConfig();
+    return res.status(200).json({
+      success: true,
+      config: config.devChatNotifications || {
+        enabled: true,
+        notifyStudent: true,
+        notifySuperAdmin: true,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+/**
+ * PATCH /api/v1/chat/notifications/config
+ * Super Admin updates chat notification settings
+ */
+async function updateChatNotificationConfig(req, res) {
+  try {
+    const user = req.user;
+    if (user.role !== "superadmin") {
+      return res.status(403).json({ success: false, message: "Only Super Admin can configure chat notifications" });
+    }
+
+    const { enabled, notifyStudent, notifySuperAdmin } = req.body;
+    const SystemConfig = require("../models/systemConfig.model");
+    const config = await SystemConfig.getEffectiveConfig();
+
+    if (!config.devChatNotifications) {
+      config.devChatNotifications = {};
+    }
+
+    if (typeof enabled === "boolean") config.devChatNotifications.enabled = enabled;
+    if (typeof notifyStudent === "boolean") config.devChatNotifications.notifyStudent = notifyStudent;
+    if (typeof notifySuperAdmin === "boolean") config.devChatNotifications.notifySuperAdmin = notifySuperAdmin;
+
+    await config.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Chat notification settings updated successfully",
+      config: config.devChatNotifications,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
 module.exports = {
   createTicket,
   getTickets,
@@ -467,4 +633,8 @@ module.exports = {
   sendTicketMessage,
   updateTicketStatus,
   rateTicket,
+  editMessage,
+  deleteMessage,
+  getChatNotificationConfig,
+  updateChatNotificationConfig,
 };

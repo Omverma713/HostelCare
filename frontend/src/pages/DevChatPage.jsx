@@ -9,12 +9,22 @@ import {
   joinTicketRoom,
   leaveTicketRoom,
   sendChatMessage,
+  editChatMessage,
+  deleteChatMessage,
   sendTypingIndicator,
   markTicketMessagesRead,
   addChatListener,
 } from '../services/chatSocketService';
 import { encryptMessage, decryptMessage } from '../utils/e2eeCrypto';
 import './DevChatPage.css';
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '277 KB';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(0)) + ' ' + sizes[i];
+}
 
 const CATEGORIES = [
   { id: 'Bug Report', label: 'Bug Report', icon: '🐞', color: '#ef4444' },
@@ -58,10 +68,21 @@ export default function DevChatPage() {
   const [newInitialMsg, setNewInitialMsg] = useState('');
   const [creatingTicket, setCreatingTicket] = useState(false);
 
+  // WhatsApp Image Download & Blur States (Images 2 & 4)
+  const [downloadedImages, setDownloadedImages] = useState({});
+  const [downloadingImages, setDownloadingImages] = useState({});
+
+  // Message Context Action Menu & Edit States (Long press on mobile, Right click on PC)
+  const [activeActionMenu, setActiveActionMenu] = useState(null); // { msg, x, y, canEdit, canDelete, isMine }
+  const [editingMessage, setEditingMessage] = useState(null); // { msg, text }
+  const [chatNotifsEnabled, setChatNotifsEnabled] = useState(true);
+
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const longPressTimerRef = useRef(null);
 
   // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
@@ -325,6 +346,41 @@ export default function DevChatPage() {
       }
     });
 
+    const removeEditListener = addChatListener('message_edited', async (data) => {
+      if (activeTicket && String(data.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase()) {
+        let plainText = '';
+        try {
+          plainText = await decryptMessage(
+            data.encryptedContent,
+            data.iv,
+            activeTicket.ticketId,
+            activeTicket.e2eeSalt
+          );
+        } catch (e) {
+          plainText = '[Encrypted content]';
+        }
+        setMessages((prev) =>
+          prev.map((m) =>
+            String(m._id) === String(data._id)
+              ? { ...m, ...data, text: plainText, isEdited: true, editedAt: data.editedAt }
+              : m
+          )
+        );
+      }
+    });
+
+    const removeDeleteListener = addChatListener('message_deleted', (data) => {
+      if (activeTicket && String(data.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase()) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            String(m._id) === String(data._id)
+              ? { ...m, isDeleted: true, deletedAt: data.deletedAt }
+              : m
+          )
+        );
+      }
+    });
+
     const removeActivityListener = addChatListener('ticket_activity', (data) => {
       setTickets((prev) =>
         prev.map((t) =>
@@ -346,10 +402,144 @@ export default function DevChatPage() {
       removeTypingListener();
       removePresenceListener();
       removeReadListener();
+      removeEditListener();
+      removeDeleteListener();
       removeActivityListener();
       if (partnerTypingTimer.current) clearTimeout(partnerTypingTimer.current);
     };
   }, [activeTicket, user, isDeveloper]);
+
+  // Load superadmin chat notification preferences
+  useEffect(() => {
+    if (isDeveloper) {
+      api.getChatNotificationConfig()
+        .then((res) => {
+          if (res?.success && res.config) {
+            setChatNotifsEnabled(Boolean(res.config.enabled));
+          }
+        })
+        .catch((err) => console.warn('Could not load chat notification config:', err));
+    }
+  }, [isDeveloper]);
+
+  const handleToggleNotifs = async () => {
+    try {
+      const next = !chatNotifsEnabled;
+      setChatNotifsEnabled(next);
+      await api.updateChatNotificationConfig({ enabled: next });
+      triggerToast('info', `Chat push notifications ${next ? 'enabled' : 'disabled'}`, 'Notifications');
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update notification settings', 'Error');
+    }
+  };
+
+  // Image Download & Spinner Trigger (Images 2 & 4)
+  const triggerImageDownload = (msgId) => {
+    setDownloadingImages((prev) => ({ ...prev, [msgId]: true }));
+    setTimeout(() => {
+      setDownloadingImages((prev) => {
+        const next = { ...prev };
+        delete next[msgId];
+        return next;
+      });
+      setDownloadedImages((prev) => ({ ...prev, [msgId]: true }));
+    }, 700);
+  };
+
+  // Context Menu & Long-Press Handlers for Messages
+  const handleContextMenu = (msg, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isMine = String(msg.sender) === String(user?.id || user?._id);
+    const canEdit = (isDeveloper || isMine) && !msg.isDeleted && msg.contentType !== 'image';
+    const canDelete = isDeveloper && !msg.isDeleted;
+    const x = Math.min(e.clientX, window.innerWidth - 200);
+    const y = Math.min(e.clientY, window.innerHeight - 200);
+    setActiveActionMenu({ msg, x, y, canEdit, canDelete, isMine });
+  };
+
+  const handleTouchStart = (msg, e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      const isMine = String(msg.sender) === String(user?.id || user?._id);
+      const canEdit = (isDeveloper || isMine) && !msg.isDeleted && msg.contentType !== 'image';
+      const canDelete = isDeveloper && !msg.isDeleted;
+      const x = Math.min(clientX, window.innerWidth - 200);
+      const y = Math.min(clientY, window.innerHeight - 200);
+      setActiveActionMenu({ msg, x, y, canEdit, canDelete, isMine });
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+  };
+
+  const handleCopyMessage = (msg) => {
+    if (msg.text) {
+      navigator.clipboard.writeText(msg.text);
+      triggerToast('success', 'Message copied to clipboard', 'Copied');
+    }
+    setActiveActionMenu(null);
+  };
+
+  const handleStartEdit = (msg) => {
+    setActiveActionMenu(null);
+    setEditingMessage({ msg, text: msg.text || '' });
+  };
+
+  const handleConfirmEdit = async () => {
+    if (!editingMessage || !editingMessage.text.trim()) return;
+    try {
+      const { msg, text } = editingMessage;
+      const { encryptedContent, iv, authTag } = await encryptMessage(
+        text.trim(),
+        activeTicket.ticketId,
+        activeTicket.e2eeSalt
+      );
+      await editChatMessage({
+        ticketId: activeTicket.ticketId,
+        messageId: msg._id,
+        encryptedContent,
+        iv,
+        authTag,
+      });
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === msg._id
+            ? { ...m, text: text.trim(), isEdited: true, editedAt: new Date() }
+            : m
+        )
+      );
+      triggerToast('success', 'Message updated successfully', 'Edited');
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to edit message', 'Error');
+    } finally {
+      setEditingMessage(null);
+    }
+  };
+
+  const handleConfirmDelete = async (msg) => {
+    setActiveActionMenu(null);
+    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    try {
+      await deleteChatMessage({
+        ticketId: activeTicket.ticketId,
+        messageId: msg._id,
+      });
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === msg._id ? { ...m, isDeleted: true, deletedAt: new Date() } : m
+        )
+      );
+      triggerToast('success', 'Message deleted', 'Deleted');
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to delete message', 'Error');
+    }
+  };
 
   // 5. Handle Send Message (Optimistic Live UI + E2EE + Dual Delivery + Image Support)
   const handleSendMessage = async (e) => {
@@ -382,6 +572,7 @@ export default function DevChatPage() {
 
     // 1. Optimistic message preview (zero delay for sender)
     const tempId = `temp_${Date.now()}`;
+    const imageSize = selectedImage ? selectedImage.size : 0;
     const optimisticMessage = {
       _id: tempId,
       ticketId: activeTicket.ticketId,
@@ -390,9 +581,14 @@ export default function DevChatPage() {
       senderName: user?.name || 'You',
       text: rawPayload,
       contentType: isImageMessage ? 'image' : 'text',
+      mediaSize: imageSize,
       read: false,
       createdAt: new Date().toISOString(),
     };
+
+    if (isImageMessage) {
+      setDownloadedImages((prev) => ({ ...prev, [tempId]: true }));
+    }
 
     setMessages((prev) => [...prev, optimisticMessage]);
     setTimeout(scrollToBottom, 40);
@@ -416,7 +612,7 @@ export default function DevChatPage() {
 
     try {
       // 2. Client-side E2EE encryption using Web Crypto AES-256-GCM
-      const { encryptedContent, iv } = await encryptMessage(
+      const { encryptedContent, iv, authTag } = await encryptMessage(
         rawPayload,
         activeTicket.ticketId,
         activeTicket.e2eeSalt
@@ -427,24 +623,37 @@ export default function DevChatPage() {
           ticketId: activeTicket.ticketId,
           encryptedContent,
           iv,
+          authTag,
           contentType: isImageMessage ? 'image' : 'text',
+          mediaSize: imageSize,
         });
         if (ack && ack.messageId) {
           setMessages((prev) =>
-            prev.map((m) => (m._id === tempId ? { ...m, _id: ack.messageId, read: false } : m))
+            prev.map((m) =>
+              m._id === tempId ? { ...m, _id: ack.messageId, read: false, mediaSize: imageSize } : m
+            )
           );
+          if (isImageMessage) {
+            setDownloadedImages((prev) => ({ ...prev, [ack.messageId]: true, [tempId]: true }));
+          }
         }
       } catch (socketErr) {
         console.warn('Socket delivery failed, using REST fallback:', socketErr.message);
         const res = await api.sendChatTicketMessage(activeTicket.ticketId, {
           encryptedContent,
           iv,
+          authTag,
           contentType: isImageMessage ? 'image' : 'text',
+          mediaSize: imageSize,
         });
         if (res.success && res.message) {
+          const finalId = res.message._id || tempId;
           setMessages((prev) =>
             prev.map((m) => (m._id === tempId ? { ...res.message, text: rawPayload } : m))
           );
+          if (isImageMessage) {
+            setDownloadedImages((prev) => ({ ...prev, [finalId]: true, [tempId]: true }));
+          }
           setTimeout(scrollToBottom, 60);
         }
       }
@@ -719,6 +928,22 @@ export default function DevChatPage() {
                   </div>
 
                   <div className="room-actions">
+                    {isDeveloper && (
+                      <button
+                        type="button"
+                        onClick={handleToggleNotifs}
+                        className="btn-resolve-ticket"
+                        style={{
+                          background: chatNotifsEnabled ? 'rgba(0, 168, 132, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                          borderColor: chatNotifsEnabled ? 'rgba(0, 168, 132, 0.35)' : 'rgba(239, 68, 68, 0.35)',
+                          color: chatNotifsEnabled ? 'var(--wa-green-action)' : '#ef4444',
+                        }}
+                        title="Toggle Support Push Notifications for Mobile & Devices"
+                      >
+                        {chatNotifsEnabled ? '🔔 Push: ON' : '🔕 Push: OFF'}
+                      </button>
+                    )}
+
                     <span className={`ticket-status-chip ${activeTicket.status}`}>
                       {activeTicket.status.replace('_', ' ')}
                     </span>
@@ -759,6 +984,30 @@ export default function DevChatPage() {
                         minute: '2-digit',
                       });
 
+                      if (msg.isDeleted) {
+                        return (
+                          <div
+                            key={msg._id || msg.createdAt}
+                            className={`chat-bubble-row ${isMine ? 'mine' : 'theirs'}`}
+                            onContextMenu={(e) => handleContextMenu(msg, e)}
+                            onTouchStart={(e) => handleTouchStart(msg, e)}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchMove={handleTouchEnd}
+                          >
+                            {!isMine && <span className="chat-sender-name">{msg.senderName}</span>}
+                            <div className="chat-bubble">
+                              <div className="chat-bubble-deleted">
+                                <span>🚫</span>
+                                <span>This message was deleted</span>
+                              </div>
+                              <div className="chat-bubble-meta">
+                                <span>{timeStr}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       // Detect media / screenshot payload
                       let mediaData = null;
                       let displayText = msg.text;
@@ -778,21 +1027,67 @@ export default function DevChatPage() {
                         mediaData = { image: msg.text, caption: '' };
                       }
 
+                      const isDownloaded = isMine || downloadedImages[msg._id];
+                      const isDownloading = downloadingImages[msg._id];
+                      const fileSizeStr = formatBytes(msg.mediaSize || mediaData?.size || 283648);
+
                       return (
                         <div
                           key={msg._id || msg.createdAt}
                           className={`chat-bubble-row ${isMine ? 'mine' : 'theirs'}`}
+                          onContextMenu={(e) => handleContextMenu(msg, e)}
+                          onTouchStart={(e) => handleTouchStart(msg, e)}
+                          onTouchEnd={handleTouchEnd}
+                          onTouchMove={handleTouchEnd}
                         >
                           {!isMine && <span className="chat-sender-name">{msg.senderName}</span>}
                           <div className={`chat-bubble ${mediaData ? 'has-media' : ''}`}>
                             {mediaData ? (
                               <div className="chat-media-wrapper">
-                                <img
-                                  src={mediaData.image}
-                                  alt="Shared Screenshot"
-                                  className="chat-bubble-image"
-                                  onClick={() => setZoomedImage(mediaData.image)}
-                                />
+                                <div style={{ position: 'relative' }}>
+                                  <img
+                                    src={mediaData.image}
+                                    alt="Shared Screenshot"
+                                    className={`chat-bubble-image ${!isDownloaded ? 'blurred' : ''}`}
+                                    onClick={() => {
+                                      if (isDownloaded) {
+                                        setZoomedImage(mediaData.image);
+                                      } else {
+                                        triggerImageDownload(msg._id);
+                                      }
+                                    }}
+                                  />
+                                  {!isDownloaded && (
+                                    <div className="image-download-overlay">
+                                      {isDownloading ? (
+                                        <div
+                                          className="download-spinner-ring"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDownloadingImages((prev) => ({ ...prev, [msg._id]: false }));
+                                          }}
+                                          title="Cancel download"
+                                        >
+                                          <div className="spinner-arc" />
+                                          <span className="spinner-cancel">✕</span>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          className="download-pill-btn"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            triggerImageDownload(msg._id);
+                                          }}
+                                          title="Download media"
+                                        >
+                                          <span className="dl-icon">⬇</span>
+                                          <span>{fileSizeStr}</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                                 {mediaData.caption && (
                                   <p className="chat-media-caption">{mediaData.caption}</p>
                                 )}
@@ -802,6 +1097,7 @@ export default function DevChatPage() {
                             )}
 
                             <div className="chat-bubble-meta">
+                              {msg.isEdited && <span className="chat-edited-tag">(edited)</span>}
                               <span>{timeStr}</span>
                               {isMine && (
                                 <span className={`read-ticks ${msg.read ? 'read' : 'unread'}`}>
@@ -834,7 +1130,7 @@ export default function DevChatPage() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Bar Container with Media Preview & Attach Button */}
+                {/* Input Bar Container with Media Preview & WhatsApp Capsule */}
                 <form className="devchat-input-bar" onSubmit={handleSendMessage}>
                   {selectedImage && (
                     <div className="chat-image-preview-bar">
@@ -852,22 +1148,14 @@ export default function DevChatPage() {
                       <div className="preview-meta">
                         <span className="preview-filename">{selectedImage.name}</span>
                         <span className="preview-filesize">
-                          {Math.round(selectedImage.size / 1024)} KB • Ready to send
+                          {formatBytes(selectedImage.size)} • Ready to send
                         </span>
                       </div>
                     </div>
                   )}
 
                   <div className="devchat-input-row">
-                    <button
-                      type="button"
-                      className="btn-attach-media"
-                      onClick={() => fileInputRef.current?.click()}
-                      title="Attach image or screenshot"
-                      id="btn-attach-chat-media"
-                    >
-                      📎
-                    </button>
+                    {/* Hidden Inputs for File and Camera Capture */}
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -876,32 +1164,82 @@ export default function DevChatPage() {
                       onChange={handleFileSelect}
                       id="chat-file-input"
                     />
-
-                    <textarea
-                      ref={textareaRef}
-                      value={inputText}
-                      onChange={handleInputChange}
-                      onPaste={handlePaste}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                      placeholder={selectedImage ? "Add a caption (optional)..." : `Type a message to ${isDeveloper ? 'student' : 'developer'} (Press Enter to send)...`}
-                      className="devchat-input-field"
-                      rows={1}
-                      id="chat-message-input"
+                    <input
+                      type="file"
+                      ref={cameraInputRef}
+                      accept="image/*"
+                      capture="environment"
+                      style={{ display: 'none' }}
+                      onChange={handleFileSelect}
+                      id="chat-camera-input"
                     />
 
+                    {/* WhatsApp-Style Input Capsule */}
+                    <div className="whatsapp-input-capsule">
+                      <button
+                        type="button"
+                        className="btn-input-emoji"
+                        onClick={() => {
+                          setInputText((prev) => prev + '😊');
+                          textareaRef.current?.focus();
+                        }}
+                        title="Emoji"
+                      >
+                        😊
+                      </button>
+
+                      <textarea
+                        ref={textareaRef}
+                        value={inputText}
+                        onChange={handleInputChange}
+                        onPaste={handlePaste}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                        placeholder="Message"
+                        className="devchat-input-field"
+                        rows={1}
+                        id="chat-message-input"
+                      />
+
+                      <button
+                        type="button"
+                        className="btn-input-attachment"
+                        onClick={() => fileInputRef.current?.click()}
+                        title="Attach image or file"
+                        id="btn-attach-chat-media"
+                      >
+                        📎
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-input-camera"
+                        onClick={() => cameraInputRef.current?.click()}
+                        title="Camera / Photo"
+                        id="btn-chat-camera"
+                      >
+                        📷
+                      </button>
+                    </div>
+
+                    {/* Separate Floating Circular Action Button */}
                     <button
                       type="submit"
                       className="btn-send-message"
-                      disabled={(!inputText.trim() && !selectedImage) || sending}
                       id="btn-send-chat-msg"
-                      title="Send message"
+                      title={inputText.trim() || selectedImage ? 'Send message' : 'Voice note'}
                     >
-                      {sending ? '...' : '➤'}
+                      {sending ? (
+                        '...'
+                      ) : inputText.trim() || selectedImage ? (
+                        <span className="send-arrow-icon">➤</span>
+                      ) : (
+                        '🎙️'
+                      )}
                     </button>
                   </div>
                 </form>
@@ -1083,6 +1421,114 @@ export default function DevChatPage() {
                 onClick={() => setZoomedImage(null)}
               >
                 ✕ Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Context Menu / Long Press Action Card (Images 1 & 3: edit & deletion) */}
+      {activeActionMenu && (
+        <div
+          className="chat-action-menu-backdrop"
+          onClick={() => setActiveActionMenu(null)}
+        >
+          <div
+            className="chat-action-menu-card"
+            style={{
+              top: `${Math.min(activeActionMenu.y, window.innerHeight - 170)}px`,
+              left: `${Math.min(activeActionMenu.x, window.innerWidth - 200)}px`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="chat-action-item"
+              onClick={() => handleCopyMessage(activeActionMenu.msg)}
+            >
+              <span>📋</span>
+              <span>Copy Text</span>
+            </button>
+
+            {activeActionMenu.canEdit && (
+              <button
+                type="button"
+                className="chat-action-item"
+                onClick={() => handleStartEdit(activeActionMenu.msg)}
+              >
+                <span>✏️</span>
+                <span>Edit Message</span>
+              </button>
+            )}
+
+            {activeActionMenu.canDelete && (
+              <button
+                type="button"
+                className="chat-action-item danger"
+                onClick={() => handleConfirmDelete(activeActionMenu.msg)}
+              >
+                <span>🗑️</span>
+                <span>Delete Message</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Message Modal Dialog */}
+      {editingMessage && (
+        <div
+          className="chat-action-menu-backdrop"
+          onClick={() => setEditingMessage(null)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <div
+            className="chat-edit-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h4 style={{ margin: 0, color: 'var(--wa-text-primary)' }}>✏️ Edit Message</h4>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--wa-text-secondary)' }}>
+              Modify your message. The recipient will see an (edited) label.
+            </p>
+            <textarea
+              className="chat-edit-textarea"
+              value={editingMessage.text}
+              onChange={(e) =>
+                setEditingMessage((prev) => ({ ...prev, text: e.target.value }))
+              }
+              placeholder="Edit your message..."
+              autoFocus
+            />
+            <div className="chat-edit-actions">
+              <button
+                type="button"
+                onClick={() => setEditingMessage(null)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--wa-border)',
+                  background: 'transparent',
+                  color: 'var(--wa-text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmEdit}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'var(--wa-green-action)',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                }}
+              >
+                Save
               </button>
             </div>
           </div>
