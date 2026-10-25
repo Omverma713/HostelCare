@@ -414,6 +414,37 @@ async function sendTicketMessage(req, res) {
 
     await ticket.save();
 
+    // Broadcast via Socket.IO if active
+    try {
+      const { getChatIO } = require("../sockets/chatSocket");
+      const io = getChatIO();
+      if (io) {
+        const broadcastPayload = {
+          _id: message._id,
+          ticketId: message.ticketId,
+          sender: message.sender,
+          senderRole: message.senderRole,
+          senderName: message.senderName,
+          encryptedContent: message.encryptedContent,
+          iv: message.iv,
+          contentType: message.contentType,
+          read: message.read,
+          createdAt: message.createdAt,
+        };
+
+        const targetUserId = isStudent ? String(ticket.developer) : String(ticket.student);
+        io.to(`ticket_${ticketId}`).emit("new_message", broadcastPayload);
+        io.to(`user_${targetUserId}`).emit("new_message", broadcastPayload);
+        io.to(`user_${targetUserId}`).emit("ticket_activity", {
+          ticketId,
+          lastMessage: ticket.lastMessage,
+          unreadCount: isStudent ? ticket.unreadDeveloper : ticket.unreadStudent,
+        });
+      }
+    } catch (broadcastErr) {
+      console.warn("Socket broadcast error in sendTicketMessage:", broadcastErr.message);
+    }
+
     return res.status(201).json({
       success: true,
       message,

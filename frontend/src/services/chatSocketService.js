@@ -18,6 +18,11 @@ function getSocketUrl() {
 /**
  * Initializes and connects Socket.io with JWT token
  */
+let currentJoinedRoom = null;
+
+/**
+ * Initializes and connects Socket.io with JWT token
+ */
 export function connectChatSocket(token) {
   if (socket && socket.connected) {
     return socket;
@@ -30,13 +35,16 @@ export function connectChatSocket(token) {
     auth: { token },
     transports: ["websocket", "polling"],
     reconnection: true,
-    reconnectionAttempts: 10,
-    reconnectionDelay: 2000,
+    reconnectionAttempts: 20,
+    reconnectionDelay: 1000,
   });
 
   socket.on("connect", () => {
     console.log("✅ [ChatSocketService] Socket connected successfully:", socket.id);
     emitLocalEvent("connection_status", { connected: true, socketId: socket.id });
+    if (currentJoinedRoom) {
+      socket.emit("join_ticket", { ticketId: currentJoinedRoom });
+    }
   });
 
   socket.on("disconnect", (reason) => {
@@ -53,12 +61,24 @@ export function connectChatSocket(token) {
     emitLocalEvent("new_message", msg);
   });
 
+  socket.on("joined_ticket", (data) => {
+    emitLocalEvent("joined_ticket", data);
+  });
+
   socket.on("typing_change", (data) => {
     emitLocalEvent("typing_change", data);
   });
 
   socket.on("user_presence", (data) => {
     emitLocalEvent("user_presence", data);
+  });
+
+  socket.on("global_presence", (data) => {
+    emitLocalEvent("user_presence", data);
+  });
+
+  socket.on("ticket_activity", (data) => {
+    emitLocalEvent("ticket_activity", data);
   });
 
   socket.on("messages_read", (data) => {
@@ -76,17 +96,22 @@ export function disconnectChatSocket() {
   if (socket) {
     socket.disconnect();
     socket = null;
+    currentJoinedRoom = null;
     listeners.clear();
   }
 }
 
 export function joinTicketRoom(ticketId) {
+  currentJoinedRoom = ticketId;
   if (socket && socket.connected) {
     socket.emit("join_ticket", { ticketId });
   }
 }
 
 export function leaveTicketRoom(ticketId) {
+  if (currentJoinedRoom === ticketId) {
+    currentJoinedRoom = null;
+  }
   if (socket && socket.connected) {
     socket.emit("leave_ticket", { ticketId });
   }
@@ -117,9 +142,8 @@ export function sendTypingIndicator(ticketId, isTyping) {
 }
 
 export function markTicketMessagesRead(ticketId) {
-  if (socket && socket.connected) {
-    socket.emit("mark_read", { ticketId });
-  }
+  if (!socket || !socket.connected) return;
+  socket.emit("mark_read", { ticketId });
 }
 
 // Local pub/sub listener registry

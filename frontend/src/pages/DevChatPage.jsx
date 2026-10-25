@@ -148,12 +148,14 @@ export default function DevChatPage() {
     }
   };
 
-  // 4. Real-Time Socket Event Listeners for Active Ticket
+  // 4. Real-Time Socket Event Listeners for Active Ticket & Global Ticket Updates
   useEffect(() => {
-    if (!activeTicket) return;
+    const partnerTypingTimer = { current: null };
 
+    // Listen for all new messages globally (instant live delivery without reopening)
     const removeMsgListener = addChatListener('new_message', async (incoming) => {
-      if (incoming.ticketId === activeTicket.ticketId) {
+      // If currently viewing this ticket:
+      if (activeTicket && String(incoming.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase()) {
         const plainText = await decryptMessage(
           incoming.encryptedContent,
           incoming.iv,
@@ -162,48 +164,111 @@ export default function DevChatPage() {
         );
 
         setMessages((prev) => {
-          // Prevent duplicates
+          // If message already exists by ID, do not duplicate
           if (prev.some((m) => String(m._id) === String(incoming._id))) return prev;
+          // Check if replacing an optimistic message
+          const tempIdx = prev.findIndex((m) => String(m._id).startsWith('temp_') && m.text === plainText);
+          if (tempIdx !== -1) {
+            const copy = [...prev];
+            copy[tempIdx] = { ...incoming, text: plainText };
+            return copy;
+          }
           return [...prev, { ...incoming, text: plainText }];
         });
 
-        // Mark as read if from other user
+        // Mark as read if from partner
         if (String(incoming.sender) !== String(user?.id || user?._id)) {
           markTicketMessagesRead(activeTicket.ticketId);
         }
 
         setTimeout(scrollToBottom, 60);
       }
+
+      // Always update ticket card preview in tickets list
+      setTickets((prev) =>
+        prev.map((t) => {
+          if (String(t.ticketId).toUpperCase() === String(incoming.ticketId).toUpperCase()) {
+            const isMe = String(incoming.sender) === String(user?.id || user?._id);
+            return {
+              ...t,
+              lastMessage: {
+                preview: 'New message',
+                senderRole: incoming.senderRole,
+                senderName: incoming.senderName,
+                at: incoming.createdAt || new Date(),
+              },
+              unreadStudent: (!isMe && !isDeveloper) ? (t.unreadStudent || 0) + 1 : t.unreadStudent,
+              unreadDeveloper: (!isMe && isDeveloper) ? (t.unreadDeveloper || 0) + 1 : t.unreadDeveloper,
+            };
+          }
+          return t;
+        })
+      );
+    });
+
+    const removeJoinedListener = addChatListener('joined_ticket', (data) => {
+      if (activeTicket && String(data.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase()) {
+        if (data.partnerOnline !== undefined) {
+          setPartnerOnline(Boolean(data.partnerOnline));
+        }
+      }
     });
 
     const removeTypingListener = addChatListener('typing_change', (data) => {
-      if (data.ticketId === activeTicket.ticketId && data.userId !== (user?.id || user?._id)) {
+      if (
+        activeTicket &&
+        String(data.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase() &&
+        String(data.userId) !== String(user?.id || user?._id)
+      ) {
         setPartnerTyping(Boolean(data.isTyping));
+        if (partnerTypingTimer.current) clearTimeout(partnerTypingTimer.current);
+        if (data.isTyping) {
+          partnerTypingTimer.current = setTimeout(() => {
+            setPartnerTyping(false);
+          }, 3500);
+        }
       }
     });
 
     const removePresenceListener = addChatListener('user_presence', (data) => {
-      if (data.userId !== (user?.id || user?._id)) {
+      if (String(data.userId) !== String(user?.id || user?._id)) {
         setPartnerOnline(data.status === 'online');
       }
     });
 
     const removeReadListener = addChatListener('messages_read', (data) => {
-      if (data.ticketId === activeTicket.ticketId) {
+      if (activeTicket && String(data.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase()) {
         setMessages((prev) => prev.map((m) => ({ ...m, read: true })));
       }
     });
 
+    const removeActivityListener = addChatListener('ticket_activity', (data) => {
+      setTickets((prev) =>
+        prev.map((t) =>
+          String(t.ticketId).toUpperCase() === String(data.ticketId).toUpperCase()
+            ? {
+                ...t,
+                lastMessage: data.lastMessage || t.lastMessage,
+                unreadStudent: !isDeveloper ? data.unreadCount : t.unreadStudent,
+                unreadDeveloper: isDeveloper ? data.unreadCount : t.unreadDeveloper,
+              }
+            : t
+        )
+      );
+    });
+
     return () => {
       removeMsgListener();
+      removeJoinedListener();
       removeTypingListener();
       removePresenceListener();
       removeReadListener();
+      removeActivityListener();
+      if (partnerTypingTimer.current) clearTimeout(partnerTypingTimer.current);
     };
-  }, [activeTicket, user]);
+  }, [activeTicket, user, isDeveloper]);
 
-  // 5. Handle Send Message
-  // 5. Handle Send Message
+  // 5. Handle Send Message (Optimistic Live UI + E2EE + Dual Delivery)
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     if (!inputText.trim() || !activeTicket || sending) return;
@@ -213,8 +278,41 @@ export default function DevChatPage() {
     sendTypingIndicator(activeTicket.ticketId, false);
     setSending(true);
 
+    // 1. Optimistic message preview (zero delay for sender)
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMessage = {
+      _id: tempId,
+      ticketId: activeTicket.ticketId,
+      sender: user?.id || user?._id,
+      senderRole: user?.role || 'student',
+      senderName: user?.name || 'You',
+      text: textToSend,
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setTimeout(scrollToBottom, 40);
+
+    // Update tickets list preview immediately
+    setTickets((prev) =>
+      prev.map((t) =>
+        String(t.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase()
+          ? {
+              ...t,
+              lastMessage: {
+                preview: textToSend,
+                senderRole: user?.role || 'student',
+                senderName: user?.name || 'You',
+                at: new Date(),
+              },
+            }
+          : t
+      )
+    );
+
     try {
-      // Client-side E2EE encryption using Web Crypto AES-256-GCM
+      // 2. Client-side E2EE encryption using Web Crypto AES-256-GCM
       const { encryptedContent, iv } = await encryptMessage(
         textToSend,
         activeTicket.ticketId,
@@ -222,12 +320,17 @@ export default function DevChatPage() {
       );
 
       try {
-        await sendChatMessage({
+        const ack = await sendChatMessage({
           ticketId: activeTicket.ticketId,
           encryptedContent,
           iv,
           contentType: 'text',
         });
+        if (ack && ack.messageId) {
+          setMessages((prev) =>
+            prev.map((m) => (m._id === tempId ? { ...m, _id: ack.messageId, read: false } : m))
+          );
+        }
       } catch (socketErr) {
         console.warn('Socket delivery failed, using REST fallback:', socketErr.message);
         const res = await api.sendChatTicketMessage(activeTicket.ticketId, {
@@ -236,16 +339,17 @@ export default function DevChatPage() {
           contentType: 'text',
         });
         if (res.success && res.message) {
-          setMessages((prev) => {
-            if (prev.some((m) => String(m._id) === String(res.message._id))) return prev;
-            return [...prev, { ...res.message, text: textToSend }];
-          });
+          setMessages((prev) =>
+            prev.map((m) => (m._id === tempId ? { ...res.message, text: textToSend } : m))
+          );
           setTimeout(scrollToBottom, 60);
         }
       }
     } catch (err) {
       console.error('Failed to send encrypted message:', err);
       triggerToast('error', err.message || 'Failed to deliver message', 'Error');
+      // Rollback optimistic message if encryption completely failed
+      setMessages((prev) => prev.filter((m) => m._id !== tempId));
       setInputText(textToSend); // Restore unsent message
     } finally {
       setSending(false);
@@ -337,7 +441,7 @@ export default function DevChatPage() {
 
       <div className="devchat-container">
         {/* Header Bar */}
-        <header className="devchat-header">
+        <header className={`devchat-header ${activeTicket ? 'mobile-hidden' : ''}`}>
           <div className="devchat-title-group">
             <div className="devchat-icon-badge">💬</div>
             <div>
@@ -478,9 +582,13 @@ export default function DevChatPage() {
                     <div>
                       <div className="room-participant-details">
                         <h3>
-                          <span>{activeTicket.subject}</span>
+                          <span className="room-subject-text">{activeTicket.subject}</span>
                           <span className="ticket-badge-id" style={{ fontSize: '0.75rem' }}>
                             ({activeTicket.ticketId})
+                          </span>
+                          <span className={`partner-online-chip ${partnerOnline ? 'online' : 'offline'}`}>
+                            <span className="pulse-dot" />
+                            {partnerOnline ? 'Online' : 'Offline'}
                           </span>
                         </h3>
                         <p>
@@ -566,11 +674,20 @@ export default function DevChatPage() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Partner Typing Indicator */}
+                {/* Partner Live Typing Indicator with Animated Bouncing Dots */}
                 {partnerTyping && (
                   <div className="typing-indicator-row">
-                    <span>✍️</span>
-                    <span>{isDeveloper ? 'Student is typing...' : 'Developer is typing...'}</span>
+                    <div className="typing-bubble">
+                      <span className="typing-pulse-dot" />
+                      <span className="typing-text">
+                        {isDeveloper ? 'Student is typing' : 'Developer is typing'}
+                      </span>
+                      <span className="typing-dots">
+                        <span className="dot dot-1" />
+                        <span className="dot dot-2" />
+                        <span className="dot dot-3" />
+                      </span>
+                    </div>
                   </div>
                 )}
 

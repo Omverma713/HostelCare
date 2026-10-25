@@ -10,6 +10,18 @@ let ioInstance = null;
  * Initializes Socket.IO with CORS, JWT handshake authentication,
  * and real-time room messaging for Chat Tickets.
  */
+// Global active user socket tracking: userId -> Set<socketId>
+const activeUsers = new Map();
+
+function isUserOnline(userId) {
+  const set = activeUsers.get(String(userId));
+  return Boolean(set && set.size > 0);
+}
+
+/**
+ * Initializes Socket.IO with CORS, JWT handshake authentication,
+ * and real-time room messaging for Chat Tickets.
+ */
 function initChatSocket(httpServer) {
   if (ioInstance) {
     return ioInstance;
@@ -62,7 +74,15 @@ function initChatSocket(httpServer) {
   // 2. Connection and Event Handling
   io.on("connection", (socket) => {
     const user = socket.user;
+    const userIdStr = String(user.id);
+
     console.log(`🔌 [ChatSocket] User connected: ${user.name} (${user.role}) - Socket: ${socket.id}`);
+
+    // Register user in active connections pool
+    if (!activeUsers.has(userIdStr)) {
+      activeUsers.set(userIdStr, new Set());
+    }
+    activeUsers.get(userIdStr).add(socket.id);
 
     // Join user-specific notification room
     socket.join(`user_${user.id}`);
@@ -88,16 +108,32 @@ function initChatSocket(httpServer) {
 
         const roomName = `ticket_${ticketId}`;
         socket.join(roomName);
-        console.log(`💬 [ChatSocket] ${user.name} joined room ${roomName}`);
 
+        const partnerId = isStudent ? String(ticket.developer) : String(ticket.student);
+        const partnerOnline = isUserOnline(partnerId);
+
+        // Immediate direct acknowledgement to joining user with live partner status
         socket.emit("joined_ticket", {
           ticketId,
           status: ticket.status,
           e2eeSalt: ticket.e2eeSalt,
+          partnerOnline,
+          partnerId,
+          partnerName: isStudent ? ticket.developerName : ticket.studentName,
         });
 
-        // Notify other participant that user is active
+        // Broadcast to ticket room that user is online
         socket.to(roomName).emit("user_presence", {
+          ticketId,
+          userId: user.id,
+          userName: user.name,
+          role: user.role,
+          status: "online",
+        });
+
+        // Also notify partner directly in their personal user room
+        io.to(`user_${partnerId}`).emit("user_presence", {
+          ticketId,
           userId: user.id,
           userName: user.name,
           role: user.role,
@@ -116,6 +152,7 @@ function initChatSocket(httpServer) {
         const roomName = `ticket_${ticketId}`;
         socket.leave(roomName);
         socket.to(roomName).emit("user_presence", {
+          ticketId,
           userId: user.id,
           userName: user.name,
           role: user.role,
@@ -125,7 +162,7 @@ function initChatSocket(httpServer) {
     });
 
     /**
-     * send_message: Receives E2EE encrypted message, persists to MongoDB, broadcasts to room
+     * send_message: Receives E2EE encrypted message, persists to MongoDB, broadcasts to room & user channels
      */
     socket.on("send_message", async (data, ack) => {
       try {
@@ -198,18 +235,22 @@ function initChatSocket(httpServer) {
         };
 
         const roomName = `ticket_${ticketId}`;
-        // Broadcast to everyone in ticket room including sender
+        const targetUserId = isStudent ? String(ticket.developer) : String(ticket.student);
+
+        // 1. Broadcast to ticket room (for anyone actively viewing ticket)
         io.to(roomName).emit("new_message", broadcastPayload);
 
-        // Also notify user personal rooms if not in ticket room
-        const targetUserId = isStudent ? String(ticket.developer) : String(ticket.student);
+        // 2. ALSO broadcast directly to target user room (guarantees instant delivery even if target was in list view!)
+        io.to(`user_${targetUserId}`).emit("new_message", broadcastPayload);
+
+        // 3. Emit ticket activity for real-time list badge updates
         io.to(`user_${targetUserId}`).emit("ticket_activity", {
           ticketId,
           lastMessage: ticket.lastMessage,
           unreadCount: isStudent ? ticket.unreadDeveloper : ticket.unreadStudent,
         });
 
-        if (ack) ack({ success: true, messageId: msg._id });
+        if (ack) ack({ success: true, messageId: msg._id, message: broadcastPayload });
       } catch (err) {
         console.error("send_message socket error:", err);
         if (ack) ack({ success: false, error: err.message });
@@ -219,27 +260,50 @@ function initChatSocket(httpServer) {
     /**
      * typing_start & typing_stop: Real-time typing indicators
      */
-    socket.on("typing_start", ({ ticketId }) => {
-      if (ticketId) {
-        socket.to(`ticket_${ticketId}`).emit("typing_change", {
-          ticketId,
-          userId: user.id,
-          userName: user.name,
-          role: user.role,
-          isTyping: true,
-        });
+    socket.on("typing_start", async ({ ticketId }) => {
+      if (!ticketId) return;
+      const roomName = `ticket_${ticketId}`;
+      const typingPayload = {
+        ticketId,
+        userId: user.id,
+        userName: user.name,
+        role: user.role,
+        isTyping: true,
+      };
+      socket.to(roomName).emit("typing_change", typingPayload);
+
+      // Also deliver to partner user channel
+      try {
+        const ticket = await ChatTicket.findOne({ ticketId }).select("student developer").lean();
+        if (ticket) {
+          const targetUserId = String(ticket.student) === String(user.id) ? String(ticket.developer) : String(ticket.student);
+          socket.to(`user_${targetUserId}`).emit("typing_change", typingPayload);
+        }
+      } catch (e) {
+        // pass
       }
     });
 
-    socket.on("typing_stop", ({ ticketId }) => {
-      if (ticketId) {
-        socket.to(`ticket_${ticketId}`).emit("typing_change", {
-          ticketId,
-          userId: user.id,
-          userName: user.name,
-          role: user.role,
-          isTyping: false,
-        });
+    socket.on("typing_stop", async ({ ticketId }) => {
+      if (!ticketId) return;
+      const roomName = `ticket_${ticketId}`;
+      const typingPayload = {
+        ticketId,
+        userId: user.id,
+        userName: user.name,
+        role: user.role,
+        isTyping: false,
+      };
+      socket.to(roomName).emit("typing_change", typingPayload);
+
+      try {
+        const ticket = await ChatTicket.findOne({ ticketId }).select("student developer").lean();
+        if (ticket) {
+          const targetUserId = String(ticket.student) === String(user.id) ? String(ticket.developer) : String(ticket.student);
+          socket.to(`user_${targetUserId}`).emit("typing_change", typingPayload);
+        }
+      } catch (e) {
+        // pass
       }
     });
 
@@ -265,6 +329,19 @@ function initChatSocket(httpServer) {
 
     socket.on("disconnect", () => {
       console.log(`🔌 [ChatSocket] User disconnected: ${user.name}`);
+      if (activeUsers.has(userIdStr)) {
+        const set = activeUsers.get(userIdStr);
+        set.delete(socket.id);
+        if (set.size === 0) {
+          activeUsers.delete(userIdStr);
+          io.emit("user_presence", {
+            userId: user.id,
+            userName: user.name,
+            role: user.role,
+            status: "offline",
+          });
+        }
+      }
     });
   });
 
