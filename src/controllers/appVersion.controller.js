@@ -37,8 +37,8 @@ const getAppVersionStatus = async (req, res) => {
     const pilotConfig = config.pilotTesting || {
       enabled: false,
       isSuspended: false,
-      version: "1.2.2.9",
-      updateUrl: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.9/hostelcare-v1.2.2.9.apk",
+      version: "1.2.2.10",
+      updateUrl: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.10/hostelcare-v1.2.2.10.apk",
       updateMessage: "You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.",
       releaseNotes: "",
       forceUpdate: false,
@@ -100,7 +100,7 @@ const getAppVersionStatus = async (req, res) => {
           clientVersion: currentVersion || null,
           platform: platform || "android",
           buildNumber: buildNumber || null,
-          latestVersion: currentVersion || pilotConfig.version || "1.2.2.9",
+          latestVersion: currentVersion || pilotConfig.version || "1.2.2.10",
           minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
           updateAvailable: false,
           forceUpdate: false,
@@ -120,7 +120,7 @@ const getAppVersionStatus = async (req, res) => {
       }
 
       // Pilot is ACTIVE and NOT suspended: deliver pilot version
-      const targetVersion = pilotConfig.version || appVersionConfig.latestVersion || "1.2.2.9";
+      const targetVersion = pilotConfig.version || appVersionConfig.latestVersion || "1.2.2.10";
       const hasNewer = currentVersion ? compareVersions(targetVersion, currentVersion) > 0 : true;
       const isForced = Boolean(pilotConfig.forceUpdate);
 

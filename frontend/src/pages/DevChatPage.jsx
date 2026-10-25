@@ -823,7 +823,7 @@ export default function DevChatPage() {
                   {socketConnected ? '● Socket Live' : '○ Connecting...'}
                 </span>
                 <span style={{ opacity: 0.5 }}>•</span>
-                <span style={{ color: '#a5b4fc', fontSize: '0.72rem' }}>v1.2.2.9 Pre-Release</span>
+                <span style={{ color: '#a5b4fc', fontSize: '0.72rem' }}>v1.2.2.10 Pre-Release</span>
               </p>
             </div>
           </div>
