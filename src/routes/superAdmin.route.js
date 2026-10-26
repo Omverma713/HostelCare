@@ -54,6 +54,7 @@ const {
   createDelegation,
   revokeDelegation,
   updateDelegationDuration,
+  updateDelegationScopes,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -112,6 +113,7 @@ router.get("/delegations", getDelegationsList);
 router.post("/delegations", sensitiveActionLimiter, createDelegation);
 router.post("/delegations/:delegationId/revoke", sensitiveActionLimiter, revokeDelegation);
 router.patch("/delegations/:delegationId/duration", sensitiveActionLimiter, updateDelegationDuration);
+router.patch("/delegations/:delegationId/scopes", sensitiveActionLimiter, updateDelegationScopes);
 
 // Session & Device Management
 router.get("/sessions", getSessionsDirectory);

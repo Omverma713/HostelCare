@@ -2082,6 +2082,12 @@ const impersonateUser = async (req, res) => {
       lastActivityAt: new Date(),
     });
 
+    const isDelegated = Boolean(
+      targetUser.isDelegatedSubAdmin &&
+      targetUser.delegatedRole === "superadmin" &&
+      (targetUser.delegationIndefinite || (targetUser.delegationExpiresAt && new Date(targetUser.delegationExpiresAt) > new Date()))
+    );
+
     const token = jwt.sign(
       {
         id: targetUser._id,
@@ -2093,6 +2099,11 @@ const impersonateUser = async (req, res) => {
         roomNumber: targetUser.roomNumber,
         isImpersonated: true,
         impersonatedBy: req.user.id || req.user._id,
+        isDelegatedSubAdmin: isDelegated,
+        delegationTitle: isDelegated ? targetUser.delegationTitle : undefined,
+        delegationScopes: isDelegated ? targetUser.delegationScopes : undefined,
+        delegationExpiresAt: isDelegated ? targetUser.delegationExpiresAt : undefined,
+        delegationIndefinite: isDelegated ? targetUser.delegationIndefinite : undefined,
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -3669,6 +3680,13 @@ const updateDelegationDuration = async (req, res) => {
       }
     }
 
+    if (Array.isArray(req.body.scopes) && req.body.scopes.length > 0) {
+      delegation.scopes = req.body.scopes;
+      await User.findByIdAndUpdate(delegation.userId, {
+        delegationScopes: req.body.scopes,
+      });
+    }
+
     delegation.durationMode = durationMode;
     delegation.isIndefinite = effectiveIndefinite;
     delegation.expiresAt = calculatedExpiresAt;
@@ -3689,7 +3707,7 @@ const updateDelegationDuration = async (req, res) => {
       targetId: delegation.userId,
       targetIdentifier: delegation.userRegistrationNumber,
       summary: `Updated Sub-Admin duration for ${delegation.userName} (${delegation.userRegistrationNumber}) to mode: ${durationMode}`,
-      details: { delegationId, durationMode, isIndefinite: effectiveIndefinite, expiresAt: calculatedExpiresAt },
+      details: { delegationId, durationMode, isIndefinite: effectiveIndefinite, expiresAt: calculatedExpiresAt, scopes: delegation.scopes },
     });
 
     return res.status(200).json({
@@ -3700,6 +3718,50 @@ const updateDelegationDuration = async (req, res) => {
   } catch (error) {
     console.error("updateDelegationDuration error:", error);
     return res.status(500).json({ success: false, message: "Failed to update delegation duration", error: error.message });
+  }
+};
+
+// PATCH /api/v1/superadmin/delegations/:delegationId/scopes
+const updateDelegationScopes = async (req, res) => {
+  try {
+    const { delegationId } = req.params;
+    const { scopes } = req.body;
+
+    if (!Array.isArray(scopes) || scopes.length === 0) {
+      return res.status(400).json({ success: false, message: "Valid scopes array is required" });
+    }
+
+    const delegation = await Delegation.findById(delegationId);
+    if (!delegation) {
+      return res.status(404).json({ success: false, message: "Delegation record not found" });
+    }
+
+    const previousScopes = [...(delegation.scopes || [])];
+    delegation.scopes = scopes;
+    await delegation.save();
+
+    await User.findByIdAndUpdate(delegation.userId, {
+      delegationScopes: scopes,
+    });
+
+    await recordAudit({
+      req,
+      action: "SUB_ADMIN_SCOPES_UPDATED",
+      targetType: "USER",
+      targetId: delegation.userId,
+      targetIdentifier: delegation.userRegistrationNumber,
+      summary: `Updated feature permission scopes for Sub-Admin ${delegation.userName} (${delegation.userRegistrationNumber})`,
+      details: { delegationId, previousScopes, updatedScopes: scopes },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Feature scopes for ${delegation.userName} updated successfully`,
+      delegation,
+    });
+  } catch (error) {
+    console.error("updateDelegationScopes error:", error);
+    return res.status(500).json({ success: false, message: "Failed to update delegation scopes", error: error.message });
   }
 };
 
@@ -3754,6 +3816,7 @@ module.exports = {
   createDelegation,
   revokeDelegation,
   updateDelegationDuration,
+  updateDelegationScopes,
 };
 
 

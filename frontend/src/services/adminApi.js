@@ -157,6 +157,13 @@ export const adminApi = {
     });
   },
 
+  updateDelegationScopes(delegationId, scopes) {
+    return adminRequest(`/superadmin/delegations/${delegationId}/scopes`, {
+      method: 'PATCH',
+      body: JSON.stringify({ scopes }),
+    });
+  },
+
   // Sessions & Devices
   getSessions({ page = 1, limit = 20, status = '', deviceType = '', search = '' } = {}) {
     const params = new URLSearchParams({ page, limit });

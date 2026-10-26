@@ -8,6 +8,20 @@ import { scheduleWeeklyMealReminders } from '../services/messNotificationService
 import { DEFAULT_MESS_DATA, DAYS_ORDER, MEAL_SLOTS } from '../constants/messMenuData';
 import './SuperAdminPortal.css';
 
+export const DELEGATION_FEATURE_MODULES = [
+  { id: 'messalerts', label: '🍱 Mess Auto-Alerts & Timetable', desc: 'Meal timings, lead-times, vacation freeze & auto-cron dispatcher' },
+  { id: 'notifications', label: '🔔 Push Broadcasts & Flash Alerts', desc: 'Custom push broadcasts, flash messages & emergency banners' },
+  { id: 'users', label: '👥 User Directory & Accounts', desc: 'User management, profile edits, password resets, locks & account flush' },
+  { id: 'sessions', label: '📱 Sessions & Device Registry', desc: 'Hardware radar, active devices, 1-click ping, mute & unregister' },
+  { id: 'notices', label: '🚨 Global Notices', desc: 'Campus-wide emergency and announcement notice board' },
+  { id: 'maintenance', label: '🛠️ Maintenance Mode', desc: 'Campus system maintenance toggle and countdown controls' },
+  { id: 'limits', label: '⚙️ Login Limits & Policies', desc: 'Session concurrency, failed login lockouts & token lifespans' },
+  { id: 'appversion', label: '📲 App Updates & APK Release', desc: 'Mandatory app update enforcement and direct APK downloads' },
+  { id: 'pilottesting', label: '🧪 Pilot Testing & Testers', desc: 'Pilot user enrollment and staged feature rollout checks' },
+  { id: 'audit', label: '📜 Security Audit Logs', desc: 'Comprehensive administrative action history and audit trails' },
+  { id: 'overview', label: '📊 System Analytics & KPIs', desc: 'Live statistics, active device counters and system health' },
+];
+
 export default function SuperAdminPortal() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,7 +29,40 @@ export default function SuperAdminPortal() {
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'overview');
   const [loading, setLoading] = useState(false);
 
-  // Sync tab with URL search parameter
+  const isMasterSuperAdmin = currentUser?.role === 'superadmin' && !currentUser?.isDelegatedSubAdmin;
+  const isDelegatedSubAdmin = Boolean(currentUser?.isDelegatedSubAdmin);
+  const userScopes = Array.isArray(currentUser?.delegationScopes) && currentUser.delegationScopes.length > 0
+    ? currentUser.delegationScopes
+    : (isMasterSuperAdmin ? ['all'] : []);
+
+  const hasScope = useCallback((scopeId) => {
+    if (isMasterSuperAdmin) return true;
+    if (!isDelegatedSubAdmin) return false;
+    if (userScopes.includes('all')) return true;
+    return userScopes.includes(scopeId);
+  }, [isMasterSuperAdmin, isDelegatedSubAdmin, userScopes]);
+
+  const allTabs = [
+    { id: 'overview', label: '📊 Overview', scope: 'overview' },
+    { id: 'users', label: '👥 User Directory', scope: 'users' },
+    { id: 'delegations', label: '👑 Sub-Admin Delegation', masterOnly: true },
+    { id: 'notices', label: '🚨 Global Notices', scope: 'notices' },
+    { id: 'sessions', label: '📱 Sessions & Devices', scope: 'sessions' },
+    { id: 'limits', label: '⚙️ Login Limits', scope: 'limits' },
+    { id: 'maintenance', label: '🛠️ Maintenance', scope: 'maintenance' },
+    { id: 'appversion', label: '📲 App Updates', scope: 'appversion' },
+    { id: 'pilottesting', label: '🧪 Pilot Testing', scope: 'pilottesting' },
+    { id: 'notifications', label: '🔔 Push Broadcast', scope: 'notifications' },
+    { id: 'messalerts', label: '🍱 Mess Auto-Alerts', scope: 'messalerts' },
+    { id: 'audit', label: '📜 Audit Logs', scope: 'audit' },
+  ];
+
+  const visibleTabs = allTabs.filter((tab) => {
+    if (tab.masterOnly) return isMasterSuperAdmin;
+    return hasScope(tab.scope);
+  });
+
+  // Sync tab with URL search parameter and clamp to allowed scopes
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam && tabParam !== activeTab) {
@@ -25,6 +72,12 @@ export default function SuperAdminPortal() {
       setCreateUserModalOpen(true);
     }
   }, [searchParams, activeTab]);
+
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some((t) => t.id === activeTab)) {
+      handleTabChange(visibleTabs[0].id);
+    }
+  }, [visibleTabs, activeTab]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -73,12 +126,16 @@ export default function SuperAdminPortal() {
     title: 'Acting Sub-Admin',
     durationMode: 'indefinite',
     customExpiresAt: '',
+    scopeMode: 'all',
+    selectedScopes: ['all'],
     notes: '',
   });
   const [submittingDelegation, setSubmittingDelegation] = useState(false);
   const [delegationUserSearch, setDelegationUserSearch] = useState('');
   const [delegationSearchResults, setDelegationSearchResults] = useState([]);
   const [searchingDelegationUsers, setSearchingDelegationUsers] = useState(false);
+  const [editingDelegationScopes, setEditingDelegationScopes] = useState(null);
+  const [savingDelegationScopes, setSavingDelegationScopes] = useState(false);
 
   // User Provisioning State (Immediate vs Pending Activation)
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
@@ -1854,14 +1911,21 @@ export default function SuperAdminPortal() {
       triggerToast('error', 'Please select a user to grant Sub-Admin power', 'Validation Error');
       return;
     }
+    const effectiveScopes = delegationFormData.scopeMode === 'all'
+      ? ['all']
+      : delegationFormData.selectedScopes.length > 0
+      ? delegationFormData.selectedScopes
+      : ['all'];
+
     try {
       setSubmittingDelegation(true);
       const payload = {
         userId: delegationFormData.userId,
         title: delegationFormData.title.trim() || 'Acting Sub-Admin',
         durationMode: delegationFormData.durationMode,
-        customExpiresAt: delegationFormData.customExpiresAt || null,
+        customExpiresAt: delegationFormData.durationMode === 'custom' ? delegationFormData.customExpiresAt : null,
         isIndefinite: delegationFormData.durationMode === 'indefinite',
+        scopes: effectiveScopes,
         notes: delegationFormData.notes.trim(),
       };
       const res = await adminApi.createDelegation(payload);
@@ -1875,6 +1939,8 @@ export default function SuperAdminPortal() {
           title: 'Acting Sub-Admin',
           durationMode: 'indefinite',
           customExpiresAt: '',
+          scopeMode: 'all',
+          selectedScopes: ['all'],
           notes: '',
         });
         setDelegationUserSearch('');
@@ -1886,6 +1952,25 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to grant delegation', 'Delegation Failed');
     } finally {
       setSubmittingDelegation(false);
+    }
+  };
+
+  const handleUpdateDelegationScopes = async (delegationId, newScopes) => {
+    try {
+      setSavingDelegationScopes(true);
+      const res = await adminApi.updateDelegationScopes(delegationId, newScopes);
+      if (res && res.success) {
+        triggerToast('success', res.message || 'Feature permissions updated successfully!');
+        setEditingDelegationScopes(null);
+        loadDelegations();
+        loadUsers(userPagination.page);
+      } else {
+        throw new Error(res.message || 'Failed to update feature permissions');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update feature permissions');
+    } finally {
+      setSavingDelegationScopes(false);
     }
   };
 
@@ -2377,22 +2462,77 @@ export default function SuperAdminPortal() {
           </div>
         </div>
 
+        {/* Delegated Sub-Admin Banner Alert */}
+        {isDelegatedSubAdmin && (
+          <div
+            style={{
+              marginBottom: '1rem',
+              padding: '0.85rem 1.25rem',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.22) 100%)',
+              border: '1px solid rgba(245, 158, 11, 0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              boxShadow: '0 4px 16px rgba(245, 158, 11, 0.15)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.4rem' }}>👑</span>
+              <div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 750, color: '#fbbf24' }}>
+                  Acting Sub-Admin Portal: {currentUser.delegationTitle || 'Sub-Admin'}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'rgba(251, 191, 36, 0.9)', marginTop: '2px' }}>
+                  {currentUser.delegationIndefinite
+                    ? '♾️ Privileges Active: Valid until manually revoked by Super Admin (Jab Super Admin Chahe)'
+                    : `⏳ Privileges Active: Valid until ${currentUser.delegationExpiresAt ? new Date(currentUser.delegationExpiresAt).toLocaleString() : 'scheduled expiry'}`}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#fef3c7' }}>Granted Features:</span>
+              {userScopes.includes('all') ? (
+                <span
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: '12px',
+                    background: 'rgba(16, 185, 129, 0.3)',
+                    color: '#6ee7b7',
+                    fontSize: '0.74rem',
+                    fontWeight: 750,
+                    border: '1px solid rgba(16, 185, 129, 0.5)',
+                  }}
+                >
+                  🌟 Full Super Admin Power (All Features)
+                </span>
+              ) : (
+                userScopes.map((s) => (
+                  <span
+                    key={s}
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                      background: 'rgba(245, 158, 11, 0.25)',
+                      color: '#fde68a',
+                      fontSize: '0.72rem',
+                      fontWeight: 650,
+                      border: '1px solid rgba(245, 158, 11, 0.4)',
+                    }}
+                  >
+                    {DELEGATION_FEATURE_MODULES.find((m) => m.id === s)?.label.split(' ')[0] || ''} {s}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Tab Switcher Pills */}
         <div className="sa-tab-bar">
-          {[
-            { id: 'overview', label: '📊 Overview' },
-            { id: 'users', label: '👥 User Directory' },
-            { id: 'delegations', label: '👑 Sub-Admin Delegation' },
-            { id: 'notices', label: '🚨 Global Notices' },
-            { id: 'sessions', label: '📱 Sessions & Devices' },
-            { id: 'limits', label: '⚙️ Login Limits' },
-            { id: 'maintenance', label: '🛠️ Maintenance' },
-            { id: 'appversion', label: '📲 App Updates' },
-            { id: 'pilottesting', label: '🧪 Pilot Testing' },
-            { id: 'notifications', label: '🔔 Push Broadcast' },
-            { id: 'messalerts', label: '🍱 Mess Auto-Alerts' },
-            { id: 'audit', label: '📜 Audit Logs' },
-          ].map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -10285,7 +10425,42 @@ export default function SuperAdminPortal() {
                           <div style={{ fontWeight: 700, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <span>👑</span> {d.title}
                           </div>
-                          {d.notes && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>"{d.notes}"</div>}
+                          {/* Feature Scope Badges */}
+                          <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            {!d.scopes || d.scopes.includes('all') ? (
+                              <span
+                                style={{
+                                  padding: '2px 8px',
+                                  borderRadius: '10px',
+                                  background: 'rgba(16, 185, 129, 0.18)',
+                                  color: '#10b981',
+                                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                🌟 All Features (Full Access)
+                              </span>
+                            ) : (
+                              d.scopes.map((s) => (
+                                <span
+                                  key={s}
+                                  style={{
+                                    padding: '2px 6px',
+                                    borderRadius: '8px',
+                                    background: 'var(--bg-secondary)',
+                                    color: 'var(--text-secondary)',
+                                    border: '1px solid var(--border-color)',
+                                    fontSize: '0.68rem',
+                                    fontWeight: 650,
+                                  }}
+                                >
+                                  {DELEGATION_FEATURE_MODULES.find((m) => m.id === s)?.label.split(' ')[0] || ''} {s}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                          {d.notes && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '2px' }}>"{d.notes}"</div>}
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           {d.isIndefinite ? (
@@ -10357,6 +10532,28 @@ export default function SuperAdminPortal() {
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
                           {d.status === 'active' && !d.isExpired ? (
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEditingDelegationScopes({
+                                    ...d,
+                                    scopes: Array.isArray(d.scopes) && d.scopes.length > 0 ? [...d.scopes] : ['all'],
+                                  })
+                                }
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                                  background: 'rgba(59, 130, 246, 0.12)',
+                                  color: '#60a5fa',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                                title="Edit feature permissions and scopes for this sub-admin"
+                              >
+                                🛡️ Permissions
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => handleUpdateDelegationDuration(d._id, 'indefinite')}
@@ -11369,6 +11566,180 @@ export default function SuperAdminPortal() {
                 )}
               </div>
 
+              {/* Feature Permissions / Scopes Selector */}
+              <div
+                style={{
+                  padding: '0.85rem',
+                  borderRadius: '10px',
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#60a5fa', margin: 0 }}>
+                    🛡️ Feature Permissions (Kaun-Kaun Se Features Dena Hai?)
+                  </label>
+                  {delegationFormData.scopeMode === 'custom' && (
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDelegationFormData((prev) => ({
+                            ...prev,
+                            selectedScopes: DELEGATION_FEATURE_MODULES.map((m) => m.id),
+                          }))
+                        }
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(59, 130, 246, 0.4)',
+                          background: 'rgba(59, 130, 246, 0.2)',
+                          color: '#93c5fd',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Select All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDelegationFormData((prev) => ({ ...prev, selectedScopes: [] }))}
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid var(--border-color)',
+                          background: 'transparent',
+                          color: 'var(--text-muted)',
+                          fontSize: '0.68rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Mode Toggles: All vs Custom */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDelegationFormData((prev) => ({
+                        ...prev,
+                        scopeMode: 'all',
+                        selectedScopes: ['all'],
+                      }))
+                    }
+                    style={{
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: delegationFormData.scopeMode === 'all' ? '2px solid #3b82f6' : '1px solid var(--border-color)',
+                      background: delegationFormData.scopeMode === 'all' ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
+                      color: delegationFormData.scopeMode === 'all' ? '#93c5fd' : 'var(--text-primary)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ fontWeight: 750, fontSize: '0.78rem' }}>🌟 All Features (Poore Powers)</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Complete Super Admin Access</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDelegationFormData((prev) => ({
+                        ...prev,
+                        scopeMode: 'custom',
+                        selectedScopes: prev.selectedScopes.includes('all')
+                          ? ['messalerts', 'notifications', 'users']
+                          : prev.selectedScopes,
+                      }))
+                    }
+                    style={{
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: delegationFormData.scopeMode === 'custom' ? '2px solid #3b82f6' : '1px solid var(--border-color)',
+                      background: delegationFormData.scopeMode === 'custom' ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
+                      color: delegationFormData.scopeMode === 'custom' ? '#93c5fd' : 'var(--text-primary)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ fontWeight: 750, fontSize: '0.78rem' }}>🎛️ Specific Features (Custom)</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Choose exact modules to allow</div>
+                  </button>
+                </div>
+
+                {delegationFormData.scopeMode === 'all' ? (
+                  <div
+                    style={{
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '8px',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      color: '#6ee7b7',
+                      fontSize: '0.74rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <span>✅</span>
+                    <span>
+                      User will receive <strong>unrestricted access to all 11 Super Admin modules</strong> (Mess Timetable & Alerts, Push Broadcast, Users, Sessions, Notices, Limits, Maintenance, Updates, Pilot, Audit, etc.).
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      maxHeight: '180px',
+                      overflowY: 'auto',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      gap: '6px',
+                      paddingRight: '4px',
+                    }}
+                  >
+                    {DELEGATION_FEATURE_MODULES.map((mod) => {
+                      const isChecked = delegationFormData.selectedScopes.includes(mod.id);
+                      return (
+                        <div
+                          key={mod.id}
+                          onClick={() => {
+                            setDelegationFormData((prev) => {
+                              const current = prev.selectedScopes.filter((s) => s !== 'all');
+                              const next = isChecked ? current.filter((s) => s !== mod.id) : [...current, mod.id];
+                              return { ...prev, selectedScopes: next };
+                            });
+                          }}
+                          style={{
+                            padding: '0.5rem 0.65rem',
+                            borderRadius: '8px',
+                            border: isChecked ? '1.5px solid #10b981' : '1px solid var(--border-color)',
+                            background: isChecked ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '8px',
+                          }}
+                        >
+                          <span style={{ fontSize: '0.9rem', marginTop: '1px' }}>{isChecked ? '☑️' : '⬜'}</span>
+                          <div>
+                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: isChecked ? '#6ee7b7' : 'var(--text-primary)' }}>
+                              {mod.label}
+                            </div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: '1.2' }}>
+                              {mod.desc}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               {/* Administrative Notes */}
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
@@ -11412,7 +11783,7 @@ export default function SuperAdminPortal() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submittingDelegation || !delegationFormData.userId}
+                  disabled={submittingDelegation || !delegationFormData.userId || (delegationFormData.scopeMode === 'custom' && delegationFormData.selectedScopes.length === 0)}
                   style={{
                     padding: '0.6rem 1.4rem',
                     borderRadius: '8px',
@@ -11421,7 +11792,7 @@ export default function SuperAdminPortal() {
                     color: '#ffffff',
                     fontSize: '0.85rem',
                     fontWeight: 750,
-                    cursor: submittingDelegation || !delegationFormData.userId ? 'not-allowed' : 'pointer',
+                    cursor: submittingDelegation || !delegationFormData.userId || (delegationFormData.scopeMode === 'custom' && delegationFormData.selectedScopes.length === 0) ? 'not-allowed' : 'pointer',
                     boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
                   }}
                 >
@@ -11429,6 +11800,269 @@ export default function SuperAdminPortal() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Delegation Permissions Modal */}
+      {editingDelegationScopes && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingDelegationScopes(null);
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid rgba(59, 130, 246, 0.45)',
+              borderRadius: '16px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '1.75rem',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(59, 130, 246, 0.2)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.5rem' }}>🛡️</span>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#60a5fa' }}>
+                    Edit Permissions for {editingDelegationScopes.userName}
+                  </h2>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Update which Super Admin modules {editingDelegationScopes.userName} ({editingDelegationScopes.userRegistrationNumber}) has access to.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingDelegationScopes(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Mode Toggles */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditingDelegationScopes((prev) => ({
+                      ...prev,
+                      scopes: ['all'],
+                    }))
+                  }
+                  style={{
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '8px',
+                    border: editingDelegationScopes.scopes.includes('all') ? '2px solid #3b82f6' : '1px solid var(--border-color)',
+                    background: editingDelegationScopes.scopes.includes('all') ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
+                    color: editingDelegationScopes.scopes.includes('all') ? '#93c5fd' : 'var(--text-primary)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ fontWeight: 750, fontSize: '0.78rem' }}>🌟 All Features (Poore Powers)</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Complete Super Admin Access</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditingDelegationScopes((prev) => ({
+                      ...prev,
+                      scopes: prev.scopes.includes('all') ? ['messalerts', 'notifications', 'users'] : prev.scopes,
+                    }))
+                  }
+                  style={{
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '8px',
+                    border: !editingDelegationScopes.scopes.includes('all') ? '2px solid #3b82f6' : '1px solid var(--border-color)',
+                    background: !editingDelegationScopes.scopes.includes('all') ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
+                    color: !editingDelegationScopes.scopes.includes('all') ? '#93c5fd' : 'var(--text-primary)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ fontWeight: 750, fontSize: '0.78rem' }}>🎛️ Specific Features (Custom)</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Select individual modules</div>
+                </button>
+              </div>
+
+              {editingDelegationScopes.scopes.includes('all') ? (
+                <div
+                  style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    color: '#6ee7b7',
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <span>✅</span>
+                  <span>Full access granted to all 11 Super Admin modules without restriction.</span>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      Select Features ({editingDelegationScopes.scopes.length} selected):
+                    </span>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingDelegationScopes((prev) => ({
+                            ...prev,
+                            scopes: DELEGATION_FEATURE_MODULES.map((m) => m.id),
+                          }))
+                        }
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(59, 130, 246, 0.4)',
+                          background: 'rgba(59, 130, 246, 0.2)',
+                          color: '#93c5fd',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Select All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingDelegationScopes((prev) => ({ ...prev, scopes: [] }))}
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid var(--border-color)',
+                          background: 'transparent',
+                          color: 'var(--text-muted)',
+                          fontSize: '0.68rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      maxHeight: '220px',
+                      overflowY: 'auto',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      gap: '6px',
+                      paddingRight: '4px',
+                    }}
+                  >
+                    {DELEGATION_FEATURE_MODULES.map((mod) => {
+                      const isChecked = editingDelegationScopes.scopes.includes(mod.id);
+                      return (
+                        <div
+                          key={mod.id}
+                          onClick={() => {
+                            setEditingDelegationScopes((prev) => {
+                              const current = prev.scopes.filter((s) => s !== 'all');
+                              const next = isChecked ? current.filter((s) => s !== mod.id) : [...current, mod.id];
+                              return { ...prev, scopes: next };
+                            });
+                          }}
+                          style={{
+                            padding: '0.55rem 0.7rem',
+                            borderRadius: '8px',
+                            border: isChecked ? '1.5px solid #10b981' : '1px solid var(--border-color)',
+                            background: isChecked ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '8px',
+                          }}
+                        >
+                          <span style={{ fontSize: '0.9rem', marginTop: '1px' }}>{isChecked ? '☑️' : '⬜'}</span>
+                          <div>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: isChecked ? '#6ee7b7' : 'var(--text-primary)' }}>
+                              {mod.label}
+                            </div>
+                            <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', lineHeight: '1.2' }}>
+                              {mod.desc}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingDelegationScopes(null)}
+                  style={{
+                    padding: '0.6rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.85rem',
+                    fontWeight: 650,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={savingDelegationScopes || editingDelegationScopes.scopes.length === 0}
+                  onClick={() =>
+                    handleUpdateDelegationScopes(
+                      editingDelegationScopes._id,
+                      editingDelegationScopes.scopes.length > 0 ? editingDelegationScopes.scopes : ['all']
+                    )
+                  }
+                  style={{
+                    padding: '0.6rem 1.4rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.85rem',
+                    fontWeight: 750,
+                    cursor: savingDelegationScopes || editingDelegationScopes.scopes.length === 0 ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                  }}
+                >
+                  {savingDelegationScopes ? 'Saving...' : '💾 Save Permissions'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

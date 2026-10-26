@@ -526,6 +526,12 @@ const loggedInUser = async (req, res) => {
     }
 
     // 6. Sign JWT with embedded sessionId for immediate revocation enforcement
+    const isDelegated = Boolean(
+      user.isDelegatedSubAdmin &&
+      user.delegatedRole === "superadmin" &&
+      (user.delegationIndefinite || (user.delegationExpiresAt && new Date(user.delegationExpiresAt) > new Date()))
+    );
+
     const jwtLifespan = config.jwtLifespanDays ? `${config.jwtLifespanDays}d` : "90d";
     const token = jwt.sign(
       {
@@ -536,6 +542,11 @@ const loggedInUser = async (req, res) => {
         role: user.role,
         hostel: user.hostel,
         roomNumber: user.roomNumber,
+        isDelegatedSubAdmin: isDelegated,
+        delegationTitle: isDelegated ? user.delegationTitle : undefined,
+        delegationScopes: isDelegated ? user.delegationScopes : undefined,
+        delegationExpiresAt: isDelegated ? user.delegationExpiresAt : undefined,
+        delegationIndefinite: isDelegated ? user.delegationIndefinite : undefined,
       },
       process.env.JWT_SECRET,
       { expiresIn: jwtLifespan }

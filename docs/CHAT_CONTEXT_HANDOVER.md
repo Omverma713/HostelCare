@@ -89,20 +89,39 @@
 3. **Real-time Live Badge**:
    - Displays whether Working or Sunday/Holiday timetable is currently active with manual override highlight tag.
 
-### 👑 G. Temporary & Indefinite Sub-Admin Delegation Power (Latest Implementation)
+### 👑 G. Temporary & Indefinite Sub-Admin Delegation Power & Granular Permissions (Latest Implementation)
 1. **Delegation Engine (`Delegation` Mongoose Model & Middleware)**:
    - Super Admin can delegate elevated Sub-Admin privileges to trusted personnel (wardens, caretakers, superintendents) without sharing the master password.
-   - Dual-mode duration support:
+   - **Duration Modes**:
      - **♾️ Indefinite / Until Revoked (`jab super admin chahe tab tak`)**: `durationMode: 'indefinite'`, `isIndefinite: true`, `expiresAt: null`. Remains active until the Super Admin manually revokes it.
      - **⏳ Preset & Custom Durations**: 24 Hours, 3 Days, 7 Days, 30 Days, or Exact Custom Date & Time picker.
-   - Automatic expiry enforcement in `superAdmin.middleware.js` and `auth.middleware.js` (reverts to base role when expired, without breaking login).
-2. **Super Admin Delegation Controls**:
+   - **Granular Feature Scoping (`scopes`)**:
+     - **🌟 All Features (Poore Powers)**: Full access to all 11 Super Admin modules.
+     - **🎛️ Specific Custom Features**: Choose exact modules to allow (e.g. Mess Auto-Alerts only, Push Broadcasts only, User Directory only, etc.).
+     - Supported Feature Modules:
+       1. `messalerts`: 🍱 Mess Auto-Alerts, Timetable & Vacation Freeze
+       2. `notifications`: 🔔 Custom Push Broadcasts & Flash Alerts
+       3. `users`: 👥 User Directory, Profile Edits, Password Reset, Locks & Flush
+       4. `sessions`: 📱 Sessions Radar, Device Registry, 1-Click Ping, Mute & Prune
+       5. `notices`: 🚨 Global Emergency & Announcement Notices
+       6. `maintenance`: 🛠️ Maintenance Mode Controls
+       7. `limits`: ⚙️ Security Policies & Login Limits
+       8. `appversion`: 📲 App Updates & Mandatory APK Releases
+       9. `pilottesting`: 🧪 Pilot Testing & Enrolled Testers
+       10. `audit`: 📜 Administrative Action History & Audit Trails
+       11. `overview`: 📊 System KPIs & Analytics Dashboard
+   - **Backend Security Enforcement**:
+     - `superAdmin.middleware.js`: strictly blocks delegated sub-admins from managing delegations (only Master Super Admin can delegate).
+     - Enforces scope checking on API endpoints if user does not hold `all` privileges.
+     - Reverts expired delegations automatically.
+2. **Super Admin Delegation Controls UI**:
    - Dedicated **👑 Sub-Admin Delegation** tab in `SuperAdminPortal.jsx`.
-   - Live roster of all delegations with real-time countdown badges (`♾️ Indefinite (Until Revoked)`, `🟢 Active (Xh Ym remaining)`, `⚠️ Expired`, `🚫 Revoked`).
-   - 1-Click **`🚫 Revoke Privileges`** button to cancel access immediately.
-   - 1-Click **`♾️ Make Indefinite`** button to convert any timed delegation into an open-ended delegation.
-   - Quick delegation launcher button directly inside the **User Details drawer** for any non-superadmin user.
-   - Sub-Admins receive full access to SuperAdmin routes and UI (`/superadmin`) with `isDelegatedSubAdmin: true`.
+   - Feature scope selector in creation modal with "Select All" and "Clear All" controls.
+   - Live roster displaying granted feature scope badges for every sub-admin.
+   - **`🛡️ Permissions`** button on active sub-admins to edit granted features anytime on the fly (`PATCH /delegations/:id/scopes`).
+   - 1-Click **`🚫 Revoke Privileges`** and **`♾️ Make Indefinite`** buttons.
+   - Dynamic tab filtering for logged-in delegated sub-admins (they only see the tabs they have permissions for, with a personalized top status banner).
+   - Quick delegation launcher button directly inside User Details drawer.
 
 ---
 

@@ -45,10 +45,59 @@ const requireSuperAdmin = async (req, res, next) => {
       const isTimeValid = isIndefinite || (dbUser.delegationExpiresAt && new Date(dbUser.delegationExpiresAt) > new Date());
 
       if (isTimeValid) {
+        // Block delegated sub-admins from managing delegations (only Master Super Admin can delegate powers)
+        const checkPath = (req.baseUrl || "") + (req.path || "") + (req.originalUrl || "");
+        if (checkPath.toLowerCase().includes("/delegations")) {
+          return res.status(403).json({
+            success: false,
+            message: "Forbidden: Only Master Super Admin can manage sub-admin delegations.",
+          });
+        }
+
         req.superAdminUser = dbUser;
         req.isDelegatedSubAdmin = true;
-        req.delegationScopes = dbUser.delegationScopes || ["all"];
+        req.delegationScopes = Array.isArray(dbUser.delegationScopes) && dbUser.delegationScopes.length > 0
+          ? dbUser.delegationScopes
+          : ["all"];
         req.delegationTitle = dbUser.delegationTitle || "Acting Sub-Admin";
+
+        // Granular Feature Scope Enforcement
+        if (!req.delegationScopes.includes("all")) {
+          const lowerPath = checkPath.toLowerCase();
+          let requiredScope = null;
+
+          if (lowerPath.includes("/mess-") || lowerPath.includes("/simulate-autofire") || lowerPath.includes("/rearm-mess-slot")) {
+            requiredScope = "messalerts";
+          } else if (lowerPath.includes("/notifications/send") || lowerPath.includes("/notifications/history") || lowerPath.includes("/broadcast-custom-mess-alert")) {
+            requiredScope = "notifications";
+          } else if (lowerPath.includes("/users")) {
+            requiredScope = "users";
+          } else if (lowerPath.includes("/sessions") || lowerPath.includes("/device-registry")) {
+            requiredScope = "sessions";
+          } else if (lowerPath.includes("/notices") || lowerPath.includes("/global-notices")) {
+            requiredScope = "notices";
+          } else if (lowerPath.includes("/maintenance")) {
+            requiredScope = "maintenance";
+          } else if (lowerPath.includes("/system-config")) {
+            requiredScope = "limits";
+          } else if (lowerPath.includes("/app-version")) {
+            requiredScope = "appversion";
+          } else if (lowerPath.includes("/pilot-test")) {
+            requiredScope = "pilottesting";
+          } else if (lowerPath.includes("/audit-logs")) {
+            requiredScope = "audit";
+          } else if (lowerPath.includes("/overview")) {
+            requiredScope = "overview";
+          }
+
+          if (requiredScope && !req.delegationScopes.includes(requiredScope)) {
+            return res.status(403).json({
+              success: false,
+              message: `Forbidden: Your sub-admin privileges do not include access to the '${requiredScope}' feature module.`,
+            });
+          }
+        }
+
         return next();
       } else {
         // Automatically cleanup expired delegation
