@@ -11,6 +11,7 @@
   --bg-secondary: #e6ebf8;
   --bg-tertiary: #d2daf2;
   --bg-card: #e6ebf8;
+  --card-bg: var(--bg-card);
 
   /* Text */
   --text-primary: #181b36;
@@ -75,6 +76,7 @@ html.dark-theme {
   --bg-secondary: #13162b;
   --bg-tertiary: #191c36;
   --bg-card: #13162b;
+  --card-bg: var(--bg-card);
 
   /* Text */
   --text-primary: #f8fafc;

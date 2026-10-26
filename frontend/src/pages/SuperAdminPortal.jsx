@@ -2412,21 +2412,7 @@ export default function SuperAdminPortal() {
               type="button"
               onClick={openMyProfileModal}
               id="sa-header-my-profile-btn"
-              style={{
-                padding: '0.65rem 1.15rem',
-                borderRadius: '10px',
-                border: '1px solid rgba(139, 92, 246, 0.45)',
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.18) 0%, rgba(99, 102, 241, 0.25) 100%)',
-                color: '#c4b5fd',
-                fontSize: '0.88rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
-                flexShrink: 0,
-              }}
+              className="sa-header-profile-action-btn"
               title="Edit your Super Admin name, email, registration number, and master password"
             >
               <span>👤</span>
@@ -8130,77 +8116,36 @@ export default function SuperAdminPortal() {
 
       {/* 7.5. TAB: GLOBAL POP-UP NOTICES */}
       {activeTab === 'notices' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="sa-notices-container">
           {/* Header Card */}
-          <div
-            style={{
-              padding: '1.25rem 1.5rem',
-              borderRadius: '16px',
-              background: 'var(--card-bg, #1e293b)',
-              border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem',
-            }}
-          >
+          <div className="sa-notices-header-card">
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h2 className="sa-notices-title">
                 <span>🚨</span> Real-time Global Pop-up Notice Manager
               </h2>
-              <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <p className="sa-notices-subtitle">
                 Broadcast emergency alerts and campus announcements that instantly pop up over mobile APK and web screens with a dismiss cross (✕).
               </p>
             </div>
             <button
               type="button"
               onClick={loadNotices}
-              style={{
-                padding: '0.55rem 1rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+              className="sa-notices-refresh-btn"
             >
               🔄 Refresh Notices
             </button>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '1.5rem',
-              alignItems: 'start',
-            }}
-          >
+          <div className="sa-notices-grid">
             {/* Left Column: Create / Broadcast Notice Form */}
-            <div
-              style={{
-                padding: '1.25rem 1.5rem',
-                borderRadius: '16px',
-                background: 'var(--card-bg, #1e293b)',
-                border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.25rem',
-              }}
-            >
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="sa-notices-form-card">
+              <h3 className="sa-notices-card-title">
                 <span>📢</span> Broadcast New Pop-up Notice
               </h3>
 
-              <form onSubmit={handlePublishNotice} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+              <form onSubmit={handlePublishNotice} className="sa-notices-form">
+                <div className="sa-notices-field">
+                  <label className="sa-notices-label">
                     Notice Headline / Title *
                   </label>
                   <input
@@ -8209,39 +8154,19 @@ export default function SuperAdminPortal() {
                     placeholder="e.g. 🚨 Emergency Maintenance: Water Supply Disruption"
                     value={newNotice.title}
                     onChange={(e) => setNewNotice((prev) => ({ ...prev, title: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.9rem',
-                      boxSizing: 'border-box',
-                      marginTop: '4px',
-                    }}
+                    className="sa-notices-input"
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                <div className="sa-notices-form-row">
+                  <div className="sa-notices-field">
+                    <label className="sa-notices-label">
                       Priority Level *
                     </label>
                     <select
                       value={newNotice.priority}
                       onChange={(e) => setNewNotice((prev) => ({ ...prev, priority: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.85rem',
-                        boxSizing: 'border-box',
-                        marginTop: '4px',
-                      }}
+                      className="sa-notices-select"
                     >
                       <option value="urgent">🚨 Urgent / Critical Alert</option>
                       <option value="warning">⚠️ Important Notice</option>
@@ -8249,24 +8174,14 @@ export default function SuperAdminPortal() {
                     </select>
                   </div>
 
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  <div className="sa-notices-field">
+                    <label className="sa-notices-label">
                       Target Audience *
                     </label>
                     <select
                       value={newNotice.targetRole}
                       onChange={(e) => setNewNotice((prev) => ({ ...prev, targetRole: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.85rem',
-                        boxSizing: 'border-box',
-                        marginTop: '4px',
-                      }}
+                      className="sa-notices-select"
                     >
                       <option value="ALL">Everyone (All Users)</option>
                       <option value="student">Students Only</option>
@@ -8277,8 +8192,8 @@ export default function SuperAdminPortal() {
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                <div className="sa-notices-field">
+                  <label className="sa-notices-label">
                     Notice Message Content (Detailed Instructions) *
                   </label>
                   <textarea
@@ -8287,35 +8202,11 @@ export default function SuperAdminPortal() {
                     placeholder="Provide full details. This message will immediately show inside a prominent pop-up on all students' and staffs' mobile apps and web screens..."
                     value={newNotice.message}
                     onChange={(e) => setNewNotice((prev) => ({ ...prev, message: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      fontFamily: 'inherit',
-                      boxSizing: 'border-box',
-                      marginTop: '4px',
-                      resize: 'vertical',
-                    }}
+                    className="sa-notices-textarea"
                   />
                 </div>
 
-                <div
-                  style={{
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    background: 'rgba(239, 68, 68, 0.08)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                    fontSize: '0.78rem',
-                    color: '#fca5a5',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
+                <div className="sa-notices-warning-banner">
                   <span>⚡</span>
                   Publishing will immediately trigger real-time WebSockets and set the active pop-up banner on mobile APKs.
                 </div>
@@ -8323,21 +8214,7 @@ export default function SuperAdminPortal() {
                 <button
                   type="submit"
                   disabled={publishingNotice}
-                  style={{
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                    color: '#ffffff',
-                    fontSize: '0.92rem',
-                    fontWeight: 700,
-                    cursor: publishingNotice ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
-                  }}
+                  className="sa-notices-submit-btn"
                 >
                   {publishingNotice ? 'Broadcasting...' : '📢 Publish & Pop-up on All Devices'}
                 </button>
@@ -8345,23 +8222,13 @@ export default function SuperAdminPortal() {
             </div>
 
             {/* Right Column: Existing Notices History & Status Controls */}
-            <div
-              style={{
-                padding: '1.25rem 1.5rem',
-                borderRadius: '16px',
-                background: 'var(--card-bg, #1e293b)',
-                border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-              }}
-            >
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="sa-notices-list-card">
+              <h3 className="sa-notices-card-title">
                 <span>📜</span> Active & Broadcasted Notices ({notices.length})
               </h3>
 
               {notices.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
                   No global notices published yet. Use the form on the left to broadcast an emergency or campus announcement.
                 </div>
               ) : (
@@ -8369,15 +8236,7 @@ export default function SuperAdminPortal() {
                   {notices.map((n) => (
                     <div
                       key={n._id}
-                      style={{
-                        padding: '1rem',
-                        borderRadius: '12px',
-                        background: n.isActive ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-secondary)',
-                        border: n.isActive ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-color)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                      }}
+                      className={`sa-notices-item-card ${n.isActive ? 'is-active' : ''}`}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -8388,7 +8247,7 @@ export default function SuperAdminPortal() {
                               fontSize: '0.72rem',
                               fontWeight: 800,
                               background: n.isActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(156, 163, 175, 0.2)',
-                              color: n.isActive ? '#34d399' : '#9ca3af',
+                              color: n.isActive ? '#10b981' : 'var(--text-muted)',
                             }}
                           >
                             {n.isActive ? '🔴 POP-UP ACTIVE' : '⚪ INACTIVE'}
@@ -8401,21 +8260,21 @@ export default function SuperAdminPortal() {
                               fontWeight: 700,
                               background:
                                 n.priority === 'urgent'
-                                  ? 'rgba(239, 68, 68, 0.2)'
+                                  ? 'rgba(239, 68, 68, 0.15)'
                                   : n.priority === 'warning'
-                                  ? 'rgba(245, 158, 11, 0.2)'
-                                  : 'rgba(59, 130, 246, 0.2)',
+                                  ? 'rgba(245, 158, 11, 0.15)'
+                                  : 'rgba(59, 130, 246, 0.15)',
                               color:
                                 n.priority === 'urgent'
-                                  ? '#f87171'
+                                  ? '#ef4444'
                                   : n.priority === 'warning'
-                                  ? '#fbbf24'
-                                  : '#60a5fa',
+                                  ? '#d97706'
+                                  : '#3b82f6',
                             }}
                           >
                             {n.priority?.toUpperCase()}
                           </span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
                             Audience: <strong>{n.targetRole || 'ALL'}</strong>
                           </span>
                         </div>
@@ -8424,16 +8283,16 @@ export default function SuperAdminPortal() {
                         </span>
                       </div>
 
-                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 750, color: 'var(--text-primary)' }}>
                         {n.title}
                       </h4>
 
-                      <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                      <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>
                         {n.message}
                       </p>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', borderTop: '1px solid var(--border-color)', paddingTop: '6px' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
+                        <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                           By: {n.createdByName || 'Super Admin'}
                         </span>
                         <div style={{ display: 'flex', gap: '6px' }}>
@@ -8441,11 +8300,11 @@ export default function SuperAdminPortal() {
                             type="button"
                             onClick={() => handleToggleNoticeStatus(n._id, n.isActive)}
                             style={{
-                              padding: '3px 8px',
-                              borderRadius: '6px',
+                              padding: '4px 10px',
+                              borderRadius: '7px',
                               border: '1px solid var(--border-color)',
-                              background: n.isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                              color: n.isActive ? '#f87171' : '#34d399',
+                              background: n.isActive ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                              color: n.isActive ? '#ef4444' : '#10b981',
                               fontSize: '0.75rem',
                               fontWeight: 700,
                               cursor: 'pointer',
@@ -8457,8 +8316,8 @@ export default function SuperAdminPortal() {
                             type="button"
                             onClick={() => handleDeleteNotice(n._id)}
                             style={{
-                              padding: '3px 8px',
-                              borderRadius: '6px',
+                              padding: '4px 10px',
+                              borderRadius: '7px',
                               border: '1px solid rgba(239, 68, 68, 0.3)',
                               background: 'transparent',
                               color: '#ef4444',
