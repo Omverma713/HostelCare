@@ -28,11 +28,10 @@ export async function initPushNotifications() {
       return;
     }
 
-    await PushNotifications.register();
-
-    // Ensure clean state without duplicate listeners
+    // Step 1: Clean existing listeners before registering new ones
     await PushNotifications.removeAllListeners().catch(() => {});
 
+    // Step 2: Register event listeners FIRST before calling PushNotifications.register()
     PushNotifications.addListener('registration', async (token) => {
       console.log('FCM Device Token registered:', token.value);
       try {
@@ -50,10 +49,6 @@ export async function initPushNotifications() {
       console.error('FCM registration error:', err);
     });
 
-    // Foreground push notification received:
-    // Capacitor's PushNotifications plugin automatically presents the system notification banner
-    // according to presentationOptions: ["badge", "sound", "alert"].
-    // Do NOT schedule a LocalNotification here as that causes duplicate notifications in the shade.
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
       console.log('Push received in foreground:', notification);
     });
@@ -65,7 +60,8 @@ export async function initPushNotifications() {
       }
     });
 
-    pushRegistered = true;
+    // Step 3: Trigger native registration AFTER listeners are active
+    await PushNotifications.register();
   } catch (err) {
     console.warn('Push notifications initialization notice:', err);
   }
