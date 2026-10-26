@@ -37,6 +37,18 @@ export const ALL_PORTAL_TABS = [
   { id: 'audit', label: '📜 Audit Logs', scope: 'audit' },
 ];
 
+export const DEFAULT_DELEGATION_FORM = {
+  userId: '',
+  targetUserName: '',
+  targetUserRegNo: '',
+  title: 'Acting Sub-Admin',
+  durationMode: 'indefinite',
+  customExpiresAt: '',
+  scopeMode: 'all',
+  selectedScopes: ['all'],
+  notes: '',
+};
+
 export default function SuperAdminPortal() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,17 +87,7 @@ export default function SuperAdminPortal() {
   const [delegationsStats, setDelegationsStats] = useState({ total: 0, active: 0, indefinite: 0 });
   const [loadingDelegations, setLoadingDelegations] = useState(false);
   const [isCreateDelegationModalOpen, setIsCreateDelegationModalOpen] = useState(false);
-  const [delegationFormData, setDelegationFormData] = useState({
-    userId: '',
-    targetUserName: '',
-    targetUserRegNo: '',
-    title: 'Acting Sub-Admin',
-    durationMode: 'indefinite',
-    customExpiresAt: '',
-    scopeMode: 'all',
-    selectedScopes: ['all'],
-    notes: '',
-  });
+  const [delegationFormData, setDelegationFormData] = useState(DEFAULT_DELEGATION_FORM);
   const [submittingDelegation, setSubmittingDelegation] = useState(false);
   const [delegationUserSearch, setDelegationUserSearch] = useState('');
   const [delegationSearchResults, setDelegationSearchResults] = useState([]);
@@ -1937,17 +1939,7 @@ export default function SuperAdminPortal() {
       if (res.success) {
         triggerToast('success', res.message || 'Sub-Admin powers granted successfully!', 'Delegation Granted');
         setIsCreateDelegationModalOpen(false);
-        setDelegationFormData({
-          userId: '',
-          targetUserName: '',
-          targetUserRegNo: '',
-          title: 'Acting Sub-Admin',
-          durationMode: 'indefinite',
-          customExpiresAt: '',
-          scopeMode: 'all',
-          selectedScopes: ['all'],
-          notes: '',
-        });
+        setDelegationFormData(DEFAULT_DELEGATION_FORM);
         setDelegationUserSearch('');
         setDelegationSearchResults([]);
         loadDelegations();
@@ -4020,13 +4012,10 @@ export default function SuperAdminPortal() {
                       type="button"
                       onClick={() => {
                         setDelegationFormData({
+                          ...DEFAULT_DELEGATION_FORM,
                           userId: selectedUser._id,
                           targetUserName: selectedUser.name,
                           targetUserRegNo: selectedUser.registrationNumber,
-                          title: 'Acting Sub-Admin',
-                          durationMode: 'indefinite',
-                          customExpiresAt: '',
-                          notes: '',
                         });
                         setIsCreateDelegationModalOpen(true);
                       }}
@@ -10295,15 +10284,7 @@ export default function SuperAdminPortal() {
                 <button
                   type="button"
                   onClick={() => {
-                    setDelegationFormData({
-                      userId: '',
-                      targetUserName: '',
-                      targetUserRegNo: '',
-                      title: 'Acting Sub-Admin',
-                      durationMode: 'indefinite',
-                      customExpiresAt: '',
-                      notes: '',
-                    });
+                    setDelegationFormData(DEFAULT_DELEGATION_FORM);
                     setDelegationUserSearch('');
                     setDelegationSearchResults([]);
                     setIsCreateDelegationModalOpen(true);
@@ -10598,13 +10579,11 @@ export default function SuperAdminPortal() {
                               type="button"
                               onClick={() => {
                                 setDelegationFormData({
+                                  ...DEFAULT_DELEGATION_FORM,
                                   userId: d.userId,
                                   targetUserName: d.userName,
                                   targetUserRegNo: d.userRegistrationNumber,
                                   title: d.title || 'Acting Sub-Admin',
-                                  durationMode: 'indefinite',
-                                  customExpiresAt: '',
-                                  notes: '',
                                 });
                                 setIsCreateDelegationModalOpen(true);
                               }}
@@ -11656,9 +11635,9 @@ export default function SuperAdminPortal() {
                       setDelegationFormData((prev) => ({
                         ...prev,
                         scopeMode: 'custom',
-                        selectedScopes: prev.selectedScopes.includes('all')
+                        selectedScopes: (prev.selectedScopes || []).includes('all')
                           ? ['messalerts', 'notifications', 'users']
-                          : prev.selectedScopes,
+                          : (prev.selectedScopes || []),
                       }))
                     }
                     style={{
@@ -11707,13 +11686,13 @@ export default function SuperAdminPortal() {
                     }}
                   >
                     {DELEGATION_FEATURE_MODULES.map((mod) => {
-                      const isChecked = delegationFormData.selectedScopes.includes(mod.id);
+                      const isChecked = (delegationFormData.selectedScopes || []).includes(mod.id);
                       return (
                         <div
                           key={mod.id}
                           onClick={() => {
                             setDelegationFormData((prev) => {
-                              const current = prev.selectedScopes.filter((s) => s !== 'all');
+                              const current = (prev.selectedScopes || []).filter((s) => s !== 'all');
                               const next = isChecked ? current.filter((s) => s !== mod.id) : [...current, mod.id];
                               return { ...prev, selectedScopes: next };
                             });
@@ -11880,9 +11859,9 @@ export default function SuperAdminPortal() {
                   style={{
                     padding: '0.6rem 0.85rem',
                     borderRadius: '8px',
-                    border: editingDelegationScopes.scopes.includes('all') ? '2px solid #3b82f6' : '1px solid var(--border-color)',
-                    background: editingDelegationScopes.scopes.includes('all') ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
-                    color: editingDelegationScopes.scopes.includes('all') ? '#93c5fd' : 'var(--text-primary)',
+                    border: (editingDelegationScopes?.scopes || []).includes('all') ? '2px solid #3b82f6' : '1px solid var(--border-color)',
+                    background: (editingDelegationScopes?.scopes || []).includes('all') ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
+                    color: (editingDelegationScopes?.scopes || []).includes('all') ? '#93c5fd' : 'var(--text-primary)',
                     cursor: 'pointer',
                     textAlign: 'left',
                   }}
@@ -11895,15 +11874,15 @@ export default function SuperAdminPortal() {
                   onClick={() =>
                     setEditingDelegationScopes((prev) => ({
                       ...prev,
-                      scopes: prev.scopes.includes('all') ? ['messalerts', 'notifications', 'users'] : prev.scopes,
+                      scopes: (prev?.scopes || []).includes('all') ? ['messalerts', 'notifications', 'users'] : (prev?.scopes || []),
                     }))
                   }
                   style={{
                     padding: '0.6rem 0.85rem',
                     borderRadius: '8px',
-                    border: !editingDelegationScopes.scopes.includes('all') ? '2px solid #3b82f6' : '1px solid var(--border-color)',
-                    background: !editingDelegationScopes.scopes.includes('all') ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
-                    color: !editingDelegationScopes.scopes.includes('all') ? '#93c5fd' : 'var(--text-primary)',
+                    border: !(editingDelegationScopes?.scopes || []).includes('all') ? '2px solid #3b82f6' : '1px solid var(--border-color)',
+                    background: !(editingDelegationScopes?.scopes || []).includes('all') ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
+                    color: !(editingDelegationScopes?.scopes || []).includes('all') ? '#93c5fd' : 'var(--text-primary)',
                     cursor: 'pointer',
                     textAlign: 'left',
                   }}
@@ -11913,7 +11892,7 @@ export default function SuperAdminPortal() {
                 </button>
               </div>
 
-              {editingDelegationScopes.scopes.includes('all') ? (
+              {(editingDelegationScopes?.scopes || []).includes('all') ? (
                 <div
                   style={{
                     padding: '0.75rem 1rem',
@@ -11987,13 +11966,13 @@ export default function SuperAdminPortal() {
                     }}
                   >
                     {DELEGATION_FEATURE_MODULES.map((mod) => {
-                      const isChecked = editingDelegationScopes.scopes.includes(mod.id);
+                      const isChecked = (editingDelegationScopes?.scopes || []).includes(mod.id);
                       return (
                         <div
                           key={mod.id}
                           onClick={() => {
                             setEditingDelegationScopes((prev) => {
-                              const current = prev.scopes.filter((s) => s !== 'all');
+                              const current = (prev?.scopes || []).filter((s) => s !== 'all');
                               const next = isChecked ? current.filter((s) => s !== mod.id) : [...current, mod.id];
                               return { ...prev, scopes: next };
                             });
