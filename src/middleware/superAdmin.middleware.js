@@ -15,32 +15,59 @@ const requireSuperAdmin = async (req, res, next) => {
       });
     }
 
-    if (req.user.role !== "superadmin") {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: Super Admin access privileges required",
-      });
-    }
-
     // Server-side database verification to prevent stale JWT privilege escalation
-    const dbUser = await User.findById(req.user.id).select("role accountStatus isActivated");
+    const dbUser = await User.findById(req.user.id);
 
-    if (!dbUser || dbUser.role !== "superadmin") {
+    if (!dbUser) {
       return res.status(403).json({
         success: false,
-        message: "Forbidden: Super Admin privileges are not assigned to this account",
+        message: "Forbidden: User account not found",
       });
     }
 
     if (dbUser.accountStatus !== "active" || dbUser.isActivated === false) {
       return res.status(403).json({
         success: false,
-        message: "Super Admin account is deactivated or suspended",
+        message: "Account is deactivated or suspended",
       });
     }
 
-    req.superAdminUser = dbUser;
-    next();
+    // 1. Permanent Super Admin Check
+    if (dbUser.role === "superadmin") {
+      req.superAdminUser = dbUser;
+      req.isDelegatedSubAdmin = false;
+      return next();
+    }
+
+    // 2. Active Temporary Sub-Admin Delegation Check
+    if (dbUser.isDelegatedSubAdmin && dbUser.delegatedRole === "superadmin") {
+      const isIndefinite = Boolean(dbUser.delegationIndefinite);
+      const isTimeValid = isIndefinite || (dbUser.delegationExpiresAt && new Date(dbUser.delegationExpiresAt) > new Date());
+
+      if (isTimeValid) {
+        req.superAdminUser = dbUser;
+        req.isDelegatedSubAdmin = true;
+        req.delegationScopes = dbUser.delegationScopes || ["all"];
+        req.delegationTitle = dbUser.delegationTitle || "Acting Sub-Admin";
+        return next();
+      } else {
+        // Automatically cleanup expired delegation
+        dbUser.isDelegatedSubAdmin = false;
+        dbUser.delegatedRole = null;
+        await dbUser.save();
+        try {
+          const Delegation = require("../models/delegation.model");
+          if (dbUser.delegationId) {
+            await Delegation.findByIdAndUpdate(dbUser.delegationId, { status: "expired" });
+          }
+        } catch (_) {}
+      }
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: "Forbidden: Super Admin access privileges required",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,

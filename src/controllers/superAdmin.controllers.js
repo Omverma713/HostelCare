@@ -3402,6 +3402,307 @@ async function broadcastCustomMessAlert(req, res) {
   }
 }
 
+// ─── TEMPORARY SUB-ADMIN DELEGATION ───────────────────────────────────────────
+const Delegation = require("../models/delegation.model");
+
+// GET /api/v1/superadmin/delegations
+const getDelegationsList = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Auto-expire any past delegations that are not indefinite
+    const expiredActive = await Delegation.find({
+      status: "active",
+      isIndefinite: false,
+      expiresAt: { $lte: now },
+    });
+
+    if (expiredActive.length > 0) {
+      for (const d of expiredActive) {
+        d.status = "expired";
+        await d.save();
+        await User.findByIdAndUpdate(d.userId, {
+          isDelegatedSubAdmin: false,
+          delegatedRole: null,
+          delegationId: null,
+        }).catch(() => {});
+      }
+    }
+
+    const delegations = await Delegation.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formatted = delegations.map((d) => {
+      let isExpired = false;
+      let timeRemainingMinutes = null;
+
+      if (!d.isIndefinite && d.expiresAt) {
+        const diffMs = new Date(d.expiresAt).getTime() - now.getTime();
+        if (diffMs <= 0 && d.status === "active") {
+          isExpired = true;
+          timeRemainingMinutes = 0;
+        } else if (diffMs > 0) {
+          timeRemainingMinutes = Math.round(diffMs / (1000 * 60));
+        }
+      }
+
+      return {
+        ...d,
+        isExpired,
+        timeRemainingMinutes,
+      };
+    });
+
+    const activeCount = formatted.filter((d) => d.status === "active" && !d.isExpired).length;
+    const indefiniteCount = formatted.filter((d) => d.status === "active" && d.isIndefinite).length;
+
+    return res.status(200).json({
+      success: true,
+      delegations: formatted,
+      stats: {
+        total: formatted.length,
+        active: activeCount,
+        indefinite: indefiniteCount,
+      },
+    });
+  } catch (error) {
+    console.error("getDelegationsList error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load delegations", error: error.message });
+  }
+};
+
+// POST /api/v1/superadmin/delegations
+const createDelegation = async (req, res) => {
+  try {
+    const {
+      userId,
+      title = "Acting Sub-Admin",
+      durationMode = "indefinite",
+      customExpiresAt,
+      isIndefinite = false,
+      scopes = ["all"],
+      notes = "",
+    } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "Target userId is required for delegation" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Target user not found" });
+    }
+
+    if (user.role === "superadmin") {
+      return res.status(400).json({ success: false, message: "User is already a permanent Super Admin" });
+    }
+
+    let calculatedExpiresAt = null;
+    let effectiveIndefinite = durationMode === "indefinite" || isIndefinite === true;
+
+    if (!effectiveIndefinite) {
+      const nowMs = Date.now();
+      if (durationMode === "24h") {
+        calculatedExpiresAt = new Date(nowMs + 24 * 3600 * 1000);
+      } else if (durationMode === "3d") {
+        calculatedExpiresAt = new Date(nowMs + 3 * 24 * 3600 * 1000);
+      } else if (durationMode === "7d") {
+        calculatedExpiresAt = new Date(nowMs + 7 * 24 * 3600 * 1000);
+      } else if (durationMode === "30d") {
+        calculatedExpiresAt = new Date(nowMs + 30 * 24 * 3600 * 1000);
+      } else if (durationMode === "custom") {
+        if (!customExpiresAt) {
+          return res.status(400).json({ success: false, message: "customExpiresAt date is required for custom duration" });
+        }
+        calculatedExpiresAt = new Date(customExpiresAt);
+        if (isNaN(calculatedExpiresAt.getTime()) || calculatedExpiresAt <= new Date()) {
+          return res.status(400).json({ success: false, message: "Custom expiry date must be in the future" });
+        }
+      } else {
+        effectiveIndefinite = true;
+      }
+    }
+
+    // Revoke any previous active delegation for this user
+    await Delegation.updateMany(
+      { userId: user._id, status: "active" },
+      {
+        $set: {
+          status: "revoked",
+          revokedAt: new Date(),
+          revokedBy: req.user.registrationNumber,
+          revocationReason: "Superseded by new delegation grant",
+        },
+      }
+    );
+
+    const delegation = await Delegation.create({
+      userId: user._id,
+      userRegistrationNumber: user.registrationNumber,
+      userName: user.name,
+      originalRole: user.role,
+      delegatedBy: req.user._id || req.user.id,
+      delegatedByRegistrationNumber: req.user.registrationNumber,
+      title: title.trim() || "Acting Sub-Admin",
+      scopes: Array.isArray(scopes) && scopes.length > 0 ? scopes : ["all"],
+      durationMode,
+      isIndefinite: effectiveIndefinite,
+      expiresAt: calculatedExpiresAt,
+      status: "active",
+      notes: notes.trim(),
+    });
+
+    // Update user record
+    user.isDelegatedSubAdmin = true;
+    user.delegatedRole = "superadmin";
+    user.delegationId = delegation._id;
+    user.delegationTitle = delegation.title;
+    user.delegationScopes = delegation.scopes;
+    user.delegationExpiresAt = calculatedExpiresAt;
+    user.delegationIndefinite = effectiveIndefinite;
+    await user.save();
+
+    await recordAudit({
+      req,
+      action: "SUB_ADMIN_DELEGATED",
+      targetType: "USER",
+      targetId: user._id,
+      targetIdentifier: user.registrationNumber,
+      summary: `Delegated Sub-Admin powers to ${user.name} (${user.registrationNumber}, ${user.role}) with mode: ${durationMode}${effectiveIndefinite ? " (Until Manually Revoked)" : ` (Expires: ${calculatedExpiresAt.toISOString()})`}`,
+      details: {
+        delegationId: delegation._id,
+        durationMode,
+        isIndefinite: effectiveIndefinite,
+        expiresAt: calculatedExpiresAt,
+        title: delegation.title,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `Sub-Admin powers successfully delegated to ${user.name} (${user.registrationNumber})! Mode: ${effectiveIndefinite ? "Until Manually Revoked" : durationMode}`,
+      delegation,
+    });
+  } catch (error) {
+    console.error("createDelegation error:", error);
+    return res.status(500).json({ success: false, message: "Failed to delegate sub-admin powers", error: error.message });
+  }
+};
+
+// POST /api/v1/superadmin/delegations/:delegationId/revoke
+const revokeDelegation = async (req, res) => {
+  try {
+    const { delegationId } = req.params;
+    const { reason = "Revoked by Super Admin" } = req.body;
+
+    const delegation = await Delegation.findById(delegationId);
+    if (!delegation) {
+      return res.status(404).json({ success: false, message: "Delegation record not found" });
+    }
+
+    delegation.status = "revoked";
+    delegation.revokedAt = new Date();
+    delegation.revokedBy = req.user.registrationNumber;
+    delegation.revocationReason = reason;
+    await delegation.save();
+
+    // Restore user original state
+    await User.findByIdAndUpdate(delegation.userId, {
+      isDelegatedSubAdmin: false,
+      delegatedRole: null,
+      delegationId: null,
+      delegationExpiresAt: null,
+      delegationIndefinite: false,
+    });
+
+    await recordAudit({
+      req,
+      action: "SUB_ADMIN_DELEGATION_REVOKED",
+      targetType: "USER",
+      targetId: delegation.userId,
+      targetIdentifier: delegation.userRegistrationNumber,
+      summary: `Revoked Sub-Admin delegation from ${delegation.userName} (${delegation.userRegistrationNumber}). Reason: ${reason}`,
+      details: { delegationId, reason },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Sub-Admin powers for ${delegation.userName} (${delegation.userRegistrationNumber}) revoked successfully.`,
+      delegation,
+    });
+  } catch (error) {
+    console.error("revokeDelegation error:", error);
+    return res.status(500).json({ success: false, message: "Failed to revoke delegation", error: error.message });
+  }
+};
+
+// PATCH /api/v1/superadmin/delegations/:delegationId/duration
+const updateDelegationDuration = async (req, res) => {
+  try {
+    const { delegationId } = req.params;
+    const { durationMode = "indefinite", customExpiresAt, isIndefinite = false } = req.body;
+
+    const delegation = await Delegation.findById(delegationId);
+    if (!delegation) {
+      return res.status(404).json({ success: false, message: "Delegation record not found" });
+    }
+
+    let calculatedExpiresAt = null;
+    let effectiveIndefinite = durationMode === "indefinite" || isIndefinite === true;
+
+    if (!effectiveIndefinite) {
+      const nowMs = Date.now();
+      if (durationMode === "24h") {
+        calculatedExpiresAt = new Date(nowMs + 24 * 3600 * 1000);
+      } else if (durationMode === "3d") {
+        calculatedExpiresAt = new Date(nowMs + 3 * 24 * 3600 * 1000);
+      } else if (durationMode === "7d") {
+        calculatedExpiresAt = new Date(nowMs + 7 * 24 * 3600 * 1000);
+      } else if (durationMode === "30d") {
+        calculatedExpiresAt = new Date(nowMs + 30 * 24 * 3600 * 1000);
+      } else if (durationMode === "custom") {
+        if (!customExpiresAt) {
+          return res.status(400).json({ success: false, message: "customExpiresAt is required" });
+        }
+        calculatedExpiresAt = new Date(customExpiresAt);
+      }
+    }
+
+    delegation.durationMode = durationMode;
+    delegation.isIndefinite = effectiveIndefinite;
+    delegation.expiresAt = calculatedExpiresAt;
+    delegation.status = "active";
+    await delegation.save();
+
+    await User.findByIdAndUpdate(delegation.userId, {
+      isDelegatedSubAdmin: true,
+      delegatedRole: "superadmin",
+      delegationExpiresAt: calculatedExpiresAt,
+      delegationIndefinite: effectiveIndefinite,
+    });
+
+    await recordAudit({
+      req,
+      action: "SUB_ADMIN_DURATION_UPDATED",
+      targetType: "USER",
+      targetId: delegation.userId,
+      targetIdentifier: delegation.userRegistrationNumber,
+      summary: `Updated Sub-Admin duration for ${delegation.userName} (${delegation.userRegistrationNumber}) to mode: ${durationMode}`,
+      details: { delegationId, durationMode, isIndefinite: effectiveIndefinite, expiresAt: calculatedExpiresAt },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Delegation duration updated to: ${effectiveIndefinite ? "Until Manually Revoked (Jab Super Admin Chahe)" : durationMode}`,
+      delegation,
+    });
+  } catch (error) {
+    console.error("updateDelegationDuration error:", error);
+    return res.status(500).json({ success: false, message: "Failed to update delegation duration", error: error.message });
+  }
+};
+
 module.exports = {
   getSystemOverview,
   getUsersDirectory,
@@ -3449,6 +3750,10 @@ module.exports = {
   flushUserAccount,
   getSuperAdminSelfProfile,
   updateSuperAdminSelfProfile,
+  getDelegationsList,
+  createDelegation,
+  revokeDelegation,
+  updateDelegationDuration,
 };
 
 

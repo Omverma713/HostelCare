@@ -61,6 +61,25 @@ export default function SuperAdminPortal() {
   const [loadingMyProfile, setLoadingMyProfile] = useState(false);
   const [savingMyProfile, setSavingMyProfile] = useState(false);
 
+  // Temporary Sub-Admin Delegation State
+  const [delegationsList, setDelegationsList] = useState([]);
+  const [delegationsStats, setDelegationsStats] = useState({ total: 0, active: 0, indefinite: 0 });
+  const [loadingDelegations, setLoadingDelegations] = useState(false);
+  const [isCreateDelegationModalOpen, setIsCreateDelegationModalOpen] = useState(false);
+  const [delegationFormData, setDelegationFormData] = useState({
+    userId: '',
+    targetUserName: '',
+    targetUserRegNo: '',
+    title: 'Acting Sub-Admin',
+    durationMode: 'indefinite',
+    customExpiresAt: '',
+    notes: '',
+  });
+  const [submittingDelegation, setSubmittingDelegation] = useState(false);
+  const [delegationUserSearch, setDelegationUserSearch] = useState('');
+  const [delegationSearchResults, setDelegationSearchResults] = useState([]);
+  const [searchingDelegationUsers, setSearchingDelegationUsers] = useState(false);
+
   // User Provisioning State (Immediate vs Pending Activation)
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
   const [createUserData, setCreateUserData] = useState({
@@ -1655,8 +1674,9 @@ export default function SuperAdminPortal() {
       loadMessNotifications();
       loadDeviceRegistry(1);
     }
+    else if (activeTab === 'delegations') loadDelegations();
     else if (activeTab === 'audit') loadAuditLogs(1);
-  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadNotices, loadMessNotifications, loadDeviceRegistry, loadAuditLogs]);
+  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadNotices, loadMessNotifications, loadDeviceRegistry, loadAuditLogs, loadDelegations]);
 
   // Fetch full details for a selected user
   const handleSelectUser = async (user) => {
@@ -1790,6 +1810,126 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to update profile', 'Admin Profile');
     } finally {
       setSavingMyProfile(false);
+    }
+  };
+
+  // Temporary Sub-Admin Delegation Handlers
+  const loadDelegations = useCallback(async () => {
+    try {
+      setLoadingDelegations(true);
+      const res = await adminApi.getDelegations();
+      if (res.success) {
+        setDelegationsList(res.delegations || []);
+        setDelegationsStats(res.stats || { total: 0, active: 0, indefinite: 0 });
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to load delegations', 'Delegations');
+    } finally {
+      setLoadingDelegations(false);
+    }
+  }, []);
+
+  const searchUsersForDelegation = async (query) => {
+    setDelegationUserSearch(query);
+    if (!query || query.trim().length < 2) {
+      setDelegationSearchResults([]);
+      return;
+    }
+    try {
+      setSearchingDelegationUsers(true);
+      const res = await adminApi.getUsers({ search: query.trim(), limit: 8 });
+      if (res.success && res.users) {
+        // Exclude permanent superadmins from delegation target list
+        setDelegationSearchResults(res.users.filter((u) => u.role !== 'superadmin'));
+      }
+    } catch (_) {
+    } finally {
+      setSearchingDelegationUsers(false);
+    }
+  };
+
+  const handleCreateDelegation = async (e) => {
+    e.preventDefault();
+    if (!delegationFormData.userId) {
+      triggerToast('error', 'Please select a user to grant Sub-Admin power', 'Validation Error');
+      return;
+    }
+    try {
+      setSubmittingDelegation(true);
+      const payload = {
+        userId: delegationFormData.userId,
+        title: delegationFormData.title.trim() || 'Acting Sub-Admin',
+        durationMode: delegationFormData.durationMode,
+        customExpiresAt: delegationFormData.customExpiresAt || null,
+        isIndefinite: delegationFormData.durationMode === 'indefinite',
+        notes: delegationFormData.notes.trim(),
+      };
+      const res = await adminApi.createDelegation(payload);
+      if (res.success) {
+        triggerToast('success', res.message || 'Sub-Admin powers granted successfully!', 'Delegation Granted');
+        setIsCreateDelegationModalOpen(false);
+        setDelegationFormData({
+          userId: '',
+          targetUserName: '',
+          targetUserRegNo: '',
+          title: 'Acting Sub-Admin',
+          durationMode: 'indefinite',
+          customExpiresAt: '',
+          notes: '',
+        });
+        setDelegationUserSearch('');
+        setDelegationSearchResults([]);
+        loadDelegations();
+        loadUsers(userPagination.page);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to grant delegation', 'Delegation Failed');
+    } finally {
+      setSubmittingDelegation(false);
+    }
+  };
+
+  const handleRevokeDelegation = async (delegationId, targetName) => {
+    if (
+      !window.confirm(
+        `⚠️ REVOKE SUB-ADMIN PRIVILEGES:\n\nAre you sure you want to revoke Sub-Admin powers from ${targetName}?\n\nThey will immediately be stripped of Super Admin access and revert to their normal role.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await adminApi.revokeDelegation(delegationId);
+      if (res.success) {
+        triggerToast('success', res.message || 'Delegation revoked', 'Privilege Revoked');
+        loadDelegations();
+        loadUsers(userPagination.page);
+        if (selectedUser && (selectedUser.delegationId === delegationId || selectedUser._id === res.delegation?.userId)) {
+          setSelectedUser((prev) => ({
+            ...prev,
+            isDelegatedSubAdmin: false,
+            delegatedRole: null,
+            delegationId: null,
+          }));
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to revoke delegation', 'Revoke Error');
+    }
+  };
+
+  const handleUpdateDelegationDuration = async (delegationId, durationMode, customExpiresAt) => {
+    try {
+      const res = await adminApi.updateDelegationDuration(delegationId, {
+        durationMode,
+        customExpiresAt,
+        isIndefinite: durationMode === 'indefinite',
+      });
+      if (res.success) {
+        triggerToast('success', res.message || 'Duration updated successfully', 'Duration Updated');
+        loadDelegations();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update duration', 'Duration Error');
     }
   };
 
@@ -2242,6 +2382,7 @@ export default function SuperAdminPortal() {
           {[
             { id: 'overview', label: '📊 Overview' },
             { id: 'users', label: '👥 User Directory' },
+            { id: 'delegations', label: '👑 Sub-Admin Delegation' },
             { id: 'notices', label: '🚨 Global Notices' },
             { id: 'sessions', label: '📱 Sessions & Devices' },
             { id: 'limits', label: '⚙️ Login Limits' },
@@ -3690,6 +3831,82 @@ export default function SuperAdminPortal() {
                   <span>🔥</span>
                   <span>{flushingUser ? 'Flushing Account...' : 'Flush Account (Purge Sessions & Device Vault)'}</span>
                 </button>
+
+                {selectedUser.role !== 'superadmin' && (
+                  selectedUser.isDelegatedSubAdmin ? (
+                    <div
+                      style={{
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '8px',
+                        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.22) 100%)',
+                        border: '1px solid rgba(245, 158, 11, 0.5)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <span>👑</span> ACTIVE SUB-ADMIN
+                        </span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#fde68a' }}>
+                          {selectedUser.delegationIndefinite ? '♾️ Until Revoked' : '⏳ Temporary'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRevokeDelegation(selectedUser.delegationId, selectedUser.name)}
+                        style={{
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(239, 68, 68, 0.5)',
+                          background: 'rgba(239, 68, 68, 0.2)',
+                          color: '#f87171',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ⛔ Revoke Sub-Admin Power
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDelegationFormData({
+                          userId: selectedUser._id,
+                          targetUserName: selectedUser.name,
+                          targetUserRegNo: selectedUser.registrationNumber,
+                          title: 'Acting Sub-Admin',
+                          durationMode: 'indefinite',
+                          customExpiresAt: '',
+                          notes: '',
+                        });
+                        setIsCreateDelegationModalOpen(true);
+                      }}
+                      style={{
+                        padding: '0.55rem',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(245, 158, 11, 0.45)',
+                        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.2) 100%)',
+                        color: '#fbbf24',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)',
+                      }}
+                      title="Delegate temporary or indefinite Sub-Admin privileges without master password"
+                    >
+                      <span>👑</span>
+                      <span>Delegate Sub-Admin Powers...</span>
+                    </button>
+                  )
+                )}
 
                 <button
                   type="button"
@@ -9884,6 +10101,336 @@ export default function SuperAdminPortal() {
         </div>
       )}
 
+      {/* 13. TAB: SUB-ADMIN DELEGATIONS DECK */}
+      {activeTab === 'delegations' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Header Banner & Stat Cards */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.5rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.5rem' }}>👑</span>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    Temporary & Indefinite Sub-Admin Delegations
+                  </h2>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Delegate elevated administrative powers to Wardens, Caretakers, or Superintendents without revealing the Master Super Admin password.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={loadDelegations}
+                  style={{
+                    padding: '0.6rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span>🔄</span> Refresh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDelegationFormData({
+                      userId: '',
+                      targetUserName: '',
+                      targetUserRegNo: '',
+                      title: 'Acting Sub-Admin',
+                      durationMode: 'indefinite',
+                      customExpiresAt: '',
+                      notes: '',
+                    });
+                    setDelegationUserSearch('');
+                    setDelegationSearchResults([]);
+                    setIsCreateDelegationModalOpen(true);
+                  }}
+                  style={{
+                    padding: '0.6rem 1.25rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.85rem',
+                    fontWeight: 750,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.35)',
+                  }}
+                >
+                  <span>➕</span> Delegate Sub-Admin
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Stat Tiles */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>ACTIVE DELEGATED SUB-ADMINS</div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>
+                  {delegationsStats.active || 0}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Currently holding live elevated rights
+                </div>
+              </div>
+
+              <div style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>INDEFINITE (JAB TAK ADMIN CHAHE)</div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#f59e0b', marginTop: '4px' }}>
+                  {delegationsStats.indefinite || 0}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Active until manually revoked by you
+                </div>
+              </div>
+
+              <div style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>TOTAL ALLOCATION HISTORY</div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  {delegationsStats.total || 0}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Active, expired & revoked audit trail
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Delegations Table */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.25rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <div style={{ fontSize: '0.95rem', fontWeight: 750, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              📋 Delegated Sub-Admin Roster
+            </div>
+
+            {loadingDelegations ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                Loading delegations roster...
+              </div>
+            ) : delegationsList.length === 0 ? (
+              <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🛡️</div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>No Sub-Admin Delegations Active</div>
+                <p style={{ fontSize: '0.8rem', maxWidth: '420px', margin: '6px auto 16px' }}>
+                  Empower trusted staff (wardens, caretakers, superintendents) to manage mess alerts, user directory, or notices during holidays or leaves.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateDelegationModalOpen(true)}
+                  style={{
+                    padding: '0.55rem 1.15rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'var(--primary)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ➕ Delegate Sub-Admin Privileges
+                </button>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                      <th style={{ padding: '0.75rem 0.5rem' }}>Sub-Admin User</th>
+                      <th style={{ padding: '0.75rem 0.5rem' }}>Title & Scope</th>
+                      <th style={{ padding: '0.75rem 0.5rem' }}>Duration & Expiry</th>
+                      <th style={{ padding: '0.75rem 0.5rem' }}>Status</th>
+                      <th style={{ padding: '0.75rem 0.5rem' }}>Granted By</th>
+                      <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {delegationsList.map((d) => (
+                      <tr key={d._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>
+                          <div style={{ fontWeight: 750, color: 'var(--text-primary)' }}>{d.userName}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                            {d.userRegistrationNumber} • <span style={{ textTransform: 'capitalize' }}>{d.originalRole}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>
+                          <div style={{ fontWeight: 700, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>👑</span> {d.title}
+                          </div>
+                          {d.notes && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>"{d.notes}"</div>}
+                        </td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>
+                          {d.isIndefinite ? (
+                            <span
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: '12px',
+                                background: 'rgba(245, 158, 11, 0.15)',
+                                color: '#f59e0b',
+                                border: '1px solid rgba(245, 158, 11, 0.35)',
+                                fontWeight: 750,
+                                fontSize: '0.72rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              <span>♾️</span> Jab Super Admin Chahe (Until Revoked)
+                            </span>
+                          ) : d.expiresAt ? (
+                            <div>
+                              <div style={{ fontWeight: 650, color: d.isExpired ? '#ef4444' : 'var(--text-primary)' }}>
+                                {new Date(d.expiresAt).toLocaleDateString()} {new Date(d.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                              {!d.isExpired && d.timeRemainingMinutes > 0 && (
+                                <div style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 650 }}>
+                                  ⏳ ~{Math.floor(d.timeRemainingMinutes / 60)}h {d.timeRemainingMinutes % 60}m left
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>N/A</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              background:
+                                d.status === 'active' && !d.isExpired
+                                  ? 'rgba(16, 185, 129, 0.15)'
+                                  : d.status === 'revoked'
+                                  ? 'rgba(239, 68, 68, 0.12)'
+                                  : 'rgba(156, 163, 175, 0.15)',
+                              color:
+                                d.status === 'active' && !d.isExpired
+                                  ? '#10b981'
+                                  : d.status === 'revoked'
+                                  ? '#ef4444'
+                                  : 'var(--text-muted)',
+                              border: `1px solid ${
+                                d.status === 'active' && !d.isExpired
+                                  ? 'rgba(16, 185, 129, 0.35)'
+                                  : d.status === 'revoked'
+                                  ? 'rgba(239, 68, 68, 0.3)'
+                                  : 'var(--border-color)'
+                              }`,
+                            }}
+                          >
+                            {d.status === 'active' && !d.isExpired ? 'ACTIVE' : d.status === 'revoked' ? 'REVOKED' : 'EXPIRED'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                          by {d.delegatedByRegistrationNumber} • {new Date(d.createdAt).toLocaleDateString()}
+                        </td>
+                        <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
+                          {d.status === 'active' && !d.isExpired ? (
+                            <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateDelegationDuration(d._id, 'indefinite')}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                                  background: 'rgba(245, 158, 11, 0.12)',
+                                  color: '#f59e0b',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                                title="Set duration to Until Manually Revoked (Jab Super Admin Chahe)"
+                              >
+                                ♾️ Make Indefinite
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRevokeDelegation(d._id, d.userName)}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                                  background: 'rgba(239, 68, 68, 0.12)',
+                                  color: '#ef4444',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                ⛔ Revoke
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDelegationFormData({
+                                  userId: d.userId,
+                                  targetUserName: d.userName,
+                                  targetUserRegNo: d.userRegistrationNumber,
+                                  title: d.title || 'Acting Sub-Admin',
+                                  durationMode: 'indefinite',
+                                  customExpiresAt: '',
+                                  notes: '',
+                                });
+                                setIsCreateDelegationModalOpen(true);
+                              }}
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.72rem',
+                                fontWeight: 650,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              ↺ Re-Grant
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Dialog Before Enabling Global Maintenance */}
       {confirmGlobalModal && (
         <div
@@ -10568,6 +11115,320 @@ export default function SuperAdminPortal() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Create / Grant Sub-Admin Delegation Modal */}
+      {isCreateDelegationModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsCreateDelegationModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid rgba(245, 158, 11, 0.45)',
+              borderRadius: '16px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '1.75rem',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 158, 11, 0.2)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.5rem' }}>👑</span>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#fbbf24' }}>
+                    Delegate Sub-Admin Powers
+                  </h2>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Grant elevated administrative portal rights without sharing your master password.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateDelegationModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateDelegation} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Target User Selector */}
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                  Target User (Warden, Caretaker, Superintendent, etc.)
+                </label>
+                {delegationFormData.userId ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: 750, color: 'var(--text-primary)' }}>
+                        {delegationFormData.targetUserName}
+                      </span>{' '}
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                        ({delegationFormData.targetUserRegNo})
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDelegationFormData((prev) => ({
+                          ...prev,
+                          userId: '',
+                          targetUserName: '',
+                          targetUserRegNo: '',
+                        }))
+                      }
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border-color)',
+                        background: 'transparent',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Change User
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Type name or reg# to search staff..."
+                      value={delegationUserSearch}
+                      onChange={(e) => searchUsersForDelegation(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.88rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    {searchingDelegationUsers && (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>Searching...</div>
+                    )}
+                    {delegationSearchResults.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: '6px',
+                          maxHeight: '140px',
+                          overflowY: 'auto',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                        }}
+                      >
+                        {delegationSearchResults.map((u) => (
+                          <div
+                            key={u._id}
+                            onClick={() => {
+                              setDelegationFormData((prev) => ({
+                                ...prev,
+                                userId: u._id,
+                                targetUserName: u.name,
+                                targetUserRegNo: u.registrationNumber,
+                              }));
+                              setDelegationSearchResults([]);
+                              setDelegationUserSearch('');
+                            }}
+                            style={{
+                              padding: '0.5rem 0.75rem',
+                              borderBottom: '1px solid var(--border-color)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              fontSize: '0.8rem',
+                            }}
+                          >
+                            <span style={{ fontWeight: 650 }}>{u.name} ({u.registrationNumber})</span>
+                            <span style={{ color: 'var(--text-muted)', textTransform: 'capitalize' }}>{u.role}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Title & Scope */}
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                  Delegation Title / Role Name
+                </label>
+                <input
+                  type="text"
+                  value={delegationFormData.title}
+                  onChange={(e) => setDelegationFormData((prev) => ({ ...prev, title: e.target.value }))}
+                  placeholder="e.g. Acting Chief Warden, Mess Incharge (Vacation)"
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.88rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Duration Options */}
+              <div style={{ padding: '0.85rem', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fbbf24', display: 'block', marginBottom: '8px' }}>
+                  ⏱️ Delegation Duration / Expiry
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', marginBottom: '8px' }}>
+                  {[
+                    { id: 'indefinite', label: '♾️ Jab Super Admin Chahe', sub: 'Until manually revoked' },
+                    { id: '24h', label: '⏱️ 24 Hours', sub: '1-day temporary shift' },
+                    { id: '3d', label: '📅 3 Days', sub: 'Weekend duty cover' },
+                    { id: '7d', label: '🗓️ 7 Days', sub: '1-week vacation' },
+                    { id: '30d', label: '🗓️ 30 Days', sub: '1-month assignment' },
+                    { id: 'custom', label: '🕒 Custom Date', sub: 'Pick exact end time' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setDelegationFormData((prev) => ({ ...prev, durationMode: opt.id }))}
+                      style={{
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: delegationFormData.durationMode === opt.id ? '2px solid #f59e0b' : '1px solid var(--border-color)',
+                        background: delegationFormData.durationMode === opt.id ? 'rgba(245, 158, 11, 0.2)' : 'var(--bg-secondary)',
+                        color: delegationFormData.durationMode === opt.id ? '#fbbf24' : 'var(--text-primary)',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ fontWeight: 750, fontSize: '0.78rem' }}>{opt.label}</div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{opt.sub}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {delegationFormData.durationMode === 'custom' && (
+                  <div style={{ marginTop: '8px' }}>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Select Expiry Date & Time:
+                    </label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={delegationFormData.customExpiresAt}
+                      onChange={(e) => setDelegationFormData((prev) => ({ ...prev, customExpiresAt: e.target.value }))}
+                      style={{
+                        padding: '0.45rem 0.65rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.82rem',
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Administrative Notes */}
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                  Administrative Note / Reason (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Authorized to oversee BH-1 & mess operations while admin is travelling"
+                  value={delegationFormData.notes}
+                  onChange={(e) => setDelegationFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateDelegationModalOpen(false)}
+                  style={{
+                    padding: '0.6rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.85rem',
+                    fontWeight: 650,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingDelegation || !delegationFormData.userId}
+                  style={{
+                    padding: '0.6rem 1.4rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.85rem',
+                    fontWeight: 750,
+                    cursor: submittingDelegation || !delegationFormData.userId ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+                  }}
+                >
+                  {submittingDelegation ? 'Granting...' : '👑 Grant Sub-Admin Privileges'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

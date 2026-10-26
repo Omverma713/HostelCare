@@ -107,6 +107,38 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // Temporary Sub-Admin Delegation tracking
+    isDelegatedSubAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    delegationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Delegation",
+      default: null,
+    },
+    delegatedRole: {
+      type: String,
+      enum: ["superadmin", null],
+      default: null,
+    },
+    delegationTitle: {
+      type: String,
+      default: null,
+    },
+    delegationScopes: {
+      type: [String],
+      default: [],
+    },
+    delegationExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    delegationIndefinite: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

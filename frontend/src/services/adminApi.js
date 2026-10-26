@@ -131,6 +131,32 @@ export const adminApi = {
     });
   },
 
+  // Temporary Sub-Admin Delegation
+  getDelegations() {
+    return adminRequest('/superadmin/delegations');
+  },
+
+  createDelegation(payload) {
+    return adminRequest('/superadmin/delegations', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  revokeDelegation(delegationId, reason = '') {
+    return adminRequest(`/superadmin/delegations/${delegationId}/revoke`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  updateDelegationDuration(delegationId, payload) {
+    return adminRequest(`/superadmin/delegations/${delegationId}/duration`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
   // Sessions & Devices
   getSessions({ page = 1, limit = 20, status = '', deviceType = '', search = '' } = {}) {
     const params = new URLSearchParams({ page, limit });

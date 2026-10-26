@@ -105,12 +105,23 @@ const authMiddleware = async (req, res, next) => {
 
       // Keep role synced in case of administrative update
       decoded.role = userDoc.role;
+      decoded.isDelegatedSubAdmin = Boolean(
+        userDoc.isDelegatedSubAdmin &&
+        userDoc.delegatedRole === "superadmin" &&
+        (userDoc.delegationIndefinite || (userDoc.delegationExpiresAt && new Date(userDoc.delegationExpiresAt) > new Date()))
+      );
+      if (decoded.isDelegatedSubAdmin) {
+        decoded.delegationTitle = userDoc.delegationTitle || "Acting Sub-Admin";
+        decoded.delegationScopes = userDoc.delegationScopes || ["all"];
+        decoded.delegationExpiresAt = userDoc.delegationExpiresAt;
+        decoded.delegationIndefinite = userDoc.delegationIndefinite;
+      }
     }
 
     req.user = decoded;
 
-    // 3. Enforce maintenance mode on active sessions (non-superadmins only)
-    if (decoded.role !== "superadmin") {
+    // 3. Enforce maintenance mode on active sessions (non-superadmins & non-delegated only)
+    if (decoded.role !== "superadmin" && !decoded.isDelegatedSubAdmin) {
       const SystemConfig = require("../models/systemConfig.model");
       const config = await SystemConfig.getEffectiveConfig();
       const maintenance = config.maintenance || {};

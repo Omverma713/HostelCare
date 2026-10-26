@@ -26,8 +26,9 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   }
 
   // User is authenticated but does not have the required role, redirect to Unauthorized page
-  // Super Admin role has universal administrative inspection clearance
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role) && user.role !== 'superadmin') {
+  // Super Admin role & Delegated Sub-Admin have universal administrative inspection clearance
+  const isSuperAdminOrDelegated = user.role === 'superadmin' || Boolean(user.isDelegatedSubAdmin);
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role) && !isSuperAdminOrDelegated) {
     return <Navigate to="/unauthorized" replace />;
   }
 

@@ -87,6 +87,7 @@ export default function Sidebar({ isOpen, onClose }) {
   if (!user) return null;
 
   const userRole = user.role;
+  const isSuperAdmin = userRole === 'superadmin' || Boolean(user?.isDelegatedSubAdmin);
 
   const getDashboardPath = () => {
     switch (userRole) {
@@ -241,7 +242,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
             </NavLink>
 
-            {userRole === 'superadmin' && (
+            {isSuperAdmin && (
               <>
                 <NavLink
                   to="/superadmin?tab=users&action=create"

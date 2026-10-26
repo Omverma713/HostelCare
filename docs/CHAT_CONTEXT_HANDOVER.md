@@ -89,9 +89,26 @@
 3. **Real-time Live Badge**:
    - Displays whether Working or Sunday/Holiday timetable is currently active with manual override highlight tag.
 
+### 👑 G. Temporary & Indefinite Sub-Admin Delegation Power (Latest Implementation)
+1. **Delegation Engine (`Delegation` Mongoose Model & Middleware)**:
+   - Super Admin can delegate elevated Sub-Admin privileges to trusted personnel (wardens, caretakers, superintendents) without sharing the master password.
+   - Dual-mode duration support:
+     - **♾️ Indefinite / Until Revoked (`jab super admin chahe tab tak`)**: `durationMode: 'indefinite'`, `isIndefinite: true`, `expiresAt: null`. Remains active until the Super Admin manually revokes it.
+     - **⏳ Preset & Custom Durations**: 24 Hours, 3 Days, 7 Days, 30 Days, or Exact Custom Date & Time picker.
+   - Automatic expiry enforcement in `superAdmin.middleware.js` and `auth.middleware.js` (reverts to base role when expired, without breaking login).
+2. **Super Admin Delegation Controls**:
+   - Dedicated **👑 Sub-Admin Delegation** tab in `SuperAdminPortal.jsx`.
+   - Live roster of all delegations with real-time countdown badges (`♾️ Indefinite (Until Revoked)`, `🟢 Active (Xh Ym remaining)`, `⚠️ Expired`, `🚫 Revoked`).
+   - 1-Click **`🚫 Revoke Privileges`** button to cancel access immediately.
+   - 1-Click **`♾️ Make Indefinite`** button to convert any timed delegation into an open-ended delegation.
+   - Quick delegation launcher button directly inside the **User Details drawer** for any non-superadmin user.
+   - Sub-Admins receive full access to SuperAdmin routes and UI (`/superadmin`) with `isDelegatedSubAdmin: true`.
+
 ---
 
 ## 🧪 3. Verification & Validation
-- **Frontend Vite Build:** `npm run build` -> ✅ **0 errors (Built in 891ms)**
+- **Frontend Vite Build:** `npm run build` -> ✅ **0 errors (Built cleanly)**
+- **Mobile Web Sync:** `sync-web.js` -> ✅ **Assets synced to mobile-app/www**
 - **Backend Node Syntax Check:** -> ✅ **BACKEND_ALL_SYNTAX_PERFECT**
-- **Git Commit:** `7eb3d07` pushed to `main` (auto-deploys to AWS EC2 and builds Android APK).
+- **Git Commit:** Latest changes pushed to `main` (auto-deploys to AWS EC2 and builds Android APK).
+
