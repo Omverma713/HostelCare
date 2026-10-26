@@ -331,10 +331,10 @@ export default function SuperAdminPortal() {
 
   // App Version State
   const [appVersionConfig, setAppVersionConfig] = useState({
-    latestVersion: '1.2.2.10',
+    latestVersion: '1.2.2.11',
     minimumSupportedVersion: '1.0.0',
     updateMessage: '',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.10/hostelcare-v1.2.2.10.apk',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.11/hostelcare-v1.2.2.11.apk',
     forceUpdate: false,
     isSuspended: false,
     suspendedReason: '',
@@ -362,8 +362,8 @@ export default function SuperAdminPortal() {
     enabled: true,
     isSuspended: false,
     suspendedReason: '',
-    version: '1.2.2.10',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.10/hostelcare-v1.2.2.10.apk',
+    version: '1.2.2.11',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.11/hostelcare-v1.2.2.11.apk',
     updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
     releaseNotes: '',
     releaseMedia: [],
@@ -645,7 +645,7 @@ export default function SuperAdminPortal() {
             releaseMedia: res.pilotTesting.releaseMedia || [],
             enabled: Boolean(res.pilotTesting.enabled),
             isSuspended: Boolean(res.pilotTesting.isSuspended),
-            version: res.pilotTesting.version || '1.2.2.10',
+            version: res.pilotTesting.version || '1.2.2.11',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
           }));
         }
@@ -872,7 +872,7 @@ export default function SuperAdminPortal() {
           'success',
           isTargeted
             ? `Removed ${u.name || reg} from targeted pilot release`
-            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.10'})`,
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.11'})`,
           'Pilot Rollout'
         );
       }
