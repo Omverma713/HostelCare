@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { adminApi } from '../services/adminApi';
@@ -22,71 +22,27 @@ export const DELEGATION_FEATURE_MODULES = [
   { id: 'overview', label: '📊 System Analytics & KPIs', desc: 'Live statistics, active device counters and system health' },
 ];
 
+export const ALL_PORTAL_TABS = [
+  { id: 'overview', label: '📊 Overview', scope: 'overview' },
+  { id: 'users', label: '👥 User Directory', scope: 'users' },
+  { id: 'delegations', label: '👑 Sub-Admin Delegation', masterOnly: true },
+  { id: 'notices', label: '🚨 Global Notices', scope: 'notices' },
+  { id: 'sessions', label: '📱 Sessions & Devices', scope: 'sessions' },
+  { id: 'limits', label: '⚙️ Login Limits', scope: 'limits' },
+  { id: 'maintenance', label: '🛠️ Maintenance', scope: 'maintenance' },
+  { id: 'appversion', label: '📲 App Updates', scope: 'appversion' },
+  { id: 'pilottesting', label: '🧪 Pilot Testing', scope: 'pilottesting' },
+  { id: 'notifications', label: '🔔 Push Broadcast', scope: 'notifications' },
+  { id: 'messalerts', label: '🍱 Mess Auto-Alerts', scope: 'messalerts' },
+  { id: 'audit', label: '📜 Audit Logs', scope: 'audit' },
+];
+
 export default function SuperAdminPortal() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { token, user: currentUser, setDirectToken } = useAuth();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'overview');
   const [loading, setLoading] = useState(false);
-
-  const isMasterSuperAdmin = currentUser?.role === 'superadmin' && !currentUser?.isDelegatedSubAdmin;
-  const isDelegatedSubAdmin = Boolean(currentUser?.isDelegatedSubAdmin);
-  const userScopes = Array.isArray(currentUser?.delegationScopes) && currentUser.delegationScopes.length > 0
-    ? currentUser.delegationScopes
-    : (isMasterSuperAdmin ? ['all'] : []);
-
-  const hasScope = useCallback((scopeId) => {
-    if (isMasterSuperAdmin) return true;
-    if (!isDelegatedSubAdmin) return false;
-    if (userScopes.includes('all')) return true;
-    return userScopes.includes(scopeId);
-  }, [isMasterSuperAdmin, isDelegatedSubAdmin, userScopes]);
-
-  const allTabs = [
-    { id: 'overview', label: '📊 Overview', scope: 'overview' },
-    { id: 'users', label: '👥 User Directory', scope: 'users' },
-    { id: 'delegations', label: '👑 Sub-Admin Delegation', masterOnly: true },
-    { id: 'notices', label: '🚨 Global Notices', scope: 'notices' },
-    { id: 'sessions', label: '📱 Sessions & Devices', scope: 'sessions' },
-    { id: 'limits', label: '⚙️ Login Limits', scope: 'limits' },
-    { id: 'maintenance', label: '🛠️ Maintenance', scope: 'maintenance' },
-    { id: 'appversion', label: '📲 App Updates', scope: 'appversion' },
-    { id: 'pilottesting', label: '🧪 Pilot Testing', scope: 'pilottesting' },
-    { id: 'notifications', label: '🔔 Push Broadcast', scope: 'notifications' },
-    { id: 'messalerts', label: '🍱 Mess Auto-Alerts', scope: 'messalerts' },
-    { id: 'audit', label: '📜 Audit Logs', scope: 'audit' },
-  ];
-
-  const visibleTabs = allTabs.filter((tab) => {
-    if (tab.masterOnly) return isMasterSuperAdmin;
-    return hasScope(tab.scope);
-  });
-
-  // Sync tab with URL search parameter and clamp to allowed scopes
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam && tabParam !== activeTab) {
-      setActiveTab(tabParam);
-    }
-    if (searchParams.get('action') === 'create') {
-      setCreateUserModalOpen(true);
-    }
-  }, [searchParams, activeTab]);
-
-  useEffect(() => {
-    if (visibleTabs.length > 0 && !visibleTabs.some((t) => t.id === activeTab)) {
-      handleTabChange(visibleTabs[0].id);
-    }
-  }, [visibleTabs, activeTab]);
-
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.set('tab', tabId);
-      return next;
-    }, { replace: true });
-  };
 
   // Overview State
   const [overview, setOverview] = useState(null);
@@ -151,6 +107,54 @@ export default function SuperAdminPortal() {
     adminPassword: '',
   });
   const [creatingUser, setCreatingUser] = useState(false);
+
+  // Computed Role & Scopes
+  const isMasterSuperAdmin = currentUser?.role === 'superadmin' && !currentUser?.isDelegatedSubAdmin;
+  const isDelegatedSubAdmin = Boolean(currentUser?.isDelegatedSubAdmin);
+  const userScopes = Array.isArray(currentUser?.delegationScopes) && currentUser.delegationScopes.length > 0
+    ? currentUser.delegationScopes
+    : (isMasterSuperAdmin ? ['all'] : []);
+
+  const hasScope = useCallback((scopeId) => {
+    if (isMasterSuperAdmin) return true;
+    if (!isDelegatedSubAdmin) return false;
+    if (userScopes.includes('all')) return true;
+    return userScopes.includes(scopeId);
+  }, [isMasterSuperAdmin, isDelegatedSubAdmin, userScopes]);
+
+  const visibleTabs = useMemo(() => {
+    return ALL_PORTAL_TABS.filter((tab) => {
+      if (tab.masterOnly) return isMasterSuperAdmin;
+      return hasScope(tab.scope);
+    });
+  }, [isMasterSuperAdmin, hasScope]);
+
+  const handleTabChange = useCallback((tabId) => {
+    setActiveTab(tabId);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tabId);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  // Sync tab with URL search parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+    if (searchParams.get('action') === 'create') {
+      setCreateUserModalOpen(true);
+    }
+  }, [searchParams, activeTab]);
+
+  // Clamp active tab to allowed scopes
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some((t) => t.id === activeTab)) {
+      handleTabChange(visibleTabs[0].id);
+    }
+  }, [visibleTabs, activeTab, handleTabChange]);
 
   // Global Notices State
   const [notices, setNotices] = useState([]);
@@ -1714,6 +1718,22 @@ export default function SuperAdminPortal() {
     }
   };
 
+  // Temporary Sub-Admin Delegation Loader (defined before initial load effect to prevent TDZ)
+  const loadDelegations = useCallback(async () => {
+    try {
+      setLoadingDelegations(true);
+      const res = await adminApi.getDelegations();
+      if (res && res.success) {
+        setDelegationsList(res.delegations || []);
+        setDelegationsStats(res.stats || { total: 0, active: 0, indefinite: 0 });
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to load delegations', 'Delegations');
+    } finally {
+      setLoadingDelegations(false);
+    }
+  }, []);
+
   // Initial load according to active tab
   useEffect(() => {
     if (activeTab === 'overview') loadOverview();
@@ -1871,21 +1891,6 @@ export default function SuperAdminPortal() {
   };
 
   // Temporary Sub-Admin Delegation Handlers
-  const loadDelegations = useCallback(async () => {
-    try {
-      setLoadingDelegations(true);
-      const res = await adminApi.getDelegations();
-      if (res.success) {
-        setDelegationsList(res.delegations || []);
-        setDelegationsStats(res.stats || { total: 0, active: 0, indefinite: 0 });
-      }
-    } catch (err) {
-      triggerToast('error', err.message || 'Failed to load delegations', 'Delegations');
-    } finally {
-      setLoadingDelegations(false);
-    }
-  }, []);
-
   const searchUsersForDelegation = async (query) => {
     setDelegationUserSearch(query);
     if (!query || query.trim().length < 2) {
