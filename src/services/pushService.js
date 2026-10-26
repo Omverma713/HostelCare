@@ -158,12 +158,14 @@ async function sendPushToSessions(sessions, payload) {
           android: {
             priority: "high",
             notification: {
-              channelId: "hostelcare_custom_channel",
+              channelId: payload.channelId || "hostelcare_custom_channel",
               sound: "default",
               icon: "ic_stat_hostelcare",
-              color: "#4361EE",
+              color: "#00f3ff",
               defaultSound: true,
               defaultVibrateTimings: true,
+              notificationPriority: "PRIORITY_MAX",
+              visibility: "PUBLIC",
               ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
             },
           },
@@ -196,6 +198,13 @@ async function sendPushToSessions(sessions, payload) {
             { _id: sessionId },
             { $set: { pushToken: null, pushProvider: "none" } }
           ).catch(() => {});
+          try {
+            const DeviceRegistry = require("../models/deviceRegistry.model");
+            await DeviceRegistry.updateOne(
+              { pushToken: normalizedToken },
+              { $set: { isActive: false, "metadata.cleanedReason": err.code, "metadata.cleanedAt": new Date() } }
+            );
+          } catch (_) {}
           report.staleTokensRemoved++;
         }
       }

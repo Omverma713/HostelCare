@@ -37,7 +37,7 @@ const messNotificationDispatchSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ["claimed", "dispatched", "failed", "skipped"],
+      enum: ["claimed", "dispatched", "failed", "skipped", "no_devices"],
       default: "claimed",
       index: true,
     },

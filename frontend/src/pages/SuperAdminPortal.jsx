@@ -1138,6 +1138,14 @@ export default function SuperAdminPortal() {
         setMessAlertTelemetry({
           serverTime: res.serverTimeIST || res.serverTime || null,
           activePushSessionsCount: res.activePushSessionsCount || 0,
+          radar: res.radar || {
+            androidHardwareCount: 0,
+            webPushCount: 0,
+            staleTokensCount: 0,
+            legacySessionsCount: res.activePushSessionsCount || 0,
+            totalReachableDevices: res.activePushSessionsCount || 0,
+            fcmReady: false,
+          },
         });
         setTodayDispatches(res.todayDispatches || []);
       }
@@ -1353,17 +1361,20 @@ export default function SuperAdminPortal() {
     await handleSaveMessAlertConfig(officialDefaults);
   };
 
-  const handleTestMessAlert = async () => {
+  const handleTestMessAlert = async (pingMyPhone = false) => {
     try {
       setTestingMessAlert(true);
       setTestAlertResult(null);
-      const res = await adminApi.testMessNotificationBroadcast({ slotKey: testSlotKey });
+      const res = await adminApi.testMessNotificationBroadcast({
+        slotKey: testSlotKey,
+        pingMyPhone,
+      });
       if (res.success) {
         setTestAlertResult(res);
         triggerToast(
           'success',
-          `Test alert for ${res.mealName || testSlotKey} triggered to ${res.targetSessionsCount || 0} active device(s)!`,
-          'Test Alert Broadcasted 🚀'
+          res.message || `Test alert triggered to ${res.result?.targets || 0} active device(s)!`,
+          pingMyPhone ? 'Admin Phone Pinged 📱' : 'Test Alert Broadcasted 🚀'
         );
       } else {
         triggerToast('warning', res.message || 'Test broadcast finished with issues', 'Test Alert');
@@ -7882,33 +7893,127 @@ export default function SuperAdminPortal() {
             {/* Safe horizontal line */}
             <hr className="sa-mess-divider-line" />
 
-            {/* Quick KPI Strip */}
-            <div className="sa-mess-kpi-grid">
-              <div className="sa-mess-kpi-item">
-                <div className="sa-mess-kpi-lbl">SCHEDULE DAEMON</div>
-                <div className="sa-mess-kpi-val" style={{ color: '#22c55e' }}>
-                  ⚡ Running (30s Cycle)
+            {/* Cyberpunk Live Device Radar & Hardware Vault HUD */}
+            <div
+              style={{
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(5, 19, 41, 0.95) 0%, rgba(10, 28, 61, 0.95) 100%)',
+                border: '1px solid rgba(0, 243, 255, 0.3)',
+                padding: '1rem',
+                boxShadow: '0 0 25px rgba(0, 243, 255, 0.08), inset 0 0 15px rgba(0, 243, 255, 0.04)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Radar Status Bar */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', zIndex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: '#00ff66',
+                      boxShadow: '0 0 10px #00ff66',
+                      animation: 'pulse 1.8s infinite',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#00f3ff', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    🛰️ Live Device Radar & Hardware Vault (Layer 1 Active)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      background: messAlertTelemetry.radar?.fcmReady ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 170, 0, 0.15)',
+                      color: messAlertTelemetry.radar?.fcmReady ? '#00ff66' : '#ffaa00',
+                      border: `1px solid ${messAlertTelemetry.radar?.fcmReady ? 'rgba(0, 255, 102, 0.3)' : 'rgba(255, 170, 0, 0.3)'}`,
+                    }}
+                  >
+                    {messAlertTelemetry.radar?.fcmReady ? '● FCM HIGH-PRIORITY: ONLINE' : '▲ FCM: VAPID / LOCAL FALLBACK'}
+                  </span>
                 </div>
               </div>
 
-              <div className="sa-mess-kpi-item">
-                <div className="sa-mess-kpi-lbl">REGISTERED PUSH DEVICES</div>
-                <div className="sa-mess-kpi-val">
-                  📱 {messAlertTelemetry.activePushSessionsCount} Active Sessions
+              {/* Holographic Radar KPI Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', zIndex: 1 }}>
+                <div
+                  style={{
+                    background: 'rgba(0, 243, 255, 0.05)',
+                    border: '1px solid rgba(0, 243, 255, 0.2)',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                  }}
+                >
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#00f3ff', letterSpacing: '0.5px' }}>
+                    🟢 ANDROID HARDWARE VAULT
+                  </div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', marginTop: '2px' }}>
+                    {messAlertTelemetry.radar?.androidHardwareCount ?? 0}
+                    <span style={{ fontSize: '0.75rem', color: '#88a0c4', fontWeight: 500, marginLeft: '4px' }}>Nodes (Permanent)</span>
+                  </div>
+                  <div style={{ fontSize: '0.66rem', color: '#6882a8', marginTop: '2px' }}>Never expires if app closed</div>
                 </div>
-              </div>
 
-              <div className="sa-mess-kpi-item">
-                <div className="sa-mess-kpi-lbl">TIMEZONE ANCHOR</div>
-                <div className="sa-mess-kpi-val">
-                  🇮🇳 Asia/Kolkata (IST +05:30)
+                <div
+                  style={{
+                    background: 'rgba(0, 255, 102, 0.05)',
+                    border: '1px solid rgba(0, 255, 102, 0.2)',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                  }}
+                >
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#00ff66', letterSpacing: '0.5px' }}>
+                    🌐 WEB PUSH BROWSERS
+                  </div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', marginTop: '2px' }}>
+                    {messAlertTelemetry.radar?.webPushCount ?? 0}
+                    <span style={{ fontSize: '0.75rem', color: '#88a0c4', fontWeight: 500, marginLeft: '4px' }}>Browsers</span>
+                  </div>
+                  <div style={{ fontSize: '0.66rem', color: '#6882a8', marginTop: '2px' }}>VAPID WebPush Subscribed</div>
                 </div>
-              </div>
 
-              <div className="sa-mess-kpi-item">
-                <div className="sa-mess-kpi-lbl">OFFICIAL NOTICE REF</div>
-                <div className="sa-mess-kpi-val" style={{ color: 'var(--primary)' }}>
-                  📋 08/10/2026 Timetable
+                <div
+                  style={{
+                    background: 'rgba(255, 170, 0, 0.05)',
+                    border: '1px solid rgba(255, 170, 0, 0.2)',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                  }}
+                >
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#ffaa00', letterSpacing: '0.5px' }}>
+                    📡 TOTAL REACHABLE NODES
+                  </div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffaa00', marginTop: '2px' }}>
+                    {(messAlertTelemetry.radar?.totalReachableDevices ?? messAlertTelemetry.activePushSessionsCount) || 0}
+                    <span style={{ fontSize: '0.75rem', color: '#88a0c4', fontWeight: 500, marginLeft: '4px' }}>Total Targets</span>
+                  </div>
+                  <div style={{ fontSize: '0.66rem', color: '#6882a8', marginTop: '2px' }}>Ready for next automated alert</div>
+                </div>
+
+                <div
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.05)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                  }}
+                >
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#ef4444', letterSpacing: '0.5px' }}>
+                    🧹 AUTO-PRUNED STALE NODES
+                  </div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', marginTop: '2px' }}>
+                    {messAlertTelemetry.radar?.staleTokensCount ?? 0}
+                    <span style={{ fontSize: '0.75rem', color: '#88a0c4', fontWeight: 500, marginLeft: '4px' }}>Cleaned</span>
+                  </div>
+                  <div style={{ fontSize: '0.66rem', color: '#6882a8', marginTop: '2px' }}>Uninstalled tokens purged</div>
                 </div>
               </div>
             </div>
@@ -8207,29 +8312,59 @@ export default function SuperAdminPortal() {
                 </div>
               </div>
 
-              {/* Trigger Button */}
-              <button
-                type="button"
-                disabled={testingMessAlert}
-                onClick={handleTestMessAlert}
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  fontSize: '0.92rem',
-                  cursor: testingMessAlert ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.4rem',
-                }}
-              >
-                {testingMessAlert ? '🚀 Dispatching Test Broadcast...' : `🚀 Trigger Live Test Notification (${testSlotKey.toUpperCase()})`}
-              </button>
+              {/* Dual Cyberpunk Action Controls */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+                {/* Instant 1-Click Phone Ping */}
+                <button
+                  type="button"
+                  disabled={testingMessAlert}
+                  onClick={() => handleTestMessAlert(true)}
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '8px',
+                    border: '1px solid #00f3ff',
+                    background: 'linear-gradient(135deg, #00f3ff 0%, #0077ff 100%)',
+                    color: '#051329',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    cursor: testingMessAlert ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 0 18px rgba(0, 243, 255, 0.45)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    letterSpacing: '0.5px',
+                  }}
+                  title="Sends high-priority test push directly to your personal phone/session only"
+                >
+                  {testingMessAlert ? '⚡ Dispatching...' : `📱 PING MY PHONE NOW (${testSlotKey.toUpperCase()})`}
+                </button>
+
+                {/* Universal Broadcast Test */}
+                <button
+                  type="button"
+                  disabled={testingMessAlert}
+                  onClick={() => handleTestMessAlert(false)}
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    cursor: testingMessAlert ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                  }}
+                  title="Sends test broadcast to all reachable registered hardware devices"
+                >
+                  {testingMessAlert ? '🚀 Dispatching All...' : `🚀 BROADCAST TO ALL NODES`}
+                </button>
+              </div>
 
               {/* Result Diagnostics Card */}
               {testAlertResult && (
@@ -8271,6 +8406,98 @@ export default function SuperAdminPortal() {
                   )}
                 </div>
               )}
+
+              {/* Real-time Delivery Audit Feed */}
+              <div
+                style={{
+                  marginTop: '0.65rem',
+                  borderRadius: '10px',
+                  background: 'rgba(5, 19, 41, 0.7)',
+                  border: '1px solid rgba(0, 243, 255, 0.2)',
+                  padding: '0.85rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#00f3ff', letterSpacing: '0.5px' }}>
+                    📋 TODAY'S REAL-TIME DELIVERY TELEMETRY LOG
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: '#88a0c4' }}>
+                    {todayDispatches.length} Record(s) logged
+                  </span>
+                </div>
+
+                {todayDispatches.length === 0 ? (
+                  <div style={{ fontSize: '0.74rem', color: '#88a0c4', textAlign: 'center', padding: '0.75rem' }}>
+                    No alerts triggered today yet. Next scheduled alert will log here automatically.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '220px', overflowY: 'auto' }}>
+                    {todayDispatches.map((d) => {
+                      const isNoDevices = d.status === 'no_devices';
+                      const isSuccess = d.status === 'dispatched';
+                      return (
+                        <div
+                          key={d._id || d.idempotencyKey}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '6px',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            background: isNoDevices
+                              ? 'rgba(255, 170, 0, 0.08)'
+                              : isSuccess
+                              ? 'rgba(0, 255, 102, 0.08)'
+                              : 'rgba(239, 68, 68, 0.08)',
+                            border: `1px solid ${
+                              isNoDevices
+                                ? 'rgba(255, 170, 0, 0.3)'
+                                : isSuccess
+                                ? 'rgba(0, 255, 102, 0.3)'
+                                : 'rgba(239, 68, 68, 0.3)'
+                            }`,
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontWeight: 800, color: '#ffffff', textTransform: 'capitalize' }}>
+                              {d.mealSlot} #{d.occurrence}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '0.68rem',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                fontWeight: 800,
+                                background: isNoDevices
+                                  ? 'rgba(255, 170, 0, 0.2)'
+                                  : isSuccess
+                                  ? 'rgba(0, 255, 102, 0.2)'
+                                  : 'rgba(239, 68, 68, 0.2)',
+                                color: isNoDevices ? '#ffaa00' : isSuccess ? '#00ff66' : '#ef4444',
+                              }}
+                            >
+                              {isNoDevices
+                                ? '⚠️ 0 DEVICES (ABORTED)'
+                                : isSuccess
+                                ? `✅ DISPATCHED (${d.targets} NODES)`
+                                : '❌ FAILED'}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.68rem', color: '#88a0c4' }}>
+                            {d.dispatchedAt ? new Date(d.dispatchedAt).toLocaleTimeString() : 'Pending'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

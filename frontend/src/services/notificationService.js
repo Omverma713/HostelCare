@@ -36,7 +36,10 @@ export async function initPushNotifications() {
     PushNotifications.addListener('registration', async (token) => {
       console.log('FCM Device Token registered:', token.value);
       try {
-        await api.registerPushToken(token.value, 'fcm');
+        await api.registerPushToken(token.value, 'fcm', {
+          platform: 'android',
+          hardwareModel: 'Android Mobile App',
+        });
         pushRegistered = true;
       } catch (err) {
         console.warn('Failed to send push token to backend:', err);

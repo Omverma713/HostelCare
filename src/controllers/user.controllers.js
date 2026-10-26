@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const Session = require("../models/session.model");
+const DeviceRegistry = require("../models/deviceRegistry.model");
 const SystemConfig = require("../models/systemConfig.model");
 const Argon = require("argon2");
 const jwt = require("jsonwebtoken");
@@ -701,9 +702,61 @@ const registerPushToken = async (req, res) => {
     session.pushRegisteredAt = new Date();
     await session.save();
 
+    // ─── Permanent Device Vault (Layer 1) ───────────────────────────────────
+    // Persist hardware device registration permanently, decoupled from session expiry
+    try {
+      const {
+        deviceId: clientDeviceId,
+        platform: clientPlatform,
+        hardwareModel,
+        appVersion,
+      } = req.body;
+
+      const fullUser = await User.findById(req.user._id).select("name registrationNumber hostelBlock roomNumber role").lean();
+
+      // Compute stable hardware identifier
+      const stableDeviceId =
+        clientDeviceId ||
+        (pushToken
+          ? `android-${crypto.createHash("md5").update(pushToken).digest("hex").slice(0, 16)}`
+          : webPushSubscription?.endpoint
+          ? `web-${crypto.createHash("md5").update(webPushSubscription.endpoint).digest("hex").slice(0, 16)}`
+          : `usr-${req.user._id}`);
+
+      const detectedPlatform =
+        clientPlatform ||
+        (pushToken ? "android" : webPushSubscription ? "web" : "unknown");
+
+      await DeviceRegistry.findOneAndUpdate(
+        { deviceId: stableDeviceId },
+        {
+          $set: {
+            deviceId: stableDeviceId,
+            userId: req.user._id,
+            userRole: fullUser?.role || req.user.role || "student",
+            studentName: fullUser?.name || req.user.name || "",
+            regNo: fullUser?.registrationNumber || req.user.registrationNumber || "",
+            hostelBlock: fullUser?.hostelBlock || session.hostelBlock || "",
+            roomNumber: fullUser?.roomNumber || session.roomNumber || "",
+            pushToken: pushToken || null,
+            pushProvider: pushToken ? "fcm" : webPushSubscription ? "webpush" : "none",
+            platform: detectedPlatform,
+            webPushSubscription: webPushSubscription || null,
+            isActive: true,
+            lastSeenAt: new Date(),
+            appVersion: appVersion || "1.0.0",
+            hardwareModel: hardwareModel || (detectedPlatform === "android" ? "Android Device" : "Browser WebPush"),
+          },
+        },
+        { upsert: true, new: true }
+      );
+    } catch (vaultErr) {
+      console.error("[DeviceRegistry] Vault upsert non-blocking error:", vaultErr.message);
+    }
+
     return res.status(200).json({
       success: true,
-      message: "Push notification token registered successfully",
+      message: "Push notification token registered successfully in permanent hardware vault",
       provider: session.pushProvider,
     });
   } catch (error) {

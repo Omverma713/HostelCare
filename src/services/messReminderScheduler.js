@@ -209,33 +209,75 @@ async function broadcastMealReminder(slotKey, options = {}) {
     },
   };
 
-  // Find all active sessions with push tokens (FCM or Web Push)
+  // Find all active devices from permanent hardware vault (Layer 1) + fallback sessions
   const mongoose = require("mongoose");
-  let sessions = [];
+  const DeviceRegistry = require("../models/deviceRegistry.model");
+  let targets = [];
+
   if (mongoose.connection && mongoose.connection.readyState === 1) {
-    sessions = await Session.find({
-      status: "active",
-      $or: [
-        { pushToken: { $exists: true, $ne: null, $ne: "" } },
-        { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
-      ],
-    })
-      .select("+pushToken +webPushSubscription")
-      .lean();
+    try {
+      const deviceQuery = {
+        isActive: true,
+        $or: [
+          { pushToken: { $exists: true, $ne: null, $ne: "" } },
+          { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
+        ],
+      };
+
+      const sessionQuery = {
+        status: "active",
+        $or: [
+          { pushToken: { $exists: true, $ne: null, $ne: "" } },
+          { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
+        ],
+      };
+
+      if (options.targetUserId) {
+        deviceQuery.userId = options.targetUserId;
+        sessionQuery.userId = options.targetUserId;
+      }
+
+      const devices = await DeviceRegistry.find(deviceQuery).lean();
+      const sessions = await Session.find(sessionQuery)
+        .select("+pushToken +webPushSubscription")
+        .lean();
+
+      // Deduplicate targets across vault and legacy sessions
+      const seenTokens = new Set();
+      const seenEndpoints = new Set();
+
+      for (const d of devices) {
+        if (d.pushToken) seenTokens.add(d.pushToken);
+        if (d.webPushSubscription?.endpoint) seenEndpoints.add(d.webPushSubscription.endpoint);
+        targets.push(d);
+      }
+
+      for (const s of sessions) {
+        if (s.pushToken && !seenTokens.has(s.pushToken)) {
+          seenTokens.add(s.pushToken);
+          targets.push(s);
+        } else if (s.webPushSubscription?.endpoint && !seenEndpoints.has(s.webPushSubscription.endpoint)) {
+          seenEndpoints.add(s.webPushSubscription.endpoint);
+          targets.push(s);
+        }
+      }
+    } catch (dbErr) {
+      console.error("[MessReminderWorker] Error fetching push targets from vault:", dbErr.message);
+    }
   }
 
-  if (sessions.length === 0) {
-    console.log(`[MessReminderWorker] No active push sessions registered for ${slotKey}.`);
-    return { success: true, targets: 0, report: null, payload };
+  if (targets.length === 0) {
+    console.log(`⚠️ [MessReminderWorker] No active push devices or sessions registered for ${slotKey}. Dispatch halted.`);
+    return { success: false, targets: 0, report: null, payload, reason: "no_devices" };
   }
 
-  const report = await sendPushToSessions(sessions, payload);
-  console.log(`[MessReminderWorker] Broadcasted ${slotKey} alert #${occurrence} to ${sessions.length} devices (FCM accepted: ${report.fcm?.accepted || 0}).`);
+  const report = await sendPushToSessions(targets, payload);
+  console.log(`[MessReminderWorker] Broadcasted ${slotKey} alert #${occurrence} to ${targets.length} devices (FCM accepted: ${report.fcm?.accepted || 0}).`);
 
   return {
     success: true,
     slotKey,
-    targets: sessions.length,
+    targets: targets.length,
     report,
     payload,
   };
@@ -308,10 +350,25 @@ async function checkAndTriggerMealAlerts() {
               idempotencyKey,
             });
 
-            await MessNotificationDispatch.markDispatched(idempotencyKey, {
-              targets: broadcastResult.targets,
-              report: broadcastResult.report,
-            });
+            if (broadcastResult.targets === 0) {
+              await MessNotificationDispatch.findOneAndUpdate(
+                { idempotencyKey },
+                {
+                  $set: {
+                    status: "no_devices",
+                    dispatchedAt: new Date(),
+                    targets: 0,
+                    failureDetails: "0 active registered devices found in DeviceRegistry. Alert aborted to prevent false-positive status.",
+                  },
+                }
+              );
+              console.log(`⚠️ [MessReminderWorker] Marked ${idempotencyKey} as 'no_devices' (0 reachable hardware nodes).`);
+            } else {
+              await MessNotificationDispatch.markDispatched(idempotencyKey, {
+                targets: broadcastResult.targets,
+                report: broadcastResult.report,
+              });
+            }
           } catch (err) {
             console.error(`[MessReminderWorker] Error broadcasting ${slotKey} reminder (${idempotencyKey}):`, err);
             await MessNotificationDispatch.markFailed(idempotencyKey, err);

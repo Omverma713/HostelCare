@@ -2330,28 +2330,47 @@ async function getMessNotificationSchedule(req, res) {
   try {
     const config = await SystemConfig.getEffectiveConfig();
     const { getKolkataTime, getEffectiveStartTimings } = require("../services/messReminderScheduler");
+    const DeviceRegistry = require("../models/deviceRegistry.model");
     const timeInfo = getKolkataTime();
     const effective = await getEffectiveStartTimings();
 
-    // Count active push sessions (FCM & WebPush)
-    const activePushSessionsCount = await Session.countDocuments({
-      status: "active",
-      $or: [
-        { pushToken: { $exists: true, $ne: null, $ne: "" } },
-        { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
-      ],
-    });
+    // Query live hardware device radar counts (Layer 1)
+    const [androidHardwareCount, webPushCount, staleTokensCount, legacySessionsCount] = await Promise.all([
+      DeviceRegistry.countDocuments({ platform: "android", isActive: true }),
+      DeviceRegistry.countDocuments({ platform: "web", isActive: true }),
+      DeviceRegistry.countDocuments({ isActive: false }),
+      Session.countDocuments({
+        status: "active",
+        $or: [
+          { pushToken: { $exists: true, $ne: null, $ne: "" } },
+          { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
+        ],
+      }),
+    ]);
 
-    // Query today's recorded dispatches for delivery counter
+    const totalReachableDevices = Math.max(androidHardwareCount + webPushCount, legacySessionsCount);
+
+    // Query today's dispatches for live telemetry audit log
     const MessNotificationDispatch = require("../models/messNotificationDispatch.model");
-    const todayDispatches = await MessNotificationDispatch.find({ dateStr: timeInfo.dateStr }).lean();
+    const todayDispatches = await MessNotificationDispatch.find({ dateStr: timeInfo.dateStr })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
 
     return res.status(200).json({
       success: true,
       config: config.messNotificationConfig,
       effectiveTimings: effective,
       serverTime: timeInfo,
-      activePushSessionsCount,
+      activePushSessionsCount: legacySessionsCount,
+      radar: {
+        androidHardwareCount,
+        webPushCount,
+        staleTokensCount,
+        legacySessionsCount,
+        totalReachableDevices,
+        fcmReady: Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON),
+      },
       todayDispatches,
     });
   } catch (error) {
@@ -2535,7 +2554,7 @@ async function testMessNotificationBroadcast(req, res) {
       });
     }
 
-    const { slotKey = "breakfast" } = req.body;
+    const { slotKey = "breakfast", pingMyPhone = false } = req.body;
     const validSlots = ["breakfast", "lunch", "snacks", "dinner"];
     if (!validSlots.includes(slotKey)) {
       return res.status(400).json({
@@ -2546,15 +2565,20 @@ async function testMessNotificationBroadcast(req, res) {
 
     const { broadcastMealReminder } = require("../services/messReminderScheduler");
     // Pass isManualTest: true to guarantee separation from production dispatch ledger
-    const result = await broadcastMealReminder(slotKey, { isManualTest: true, isTest: true });
+    const result = await broadcastMealReminder(slotKey, {
+      isManualTest: true,
+      isTest: true,
+      targetUserId: pingMyPhone ? req.user?._id : null,
+    });
 
     await recordAudit({
       req,
       action: "MESS_NOTIFICATION_TEST_TRIGGERED",
       targetType: "NOTIFICATION",
-      summary: `Super Admin triggered manual test alert for ${slotKey} (Targets: ${result.targets || 0})`,
+      summary: `Super Admin triggered manual test alert for ${slotKey} (${pingMyPhone ? "Admin Device Only" : "Universal Broadcast"}, Targets: ${result.targets || 0})`,
       details: {
         slotKey,
+        pingMyPhone,
         targets: result.targets,
         report: result.report,
       },
@@ -2562,7 +2586,9 @@ async function testMessNotificationBroadcast(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `Manual test notification for ${slotKey.toUpperCase()} broadcasted successfully to ${result.targets || 0} active devices.`,
+      message: pingMyPhone
+        ? `Direct Test Alert sent to your phone for ${slotKey.toUpperCase()} (Targets: ${result.targets || 0}).`
+        : `Manual test notification for ${slotKey.toUpperCase()} broadcasted successfully to ${result.targets || 0} active devices.`,
       result,
     });
   } catch (error) {

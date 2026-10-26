@@ -166,10 +166,15 @@ export const api = {
   },
 
   // --- PUSH NOTIFICATIONS ---
-  registerPushToken(pushToken, provider = 'fcm') {
+  registerPushToken(pushToken, provider = 'fcm', extraMetadata = {}) {
     return request('/users/register-push-token', {
       method: 'POST',
-      body: JSON.stringify({ pushToken, provider }),
+      body: JSON.stringify({
+        pushToken,
+        provider,
+        platform: 'android',
+        ...extraMetadata,
+      }),
     });
   },
 
