@@ -172,6 +172,43 @@ function initChatSocket(httpServer) {
     // Join user-specific notification room
     socket.join(`user_${user.id}`);
 
+    // Auto-deliver any pending undelivered messages for this user
+    (async () => {
+      try {
+        const userTickets = await ChatTicket.find({
+          $or: [{ student: user.id }, { developer: user.id }]
+        }).select("ticketId").lean();
+        const ticketIds = userTickets.map((t) => t.ticketId);
+        if (ticketIds.length > 0) {
+          const undelivered = await ChatMessage.find({
+            ticketId: { $in: ticketIds },
+            sender: { $ne: user.id },
+            delivered: false
+          }).select("_id ticketId sender").lean();
+
+          if (undelivered.length > 0) {
+            const deliveredAt = new Date();
+            await ChatMessage.updateMany(
+              { _id: { $in: undelivered.map((m) => m._id) } },
+              { $set: { delivered: true, deliveredAt } }
+            );
+
+            undelivered.forEach((m) => {
+              const deliveryPayload = {
+                messageId: m._id,
+                ticketId: m.ticketId,
+                deliveredAt: deliveredAt.toISOString()
+              };
+              io.to(`user_${m.sender}`).emit("message_delivered", deliveryPayload);
+              io.to(`ticket_${m.ticketId}`).emit("message_delivered", deliveryPayload);
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[ChatSocket] Connect delivery check error:", err.message);
+      }
+    })();
+
     /**
      * join_ticket: Student or Developer joins a specific ticket room
      */
@@ -272,7 +309,23 @@ function initChatSocket(httpServer) {
           return;
         }
 
-        // Create persistent encrypted message record
+        // Feature 3: Prevent students from sending messages on resolved tickets
+        if (ticket.status === "resolved" && isStudent) {
+          if (ack) {
+            ack({
+              success: false,
+              error: "This ticket has been marked as resolved by Support. Please reopen the ticket to send messages."
+            });
+          }
+          return;
+        }
+
+        const targetUserId = isStudent ? String(ticket.developer) : String(ticket.student);
+        const isPartnerOnline = isUserOnline(targetUserId);
+        const isDelivered = isPartnerOnline;
+        const now = new Date();
+
+        // Create persistent encrypted message record with delivery tracking
         const msg = await ChatMessage.create({
           ticketId,
           sender: user.id,
@@ -283,6 +336,8 @@ function initChatSocket(httpServer) {
           authTag: authTag || "",
           contentType,
           mediaSize: Number(mediaSize) || 0,
+          delivered: isDelivered,
+          deliveredAt: isDelivered ? now : null,
           read: false,
         });
 
@@ -291,7 +346,7 @@ function initChatSocket(httpServer) {
           preview: contentType === "image" ? "📷 Image" : "Encrypted Message",
           senderRole: user.role,
           senderName: user.name,
-          at: new Date(),
+          at: now,
         };
 
         if (isStudent) {
@@ -319,12 +374,13 @@ function initChatSocket(httpServer) {
           mediaSize: msg.mediaSize,
           isEdited: false,
           isDeleted: false,
+          delivered: msg.delivered,
+          deliveredAt: msg.deliveredAt,
           read: msg.read,
           createdAt: msg.createdAt,
         };
 
         const roomName = `ticket_${ticketId}`;
-        const targetUserId = isStudent ? String(ticket.developer) : String(ticket.student);
 
         // 1. Broadcast to ticket room (for anyone actively viewing ticket)
         io.to(roomName).emit("new_message", broadcastPayload);
@@ -529,15 +585,30 @@ function initChatSocket(httpServer) {
     socket.on("mark_read", async ({ ticketId }) => {
       try {
         if (!ticketId) return;
+        const now = new Date();
         await ChatMessage.updateMany(
           { ticketId, sender: { $ne: user.id }, read: false },
-          { $set: { read: true, readAt: new Date() } }
+          { $set: { read: true, readAt: now, delivered: true, deliveredAt: now } }
         );
 
-        socket.to(`ticket_${ticketId}`).emit("messages_read", {
+        const readPayload = {
           ticketId,
           readBy: user.id,
-        });
+          readAt: now.toISOString(),
+        };
+
+        socket.to(`ticket_${ticketId}`).emit("messages_read", readPayload);
+
+        // Also notify partner user room
+        try {
+          const ticket = await ChatTicket.findOne({ ticketId }).select("student developer").lean();
+          if (ticket) {
+            const partnerId = String(ticket.student) === String(user.id) ? String(ticket.developer) : String(ticket.student);
+            io.to(`user_${partnerId}`).emit("messages_read", readPayload);
+          }
+        } catch (e) {
+          // pass
+        }
       } catch (err) {
         console.error("mark_read socket error:", err);
       }

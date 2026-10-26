@@ -122,7 +122,10 @@ function RouteErrorFallback() {
  * Dashboard Shell Layout containing top mobile nav, 3D Canvas, and sidebar navigation drawer
  */
 function DashboardLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('hc_sidebar_collapsed') === 'true';
+  });
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { theme } = useTheme();
   const { user } = useAuth();
   const location = useLocation();
@@ -135,11 +138,51 @@ function DashboardLayout() {
     }
   }, [user]);
 
+  const handleToggleSidebar = () => {
+    if (window.innerWidth <= 1024) {
+      setMobileSidebarOpen((prev) => !prev);
+    } else {
+      setSidebarCollapsed((prev) => {
+        const next = !prev;
+        localStorage.setItem('hc_sidebar_collapsed', String(next));
+        return next;
+      });
+    }
+  };
+
+  const handleCloseSidebar = () => {
+    if (window.innerWidth <= 1024) {
+      setMobileSidebarOpen(false);
+    } else {
+      setSidebarCollapsed(true);
+      localStorage.setItem('hc_sidebar_collapsed', 'true');
+    }
+  };
+
+  const isSidebarVisibleOnDesktop = !sidebarCollapsed;
+
   return (
-    <div className={`app-container ${isChatRoute ? 'is-chat-layout' : ''}`}>
+    <div className={`app-container ${isChatRoute ? 'is-chat-layout' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       {!isChatRoute && <Canvas3DBackground theme={theme} role="student" />}
-      <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Navbar onToggleSidebar={handleToggleSidebar} />
+
+      {/* Floating 3-line Hamburger button to re-open sidebar when collapsed */}
+      {!isChatRoute && sidebarCollapsed && (
+        <button
+          type="button"
+          className="floating-sidebar-toggle"
+          onClick={handleToggleSidebar}
+          title="Open Menu (☰)"
+          id="btn-floating-open-sidebar"
+        >
+          ☰
+        </button>
+      )}
+
+      <Sidebar
+        isOpen={window.innerWidth <= 1024 ? mobileSidebarOpen : isSidebarVisibleOnDesktop}
+        onClose={handleCloseSidebar}
+      />
       <main className="main-content">
         <ErrorBoundary fallback={<RouteErrorFallback />}>
           <Suspense fallback={<PageFallback />}>

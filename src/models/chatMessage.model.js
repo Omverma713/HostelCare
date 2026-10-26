@@ -54,6 +54,15 @@ const chatMessageSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    delivered: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deliveredAt: {
+      type: Date,
+      default: null,
+    },
     isEdited: {
       type: Boolean,
       default: false,

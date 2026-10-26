@@ -3343,6 +3343,7 @@ export default function SuperAdminPortal() {
           {/* User Details & Management Drawer */}
           {selectedUser && (
             <div
+              className="sa-user-details-drawer"
               style={{
                 background: 'var(--bg-card)',
                 borderRadius: 'var(--border-radius-lg)',
@@ -3350,6 +3351,9 @@ export default function SuperAdminPortal() {
                 padding: '1.25rem',
                 boxShadow: 'var(--shadow-sm)',
                 height: 'fit-content',
+                minWidth: 0,
+                boxSizing: 'border-box',
+                overflow: 'hidden',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
@@ -3949,18 +3953,23 @@ export default function SuperAdminPortal() {
                   onClick={() => handleFlushUser(selectedUser._id)}
                   disabled={flushingUser}
                   style={{
-                    padding: '0.6rem',
+                    padding: '0.6rem 0.75rem',
                     borderRadius: '8px',
                     border: '1px solid rgba(239, 68, 68, 0.45)',
                     background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.16) 0%, rgba(220, 38, 38, 0.25) 100%)',
                     color: '#f87171',
                     fontWeight: 750,
-                    fontSize: '0.82rem',
+                    fontSize: '0.8rem',
                     cursor: flushingUser ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    textAlign: 'center',
                     gap: '6px',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    whiteSpace: 'normal',
+                    lineHeight: 1.3,
                     boxShadow: '0 2px 10px rgba(239, 68, 68, 0.18)',
                   }}
                   title="Revoke all active sessions, clear push tokens, prune hardware device vault, and clear lockouts"
@@ -4063,7 +4072,7 @@ export default function SuperAdminPortal() {
               {/* Active Sessions Mini-list */}
               {userDetails && (
                 <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px' }}>
                     ACTIVE SESSIONS ({userDetails.activeSessions.length})
                   </div>
                   {userDetails.activeSessions.length === 0 ? (
@@ -4073,30 +4082,42 @@ export default function SuperAdminPortal() {
                       <div
                         key={s.sessionId}
                         style={{
-                          fontSize: '0.75rem',
-                          padding: '0.4rem',
-                          borderRadius: '6px',
+                          fontSize: '0.74rem',
+                          padding: '0.45rem 0.65rem',
+                          borderRadius: '8px',
                           background: 'var(--bg-secondary)',
-                          marginBottom: '4px',
+                          marginBottom: '6px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
+                          gap: '8px',
+                          border: '1px solid var(--border-color)',
+                          boxSizing: 'border-box',
                         }}
                       >
-                        <div>
-                          <div>{s.deviceNickname || s.deviceType}</div>
-                          <div style={{ color: 'var(--text-muted)' }}>IP: {s.ip}</div>
+                        <div style={{ flex: '1 1 auto', minWidth: 0, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                            {s.deviceNickname || s.deviceType}
+                          </div>
+                          <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginTop: '2px' }}>
+                            IP: {s.ip}
+                          </div>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleRevokeSession(s.sessionId)}
                           style={{
-                            border: 'none',
-                            background: 'none',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            background: 'rgba(239, 68, 68, 0.12)',
                             color: '#ef4444',
                             cursor: 'pointer',
-                            fontSize: '0.75rem',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            flexShrink: 0,
                           }}
+                          title="Revoke this session"
                         >
                           Revoke
                         </button>
@@ -10237,9 +10258,10 @@ export default function SuperAdminPortal() {
 
       {/* 13. TAB: SUB-ADMIN DELEGATIONS DECK */}
       {activeTab === 'delegations' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="sa-delegations-deck-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Header Banner & Stat Cards */}
           <div
+            className="sa-delegations-deck"
             style={{
               background: 'var(--bg-card)',
               borderRadius: 'var(--border-radius-lg)',
@@ -10311,8 +10333,8 @@ export default function SuperAdminPortal() {
 
             {/* Quick Stat Tiles */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>ACTIVE DELEGATED SUB-ADMINS</div>
+              <div className="sa-delegations-stat-tile" style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div className="stat-label" style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>ACTIVE DELEGATED SUB-ADMINS</div>
                 <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>
                   {delegationsStats.active || 0}
                 </div>
@@ -10321,8 +10343,8 @@ export default function SuperAdminPortal() {
                 </div>
               </div>
 
-              <div style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>INDEFINITE (JAB TAK ADMIN CHAHE)</div>
+              <div className="sa-delegations-stat-tile" style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div className="stat-label" style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>INDEFINITE (JAB TAK ADMIN CHAHE)</div>
                 <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#f59e0b', marginTop: '4px' }}>
                   {delegationsStats.indefinite || 0}
                 </div>
@@ -10331,8 +10353,8 @@ export default function SuperAdminPortal() {
                 </div>
               </div>
 
-              <div style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>TOTAL ALLOCATION HISTORY</div>
+              <div className="sa-delegations-stat-tile" style={{ padding: '1rem', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div className="stat-label" style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-muted)' }}>TOTAL ALLOCATION HISTORY</div>
                 <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
                   {delegationsStats.total || 0}
                 </div>
@@ -10345,6 +10367,7 @@ export default function SuperAdminPortal() {
 
           {/* Delegations Table */}
           <div
+            className="sa-delegations-roster"
             style={{
               background: 'var(--bg-card)',
               borderRadius: 'var(--border-radius-lg)',

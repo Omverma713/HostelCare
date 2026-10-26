@@ -153,15 +153,16 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
           </div>
 
-          {/* Close button on mobile */}
+          {/* 3-line Hamburger Toggle button to collapse sidebar */}
           <button
             type="button"
-            className="sidebar-close-btn"
+            className="sidebar-toggle-btn"
             onClick={onClose}
-            aria-label="Close sidebar"
-            title="Close menu"
+            aria-label="Toggle sidebar"
+            title="Collapse Sidebar (☰)"
+            id="btn-sidebar-hamburger-close"
           >
-            ✕
+            ☰
           </button>
         </div>
 

@@ -494,12 +494,87 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25rem;
+  min-width: 0;
 }
 
-@media (min-width: 992px) {
+.sa-desktop-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.sa-desktop-table table {
+  min-width: 640px;
+}
+
+@media (min-width: 1220px) {
   .sa-users-grid.has-selection {
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: minmax(0, 1fr) 390px;
   }
+}
+
+@media (max-width: 1219px) {
+  .sa-users-grid.has-selection {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =======================================================
+   Sub-Admin Delegation Warm Tone (Light Theme Aesthetic)
+   ======================================================= */
+html.light-theme .sa-delegations-deck,
+body.light-theme .sa-delegations-deck,
+html:not(.dark-theme) .sa-delegations-deck {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.65) 0%, rgba(253, 230, 138, 0.4) 100%) !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 8px 28px rgba(217, 119, 6, 0.08) !important;
+}
+
+html.light-theme .sa-delegations-deck h2,
+body.light-theme .sa-delegations-deck h2,
+html:not(.dark-theme) .sa-delegations-deck h2 {
+  color: #92400e !important;
+}
+
+html.light-theme .sa-delegations-deck .sa-delegations-stat-tile,
+body.light-theme .sa-delegations-deck .sa-delegations-stat-tile,
+html:not(.dark-theme) .sa-delegations-deck .sa-delegations-stat-tile {
+  background: rgba(254, 243, 199, 0.85) !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.06);
+}
+
+html.light-theme .sa-delegations-deck .sa-delegations-stat-tile .stat-label,
+body.light-theme .sa-delegations-deck .sa-delegations-stat-tile .stat-label,
+html:not(.dark-theme) .sa-delegations-deck .sa-delegations-stat-tile .stat-label {
+  color: #92400e !important;
+}
+
+html.light-theme .sa-delegations-deck .sa-delegations-stat-tile .stat-value,
+body.light-theme .sa-delegations-deck .sa-delegations-stat-tile .stat-value,
+html:not(.dark-theme) .sa-delegations-deck .sa-delegations-stat-tile .stat-value {
+  color: #78350f !important;
+}
+
+html.light-theme .sa-delegations-roster,
+body.light-theme .sa-delegations-roster,
+html:not(.dark-theme) .sa-delegations-roster {
+  background: linear-gradient(180deg, #fffdf8 0%, #fef3c7 100%) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 6px 24px rgba(217, 119, 6, 0.07) !important;
+}
+
+html.light-theme .sa-delegations-roster h3,
+body.light-theme .sa-delegations-roster h3,
+html:not(.dark-theme) .sa-delegations-roster h3 {
+  color: #92400e !important;
+}
+
+html.light-theme .sa-delegation-card,
+body.light-theme .sa-delegation-card,
+html:not(.dark-theme) .sa-delegation-card {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
 
 /* =======================================================

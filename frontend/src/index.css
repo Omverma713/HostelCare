@@ -1523,11 +1523,11 @@ html.dark-theme .btn-sos-helpline {
 .sidebar-bottom-deck {
   position: relative;
   z-index: 2;
-  padding: 14px 14px 18px;
+  padding: 10px 12px 14px;
   border-top: 1px solid rgba(67, 97, 238, 0.16);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -1539,14 +1539,14 @@ html.dark-theme .sidebar-bottom-deck {
 }
 
 .sidebar-resident-card {
-  padding: 12px 14px;
-  border-radius: 16px;
+  padding: 8px 10px;
+  border-radius: 14px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(220, 230, 254, 0.85) 100%);
   border: 1px solid rgba(67, 97, 238, 0.25);
-  box-shadow: 0 6px 18px rgba(67, 97, 238, 0.1);
+  box-shadow: 0 4px 14px rgba(67, 97, 238, 0.08);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 html.dark-theme .sidebar-resident-card {
@@ -1749,12 +1749,129 @@ body.sidebar-open-lock {
   touch-action: none !important;
 }
 
-/* Sidebar close button */
-.sidebar-close-btn {
-  display: none;
+/* Sidebar toggle & collapse buttons (3-line hamburger) */
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 9px;
+  border: 1px solid rgba(67, 97, 238, 0.22);
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--text-primary);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.08);
+}
+
+html.dark-theme .sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(67, 97, 238, 0.15);
+  color: var(--primary);
+  border-color: rgba(67, 97, 238, 0.4);
+  transform: scale(1.05);
+}
+
+html.dark-theme .sidebar-toggle-btn:hover {
+  background: rgba(99, 102, 241, 0.22);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.45);
+}
+
+/* Floating 3-line hamburger toggle when sidebar is collapsed on desktop */
+.floating-sidebar-toggle {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  z-index: 999;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1.5px solid rgba(67, 97, 238, 0.28);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--primary);
+  font-size: 1.3rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(67, 97, 238, 0.2), 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: floatTogglePop 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+html.dark-theme .floating-sidebar-toggle {
+  background: rgba(19, 22, 43, 0.88);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #a5b4fc;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), 0 0 16px rgba(99, 102, 241, 0.25);
+}
+
+.floating-sidebar-toggle:hover {
+  transform: scale(1.08) translateY(-1px);
+  background: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 12px 30px rgba(67, 97, 238, 0.3);
+}
+
+html.dark-theme .floating-sidebar-toggle:hover {
+  background: #191c36;
+  border-color: #818cf8;
+  color: #c7d2fe;
+}
+
+@keyframes floatTogglePop {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+}
+
+@media (min-width: 1025px) {
+  .sidebar.sidebar-dock-3d {
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
+  }
+
+  .main-content {
+    transition: margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1), padding 0.28s ease !important;
+  }
+
+  .app-container.sidebar-collapsed .sidebar.sidebar-dock-3d {
+    transform: translateX(-100%) !important;
+    box-shadow: none !important;
+    pointer-events: none;
+  }
+
+  .app-container.sidebar-collapsed .main-content {
+    margin-left: 0 !important;
+    padding-left: 74px;
+  }
 }
 
 @media (max-width: 1024px) {
+  .floating-sidebar-toggle {
+    display: none !important;
+  }
+
   .sidebar {
     transform: translateX(-100%);
     z-index: 10001 !important;
@@ -1780,36 +1897,6 @@ body.sidebar-open-lock {
 
   .sidebar-brand-dock {
     padding-top: max(22px, calc(16px + env(safe-area-inset-top, 0px)));
-  }
-
-  .sidebar-close-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    border: 1px solid rgba(67, 97, 238, 0.2);
-    background: rgba(255, 255, 255, 0.45);
-    color: var(--text-primary);
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  html.dark-theme .sidebar-close-btn {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
-    color: #e2e8f0;
-  }
-
-  .sidebar-close-btn:hover,
-  .sidebar-close-btn:active {
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.35);
   }
 }
 

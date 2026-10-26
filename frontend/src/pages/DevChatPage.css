@@ -660,14 +660,82 @@ html.light-theme .e2ee-notice-pill {
 .read-ticks {
   font-size: 0.72rem;
   font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.read-ticks.pending {
+  color: var(--wa-text-secondary);
+  font-size: 0.68rem;
+  opacity: 0.85;
+}
+
+.read-ticks.failed {
+  color: #ef4444;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.read-ticks.sent {
+  color: var(--wa-text-secondary);
+  letter-spacing: -2px;
+}
+
+.read-ticks.delivered {
+  color: var(--wa-text-secondary);
+  letter-spacing: -2px;
+  font-weight: 800;
 }
 
 .read-ticks.read {
-  color: var(--wa-blue-ticks);
+  color: var(--wa-blue-ticks) !important;
+  letter-spacing: -2px;
+  font-weight: 800;
+  text-shadow: 0 0 6px rgba(83, 189, 235, 0.45);
 }
 
-.read-ticks.unread {
-  color: var(--wa-text-secondary);
+/* Feature 3: Ticket Resolved Lock Banner for Student */
+.ticket-resolved-lock-banner {
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 8px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  animation: fadeInLock 0.3s ease;
+}
+
+.ticket-resolved-lock-banner .lock-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.ticket-resolved-lock-banner .lock-text {
+  flex: 1;
+}
+
+.ticket-resolved-lock-banner .btn-reopen-ticket {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-weight: 750;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s ease;
+}
+
+.ticket-resolved-lock-banner .btn-reopen-ticket:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(16, 185, 129, 0.45);
 }
 
 /* ─── 7. Partner Online Chip & Typing Indicator ───────────────────────────── */

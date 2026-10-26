@@ -228,14 +228,14 @@ async function getTicketMessages(req, res) {
       await ticket.save();
       await ChatMessage.updateMany(
         { ticketId, senderRole: { $ne: "student" }, read: false },
-        { $set: { read: true, readAt: new Date() } }
+        { $set: { read: true, readAt: new Date(), delivered: true, deliveredAt: new Date() } }
       );
     } else if (isDeveloper && ticket.unreadDeveloper > 0) {
       ticket.unreadDeveloper = 0;
       await ticket.save();
       await ChatMessage.updateMany(
         { ticketId, senderRole: "student", read: false },
-        { $set: { read: true, readAt: new Date() } }
+        { $set: { read: true, readAt: new Date(), delivered: true, deliveredAt: new Date() } }
       );
     }
 
@@ -449,6 +449,13 @@ async function sendTicketMessage(req, res) {
       });
     }
 
+    if (ticket.status === "resolved" && isStudent) {
+      return res.status(403).json({
+        success: false,
+        message: "This ticket has been marked as resolved by Support. Please reopen the ticket to send messages.",
+      });
+    }
+
     const message = await ChatMessage.create({
       ticketId,
       sender: user.id || user._id,
@@ -458,6 +465,7 @@ async function sendTicketMessage(req, res) {
       iv,
       contentType,
       read: false,
+      delivered: false,
     });
 
     ticket.lastMessage = {

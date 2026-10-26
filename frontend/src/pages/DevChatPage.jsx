@@ -342,7 +342,19 @@ export default function DevChatPage() {
 
     const removeReadListener = addChatListener('messages_read', (data) => {
       if (activeTicket && String(data.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase()) {
-        setMessages((prev) => prev.map((m) => ({ ...m, read: true })));
+        setMessages((prev) => prev.map((m) => ({ ...m, read: true, delivered: true })));
+      }
+    });
+
+    const removeDeliveredListener = addChatListener('message_delivered', (data) => {
+      if (activeTicket && String(data.ticketId).toUpperCase() === String(activeTicket.ticketId).toUpperCase()) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m._id === data.messageId || (!m.delivered && String(m.sender) === String(user?.id || user?._id))
+              ? { ...m, delivered: true, deliveredAt: data.deliveredAt || new Date().toISOString() }
+              : m
+          )
+        );
       }
     });
 
@@ -418,6 +430,7 @@ export default function DevChatPage() {
       removeTypingListener();
       removePresenceListener();
       removeReadListener();
+      removeDeliveredListener();
       removeEditListener();
       removeDeleteListener();
       removeActivityListener();
@@ -588,7 +601,7 @@ export default function DevChatPage() {
     sendTypingIndicator(activeTicket.ticketId, false);
     setSending(true);
 
-    // 1. Optimistic message preview (zero delay for sender)
+    // 1. Optimistic message preview (zero delay for sender with WhatsApp 🕒 Clock)
     const tempId = `temp_${Date.now()}`;
     const imageSize = selectedImage ? selectedImage.size : 0;
     const optimisticMessage = {
@@ -600,7 +613,9 @@ export default function DevChatPage() {
       text: rawPayload,
       contentType: isImageMessage ? 'image' : 'text',
       mediaSize: imageSize,
+      status: 'pending',
       read: false,
+      delivered: false,
       createdAt: new Date().toISOString(),
     };
 
@@ -648,7 +663,16 @@ export default function DevChatPage() {
         if (ack && ack.messageId) {
           setMessages((prev) =>
             prev.map((m) =>
-              m._id === tempId ? { ...m, _id: ack.messageId, read: false, mediaSize: imageSize } : m
+              m._id === tempId
+                ? {
+                    ...m,
+                    _id: ack.messageId,
+                    status: 'sent',
+                    delivered: ack.message?.delivered || false,
+                    read: false,
+                    mediaSize: imageSize,
+                  }
+                : m
             )
           );
           if (isImageMessage) {
@@ -667,7 +691,16 @@ export default function DevChatPage() {
         if (res.success && res.message) {
           const finalId = res.message._id || tempId;
           setMessages((prev) =>
-            prev.map((m) => (m._id === tempId ? { ...res.message, text: rawPayload } : m))
+            prev.map((m) =>
+              m._id === tempId
+                ? {
+                    ...res.message,
+                    text: rawPayload,
+                    status: 'sent',
+                    delivered: res.message.delivered || false,
+                  }
+                : m
+            )
           );
           if (isImageMessage) {
             setDownloadedImages((prev) => ({ ...prev, [finalId]: true, [tempId]: true }));
@@ -678,8 +711,10 @@ export default function DevChatPage() {
     } catch (err) {
       console.error('Failed to send encrypted message:', err);
       triggerToast('error', err.message || 'Failed to deliver message', 'Error');
-      // Rollback optimistic message if encryption completely failed
-      setMessages((prev) => prev.filter((m) => m._id !== tempId));
+      // Mark optimistic message as failed with ⚠️ so user knows
+      setMessages((prev) =>
+        prev.map((m) => (m._id === tempId ? { ...m, status: 'failed' } : m))
+      );
       if (!isImageMessage) setInputText(textToSend); // Restore unsent text
     } finally {
       setSending(false);
@@ -1173,8 +1208,18 @@ export default function DevChatPage() {
                               {msg.isEdited && <span className="chat-edited-tag">(edited)</span>}
                               <span>{timeStr}</span>
                               {isMine && (
-                                <span className={`read-ticks ${msg.read ? 'read' : 'unread'}`}>
-                                  {msg.read ? '✓✓' : '✓'}
+                                <span className={`read-ticks ${msg.status === 'pending' ? 'pending' : msg.status === 'failed' ? 'failed' : msg.read ? 'read' : msg.delivered ? 'delivered' : 'sent'}`}>
+                                  {msg.status === 'pending' ? (
+                                    <span className="tick-clock-icon" title="Sending...">🕒</span>
+                                  ) : msg.status === 'failed' ? (
+                                    <span className="tick-failed-icon" title="Failed to send">⚠️</span>
+                                  ) : msg.read ? (
+                                    <span className="tick-double-blue" title="Read">✓✓</span>
+                                  ) : msg.delivered ? (
+                                    <span className="tick-double-grey" title="Delivered">✓✓</span>
+                                  ) : (
+                                    <span className="tick-single-grey" title="Sent">✓</span>
+                                  )}
                                 </span>
                               )}
                             </div>
@@ -1227,7 +1272,29 @@ export default function DevChatPage() {
                     </div>
                   )}
 
-                  <div className="devchat-input-row">
+                  {/* Feature 3: Resolved Ticket Chat Lock for Students */}
+                  {activeTicket?.status === 'resolved' && !isDeveloper ? (
+                    <div className="ticket-resolved-lock-banner">
+                      <div className="lock-icon">🔒</div>
+                      <div className="lock-text">
+                        <strong style={{ display: 'block', fontSize: '0.88rem', color: '#f87171', marginBottom: '2px' }}>
+                          This ticket has been marked as RESOLVED by Support
+                        </strong>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                          New messages are locked. If your issue is still pending or needs further assistance, reopen the ticket.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-reopen-ticket"
+                        onClick={handleResolveTicket}
+                        id="btn-reopen-ticket-banner"
+                      >
+                        🔄 Reopen Ticket
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="devchat-input-row">
                     {/* Hidden Inputs for File and Camera Capture */}
                     <input
                       type="file"
@@ -1298,7 +1365,8 @@ export default function DevChatPage() {
                       {sending ? '...' : <span className="send-arrow-icon">➤</span>}
                     </button>
                   </div>
-                </form>
+                )}
+              </form>
               </>
             ) : (
               <div
