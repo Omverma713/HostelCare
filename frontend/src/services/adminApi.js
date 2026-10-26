@@ -233,6 +233,42 @@ export const adminApi = {
     });
   },
 
+  // --- HARDWARE DEVICE REGISTRY & GRANULAR SINGLE-STUDENT CONTROLS ---
+  getDeviceRegistry(params = {}) {
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== '' && v !== null)
+    );
+    const qs = new URLSearchParams(cleanParams).toString();
+    return adminRequest(`/superadmin/device-registry${qs ? '?' + qs : ''}`);
+  },
+
+  toggleDeviceMute(deviceId, isMuted, reason = '') {
+    return adminRequest(`/superadmin/device-registry/${encodeURIComponent(deviceId)}/toggle-mute`, {
+      method: 'POST',
+      body: JSON.stringify({ isMuted, reason }),
+    });
+  },
+
+  pingSingleDevice(deviceId, payload = {}) {
+    return adminRequest(`/superadmin/device-registry/${encodeURIComponent(deviceId)}/ping`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteDeviceRegistryEntry(deviceId) {
+    return adminRequest(`/superadmin/device-registry/${encodeURIComponent(deviceId)}`, {
+      method: 'DELETE',
+    });
+  },
+
+  broadcastCustomMessAlert(payload) {
+    return adminRequest('/superadmin/mess-notifications/broadcast-custom', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
   // Mess Timetable Food Items Manager
   getMessMenu() {
     return adminRequest('/mess-menu');

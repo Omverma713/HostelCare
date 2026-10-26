@@ -185,6 +185,22 @@ export default function SuperAdminPortal() {
   const [testAlertResult, setTestAlertResult] = useState(null);
   const [scheduleDayTab, setScheduleDayTab] = useState('working'); // 'working' | 'sunday'
 
+  // Device Registry & Granular Single-Student Controls State
+  const [deviceRegistryList, setDeviceRegistryList] = useState([]);
+  const [deviceRegistryPagination, setDeviceRegistryPagination] = useState({ page: 1, limit: 15, total: 0, totalPages: 1 });
+  const [deviceSearchQuery, setDeviceSearchQuery] = useState('');
+  const [deviceBlockFilter, setDeviceBlockFilter] = useState('');
+  const [loadingDeviceRegistry, setLoadingDeviceRegistry] = useState(false);
+  const [pingingDeviceId, setPingingDeviceId] = useState(null);
+  const [mutingDeviceId, setMutingDeviceId] = useState(null);
+
+  // Custom / Emergency Mess Announcement State
+  const [customAnnouncementTitle, setCustomAnnouncementTitle] = useState('');
+  const [customAnnouncementBody, setCustomAnnouncementBody] = useState('');
+  const [customAnnouncementImage, setCustomAnnouncementImage] = useState('');
+  const [customAnnouncementTargetBlock, setCustomAnnouncementTargetBlock] = useState('all');
+  const [broadcastingCustomAlert, setBroadcastingCustomAlert] = useState(false);
+
   // Audit Logs State
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditPagination, setAuditPagination] = useState({ page: 1, limit: 25, total: 0, totalPages: 1 });
@@ -1125,6 +1141,12 @@ export default function SuperAdminPortal() {
         const fallbackCount = res.config.alertCountPerMeal || 1;
         setMessAlertConfig((prev) => ({
           enabled: Boolean(res.config.enabled),
+          vacationMode: Boolean(res.config.vacationMode),
+          mealSwitches: res.config.mealSwitches || { breakfast: true, lunch: true, snacks: true, dinner: true },
+          leadTimes: res.config.leadTimes || { breakfast: 0, lunch: 0, snacks: 0, dinner: 0 },
+          customTemplates: res.config.customTemplates || {},
+          targetBlocks: res.config.targetBlocks || [],
+          targetRoles: res.config.targetRoles || ['student'],
           alertCountPerMeal: fallbackCount,
           frequencies: {
             breakfast: Number(rawFreq.breakfast ?? fallbackCount ?? prev.frequencies?.breakfast ?? 1),
@@ -1155,6 +1177,115 @@ export default function SuperAdminPortal() {
       setLoading(false);
     }
   }, []);
+
+  // Load Device Registry Directory (Layer 1 Vault Viewer)
+  const loadDeviceRegistry = useCallback(async (page = 1) => {
+    try {
+      setLoadingDeviceRegistry(true);
+      const res = await adminApi.getDeviceRegistry({
+        search: deviceSearchQuery,
+        hostelBlock: deviceBlockFilter,
+        page,
+        limit: 15,
+      });
+      if (res.success) {
+        setDeviceRegistryList(res.devices || []);
+        setDeviceRegistryPagination(res.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
+      }
+    } catch (err) {
+      console.error('Failed to load device registry:', err);
+    } finally {
+      setLoadingDeviceRegistry(false);
+    }
+  }, [deviceSearchQuery, deviceBlockFilter]);
+
+  // Single-Student Mute / Unmute Toggle
+  const handleToggleDeviceMute = async (deviceId, currentMuted, studentName = '') => {
+    try {
+      setMutingDeviceId(deviceId);
+      const res = await adminApi.toggleDeviceMute(deviceId, !currentMuted);
+      if (res.success) {
+        triggerToast('info', res.message, 'Device Mute Toggled 🔕');
+        setDeviceRegistryList((prev) =>
+          prev.map((d) => (d.deviceId === deviceId ? { ...d, isMuted: !currentMuted } : d))
+        );
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to toggle device mute', 'Error');
+    } finally {
+      setMutingDeviceId(null);
+    }
+  };
+
+  // Single-Student 1-Click Direct Ping
+  const handlePingSingleDevice = async (deviceId, studentName = '') => {
+    try {
+      setPingingDeviceId(deviceId);
+      const res = await adminApi.pingSingleDevice(deviceId, {
+        slotKey: testSlotKey,
+        customTitle: `🎯 Direct Alert for ${studentName || 'Student'}`,
+        customBody: `Super Admin test ping delivered exclusively to your device for ${testSlotKey.toUpperCase()}.`,
+      });
+      if (res.success) {
+        triggerToast('success', res.message || `Test ping delivered to ${studentName || deviceId}!`, 'Device Pinged 📱');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to ping device', 'Error');
+    } finally {
+      setPingingDeviceId(null);
+    }
+  };
+
+  // Single Device Prune / Delete
+  const handleDeleteDeviceEntry = async (deviceId, studentName = '') => {
+    if (!window.confirm(`Are you sure you want to prune and unregister device for ${studentName || deviceId}?`)) return;
+    try {
+      const res = await adminApi.deleteDeviceRegistryEntry(deviceId);
+      if (res.success) {
+        triggerToast('success', 'Device pruned from hardware vault', 'Pruned 🗑️');
+        setDeviceRegistryList((prev) => prev.filter((d) => d.deviceId !== deviceId));
+        loadMessNotifications();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to prune device', 'Error');
+    }
+  };
+
+  // Emergency / Custom Announcement Broadcast
+  const handleBroadcastCustomAnnouncement = async () => {
+    if (!customAnnouncementTitle.trim() || !customAnnouncementBody.trim()) {
+      triggerToast('warning', 'Please provide both Title and Body for the announcement', 'Missing Info');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Broadcast this custom mess announcement to ${
+        customAnnouncementTargetBlock === 'all' ? 'ALL students' : `Block ${customAnnouncementTargetBlock}`
+      }?\n\nTitle: ${customAnnouncementTitle}\nBody: ${customAnnouncementBody}`
+    );
+    if (!confirmed) return;
+
+    try {
+      setBroadcastingCustomAlert(true);
+      const res = await adminApi.broadcastCustomMessAlert({
+        title: customAnnouncementTitle.trim(),
+        body: customAnnouncementBody.trim(),
+        imageUrl: customAnnouncementImage.trim() || null,
+        targetBlocks: customAnnouncementTargetBlock === 'all' ? [] : [customAnnouncementTargetBlock],
+        targetRoles: ['student'],
+      });
+      if (res.success) {
+        triggerToast('success', res.message || 'Custom announcement broadcasted successfully!', 'Broadcast Sent 📢');
+        setCustomAnnouncementTitle('');
+        setCustomAnnouncementBody('');
+        setCustomAnnouncementImage('');
+        loadMessNotifications();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to broadcast announcement', 'Error');
+    } finally {
+      setBroadcastingCustomAlert(false);
+    }
+  };
 
   const handlePurgeDispatches = async () => {
     if (!window.confirm("Are you sure you want to clear/delete today's dispatched mess alert records? This will purge all logged delivery records and reset duplicate counters.")) return;
@@ -1403,9 +1534,12 @@ export default function SuperAdminPortal() {
     else if (activeTab === 'appversion' || activeTab === 'pilottesting') loadAppVersion();
     else if (activeTab === 'notifications') loadCampaigns();
     else if (activeTab === 'notices') loadNotices();
-    else if (activeTab === 'messalerts') loadMessNotifications();
+    else if (activeTab === 'messalerts') {
+      loadMessNotifications();
+      loadDeviceRegistry(1);
+    }
     else if (activeTab === 'audit') loadAuditLogs(1);
-  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadNotices, loadMessNotifications, loadAuditLogs]);
+  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadNotices, loadMessNotifications, loadDeviceRegistry, loadAuditLogs]);
 
   // Fetch full details for a selected user
   const handleSelectUser = async (user) => {
@@ -7634,6 +7768,31 @@ export default function SuperAdminPortal() {
 
                 <button
                   type="button"
+                  onClick={() => {
+                    const nextVacation = !messAlertConfig.vacationMode;
+                    setMessAlertConfig((prev) => ({ ...prev, vacationMode: nextVacation }));
+                    handleSaveMessAlertConfig({ ...messAlertConfig, vacationMode: nextVacation });
+                  }}
+                  style={{
+                    padding: '0.55rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 170, 0, 0.4)',
+                    background: messAlertConfig.vacationMode ? 'rgba(255, 170, 0, 0.25)' : 'rgba(255, 170, 0, 0.08)',
+                    color: '#ffaa00',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                  title="Freeze all scheduled mess alerts during vacation/breaks without modifying timetable"
+                >
+                  {messAlertConfig.vacationMode ? '🏖️ Vacation Freeze: ACTIVE' : '🏖️ Vacation Mode: OFF'}
+                </button>
+
+                <button
+                  type="button"
                   onClick={loadMessNotifications}
                   title="Refresh live status and active subscriber count"
                   style={{
@@ -8499,6 +8658,411 @@ export default function SuperAdminPortal() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Card 1: 📢 Emergency / Custom Mess Announcement Command Deck */}
+          <div
+            className="sa-mess-card"
+            style={{
+              marginTop: '1.25rem',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 170, 0, 0.3)',
+              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%)',
+              padding: '1.25rem',
+              boxShadow: '0 0 20px rgba(255, 170, 0, 0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#ffaa00', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📢 1-Click Custom & Emergency Announcement Dispatcher</span>
+                </h3>
+                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
+                  Instantly broadcast custom messages, holiday updates, or sudden timetable changes to student phones.
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  background: 'rgba(255, 170, 0, 0.15)',
+                  color: '#ffaa00',
+                  border: '1px solid rgba(255, 170, 0, 0.3)',
+                }}
+              >
+                ⚡ HIGH-PRIORITY FLASH DISPATCH
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginBottom: '4px' }}>
+                  Announcement Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Special Sunday Feast Tonight! 🍕"
+                  value={customAnnouncementTitle}
+                  onChange={(e) => setCustomAnnouncementTitle(e.target.value)}
+                  className="sa-mess-input"
+                  style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', borderColor: 'rgba(255, 170, 0, 0.3)' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginBottom: '4px' }}>
+                  Target Hostel Block
+                </label>
+                <select
+                  value={customAnnouncementTargetBlock}
+                  onChange={(e) => setCustomAnnouncementTargetBlock(e.target.value)}
+                  className="sa-mess-input"
+                  style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', borderColor: 'rgba(255, 170, 0, 0.3)' }}
+                >
+                  <option value="all">📢 Universal (All Hostel Students)</option>
+                  <option value="Block A">🏢 Block A Only</option>
+                  <option value="Block B">🏢 Block B Only</option>
+                  <option value="Block C">🏢 Block C Only</option>
+                  <option value="Block D">🏢 Block D Only</option>
+                </select>
+              </div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginBottom: '4px' }}>
+                  Announcement Body (Message details)
+                </label>
+                <textarea
+                  rows="2"
+                  placeholder="e.g. Mess timing today extended by 30 mins. Hot food is now being served in both halls!"
+                  value={customAnnouncementBody}
+                  onChange={(e) => setCustomAnnouncementBody(e.target.value)}
+                  className="sa-mess-input"
+                  style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', borderColor: 'rgba(255, 170, 0, 0.3)', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  placeholder="Optional Banner Image URL (e.g. https://.../photo.jpg)"
+                  value={customAnnouncementImage}
+                  onChange={(e) => setCustomAnnouncementImage(e.target.value)}
+                  className="sa-mess-input"
+                  style={{ flex: 1, minWidth: '220px', background: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', borderColor: 'rgba(255, 170, 0, 0.3)' }}
+                />
+                <button
+                  type="button"
+                  disabled={broadcastingCustomAlert}
+                  onClick={handleBroadcastCustomAnnouncement}
+                  style={{
+                    padding: '0.65rem 1.4rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #ffaa00 0%, #ea580c 100%)',
+                    color: '#000000',
+                    fontWeight: 800,
+                    fontSize: '0.86rem',
+                    cursor: broadcastingCustomAlert ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 0 15px rgba(255, 170, 0, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  {broadcastingCustomAlert ? '⚡ Broadcasting...' : '📢 Broadcast Announcement Now'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: 📱 Single-se-Single Hardware Device Registry Directory */}
+          <div
+            className="sa-mess-card"
+            style={{
+              marginTop: '1.25rem',
+              borderRadius: '12px',
+              border: '1px solid rgba(0, 243, 255, 0.3)',
+              background: 'linear-gradient(135deg, rgba(5, 19, 41, 0.95) 0%, rgba(10, 28, 61, 0.95) 100%)',
+              padding: '1.25rem',
+              boxShadow: '0 0 25px rgba(0, 243, 255, 0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#00f3ff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📱 Single Student Hardware Device Registry</span>
+                </h3>
+                <div style={{ fontSize: '0.78rem', color: '#88a0c4', marginTop: '2px' }}>
+                  Full control over every single student phone. Ping individual devices, mute alerts for students on leave, or prune uninstalled phones.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span
+                  style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    background: 'rgba(0, 243, 255, 0.15)',
+                    color: '#00f3ff',
+                    border: '1px solid rgba(0, 243, 255, 0.3)',
+                  }}
+                >
+                  {deviceRegistryPagination.total} Total Registered Hardware Nodes
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => loadDeviceRegistry(deviceRegistryPagination.page)}
+                  disabled={loadingDeviceRegistry}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(0, 243, 255, 0.4)',
+                    background: 'rgba(0, 243, 255, 0.1)',
+                    color: '#00f3ff',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {loadingDeviceRegistry ? 'Scanning...' : '🔄 Refresh Directory'}
+                </button>
+              </div>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="🔍 Search by student name, roll number, room number, or device ID..."
+                value={deviceSearchQuery}
+                onChange={(e) => setDeviceSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && loadDeviceRegistry(1)}
+                className="sa-mess-input"
+                style={{ flex: 1, minWidth: '240px', background: 'rgba(5, 19, 41, 0.8)', color: '#ffffff', borderColor: 'rgba(0, 243, 255, 0.3)' }}
+              />
+
+              <select
+                value={deviceBlockFilter}
+                onChange={(e) => {
+                  setDeviceBlockFilter(e.target.value);
+                  setTimeout(() => loadDeviceRegistry(1), 50);
+                }}
+                className="sa-mess-input"
+                style={{ minWidth: '150px', background: 'rgba(5, 19, 41, 0.8)', color: '#ffffff', borderColor: 'rgba(0, 243, 255, 0.3)' }}
+              >
+                <option value="">All Blocks</option>
+                <option value="Block A">Block A</option>
+                <option value="Block B">Block B</option>
+                <option value="Block C">Block C</option>
+                <option value="Block D">Block D</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => loadDeviceRegistry(1)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #00f3ff 0%, #0084ff 100%)',
+                  color: '#051329',
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Search
+              </button>
+            </div>
+
+            {/* Device Registry Table */}
+            <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid rgba(0, 243, 255, 0.2)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(0, 243, 255, 0.08)', color: '#00f3ff', borderBottom: '1px solid rgba(0, 243, 255, 0.2)' }}>
+                    <th style={{ padding: '0.65rem 0.75rem' }}>Student / Reg No</th>
+                    <th style={{ padding: '0.65rem 0.75rem' }}>Hostel Block & Room</th>
+                    <th style={{ padding: '0.65rem 0.75rem' }}>Platform / Hardware</th>
+                    <th style={{ padding: '0.65rem 0.75rem' }}>Alert Status</th>
+                    <th style={{ padding: '0.65rem 0.75rem' }}>Last Seen</th>
+                    <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right' }}>Single Device Controls</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deviceRegistryList.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: '#88a0c4' }}>
+                        {loadingDeviceRegistry ? 'Scanning hardware registry...' : 'No registered devices found matching criteria.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    deviceRegistryList.map((dev) => {
+                      const isMuted = dev.isMuted === true;
+                      return (
+                        <tr
+                          key={dev.deviceId}
+                          style={{
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                            background: isMuted ? 'rgba(255, 170, 0, 0.03)' : 'transparent',
+                          }}
+                        >
+                          <td style={{ padding: '0.65rem 0.75rem' }}>
+                            <div style={{ fontWeight: 700, color: '#ffffff' }}>
+                              {dev.studentName || 'Hostel Student'}
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#88a0c4' }}>
+                              {dev.regNo || dev.deviceId.slice(0, 16)}
+                            </div>
+                          </td>
+
+                          <td style={{ padding: '0.65rem 0.75rem', color: '#cbd5e1' }}>
+                            <div>{dev.hostelBlock || 'Unassigned Block'}</div>
+                            <div style={{ fontSize: '0.7rem', color: '#88a0c4' }}>Room: {dev.roomNumber || 'N/A'}</div>
+                          </td>
+
+                          <td style={{ padding: '0.65rem 0.75rem' }}>
+                            <span
+                              style={{
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                background: dev.platform === 'android' ? 'rgba(0, 255, 102, 0.15)' : 'rgba(0, 243, 255, 0.15)',
+                                color: dev.platform === 'android' ? '#00ff66' : '#00f3ff',
+                              }}
+                            >
+                              {dev.platform === 'android' ? '🤖 Android Phone' : '🌐 Web Browser'}
+                            </span>
+                            <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '2px' }}>
+                              {dev.hardwareModel || 'Device'}
+                            </div>
+                          </td>
+
+                          <td style={{ padding: '0.65rem 0.75rem' }}>
+                            <span
+                              style={{
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                background: isMuted ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0, 255, 102, 0.15)',
+                                color: isMuted ? '#ef4444' : '#00ff66',
+                              }}
+                            >
+                              {isMuted ? '🔕 MUTED (Skipped)' : '🟢 ACTIVE (Reachable)'}
+                            </span>
+                          </td>
+
+                          <td style={{ padding: '0.65rem 0.75rem', fontSize: '0.72rem', color: '#94a3b8' }}>
+                            {dev.lastSeenAt ? new Date(dev.lastSeenAt).toLocaleDateString() : 'Active'}
+                          </td>
+
+                          <td style={{ padding: '0.65rem 0.75rem', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              {/* 1-Click Single Ping */}
+                              <button
+                                type="button"
+                                disabled={pingingDeviceId === dev.deviceId}
+                                onClick={() => handlePingSingleDevice(dev.deviceId, dev.studentName)}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '5px',
+                                  border: '1px solid #00f3ff',
+                                  background: 'rgba(0, 243, 255, 0.15)',
+                                  color: '#00f3ff',
+                                  fontWeight: 800,
+                                  fontSize: '0.72rem',
+                                  cursor: pingingDeviceId === dev.deviceId ? 'not-allowed' : 'pointer',
+                                }}
+                                title="Send test ping directly to this student's phone only"
+                              >
+                                {pingingDeviceId === dev.deviceId ? '⚡...' : '📱 Ping'}
+                              </button>
+
+                              {/* Single Mute / Unmute */}
+                              <button
+                                type="button"
+                                disabled={mutingDeviceId === dev.deviceId}
+                                onClick={() => handleToggleDeviceMute(dev.deviceId, isMuted, dev.studentName)}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '5px',
+                                  border: isMuted ? '1px solid #10b981' : '1px solid #f59e0b',
+                                  background: isMuted ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                  color: isMuted ? '#10b981' : '#f59e0b',
+                                  fontWeight: 800,
+                                  fontSize: '0.72rem',
+                                  cursor: mutingDeviceId === dev.deviceId ? 'not-allowed' : 'pointer',
+                                }}
+                                title={isMuted ? 'Unmute alerts for this student' : 'Mute mess alerts for this student'}
+                              >
+                                {isMuted ? '🔔 Unmute' : '🔕 Mute'}
+                              </button>
+
+                              {/* Prune / Delete */}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteDeviceEntry(dev.deviceId, dev.studentName)}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '5px',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  color: '#ef4444',
+                                  fontWeight: 700,
+                                  fontSize: '0.72rem',
+                                  cursor: 'pointer',
+                                }}
+                                title="Prune this device from database"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {deviceRegistryPagination.totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '6px' }}>
+                {Array.from({ length: deviceRegistryPagination.totalPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => loadDeviceRegistry(i + 1)}
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid',
+                      borderColor: deviceRegistryPagination.page === i + 1 ? '#00f3ff' : 'rgba(255, 255, 255, 0.1)',
+                      background: deviceRegistryPagination.page === i + 1 ? '#00f3ff' : 'transparent',
+                      color: deviceRegistryPagination.page === i + 1 ? '#051329' : '#88a0c4',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

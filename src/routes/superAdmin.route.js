@@ -40,6 +40,11 @@ const {
   createGlobalNotice,
   toggleGlobalNoticeStatus,
   deleteGlobalNotice,
+  getDeviceRegistryDirectory,
+  toggleDeviceMuteStatus,
+  pingSingleDevice,
+  deleteDeviceRegistryEntry,
+  broadcastCustomMessAlert,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -123,6 +128,13 @@ router.get("/notices/active", getActiveGlobalNotice);
 router.post("/notices", sensitiveActionLimiter, createGlobalNotice);
 router.patch("/notices/:noticeId/status", sensitiveActionLimiter, toggleGlobalNoticeStatus);
 router.delete("/notices/:noticeId", sensitiveActionLimiter, deleteGlobalNotice);
+
+// Hardware Device Registry & Granular Student Mute/Ping Controls
+router.get("/device-registry", getDeviceRegistryDirectory);
+router.post("/device-registry/:deviceId/toggle-mute", sensitiveActionLimiter, toggleDeviceMuteStatus);
+router.post("/device-registry/:deviceId/ping", sensitiveActionLimiter, pingSingleDevice);
+router.delete("/device-registry/:deviceId", sensitiveActionLimiter, deleteDeviceRegistryEntry);
+router.post("/mess-notifications/broadcast-custom", sensitiveActionLimiter, broadcastCustomMessAlert);
 
 // Audit Logs
 router.get("/audit-logs", getAuditLogs);

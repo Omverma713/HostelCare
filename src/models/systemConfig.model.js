@@ -249,6 +249,52 @@ const systemConfigSchema = new mongoose.Schema(
         min: 1,
         max: 3,
       },
+      vacationMode: {
+        type: Boolean,
+        default: false,
+      },
+      mealSwitches: {
+        breakfast: { type: Boolean, default: true },
+        lunch: { type: Boolean, default: true },
+        snacks: { type: Boolean, default: true },
+        dinner: { type: Boolean, default: true },
+      },
+      leadTimes: {
+        breakfast: { type: Number, default: 0 }, // minutes before meal start (-30 to +30)
+        lunch: { type: Number, default: 0 },
+        snacks: { type: Number, default: 0 },
+        dinner: { type: Number, default: 0 },
+      },
+      customTemplates: {
+        breakfast: {
+          title: { type: String, default: "" },
+          body: { type: String, default: "" },
+          imageUrl: { type: String, default: "" },
+        },
+        lunch: {
+          title: { type: String, default: "" },
+          body: { type: String, default: "" },
+          imageUrl: { type: String, default: "" },
+        },
+        snacks: {
+          title: { type: String, default: "" },
+          body: { type: String, default: "" },
+          imageUrl: { type: String, default: "" },
+        },
+        dinner: {
+          title: { type: String, default: "" },
+          body: { type: String, default: "" },
+          imageUrl: { type: String, default: "" },
+        },
+      },
+      targetBlocks: {
+        type: [String],
+        default: [], // empty = all blocks
+      },
+      targetRoles: {
+        type: [String],
+        default: ["student"],
+      },
       frequencies: {
         breakfast: { type: Number, default: 1, min: 1, max: 3 },
         lunch: { type: Number, default: 1, min: 1, max: 3 },

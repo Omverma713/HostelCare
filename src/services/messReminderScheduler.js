@@ -64,7 +64,13 @@ async function getEffectiveStartTimings() {
 
         return {
           enabled: mc.enabled !== false,
+          vacationMode: mc.vacationMode === true,
           alertCountPerMeal: defaultAlertCount,
+          mealSwitches: mc.mealSwitches || { breakfast: true, lunch: true, snacks: true, dinner: true },
+          leadTimes: mc.leadTimes || { breakfast: 0, lunch: 0, snacks: 0, dinner: 0 },
+          customTemplates: mc.customTemplates || {},
+          targetBlocks: mc.targetBlocks || [],
+          targetRoles: mc.targetRoles || ["student"],
           frequencies,
           working: {
             breakfast: { hour: mc.workingDays?.breakfast?.startHour ?? 7, minute: mc.workingDays?.breakfast?.startMinute ?? 0, timing: mc.workingDays?.breakfast?.timing || "07:00 AM – 09:15 AM" },
@@ -193,12 +199,19 @@ async function broadcastMealReminder(slotKey, options = {}) {
     title = `📢 Final Call (+30m): ${metadata.title}`;
   }
 
+  const customTpl = options.customTemplate || {};
+  const finalTitle = options.customTitle || customTpl.title || title;
+  const finalBody = options.customBody || customTpl.body || `Today's Menu: ${itemsText}${items.length > 4 ? " & more" : ""} (${timingText}). Tap to view full timetable.`;
+  const finalImageUrl = options.imageUrl || customTpl.imageUrl || null;
+
   const payload = {
-    title,
-    body: `Today's Menu: ${itemsText}${items.length > 4 ? " & more" : ""} (${timingText}). Tap to view full timetable.`,
-    route: "/mess-menu",
+    title: finalTitle,
+    body: finalBody,
+    ...(finalImageUrl ? { imageUrl: finalImageUrl } : {}),
+    route: options.customRoute || "/mess-menu",
+    channelId: "hostelcare_custom_channel",
     data: {
-      route: "/mess-menu",
+      route: options.customRoute || "/mess-menu",
       slotKey,
       day: timeInfo.weekday,
       broadcastType: options.isTest ? "mess_manual_test" : "mess_auto_reminder",
@@ -206,6 +219,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
       occurrence: String(occurrence),
       idempotencyKey: options.idempotencyKey || "",
       timestamp: new Date().toISOString(),
+      ...(options.extraData || {}),
     },
   };
 
@@ -218,6 +232,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
     try {
       const deviceQuery = {
         isActive: true,
+        isMuted: { $ne: true }, // Exclude muted students
         $or: [
           { pushToken: { $exists: true, $ne: null, $ne: "" } },
           { "webPushSubscription.endpoint": { $exists: true, $ne: null } },
@@ -232,9 +247,21 @@ async function broadcastMealReminder(slotKey, options = {}) {
         ],
       };
 
+      if (options.targetDeviceId) {
+        deviceQuery.deviceId = options.targetDeviceId;
+      }
+
       if (options.targetUserId) {
         deviceQuery.userId = options.targetUserId;
         sessionQuery.userId = options.targetUserId;
+      }
+
+      if (options.targetBlocks && options.targetBlocks.length > 0) {
+        deviceQuery.hostelBlock = { $in: options.targetBlocks };
+      }
+
+      if (options.targetRoles && options.targetRoles.length > 0) {
+        deviceQuery.userRole = { $in: options.targetRoles };
       }
 
       const devices = await DeviceRegistry.find(deviceQuery).lean();
@@ -289,7 +316,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
  */
 async function checkAndTriggerMealAlerts() {
   const effective = await getEffectiveStartTimings();
-  if (!effective.enabled) {
+  if (!effective.enabled || effective.vacationMode) {
     return;
   }
 
@@ -302,6 +329,11 @@ async function checkAndTriggerMealAlerts() {
   const isDbConnected = mongoose.connection && mongoose.connection.readyState === 1;
 
   for (const [slotKey, cfg] of Object.entries(timings)) {
+    // 1. Check if this specific meal is switched ON
+    if (effective.mealSwitches && effective.mealSwitches[slotKey] === false) {
+      continue;
+    }
+
     // Retrieve independent frequency for this specific meal slot (1, 2, or 3)
     const mealFrequency = Math.max(
       1,
@@ -316,10 +348,13 @@ async function checkAndTriggerMealAlerts() {
     if (mealFrequency >= 2) offsets.push(15);
     if (mealFrequency >= 3) offsets.push(30);
 
+    // Lead time offset (e.g. 15 mins before start time)
+    const leadTimeMinutes = Number(effective.leadTimes?.[slotKey] || 0);
+
     for (let i = 0; i < offsets.length; i++) {
       const occurrence = i + 1;
       const offsetMinutes = offsets[i];
-      const totalStartMinutes = cfg.hour * 60 + cfg.minute + offsetMinutes;
+      const totalStartMinutes = (cfg.hour * 60 + cfg.minute - leadTimeMinutes + offsetMinutes + 1440) % 1440;
       const targetHour = Math.floor(totalStartMinutes / 60) % 24;
       const targetMinute = totalStartMinutes % 60;
 
@@ -348,6 +383,9 @@ async function checkAndTriggerMealAlerts() {
               alertIndex: occurrence,
               occurrence,
               idempotencyKey,
+              customTemplate: effective.customTemplates?.[slotKey] || {},
+              targetBlocks: effective.targetBlocks || [],
+              targetRoles: effective.targetRoles || ["student"],
             });
 
             if (broadcastResult.targets === 0) {

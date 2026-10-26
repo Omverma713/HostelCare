@@ -2505,6 +2505,39 @@ async function updateMessNotificationSchedule(req, res) {
       };
     }
 
+    if (req.body.vacationMode !== undefined) {
+      config.messNotificationConfig.vacationMode = Boolean(req.body.vacationMode);
+    }
+
+    if (req.body.mealSwitches && typeof req.body.mealSwitches === "object") {
+      config.messNotificationConfig.mealSwitches = {
+        ...config.messNotificationConfig.mealSwitches,
+        ...req.body.mealSwitches,
+      };
+    }
+
+    if (req.body.leadTimes && typeof req.body.leadTimes === "object") {
+      config.messNotificationConfig.leadTimes = {
+        ...config.messNotificationConfig.leadTimes,
+        ...req.body.leadTimes,
+      };
+    }
+
+    if (req.body.customTemplates && typeof req.body.customTemplates === "object") {
+      config.messNotificationConfig.customTemplates = {
+        ...config.messNotificationConfig.customTemplates,
+        ...req.body.customTemplates,
+      };
+    }
+
+    if (Array.isArray(req.body.targetBlocks)) {
+      config.messNotificationConfig.targetBlocks = req.body.targetBlocks;
+    }
+
+    if (Array.isArray(req.body.targetRoles)) {
+      config.messNotificationConfig.targetRoles = req.body.targetRoles;
+    }
+
     config.updatedBy = req.user?.id || req.user?.registrationNumber || "superadmin";
     await config.save();
 
@@ -2757,6 +2790,182 @@ const deleteGlobalNotice = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/v1/superadmin/device-registry
+ * Searchable, filterable list of all registered hardware devices
+ */
+async function getDeviceRegistryDirectory(req, res) {
+  try {
+    const DeviceRegistry = require("../models/deviceRegistry.model");
+    const { search = "", platform, isMuted, isActive, page = 1, limit = 20 } = req.query;
+
+    const query = {};
+    if (search.trim()) {
+      const regex = new RegExp(search.trim(), "i");
+      query.$or = [
+        { studentName: regex },
+        { regNo: regex },
+        { roomNumber: regex },
+        { hostelBlock: regex },
+        { deviceId: regex },
+      ];
+    }
+    if (platform) query.platform = platform;
+    if (isMuted !== undefined) query.isMuted = isMuted === "true";
+    if (isActive !== undefined) query.isActive = isActive === "true";
+
+    const p = Math.max(1, parseInt(page, 10) || 1);
+    const l = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const skip = (p - 1) * l;
+
+    const [devices, total] = await Promise.all([
+      DeviceRegistry.find(query).sort({ lastSeenAt: -1 }).skip(skip).limit(l).lean(),
+      DeviceRegistry.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      devices,
+      pagination: {
+        page: p,
+        limit: l,
+        total,
+        totalPages: Math.ceil(total / l) || 1,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch device registry", error: error.message });
+  }
+}
+
+/**
+ * POST /api/v1/superadmin/device-registry/:deviceId/toggle-mute
+ * Granular mute/unmute of mess alerts for a single student device
+ */
+async function toggleDeviceMuteStatus(req, res) {
+  try {
+    const DeviceRegistry = require("../models/deviceRegistry.model");
+    const { deviceId } = req.params;
+    const { isMuted, reason = "" } = req.body;
+
+    const device = await DeviceRegistry.findOne({ deviceId });
+    if (!device) {
+      return res.status(404).json({ success: false, message: "Device not found in registry" });
+    }
+
+    const nextMuted = isMuted !== undefined ? Boolean(isMuted) : !device.isMuted;
+    device.isMuted = nextMuted;
+    if (reason) device.mutedReason = reason;
+    await device.save();
+
+    await recordAudit({
+      req,
+      action: "DEVICE_MUTE_TOGGLED",
+      targetType: "DEVICE",
+      targetIdentifier: deviceId,
+      summary: `${nextMuted ? "Muted" : "Unmuted"} mess notifications for student ${device.studentName || device.regNo || deviceId}`,
+      details: { deviceId, isMuted: nextMuted, reason },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Device for ${device.studentName || device.regNo || "Student"} ${nextMuted ? "MUTED (Alerts skipped)" : "UNMUTED (Alerts enabled)"}`,
+      device,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to toggle device mute status", error: error.message });
+  }
+}
+
+/**
+ * POST /api/v1/superadmin/device-registry/:deviceId/ping
+ * 1-click test ping to a single student device only
+ */
+async function pingSingleDevice(req, res) {
+  try {
+    const DeviceRegistry = require("../models/deviceRegistry.model");
+    const { broadcastMealReminder } = require("../services/messReminderScheduler");
+    const { deviceId } = req.params;
+    const { customTitle, customBody, slotKey = "breakfast" } = req.body;
+
+    const device = await DeviceRegistry.findOne({ deviceId }).lean();
+    if (!device) {
+      return res.status(404).json({ success: false, message: "Target device not found" });
+    }
+
+    const result = await broadcastMealReminder(slotKey, {
+      isManualTest: true,
+      isTest: true,
+      targetDeviceId: deviceId,
+      customTitle: customTitle || `🎯 Direct Alert for ${device.studentName || device.regNo || "Student"}`,
+      customBody: customBody || `Meal Alert: Today's ${slotKey.toUpperCase()} is active. Sent directly by Super Admin.`,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Direct ping delivered to device of ${device.studentName || device.regNo || deviceId}`,
+      result,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to ping single device", error: error.message });
+  }
+}
+
+/**
+ * DELETE /api/v1/superadmin/device-registry/:deviceId
+ * Unregisters / prunes a device from hardware vault
+ */
+async function deleteDeviceRegistryEntry(req, res) {
+  try {
+    const DeviceRegistry = require("../models/deviceRegistry.model");
+    const { deviceId } = req.params;
+    await DeviceRegistry.deleteOne({ deviceId });
+    return res.status(200).json({ success: true, message: "Device successfully pruned from hardware registry" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to remove device", error: error.message });
+  }
+}
+
+/**
+ * POST /api/v1/superadmin/mess-notifications/broadcast-custom
+ * 1-click emergency mess announcement broadcast to targeted blocks/roles
+ */
+async function broadcastCustomMessAlert(req, res) {
+  try {
+    const { title, body, imageUrl, targetBlocks = [], targetRoles = ["student"] } = req.body;
+    if (!title || !body) {
+      return res.status(400).json({ success: false, message: "Title and body are required for custom announcement broadcast" });
+    }
+
+    const { broadcastMealReminder } = require("../services/messReminderScheduler");
+    const result = await broadcastMealReminder("breakfast", {
+      isManualTest: true,
+      isTest: true,
+      customTitle: title,
+      customBody: body,
+      imageUrl: imageUrl || null,
+      targetBlocks,
+      targetRoles,
+    });
+
+    await recordAudit({
+      req,
+      action: "CUSTOM_MESS_ALERT_BROADCASTED",
+      targetType: "NOTIFICATION",
+      summary: `Custom Announcement Broadcast: "${title}" (Targets: ${result.targets || 0})`,
+      details: { title, body, imageUrl, targetBlocks, targetRoles, targets: result.targets },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Custom announcement broadcasted successfully to ${result.targets || 0} nodes.`,
+      result,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to broadcast custom alert", error: error.message });
+  }
+}
+
 module.exports = {
   getSystemOverview,
   getUsersDirectory,
@@ -2794,5 +3003,11 @@ module.exports = {
   createGlobalNotice,
   toggleGlobalNoticeStatus,
   deleteGlobalNotice,
+  getDeviceRegistryDirectory,
+  toggleDeviceMuteStatus,
+  pingSingleDevice,
+  deleteDeviceRegistryEntry,
+  broadcastCustomMessAlert,
 };
+
 

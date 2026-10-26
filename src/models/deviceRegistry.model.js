@@ -72,6 +72,15 @@ const deviceRegistrySchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    isMuted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    mutedReason: {
+      type: String,
+      default: "",
+    },
     lastSeenAt: {
       type: Date,
       default: Date.now,
