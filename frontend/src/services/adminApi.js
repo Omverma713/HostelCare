@@ -233,6 +233,20 @@ export const adminApi = {
     });
   },
 
+  simulateAutoFire(slotKey, delaySeconds = 0, reArm = true) {
+    return adminRequest('/superadmin/mess-notifications/auto-fire-simulator', {
+      method: 'POST',
+      body: JSON.stringify({ slotKey, delaySeconds, reArm }),
+    });
+  },
+
+  rearmMessSlot(slotKey = 'all') {
+    return adminRequest('/superadmin/mess-notifications/rearm-slot', {
+      method: 'POST',
+      body: JSON.stringify({ slotKey }),
+    });
+  },
+
   // --- HARDWARE DEVICE REGISTRY & GRANULAR SINGLE-STUDENT CONTROLS ---
   getDeviceRegistry(params = {}) {
     const cleanParams = Object.fromEntries(

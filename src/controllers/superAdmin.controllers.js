@@ -2671,6 +2671,161 @@ async function purgeMessNotificationDispatches(req, res) {
   }
 }
 
+/**
+ * POST /api/v1/superadmin/mess-notifications/auto-fire-simulator
+ * Executes or schedules an immediate simulation of the production auto-cron pipeline.
+ * Allows Super Admin to trigger auto-broadcasts with optional countdown delay (e.g. 15s) so they can lock their phone and see wake-lock in action.
+ */
+async function simulateAutoFireMessAlert(req, res) {
+  try {
+    if (req.user?.role !== "superadmin") {
+      return res.status(403).json({ success: false, message: "Access denied." });
+    }
+
+    const { slotKey = "snacks", delaySeconds = 0, reArm = true } = req.body;
+    const validSlots = ["breakfast", "lunch", "snacks", "dinner"];
+    if (!validSlots.includes(slotKey)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid slotKey: ${slotKey}. Must be one of: ${validSlots.join(", ")}`,
+      });
+    }
+
+    const { getKolkataTime, broadcastMealReminder } = require("../services/messReminderScheduler");
+    const MessNotificationDispatch = require("../models/messNotificationDispatch.model");
+    const SystemConfig = require("../models/systemConfig.model");
+    const timeInfo = getKolkataTime();
+
+    if (reArm) {
+      await MessNotificationDispatch.deleteMany({
+        dateStr: timeInfo.dateStr,
+        mealSlot: slotKey,
+      }).catch(() => {});
+    }
+
+    const delay = Math.max(0, Math.min(300, Number(delaySeconds) || 0));
+
+    if (delay > 0) {
+      setTimeout(async () => {
+        try {
+          console.log(`⏱️ [AutoFireSimulator] Delayed auto-fire triggering now for ${slotKey} (${delay}s delay elapsed)...`);
+          const config = await SystemConfig.getEffectiveConfig();
+          const effective = config?.messNotificationConfig || {};
+
+          await broadcastMealReminder(slotKey, {
+            alertIndex: 1,
+            occurrence: 1,
+            isManualTest: false,
+            isSimulatedAuto: true,
+            customTemplate: effective.customTemplates?.[slotKey] || {},
+            targetBlocks: effective.targetBlocks || [],
+            targetRoles: effective.targetRoles || ["student"],
+          });
+        } catch (simErr) {
+          console.error("⏱️ [AutoFireSimulator] Background timer error:", simErr.message);
+        }
+      }, delay * 1000);
+
+      await recordAudit({
+        req,
+        action: "MESS_AUTO_FIRE_SCHEDULED",
+        targetType: "NOTIFICATION",
+        summary: `Super Admin armed delayed auto-fire simulation for ${slotKey.toUpperCase()} in ${delay} seconds`,
+        details: { slotKey, delaySeconds: delay, reArm },
+      });
+
+      return res.status(200).json({
+        success: true,
+        scheduled: true,
+        delaySeconds: delay,
+        message: `⚡ Auto-fire armed! Server will automatically broadcast ${slotKey.toUpperCase()} alert in ${delay} seconds. Lock your phone now to test heads-up wake-lock!`,
+      });
+    }
+
+    const config = await SystemConfig.getEffectiveConfig();
+    const effective = config?.messNotificationConfig || {};
+
+    const result = await broadcastMealReminder(slotKey, {
+      alertIndex: 1,
+      occurrence: 1,
+      isManualTest: false,
+      isSimulatedAuto: true,
+      customTemplate: effective.customTemplates?.[slotKey] || {},
+      targetBlocks: effective.targetBlocks || [],
+      targetRoles: effective.targetRoles || ["student"],
+    });
+
+    await recordAudit({
+      req,
+      action: "MESS_AUTO_FIRE_EXECUTED",
+      targetType: "NOTIFICATION",
+      summary: `Super Admin executed immediate auto-fire simulation for ${slotKey.toUpperCase()} (Targets: ${result.targets || 0})`,
+      details: { slotKey, targets: result.targets, report: result.report },
+    });
+
+    return res.status(200).json({
+      success: true,
+      scheduled: false,
+      message: `⚡ Auto-fire broadcast completed for ${slotKey.toUpperCase()}! Dispatched to ${result.targets || 0} active devices.`,
+      result,
+    });
+  } catch (error) {
+    console.error("simulateAutoFireMessAlert error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to simulate auto-fire alert",
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * POST /api/v1/superadmin/mess-notifications/rearm-slot
+ * Clears today's dispatch lock for a specific slot or all slots so that auto-cron can fire again.
+ */
+async function rearmMessSlotForToday(req, res) {
+  try {
+    if (req.user?.role !== "superadmin") {
+      return res.status(403).json({ success: false, message: "Access denied." });
+    }
+
+    const { slotKey = "all" } = req.body;
+    const { getKolkataTime } = require("../services/messReminderScheduler");
+    const MessNotificationDispatch = require("../models/messNotificationDispatch.model");
+    const timeInfo = getKolkataTime();
+
+    const query = { dateStr: timeInfo.dateStr };
+    if (slotKey !== "all") {
+      query.mealSlot = slotKey;
+    }
+
+    const result = await MessNotificationDispatch.deleteMany(query);
+
+    await recordAudit({
+      req,
+      action: "MESS_SLOT_REARMED",
+      targetType: "NOTIFICATION",
+      summary: `Super Admin re-armed ${slotKey.toUpperCase()} for today (${timeInfo.dateStr}). Removed ${result.deletedCount} dispatch locks.`,
+      details: { slotKey, deletedCount: result.deletedCount, dateStr: timeInfo.dateStr },
+    });
+
+    return res.status(200).json({
+      success: true,
+      deletedCount: result.deletedCount,
+      message: slotKey === "all"
+        ? `All meal slots for today (${timeInfo.dateStr}) re-armed! Auto-cron locks cleared.`
+        : `${slotKey.toUpperCase()} re-armed for today! Auto-cron lock cleared.`,
+    });
+  } catch (error) {
+    console.error("rearmMessSlotForToday error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to re-arm meal slot",
+      error: error.message,
+    });
+  }
+}
+
 // ─── GLOBAL EMERGENCY / ANNOUNCEMENT NOTICES ─────────────────────────────────
 const getGlobalNotices = async (req, res) => {
   try {
@@ -3008,6 +3163,8 @@ module.exports = {
   pingSingleDevice,
   deleteDeviceRegistryEntry,
   broadcastCustomMessAlert,
+  simulateAutoFireMessAlert,
+  rearmMessSlotForToday,
 };
 
 

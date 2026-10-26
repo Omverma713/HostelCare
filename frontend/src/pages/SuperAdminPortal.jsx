@@ -1521,6 +1521,63 @@ export default function SuperAdminPortal() {
     }
   };
 
+  const [delayedAutoFireCountdown, setDelayedAutoFireCountdown] = useState(null);
+  const [delayedSlotKey, setDelayedSlotKey] = useState(null);
+  const [rearmingSlot, setRearmingSlot] = useState(false);
+
+  const handleSimulateAutoFire = async (slotKey, delaySeconds = 0) => {
+    try {
+      setTestingMessAlert(true);
+      const res = await adminApi.simulateAutoFire(slotKey, delaySeconds, true);
+      if (res.success) {
+        if (delaySeconds > 0) {
+          setDelayedSlotKey(slotKey);
+          setDelayedAutoFireCountdown(delaySeconds);
+          triggerToast('info', res.message, 'Auto-Fire Armed ⏱️');
+          let remaining = delaySeconds;
+          const interval = setInterval(() => {
+            remaining -= 1;
+            setDelayedAutoFireCountdown(remaining);
+            if (remaining <= 0) {
+              clearInterval(interval);
+              setDelayedAutoFireCountdown(null);
+              setDelayedSlotKey(null);
+              loadMessNotifications();
+              triggerToast('success', `${slotKey.toUpperCase()} auto-fire broadcast executed by server!`, 'Dispatched 🚀');
+            }
+          }, 1000);
+        } else {
+          setTestAlertResult(res);
+          triggerToast('success', res.message, 'Auto-Fire Dispatched 🚀');
+          await loadMessNotifications();
+        }
+      } else {
+        triggerToast('warning', res.message || 'Auto-fire simulation failed', 'Warning');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to trigger auto-fire simulation', 'Error');
+    } finally {
+      setTestingMessAlert(false);
+    }
+  };
+
+  const handleRearmSlot = async (slotKey = 'all') => {
+    try {
+      setRearmingSlot(true);
+      const res = await adminApi.rearmMessSlot(slotKey);
+      if (res.success) {
+        triggerToast('success', res.message, 'Slot Re-Armed 🔄');
+        await loadMessNotifications();
+      } else {
+        triggerToast('warning', res.message || 'Failed to re-arm slot', 'Warning');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to re-arm slot', 'Error');
+    } finally {
+      setRearmingSlot(false);
+    }
+  };
+
   // Initial load according to active tab
   useEffect(() => {
     if (activeTab === 'overview') loadOverview();
@@ -7892,6 +7949,25 @@ export default function SuperAdminPortal() {
 
                     <button
                       type="button"
+                      onClick={() => handleRearmSlot('all')}
+                      disabled={rearmingSlot}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(168, 85, 247, 0.4)',
+                        background: 'rgba(168, 85, 247, 0.15)',
+                        color: '#c084fc',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: rearmingSlot ? 'not-allowed' : 'pointer',
+                      }}
+                      title="Clears all 4 meal locks for today so auto-cron will fire again on schedule"
+                    >
+                      {rearmingSlot ? 'Re-Arming...' : '🔄 Re-Arm All 4 Slots'}
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => handleSaveMessAlertConfig()}
                       disabled={savingMessAlerts}
                       style={{
@@ -7965,6 +8041,46 @@ export default function SuperAdminPortal() {
                   </div>
                 </div>
 
+                {/* Delayed Auto-Fire Active Countdown Banner */}
+                {delayedAutoFireCountdown !== null && (
+                  <div
+                    style={{
+                      padding: '0.75rem 1rem',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.2) 0%, rgba(239, 68, 68, 0.2) 100%)',
+                      border: '1px solid #f59e0b',
+                      color: '#f59e0b',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span>
+                      ⏱️ AUTO-FIRE ARMED: <strong>{delayedSlotKey?.toUpperCase()}</strong> broadcast will automatically trigger in <strong>{delayedAutoFireCountdown}s</strong>! Lock your phone screen now and observe the wake-lock heads-up alert!
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDelayedAutoFireCountdown(null);
+                        setDelayedSlotKey(null);
+                      }}
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '5px',
+                        border: '1px solid #ef4444',
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
                   {[
                     { key: 'breakfast', label: 'Breakfast', emoji: '🍳' },
@@ -7973,12 +8089,17 @@ export default function SuperAdminPortal() {
                     { key: 'dinner',    label: 'Dinner',    emoji: '🍲' },
                   ].map((meal) => {
                     const currentFreq = messAlertConfig.frequencies?.[meal.key] || messAlertConfig.alertCountPerMeal || 1;
+                    const slotDispatch = todayDispatches.find((d) => d.mealSlot === meal.key && d.status === 'dispatched');
+                    const dispatchTime = slotDispatch?.dispatchedAt
+                      ? new Date(slotDispatch.dispatchedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : null;
+
                     return (
                       <div
                         key={meal.key}
                         style={{
                           background: 'var(--bg-secondary)',
-                          border: '1px solid var(--border-color)',
+                          border: slotDispatch ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-color)',
                           borderRadius: '10px',
                           padding: '0.75rem',
                           display: 'flex',
@@ -8000,11 +8121,12 @@ export default function SuperAdminPortal() {
                               borderRadius: '6px',
                             }}
                           >
-                            Saved: {currentFreq}x {currentFreq === 3 ? '(Start + 15m + 30m)' : currentFreq === 2 ? '(Start + 15m)' : '(Start only)'}
+                            Saved: {currentFreq}x
                           </span>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                        {/* Frequency Buttons */}
+                        <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
                           {[
                             { count: 1, label: '1x (Start)' },
                             { count: 2, label: '2x (+15m)' },
@@ -8025,14 +8147,14 @@ export default function SuperAdminPortal() {
                               }}
                               style={{
                                 flex: 1,
-                                padding: '0.4rem 0.2rem',
+                                padding: '0.35rem 0.2rem',
                                 borderRadius: '6px',
                                 border: '1px solid',
                                 borderColor: currentFreq === opt.count ? 'var(--primary)' : 'var(--border-color)',
                                 background: currentFreq === opt.count ? 'var(--primary)' : 'var(--bg-card)',
                                 color: currentFreq === opt.count ? '#ffffff' : 'var(--text-primary)',
                                 fontWeight: 700,
-                                fontSize: '0.74rem',
+                                fontSize: '0.72rem',
                                 cursor: 'pointer',
                                 transition: 'all 0.15s ease',
                                 textAlign: 'center',
@@ -8041,6 +8163,86 @@ export default function SuperAdminPortal() {
                               {opt.label}
                             </button>
                           ))}
+                        </div>
+
+                        {/* Real-time Dispatch Status Radar */}
+                        <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Today's Status:</span>
+                            {slotDispatch ? (
+                              <span style={{ color: '#10b981', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                <span>✅ DISPATCHED</span>
+                                <span style={{ color: 'var(--text-muted)' }}>({dispatchTime})</span>
+                              </span>
+                            ) : (
+                              <span style={{ color: '#38bdf8', fontWeight: 800 }}>
+                                ⏳ PENDING / UPCOMING
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Granular Auto-Fire & Re-Arm Action Bar */}
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleSimulateAutoFire(meal.key, 0)}
+                              disabled={testingMessAlert}
+                              style={{
+                                flex: 1,
+                                padding: '4px 6px',
+                                fontSize: '0.68rem',
+                                fontWeight: 800,
+                                borderRadius: '5px',
+                                border: '1px solid rgba(0, 243, 255, 0.4)',
+                                background: 'rgba(0, 243, 255, 0.12)',
+                                color: '#00f3ff',
+                                cursor: 'pointer',
+                              }}
+                              title="Directly trigger this meal alert using the real production auto-cron pipeline"
+                            >
+                              ⚡ Auto-Fire Now
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleSimulateAutoFire(meal.key, 15)}
+                              disabled={testingMessAlert || delayedAutoFireCountdown !== null}
+                              style={{
+                                padding: '4px 6px',
+                                fontSize: '0.68rem',
+                                fontWeight: 800,
+                                borderRadius: '5px',
+                                border: '1px solid rgba(245, 158, 11, 0.4)',
+                                background: 'rgba(245, 158, 11, 0.12)',
+                                color: '#f59e0b',
+                                cursor: 'pointer',
+                              }}
+                              title="Arms an automatic background timer for 15 seconds. Lock your phone and observe wake-lock in action!"
+                            >
+                              ⏱️ 15s Timer
+                            </button>
+
+                            {slotDispatch && (
+                              <button
+                                type="button"
+                                onClick={() => handleRearmSlot(meal.key)}
+                                disabled={rearmingSlot}
+                                style={{
+                                  padding: '4px 6px',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 800,
+                                  borderRadius: '5px',
+                                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                                  background: 'rgba(168, 85, 247, 0.12)',
+                                  color: '#c084fc',
+                                  cursor: 'pointer',
+                                }}
+                                title="Clears today's dispatch lock so the automatic schedule or auto-cron can fire it again"
+                              >
+                                🔄 Re-Arm
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

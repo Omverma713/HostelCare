@@ -45,6 +45,8 @@ const {
   pingSingleDevice,
   deleteDeviceRegistryEntry,
   broadcastCustomMessAlert,
+  simulateAutoFireMessAlert,
+  rearmMessSlotForToday,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -121,6 +123,8 @@ router.get("/mess-notifications", getMessNotificationSchedule);
 router.put("/mess-notifications", sensitiveActionLimiter, updateMessNotificationSchedule);
 router.post("/mess-notifications/test", sensitiveActionLimiter, testMessNotificationBroadcast);
 router.delete("/mess-notifications/dispatches", sensitiveActionLimiter, purgeMessNotificationDispatches);
+router.post("/mess-notifications/auto-fire-simulator", sensitiveActionLimiter, simulateAutoFireMessAlert);
+router.post("/mess-notifications/rearm-slot", sensitiveActionLimiter, rearmMessSlotForToday);
 
 // Emergency / Global Broadcast Notices
 router.get("/notices", getGlobalNotices);
