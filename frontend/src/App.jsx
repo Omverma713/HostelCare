@@ -48,6 +48,77 @@ function PageFallback() {
 }
 
 /**
+ * Graceful error fallback if any lazy-loaded dashboard throws a render error
+ */
+function RouteErrorFallback() {
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '60vh',
+      padding: '24px',
+      textAlign: 'center',
+      color: 'var(--text-primary)'
+    }}>
+      <div style={{
+        background: 'rgba(239, 68, 68, 0.08)',
+        border: '1px solid rgba(239, 68, 68, 0.25)',
+        borderRadius: '16px',
+        padding: '32px 24px',
+        maxWidth: '460px',
+        width: '100%',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+      }}>
+        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⚠️</div>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px' }}>Interface Load Error</h3>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.5 }}>
+          An error occurred while loading this view. This can be resolved by refreshing or clearing cached scripts.
+        </p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              background: 'var(--primary, #3b82f6)',
+              color: '#fff',
+              border: 'none',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            🔄 Reload Page
+          </button>
+          <button
+            onClick={() => {
+              if ('caches' in window) {
+                caches.keys().then((names) => {
+                  names.forEach((name) => caches.delete(name));
+                });
+              }
+              window.location.href = '/';
+            }}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              background: 'rgba(255, 255, 255, 0.08)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            🧹 Clear Cache & Home
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Dashboard Shell Layout containing top mobile nav, 3D Canvas, and sidebar navigation drawer
  */
 function DashboardLayout() {
@@ -70,9 +141,11 @@ function DashboardLayout() {
       <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="main-content">
-        <Suspense fallback={<PageFallback />}>
-          <Outlet />
-        </Suspense>
+        <ErrorBoundary fallback={<RouteErrorFallback />}>
+          <Suspense fallback={<PageFallback />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
         {!isChatRoute && <AppFooter />}
       </main>
     </div>
