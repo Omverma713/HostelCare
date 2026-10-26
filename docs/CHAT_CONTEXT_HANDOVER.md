@@ -45,8 +45,20 @@
 4. **Live Device Radar HUD**:
    - Real-time gauge of Android hardware nodes, web push subscribers, and FCM gateway connection status.
 
+### ⚡ D. Auto-Fire Simulation & Re-Arm Engine
+1. **Real Production Pipeline Auto-Fire (`⚡ Auto-Fire Now`)**:
+   - Executes the actual automated cron pipeline for that specific meal slot instantly.
+2. **Delayed Auto-Fire Testing Timer (`⏱️ 15s Timer`)**:
+   - Arms a 15-second background countdown on the server.
+   - Allows admin to click the button, lock their Android phone screen, put it on the desk, and witness the heads-up notification wake up their phone screen automatically.
+3. **1-Click Per-Meal & Universal Re-Arm (`🔄 Re-Arm`)**:
+   - Clears the idempotency lock (`${dateStr}_${slotKey}_*`) for today so that auto-cron can fire again naturally on schedule.
+4. **Live Meal Status Badges**:
+   - Visual indicators on all 4 meals: `✅ DISPATCHED TODAY (HH:MM)` vs `⏳ PENDING / UPCOMING`.
+
 ---
 
 ## 🧪 3. Verification & Validation
-- **Frontend Vite Build:** `npm run build` -> ✅ **0 errors (Built in 856ms)**
+- **Frontend Vite Build:** `npm run build` -> ✅ **0 errors (Built in 1.05s)**
 - **Backend Node Syntax Check:** -> ✅ **BACKEND_ALL_SYNTAX_PERFECT**
+- **Git Commit:** `069546b` pushed to `main` (auto-deploys to AWS EC2 and builds Android APK).
