@@ -44,8 +44,22 @@ export default function SuperAdminPortal() {
   const [userFilters, setUserFilters] = useState({ search: '', role: 'all', status: 'all', hostel: 'all' });
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
-  const [editUserData, setEditUserData] = useState({ name: '', email: '', role: '', hostel: '', roomNumber: '' });
+  const [editUserData, setEditUserData] = useState({ name: '', email: '', registrationNumber: '', role: '', hostel: '', roomNumber: '', newPassword: '' });
   const [resetPasswordModal, setResetPasswordModal] = useState({ open: false, userId: null, newPassword: '', adminPassword: '' });
+  const [lockedUsersCount, setLockedUsersCount] = useState(0);
+  const [flushingUser, setFlushingUser] = useState(false);
+
+  // Super Admin Self-Profile State
+  const [isMyProfileModalOpen, setIsMyProfileModalOpen] = useState(false);
+  const [myProfileData, setMyProfileData] = useState({
+    name: '',
+    email: '',
+    registrationNumber: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [loadingMyProfile, setLoadingMyProfile] = useState(false);
+  const [savingMyProfile, setSavingMyProfile] = useState(false);
 
   // User Provisioning State (Immediate vs Pending Activation)
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
@@ -311,6 +325,9 @@ export default function SuperAdminPortal() {
       if (res.success) {
         setUsers(res.users);
         setUserPagination(res.pagination);
+        if (res.lockedCount !== undefined) {
+          setLockedUsersCount(res.lockedCount);
+        }
       }
     } catch (err) {
       triggerToast('error', err.message || 'Failed to load users', 'User Directory');
@@ -1647,19 +1664,24 @@ export default function SuperAdminPortal() {
     setEditUserData({
       name: user.name || '',
       email: user.email || '',
+      registrationNumber: user.registrationNumber || '',
       role: user.role || 'student',
       hostel: user.hostel || '',
       roomNumber: user.roomNumber || '',
+      newPassword: '',
       maxDevices: user.maxDevices !== null && user.maxDevices !== undefined ? user.maxDevices : '',
     });
     try {
       const res = await adminApi.getUserDetails(user._id);
       if (res.success) {
         setUserDetails(res);
-        if (res.user && res.user.maxDevices !== undefined) {
+        if (res.user) {
           setEditUserData((prev) => ({
             ...prev,
-            maxDevices: res.user.maxDevices !== null ? res.user.maxDevices : '',
+            registrationNumber: res.user.registrationNumber || prev.registrationNumber,
+            hostel: res.user.hostel || prev.hostel,
+            roomNumber: res.user.roomNumber || prev.roomNumber,
+            maxDevices: res.user.maxDevices !== null && res.user.maxDevices !== undefined ? res.user.maxDevices : '',
           }));
         }
       }
@@ -1681,6 +1703,93 @@ export default function SuperAdminPortal() {
       }
     } catch (err) {
       triggerToast('error', err.message, 'Update Failed');
+    }
+  };
+
+  // Administrative Flush User Account (Revoke all sessions, wipe device vault, reset lockout counters)
+  const handleFlushUser = async (userId) => {
+    if (
+      !window.confirm(
+        "⚠️ ADMINISTRATIVE FLUSH USER ACCOUNT:\n\nThis will immediately:\n1. Terminate & revoke ALL active sessions on all devices\n2. Wipe hardware device registry & push tokens\n3. Clear failed login attempts counter to 0\n4. Remove login lockouts and restore status to 'active'\n\nAre you sure you want to completely flush this account?"
+      )
+    ) {
+      return;
+    }
+    try {
+      setFlushingUser(true);
+      const res = await adminApi.flushUser(userId);
+      if (res.success) {
+        triggerToast('success', res.message || 'Account flushed and refreshed', 'Account Flushed');
+        loadUsers(userPagination.page);
+        if (selectedUser && selectedUser._id === userId) {
+          handleSelectUser({
+            ...selectedUser,
+            failedLoginAttempts: 0,
+            lockUntil: null,
+            isLocked: false,
+            accountStatus: 'active',
+          });
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to flush account', 'Flush Failed');
+    } finally {
+      setFlushingUser(false);
+    }
+  };
+
+  // Super Admin Self-Profile Modals & Handlers
+  const openMyProfileModal = async () => {
+    setIsMyProfileModalOpen(true);
+    setLoadingMyProfile(true);
+    try {
+      const res = await adminApi.getSuperAdminProfile();
+      if (res.success && res.admin) {
+        setMyProfileData({
+          name: res.admin.name || '',
+          email: res.admin.email || '',
+          registrationNumber: res.admin.registrationNumber || '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to fetch admin profile', 'Admin Profile');
+    } finally {
+      setLoadingMyProfile(false);
+    }
+  };
+
+  const handleSaveMyProfile = async (e) => {
+    e.preventDefault();
+    if (myProfileData.newPassword && myProfileData.newPassword.length < 6) {
+      triggerToast('error', 'New password must be at least 6 characters', 'Validation Error');
+      return;
+    }
+    if (myProfileData.newPassword && myProfileData.newPassword !== myProfileData.confirmPassword) {
+      triggerToast('error', 'New passwords do not match', 'Validation Error');
+      return;
+    }
+
+    try {
+      setSavingMyProfile(true);
+      const payload = {
+        name: myProfileData.name,
+        email: myProfileData.email,
+        registrationNumber: myProfileData.registrationNumber,
+      };
+      if (myProfileData.newPassword) {
+        payload.newPassword = myProfileData.newPassword;
+      }
+      const res = await adminApi.updateSuperAdminProfile(payload);
+      if (res.success) {
+        triggerToast('success', res.message || 'Super Admin profile updated successfully!', 'Profile Saved');
+        setIsMyProfileModalOpen(false);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update profile', 'Admin Profile');
+    } finally {
+      setSavingMyProfile(false);
     }
   };
 
@@ -2076,30 +2185,56 @@ export default function SuperAdminPortal() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setCreateUserModalOpen(true)}
-            id="sa-header-create-user-btn"
-            style={{
-              padding: '0.65rem 1.25rem',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-              color: '#ffffff',
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-              flexShrink: 0,
-              marginLeft: 'auto',
-            }}
-          >
-            <span>➕</span>
-            <span>Create User</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={openMyProfileModal}
+              id="sa-header-my-profile-btn"
+              style={{
+                padding: '0.65rem 1.15rem',
+                borderRadius: '10px',
+                border: '1px solid rgba(139, 92, 246, 0.45)',
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.18) 0%, rgba(99, 102, 241, 0.25) 100%)',
+                color: '#c4b5fd',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
+                flexShrink: 0,
+              }}
+              title="Edit your Super Admin name, email, registration number, and master password"
+            >
+              <span>👤</span>
+              <span>My Profile</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCreateUserModalOpen(true)}
+              id="sa-header-create-user-btn"
+              style={{
+                padding: '0.65rem 1.25rem',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                color: '#ffffff',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                flexShrink: 0,
+              }}
+            >
+              <span>➕</span>
+              <span>Create User</span>
+            </button>
+          </div>
         </div>
 
         {/* Tab Switcher Pills */}
@@ -2271,6 +2406,98 @@ export default function SuperAdminPortal() {
               boxShadow: 'var(--shadow-sm)',
             }}
           >
+            {/* Locked Accounts Radar Pill / Banner */}
+            {lockedUsersCount > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.85rem 1.15rem',
+                  marginBottom: '1.25rem',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.16) 0%, rgba(185, 28, 28, 0.25) 100%)',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
+                  boxShadow: '0 4px 20px rgba(239, 68, 68, 0.2)',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '1.4rem', filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.6))' }}>🔒</span>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 750, color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>Security Radar: {lockedUsersCount} Account{lockedUsersCount > 1 ? 's' : ''} Locked Out</span>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          background: 'rgba(239, 68, 68, 0.3)',
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        POLICY ALERT
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.76rem', color: 'rgba(252, 165, 165, 0.85)', marginTop: '2px' }}>
+                      Users reached maximum failed login attempts or were administratively locked. 1-click unlock available.
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserFilters((prev) => ({ ...prev, status: 'locked' }));
+                      loadUsers(1);
+                    }}
+                    style={{
+                      padding: '0.45rem 1rem',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(239, 68, 68, 0.6)',
+                      background: 'rgba(239, 68, 68, 0.35)',
+                      color: '#ffffff',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+                    }}
+                  >
+                    <span>🎯</span>
+                    <span>Filter Locked ({lockedUsersCount})</span>
+                  </button>
+                  {userFilters.status === 'locked' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserFilters((prev) => ({ ...prev, status: 'all' }));
+                        loadUsers(1);
+                      }}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.8rem',
+                        fontWeight: 650,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Show All
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Filters Row */}
             <div className="sa-filters-bar">
               <input
@@ -2993,23 +3220,46 @@ export default function SuperAdminPortal() {
 
               {/* Edit Profile Form */}
               <form onSubmit={handleSaveUserProfile} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Full Name</label>
-                  <input
-                    type="text"
-                    value={editUserData.name}
-                    onChange={(e) => setEditUserData((prev) => ({ ...prev, name: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.65rem',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      boxSizing: 'border-box',
-                    }}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-secondary)' }}>Registration Number</label>
+                    <input
+                      type="text"
+                      value={editUserData.registrationNumber || ''}
+                      onChange={(e) => setEditUserData((prev) => ({ ...prev, registrationNumber: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. 21BCE1000"
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.65rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 650, color: 'var(--text-secondary)' }}>Full Name</label>
+                    <input
+                      type="text"
+                      value={editUserData.name}
+                      onChange={(e) => setEditUserData((prev) => ({ ...prev, name: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.65rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -3076,23 +3326,45 @@ export default function SuperAdminPortal() {
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Room #</label>
-                  <input
-                    type="text"
-                    value={editUserData.roomNumber}
-                    onChange={(e) => setEditUserData((prev) => ({ ...prev, roomNumber: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.65rem',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      boxSizing: 'border-box',
-                    }}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Room #</label>
+                    <input
+                      type="text"
+                      value={editUserData.roomNumber}
+                      onChange={(e) => setEditUserData((prev) => ({ ...prev, roomNumber: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.65rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Direct New Password</label>
+                    <input
+                      type="password"
+                      placeholder="Leave blank to keep"
+                      value={editUserData.newPassword || ''}
+                      onChange={(e) => setEditUserData((prev) => ({ ...prev, newPassword: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.65rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Individual Device Limit Field */}
@@ -3392,6 +3664,31 @@ export default function SuperAdminPortal() {
                   }}
                 >
                   🔑 Reset User Password
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleFlushUser(selectedUser._id)}
+                  disabled={flushingUser}
+                  style={{
+                    padding: '0.6rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(239, 68, 68, 0.45)',
+                    background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.16) 0%, rgba(220, 38, 38, 0.25) 100%)',
+                    color: '#f87171',
+                    fontWeight: 750,
+                    fontSize: '0.82rem',
+                    cursor: flushingUser ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 10px rgba(239, 68, 68, 0.18)',
+                  }}
+                  title="Revoke all active sessions, clear push tokens, prune hardware device vault, and clear lockouts"
+                >
+                  <span>🔥</span>
+                  <span>{flushingUser ? 'Flushing Account...' : 'Flush Account (Purge Sessions & Device Vault)'}</span>
                 </button>
 
                 <button
@@ -10058,6 +10355,219 @@ export default function SuperAdminPortal() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Super Admin Self-Profile Editor Modal */}
+      {isMyProfileModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsMyProfileModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid rgba(139, 92, 246, 0.4)',
+              borderRadius: '16px',
+              maxWidth: '520px',
+              width: '100%',
+              padding: '1.75rem',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.2)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.4rem' }}>👤</span>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 750, color: '#c4b5fd' }}>
+                    Super Admin Profile & Credentials
+                  </h2>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Manage your personal account details, registration number, and master credentials.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMyProfileModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                  padding: '4px',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {loadingMyProfile ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                Loading admin credentials...
+              </div>
+            ) : (
+              <form onSubmit={handleSaveMyProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 650, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={myProfileData.name}
+                    onChange={(e) => setMyProfileData((prev) => ({ ...prev, name: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.9rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 650, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Registration Number
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={myProfileData.registrationNumber}
+                      onChange={(e) => setMyProfileData((prev) => ({ ...prev, registrationNumber: e.target.value.toUpperCase() }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 650, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={myProfileData.email}
+                      onChange={(e) => setMyProfileData((prev) => ({ ...prev, email: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.9rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ padding: '0.85rem', borderRadius: '10px', background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.25)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#c4b5fd', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🔑</span> Change Password (Optional)
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <input
+                      type="password"
+                      placeholder="New Password (min 6 characters)"
+                      value={myProfileData.newPassword}
+                      onChange={(e) => setMyProfileData((prev) => ({ ...prev, newPassword: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.55rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <input
+                      type="password"
+                      placeholder="Confirm New Password"
+                      value={myProfileData.confirmPassword}
+                      onChange={(e) => setMyProfileData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '0.55rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsMyProfileModalOpen(false)}
+                    style={{
+                      padding: '0.6rem 1rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingMyProfile}
+                    style={{
+                      padding: '0.6rem 1.4rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+                      color: '#ffffff',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: savingMyProfile ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)',
+                    }}
+                  >
+                    {savingMyProfile ? 'Saving...' : '💾 Save Changes'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

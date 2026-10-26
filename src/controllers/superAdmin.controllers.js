@@ -129,7 +129,11 @@ const getUsersDirectory = async (req, res) => {
 
     if (status && status !== "all") {
       if (status === "locked") {
-        query.lockUntil = { $gt: new Date() };
+        query.$or = [
+          { lockUntil: { $gt: new Date() } },
+          { accountStatus: "locked" },
+          { failedLoginAttempts: { $gte: 5 } },
+        ];
       } else {
         query.accountStatus = status;
       }
@@ -139,7 +143,7 @@ const getUsersDirectory = async (req, res) => {
       query.hostel = hostel;
     }
 
-    const [rawUsers, total, config] = await Promise.all([
+    const [rawUsers, total, totalLockedCount, config] = await Promise.all([
       User.find(query)
         .select("-password") // STRICT: NEVER expose password hashes
         .sort({ createdAt: -1 })
@@ -147,6 +151,13 @@ const getUsersDirectory = async (req, res) => {
         .limit(limit)
         .lean(),
       User.countDocuments(query),
+      User.countDocuments({
+        $or: [
+          { lockUntil: { $gt: new Date() } },
+          { accountStatus: "locked" },
+          { failedLoginAttempts: { $gte: 5 } },
+        ],
+      }),
       SystemConfig.getEffectiveConfig(),
     ]);
 
@@ -164,10 +175,14 @@ const getUsersDirectory = async (req, res) => {
         typeof u.maxDevices === "number" && u.maxDevices > 0
           ? u.maxDevices
           : config.maxConcurrentSessions;
-      const isLocked = Boolean(u.lockUntil && new Date(u.lockUntil) > new Date());
-      const lockMinutesRemaining = isLocked
+      const isLocked = Boolean(
+        (u.lockUntil && new Date(u.lockUntil) > new Date()) ||
+        u.accountStatus === "locked" ||
+        (u.failedLoginAttempts || 0) >= (config.failedLoginThreshold || 5)
+      );
+      const lockMinutesRemaining = u.lockUntil && new Date(u.lockUntil) > new Date()
         ? Math.max(1, Math.ceil((new Date(u.lockUntil) - new Date()) / (60 * 1000)))
-        : 0;
+        : isLocked ? (config.lockoutDurationMinutes || 15) : 0;
       return {
         ...u,
         isLocked,
@@ -180,6 +195,7 @@ const getUsersDirectory = async (req, res) => {
     return res.status(200).json({
       success: true,
       users,
+      lockedCount: totalLockedCount,
       pagination: {
         page,
         limit,
@@ -265,7 +281,18 @@ const getUserDetails = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { name, email, role, hostel, roomNumber, maxDevices, deviceLimit } = req.body;
+    const {
+      name,
+      email,
+      role,
+      hostel,
+      roomNumber,
+      registrationNumber,
+      password,
+      accountStatus,
+      maxDevices,
+      deviceLimit,
+    } = req.body;
 
     const user = await User.findById(userId);
 
@@ -282,6 +309,50 @@ const updateUserProfile = async (req, res) => {
     if (name && name.trim()) {
       changes.name = { from: user.name, to: name.trim() };
       user.name = name.trim();
+    }
+
+    if (registrationNumber && registrationNumber.trim()) {
+      const cleanReg = registrationNumber.trim().toUpperCase();
+      if (cleanReg !== user.registrationNumber) {
+        const exists = await User.findOne({
+          registrationNumber: cleanReg,
+          _id: { $ne: user._id },
+        });
+        if (exists) {
+          return res.status(409).json({
+            success: false,
+            message: `Registration number '${cleanReg}' is already assigned to another user (${exists.name}).`,
+          });
+        }
+        changes.registrationNumber = { from: user.registrationNumber, to: cleanReg };
+        user.registrationNumber = cleanReg;
+
+        // Cascade update to sessions
+        await Session.updateMany(
+          { userId: user._id },
+          { $set: { registrationNumber: cleanReg } }
+        ).catch(() => {});
+      }
+    }
+
+    if (password && password.trim().length >= 6) {
+      const Argon = require("../utils/argon");
+      user.password = await Argon.hash(password.trim());
+      user.isActivated = true;
+      user.failedLoginAttempts = 0;
+      user.lockUntil = null;
+      changes.password = "updated_and_rehashed";
+    }
+
+    if (accountStatus && ["active", "locked", "deactivated", "suspended"].includes(accountStatus)) {
+      if (user.accountStatus !== accountStatus) {
+        changes.accountStatus = { from: user.accountStatus, to: accountStatus };
+        user.accountStatus = accountStatus;
+        if (accountStatus === "active") {
+          user.failedLoginAttempts = 0;
+          user.lockUntil = null;
+        }
+      }
     }
 
     if (email !== undefined) {
@@ -325,6 +396,23 @@ const updateUserProfile = async (req, res) => {
     }
 
     await user.save();
+
+    // Cascade student details to permanent DeviceRegistry
+    try {
+      const DeviceRegistry = require("../models/deviceRegistry.model");
+      await DeviceRegistry.updateMany(
+        { userId: user._id },
+        {
+          $set: {
+            studentName: user.name,
+            registrationNumber: user.registrationNumber,
+            hostelBlock: user.hostel,
+            roomNumber: user.roomNumber,
+            userRole: user.role,
+          },
+        }
+      );
+    } catch (_) {}
 
     await recordAudit({
       req,
@@ -916,6 +1004,177 @@ const adjustUserLockDuration = async (req, res) => {
       message: "Failed to adjust user lock duration",
       error: error.message,
     });
+  }
+};
+
+// ─── FLUSH USER ACCOUNT ──────────────────────────────────────────────────────
+// POST /api/v1/superadmin/users/:userId/flush
+const flushUserAccount = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const previousAttempts = user.failedLoginAttempts || 0;
+    const wasLocked = Boolean(user.lockUntil && new Date(user.lockUntil) > new Date());
+
+    // 1. Reset user lockout and status
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    user.accountStatus = "active";
+    user.sessionsRevokedAt = new Date();
+    await user.save();
+
+    // 2. Revoke all active sessions
+    const sessionResult = await Session.updateMany(
+      { userId: user._id, status: "active" },
+      {
+        $set: {
+          status: "revoked",
+          revokedAt: new Date(),
+          revokedBy: `admin:${req.user.registrationNumber}:flush`,
+          pushToken: null,
+          pushProvider: "none",
+        },
+      }
+    );
+
+    // 3. Clear/prune hardware device bindings
+    let prunedCount = 0;
+    try {
+      const DeviceRegistry = require("../models/deviceRegistry.model");
+      const deviceResult = await DeviceRegistry.deleteMany({ userId: user._id });
+      prunedCount = deviceResult.deletedCount || 0;
+    } catch (_) {}
+
+    await recordAudit({
+      req,
+      action: "ACCOUNT_FLUSHED",
+      targetType: "USER",
+      targetId: user._id,
+      targetIdentifier: user.registrationNumber,
+      summary: `Administrative flush executed for ${user.registrationNumber}: revoked ${sessionResult.modifiedCount} session(s), pruned ${prunedCount} device(s), cleared ${previousAttempts} failed attempt(s).`,
+      details: {
+        revokedSessions: sessionResult.modifiedCount,
+        prunedDevices: prunedCount,
+        clearedAttempts: previousAttempts,
+        wasLocked,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Account for ${user.name} (${user.registrationNumber}) has been completely flushed! All sessions revoked (${sessionResult.modifiedCount}), hardware devices pruned (${prunedCount}), and login lockouts reset.`,
+      user: {
+        _id: user._id,
+        name: user.name,
+        registrationNumber: user.registrationNumber,
+        failedLoginAttempts: 0,
+        lockUntil: null,
+        accountStatus: "active",
+        isLocked: false,
+      },
+      revokedSessions: sessionResult.modifiedCount,
+      prunedDevices: prunedCount,
+    });
+  } catch (error) {
+    console.error("flushUserAccount error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to flush user account",
+      error: error.message,
+    });
+  }
+};
+
+// ─── SUPER ADMIN SELF-PROFILE (ME) ──────────────────────────────────────────
+// GET /api/v1/superadmin/me
+const getSuperAdminSelfProfile = async (req, res) => {
+  try {
+    const admin = await User.findById(req.user._id).select("-password").lean();
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin profile not found" });
+    }
+    return res.status(200).json({ success: true, admin });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch admin profile", error: error.message });
+  }
+};
+
+// PATCH /api/v1/superadmin/me
+const updateSuperAdminSelfProfile = async (req, res) => {
+  try {
+    const { name, email, registrationNumber, newPassword, currentPassword } = req.body;
+    const admin = await User.findById(req.user._id);
+
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin account not found" });
+    }
+
+    const Argon = require("../utils/argon");
+
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        return res.status(400).json({ success: false, message: "New password must be at least 6 characters long." });
+      }
+      if (currentPassword) {
+        const matches = await Argon.verify(admin.password, currentPassword);
+        if (!matches) {
+          return res.status(400).json({ success: false, message: "Current password does not match." });
+        }
+      }
+      admin.password = await Argon.hash(newPassword);
+    }
+
+    if (name && name.trim()) {
+      admin.name = name.trim();
+    }
+
+    if (email !== undefined) {
+      admin.email = (email || "").trim();
+    }
+
+    if (registrationNumber && registrationNumber.trim()) {
+      const cleanReg = registrationNumber.trim().toUpperCase();
+      if (cleanReg !== admin.registrationNumber) {
+        const exists = await User.findOne({ registrationNumber: cleanReg, _id: { $ne: admin._id } });
+        if (exists) {
+          return res.status(409).json({ success: false, message: `Registration number '${cleanReg}' is already in use.` });
+        }
+        admin.registrationNumber = cleanReg;
+        await Session.updateMany({ userId: admin._id }, { $set: { registrationNumber: cleanReg } }).catch(() => {});
+      }
+    }
+
+    await admin.save();
+
+    await recordAudit({
+      req,
+      action: "SUPERADMIN_SELF_PROFILE_UPDATED",
+      targetType: "USER",
+      targetId: admin._id,
+      targetIdentifier: admin.registrationNumber,
+      summary: `Super Admin updated their own profile (${admin.name}, ${admin.registrationNumber})`,
+      details: { name: admin.name, email: admin.email, registrationNumber: admin.registrationNumber, passwordUpdated: Boolean(newPassword) },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Your Super Admin profile has been updated successfully!",
+      admin: {
+        _id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        registrationNumber: admin.registrationNumber,
+        role: admin.role,
+      },
+    });
+  } catch (error) {
+    console.error("updateSuperAdminSelfProfile error:", error);
+    return res.status(500).json({ success: false, message: "Failed to update admin profile", error: error.message });
   }
 };
 
@@ -3187,6 +3446,9 @@ module.exports = {
   broadcastCustomMessAlert,
   simulateAutoFireMessAlert,
   rearmMessSlotForToday,
+  flushUserAccount,
+  getSuperAdminSelfProfile,
+  updateSuperAdminSelfProfile,
 };
 
 

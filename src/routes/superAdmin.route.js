@@ -47,6 +47,9 @@ const {
   broadcastCustomMessAlert,
   simulateAutoFireMessAlert,
   rearmMessSlotForToday,
+  flushUserAccount,
+  getSuperAdminSelfProfile,
+  updateSuperAdminSelfProfile,
 } = require("../controllers/superAdmin.controllers");
 
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
@@ -81,6 +84,10 @@ router.use(superAdminLimiter);
 // System Overview
 router.get("/overview", getSystemOverview);
 
+// Super Admin Self-Profile Management
+router.get("/me", getSuperAdminSelfProfile);
+router.patch("/me", sensitiveActionLimiter, updateSuperAdminSelfProfile);
+
 // User Management
 router.get("/users", getUsersDirectory);
 router.post("/users", sensitiveActionLimiter, provisionUser);
@@ -94,6 +101,7 @@ router.post("/users/:userId/impersonate", sensitiveActionLimiter, impersonateUse
 router.post("/users/:userId/unlock", sensitiveActionLimiter, unlockUserAccount);
 router.post("/users/:userId/lock", sensitiveActionLimiter, lockUserAccount);
 router.patch("/users/:userId/lock-duration", sensitiveActionLimiter, adjustUserLockDuration);
+router.post("/users/:userId/flush", sensitiveActionLimiter, flushUserAccount);
 
 // Session & Device Management
 router.get("/sessions", getSessionsDirectory);

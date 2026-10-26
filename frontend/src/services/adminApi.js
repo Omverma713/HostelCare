@@ -113,6 +113,24 @@ export const adminApi = {
     });
   },
 
+  flushUser(userId) {
+    return adminRequest(`/superadmin/users/${userId}/flush`, {
+      method: 'POST',
+    });
+  },
+
+  // Super Admin Self Profile
+  getSuperAdminProfile() {
+    return adminRequest('/superadmin/me');
+  },
+
+  updateSuperAdminProfile(profileData) {
+    return adminRequest('/superadmin/me', {
+      method: 'PATCH',
+      body: JSON.stringify(profileData),
+    });
+  },
+
   // Sessions & Devices
   getSessions({ page = 1, limit = 20, status = '', deviceType = '', search = '' } = {}) {
     const params = new URLSearchParams({ page, limit });

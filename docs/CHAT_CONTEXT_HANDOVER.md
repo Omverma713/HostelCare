@@ -56,8 +56,29 @@
 4. **Live Meal Status Badges**:
    - Visual indicators on all 4 meals: `✅ DISPATCHED TODAY (HH:MM)` vs `⏳ PENDING / UPCOMING`.
 
-### 📅 E. Day Mode & Active Timetable Switcher (Latest Addition)
+### 📅 E. Day Mode & Active Timetable Switcher
 1. **Separation of Timetables**:
+   - Working Days Timetable vs Sunday & Holidays Timetable.
+2. **Day Mode Override Selector**:
+   - `Auto (Calendar-Based)`, `Force Working Day Schedule`, `Force Sunday Schedule`, `Holiday Schedule`.
+
+### 🛡️ F. Locked Accounts Radar, Account Flush & Profile Controls (Latest Addition)
+1. **Locked Accounts Radar & Counter**:
+   - Real-time detection of accounts locked due to repeated incorrect password attempts (`failedLoginAttempts >= 5`, `lockUntil > now`, `accountStatus: 'locked'`).
+   - Glowing Security Radar banner in User Directory displaying live locked count with 1-click filter button (`Filter Locked`).
+   - 1-click `🔓 Unlock` and `🔒 Lock` controls directly on table rows, mobile cards, and inside the user drawer.
+2. **Administrative Account Flush Engine (`POST /api/v1/superadmin/users/:userId/flush`)**:
+   - 1-click account flush button in User Details drawer:
+     - Instantly terminates all active sessions across all devices.
+     - Prunes hardware push tokens and device registry vaults.
+     - Resets `failedLoginAttempts` counter to `0` and clears `lockUntil`.
+     - Restores account status to `active`.
+3. **User Profile Deep Edit**:
+   - Super admin can edit any user's Full Name, Hostel Name, Room Number, and **Registration Number** (`registrationNumber` verified for uniqueness with cascade sync to `Session` and `DeviceRegistry`).
+   - Direct password change field directly inside the edit profile form.
+4. **Super Admin Self-Profile & Master Credentials Editor (`GET/PATCH /api/v1/superadmin/me`)**:
+   - "👤 My Profile" modal accessible directly from the portal header.
+   - Allows Super Admin to view and update their own Full Name, Email Address, Registration Number, and Master Password.
    - Working Days Timings: Breakfast 07:00 AM, Lunch 12:30 PM, Snacks 05:45 PM, Dinner 08:30 PM.
    - Sunday & Holiday Timings: Breakfast 08:00 AM (1 hr later), Lunch 12:30 PM, Snacks 05:30 PM (15m earlier), Dinner 08:30 PM.
 2. **1-Click Day Mode Override Deck**:
