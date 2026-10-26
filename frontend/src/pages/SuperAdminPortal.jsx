@@ -140,6 +140,7 @@ export default function SuperAdminPortal() {
   const [messAlertConfig, setMessAlertConfig] = useState({
     enabled: true,
     alertCountPerMeal: 1,
+    dayModeOverride: 'auto',
     frequencies: {
       breakfast: 1,
       lunch: 1,
@@ -159,6 +160,9 @@ export default function SuperAdminPortal() {
       dinner:    { startHour: 20, startMinute: 30, timing: '08:30 PM – 10:00 PM' },
     },
   });
+
+  const [dayModeInfo, setDayModeInfo] = useState(null);
+  const [togglingDayMode, setTogglingDayMode] = useState(false);
 
   // Food Menu Editor Modal State
   const [isFoodEditorModalOpen, setIsFoodEditorModalOpen] = useState(false);
@@ -1170,6 +1174,9 @@ export default function SuperAdminPortal() {
           },
         });
         setTodayDispatches(res.todayDispatches || []);
+        if (res.dayModeInfo) {
+          setDayModeInfo(res.dayModeInfo);
+        }
       }
     } catch (err) {
       triggerToast('error', err.message || 'Failed to load mess notification schedule', 'Mess Alerts');
@@ -1575,6 +1582,42 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to re-arm slot', 'Error');
     } finally {
       setRearmingSlot(false);
+    }
+  };
+
+  const handleToggleDayMode = async (mode) => {
+    try {
+      setTogglingDayMode(true);
+      const nextConfig = {
+        ...messAlertConfig,
+        dayModeOverride: mode,
+      };
+      setMessAlertConfig(nextConfig);
+      const res = await adminApi.updateMessNotificationSchedule({
+        dayModeOverride: mode,
+      });
+      if (res.success) {
+        const modeLabel =
+          mode === 'working'
+            ? 'Working Days'
+            : mode === 'sunday'
+            ? 'Sunday Timetable'
+            : mode === 'holiday'
+            ? 'Holiday Timetable'
+            : 'Auto (Follow Calendar)';
+        triggerToast(
+          'success',
+          `Schedule mode set to ${mode.toUpperCase()}! Active timetable: ${modeLabel}`,
+          'Day Mode Updated 📅'
+        );
+        await loadMessNotifications();
+      } else {
+        triggerToast('warning', res.message || 'Failed to update day mode', 'Day Mode');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update day mode', 'Error');
+    } finally {
+      setTogglingDayMode(false);
     }
   };
 
@@ -7984,6 +8027,95 @@ export default function SuperAdminPortal() {
                     >
                       {savingMessAlerts ? 'Saving...' : '💾 Save Frequencies'}
                     </button>
+                  </div>
+                </div>
+
+                {/* Cyberpunk Day Mode Selector (Working Day vs Sunday vs Holiday Override) */}
+                <div
+                  style={{
+                    padding: '0.85rem 1rem',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, rgba(16, 28, 61, 0.95) 0%, rgba(20, 35, 75, 0.95) 100%)',
+                    border: '1px solid rgba(0, 243, 255, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#00f3ff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>📅 Day Mode & Active Timetable Selector</span>
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          background: dayModeInfo?.isHolidaySchedule ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                          color: dayModeInfo?.isHolidaySchedule ? '#f59e0b' : '#10b981',
+                          border: dayModeInfo?.isHolidaySchedule ? '1px solid #f59e0b' : '1px solid #10b981',
+                        }}
+                      >
+                        {dayModeInfo?.isHolidaySchedule ? '🏖️ Sunday & Holiday Timings Active' : '💼 Working Days Timings Active'}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                      Today: <strong style={{ color: 'var(--text-primary)' }}>{dayModeInfo?.weekday ? dayModeInfo.weekday.toUpperCase() : 'TODAY'}</strong>
+                      {dayModeInfo?.dayModeOverride && dayModeInfo.dayModeOverride !== 'auto' && (
+                        <span style={{ color: '#f43f5e', fontWeight: 750, marginLeft: '6px' }}>
+                          (⚡ MANUAL OVERRIDE: {dayModeInfo.dayModeOverride.toUpperCase()})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '8px' }}>
+                    {[
+                      { key: 'auto', label: '🤖 Auto (Calendar)', desc: 'Sunday = Sunday/Holiday, Mon-Sat = Working' },
+                      { key: 'working', label: '💼 Working Day', desc: 'Force Working Schedule (7:00 AM breakfast, 5:45 PM snacks)' },
+                      { key: 'sunday', label: '🏖️ Sunday Timings', desc: 'Force Sunday Schedule (8:00 AM breakfast, 5:30 PM snacks)' },
+                      { key: 'holiday', label: '🎉 Holiday Override', desc: 'Force Holiday Mode (Festival/Institute Holiday)' },
+                    ].map((mode) => {
+                      const isActive = (messAlertConfig.dayModeOverride || 'auto') === mode.key;
+                      return (
+                        <button
+                          key={mode.key}
+                          type="button"
+                          onClick={() => handleToggleDayMode(mode.key)}
+                          disabled={togglingDayMode}
+                          style={{
+                            padding: '0.55rem 0.75rem',
+                            borderRadius: '8px',
+                            border: isActive ? '1px solid #00f3ff' : '1px solid rgba(255, 255, 255, 0.1)',
+                            background: isActive
+                              ? 'linear-gradient(135deg, rgba(0, 243, 255, 0.22) 0%, rgba(67, 97, 238, 0.25) 100%)'
+                              : 'rgba(255, 255, 255, 0.03)',
+                            color: isActive ? '#00f3ff' : 'var(--text-primary)',
+                            fontWeight: isActive ? 800 : 600,
+                            fontSize: '0.76rem',
+                            cursor: togglingDayMode ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            gap: '3px',
+                            transition: 'all 0.15s ease',
+                            textAlign: 'left',
+                          }}
+                          title={mode.desc}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <span>{mode.label}</span>
+                            {isActive && <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 800 }}>● ACTIVE</span>}
+                          </div>
+                          <span style={{ fontSize: '0.66rem', color: isActive ? 'rgba(0, 243, 255, 0.85)' : 'var(--text-muted)' }}>
+                            {mode.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

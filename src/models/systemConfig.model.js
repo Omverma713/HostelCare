@@ -253,6 +253,11 @@ const systemConfigSchema = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
+      dayModeOverride: {
+        type: String,
+        enum: ["auto", "working", "sunday", "holiday"],
+        default: "auto",
+      },
       mealSwitches: {
         breakfast: { type: Boolean, default: true },
         lunch: { type: Boolean, default: true },

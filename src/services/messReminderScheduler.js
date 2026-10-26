@@ -65,6 +65,7 @@ async function getEffectiveStartTimings() {
         return {
           enabled: mc.enabled !== false,
           vacationMode: mc.vacationMode === true,
+          dayModeOverride: mc.dayModeOverride || "auto",
           alertCountPerMeal: defaultAlertCount,
           mealSwitches: mc.mealSwitches || { breakfast: true, lunch: true, snacks: true, dinner: true },
           leadTimes: mc.leadTimes || { breakfast: 0, lunch: 0, snacks: 0, dinner: 0 },
@@ -321,7 +322,18 @@ async function checkAndTriggerMealAlerts() {
   }
 
   const kt = getKolkataTime();
-  const timings = kt.isSunday
+  const dayMode = effective.dayModeOverride || "auto";
+  let isHolidaySchedule = false;
+
+  if (dayMode === "working") {
+    isHolidaySchedule = false;
+  } else if (dayMode === "sunday" || dayMode === "holiday") {
+    isHolidaySchedule = true;
+  } else {
+    isHolidaySchedule = kt.isSunday;
+  }
+
+  const timings = isHolidaySchedule
     ? effective.sundayAndHolidays
     : effective.working;
 

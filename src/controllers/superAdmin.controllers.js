@@ -2357,12 +2357,27 @@ async function getMessNotificationSchedule(req, res) {
       .limit(20)
       .lean();
 
+    const dayMode = effective.dayModeOverride || "auto";
+    const isHolidaySchedule =
+      dayMode === "working"
+        ? false
+        : dayMode === "sunday" || dayMode === "holiday"
+        ? true
+        : timeInfo.isSunday;
+
     return res.status(200).json({
       success: true,
       config: config.messNotificationConfig,
       effectiveTimings: effective,
       serverTime: timeInfo,
       activePushSessionsCount: legacySessionsCount,
+      dayModeInfo: {
+        weekday: timeInfo.weekday,
+        isSunday: timeInfo.isSunday,
+        dayModeOverride: dayMode,
+        isHolidaySchedule,
+        activeTimetableName: isHolidaySchedule ? "Sunday & Holidays" : "Working Days",
+      },
       radar: {
         androidHardwareCount,
         webPushCount,
@@ -2507,6 +2522,13 @@ async function updateMessNotificationSchedule(req, res) {
 
     if (req.body.vacationMode !== undefined) {
       config.messNotificationConfig.vacationMode = Boolean(req.body.vacationMode);
+    }
+
+    if (req.body.dayModeOverride !== undefined) {
+      const validDayModes = ["auto", "working", "sunday", "holiday"];
+      if (validDayModes.includes(req.body.dayModeOverride)) {
+        config.messNotificationConfig.dayModeOverride = req.body.dayModeOverride;
+      }
     }
 
     if (req.body.mealSwitches && typeof req.body.mealSwitches === "object") {
