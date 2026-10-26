@@ -56,9 +56,21 @@
 4. **Live Meal Status Badges**:
    - Visual indicators on all 4 meals: `✅ DISPATCHED TODAY (HH:MM)` vs `⏳ PENDING / UPCOMING`.
 
+### 📅 E. Day Mode & Active Timetable Switcher (Latest Addition)
+1. **Separation of Timetables**:
+   - Working Days Timings: Breakfast 07:00 AM, Lunch 12:30 PM, Snacks 05:45 PM, Dinner 08:30 PM.
+   - Sunday & Holiday Timings: Breakfast 08:00 AM (1 hr later), Lunch 12:30 PM, Snacks 05:30 PM (15m earlier), Dinner 08:30 PM.
+2. **1-Click Day Mode Override Deck**:
+   - `🤖 Auto (Follow Calendar)`: Sunday automatically uses Sunday timetable, Mon-Sat uses Working timetable.
+   - `💼 Working Day`: Forces Working schedule even on Sundays or holidays.
+   - `🏖️ Sunday Timings`: Forces Sunday schedule anytime.
+   - `🎉 Holiday Override`: Forces Holiday mode (festivals, exams, campus breaks) using Sunday timetable.
+3. **Real-time Live Badge**:
+   - Displays whether Working or Sunday/Holiday timetable is currently active with manual override highlight tag.
+
 ---
 
 ## 🧪 3. Verification & Validation
-- **Frontend Vite Build:** `npm run build` -> ✅ **0 errors (Built in 1.05s)**
+- **Frontend Vite Build:** `npm run build` -> ✅ **0 errors (Built in 891ms)**
 - **Backend Node Syntax Check:** -> ✅ **BACKEND_ALL_SYNTAX_PERFECT**
-- **Git Commit:** `069546b` pushed to `main` (auto-deploys to AWS EC2 and builds Android APK).
+- **Git Commit:** `7eb3d07` pushed to `main` (auto-deploys to AWS EC2 and builds Android APK).
