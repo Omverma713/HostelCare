@@ -1920,7 +1920,7 @@ export default function SuperAdminPortal() {
     }
     const effectiveScopes = delegationFormData.scopeMode === 'all'
       ? ['all']
-      : delegationFormData.selectedScopes.length > 0
+      : (delegationFormData.selectedScopes || []).length > 0
       ? delegationFormData.selectedScopes
       : ['all'];
 
@@ -10370,7 +10370,12 @@ export default function SuperAdminPortal() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setIsCreateDelegationModalOpen(true)}
+                  onClick={() => {
+                    setDelegationFormData(DEFAULT_DELEGATION_FORM);
+                    setDelegationUserSearch('');
+                    setDelegationSearchResults([]);
+                    setIsCreateDelegationModalOpen(true);
+                  }}
                   style={{
                     padding: '0.55rem 1.15rem',
                     borderRadius: '8px',
@@ -11767,7 +11772,7 @@ export default function SuperAdminPortal() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submittingDelegation || !delegationFormData.userId || (delegationFormData.scopeMode === 'custom' && delegationFormData.selectedScopes.length === 0)}
+                  disabled={submittingDelegation || !delegationFormData.userId || (delegationFormData.scopeMode === 'custom' && (delegationFormData.selectedScopes || []).length === 0)}
                   style={{
                     padding: '0.6rem 1.4rem',
                     borderRadius: '8px',
@@ -11776,7 +11781,7 @@ export default function SuperAdminPortal() {
                     color: '#ffffff',
                     fontSize: '0.85rem',
                     fontWeight: 750,
-                    cursor: submittingDelegation || !delegationFormData.userId || (delegationFormData.scopeMode === 'custom' && delegationFormData.selectedScopes.length === 0) ? 'not-allowed' : 'pointer',
+                    cursor: submittingDelegation || !delegationFormData.userId || (delegationFormData.scopeMode === 'custom' && (delegationFormData.selectedScopes || []).length === 0) ? 'not-allowed' : 'pointer',
                     boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
                   }}
                 >
