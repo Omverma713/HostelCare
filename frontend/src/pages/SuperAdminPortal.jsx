@@ -2407,7 +2407,7 @@ export default function SuperAdminPortal() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+          <div className="sa-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={openMyProfileModal}
@@ -2419,29 +2419,31 @@ export default function SuperAdminPortal() {
               <span>My Profile</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setCreateUserModalOpen(true)}
-              id="sa-header-create-user-btn"
-              style={{
-                padding: '0.65rem 1.25rem',
-                borderRadius: '10px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                color: '#ffffff',
-                fontSize: '0.88rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                flexShrink: 0,
-              }}
-            >
-              <span>➕</span>
-              <span>Create User</span>
-            </button>
+            {activeTab !== 'overview' && (
+              <button
+                type="button"
+                onClick={() => setCreateUserModalOpen(true)}
+                id="sa-header-create-user-btn"
+                style={{
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  color: '#ffffff',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                  flexShrink: 0,
+                }}
+              >
+                <span>➕</span>
+                <span>Create User</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -2797,32 +2799,25 @@ export default function SuperAdminPortal() {
                 <option value="suspended">Suspended</option>
               </select>
 
-              <button
-                type="button"
-                onClick={() => loadUsers(1)}
-                className="sa-filter-btn"
-              >
-                Search
-              </button>
+              <div className="sa-filter-actions-row">
+                <button
+                  type="button"
+                  onClick={() => loadUsers(1)}
+                  className="sa-filter-btn sa-search-btn"
+                >
+                  Search
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setCreateUserModalOpen(true)}
-                className="sa-filter-btn"
-                style={{
-                  background: 'var(--primary)',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  marginLeft: 'auto',
-                }}
-                id="btn-open-create-user-modal"
-              >
-                <span>➕</span>
-                <span>Create User</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setCreateUserModalOpen(true)}
+                  className="sa-create-user-filter-btn"
+                  id="btn-open-create-user-modal"
+                >
+                  <span>➕</span>
+                  <span>Create User</span>
+                </button>
+              </div>
             </div>
 
             {/* Desktop Table View */}
@@ -6120,6 +6115,7 @@ export default function SuperAdminPortal() {
                         placeholder="Or directly enter Reg Number (e.g. 21BCON001) & press Add"
                         style={{
                           flex: 1,
+                          minWidth: 0,
                           padding: '0.45rem 0.65rem',
                           borderRadius: '6px',
                           border: '1px solid var(--border-color)',
@@ -6133,14 +6129,21 @@ export default function SuperAdminPortal() {
                         type="button"
                         onClick={() => targetManualReg.trim() && handleAddTargetUser(targetManualReg)}
                         style={{
-                          padding: '0.45rem 0.95rem',
+                          padding: '0.45rem 1rem',
                           borderRadius: '6px',
                           border: 'none',
                           background: 'var(--primary)',
                           color: '#fff',
                           fontWeight: 700,
-                          fontSize: '0.75rem',
+                          fontSize: '0.78rem',
                           cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: '72px',
+                          boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)',
                         }}
                       >
                         + Add
@@ -11199,7 +11202,9 @@ export default function SuperAdminPortal() {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9999,
-            padding: '1rem',
+            padding: '1rem 0.75rem',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsCreateDelegationModalOpen(false);
@@ -11212,9 +11217,14 @@ export default function SuperAdminPortal() {
               borderRadius: '16px',
               maxWidth: '560px',
               width: '100%',
-              padding: '1.75rem',
+              maxHeight: 'min(92vh, 850px)',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              padding: '1.5rem',
               boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 158, 11, 0.2)',
               color: 'var(--text-primary)',
+              boxSizing: 'border-box',
+              margin: 'auto',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
@@ -11618,7 +11628,9 @@ export default function SuperAdminPortal() {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9999,
-            padding: '1rem',
+            padding: '1rem 0.75rem',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setEditingDelegationScopes(null);
@@ -11631,9 +11643,14 @@ export default function SuperAdminPortal() {
               borderRadius: '16px',
               maxWidth: '560px',
               width: '100%',
-              padding: '1.75rem',
+              maxHeight: 'min(92vh, 850px)',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              padding: '1.5rem',
               boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(59, 130, 246, 0.2)',
               color: 'var(--text-primary)',
+              boxSizing: 'border-box',
+              margin: 'auto',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>

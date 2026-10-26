@@ -349,6 +349,36 @@ html.dark-theme .sa-header-profile-action-btn {
   cursor: pointer;
 }
 
+.sa-filter-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.sa-create-user-filter-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.sa-create-user-filter-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
 /* 5. Desktop Table vs Mobile Cards */
 .sa-desktop-table {
   display: block;
@@ -733,6 +763,28 @@ html:not(.dark-theme) .sa-delegation-card {
   .sa-filter-btn {
     width: 100%;
     padding: 0.65rem;
+  }
+
+  .sa-filter-actions-row {
+    width: 100%;
+    margin-left: 0;
+    display: flex;
+    gap: 8px;
+  }
+
+  .sa-filter-actions-row .sa-search-btn {
+    flex: 1;
+    width: auto;
+    padding: 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .sa-create-user-filter-btn {
+    flex: 1;
+    width: auto;
+    padding: 0.6rem;
+    font-size: 0.85rem;
+    justify-content: center;
   }
 
   /* Switch tables to mobile cards on small screens */
