@@ -1165,14 +1165,16 @@ html.dark-theme .sidebar.sidebar-dock-3d {
 .sidebar-brand-dock {
   position: relative;
   z-index: 2;
-  padding: 24px 20px 20px;
+  padding: 16px 12px 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   border-bottom: 1px solid rgba(67, 97, 238, 0.16);
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 html.dark-theme .sidebar-brand-dock {
@@ -1182,8 +1184,8 @@ html.dark-theme .sidebar-brand-dock {
 
 .sidebar-emblem-wrap {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1191,9 +1193,9 @@ html.dark-theme .sidebar-brand-dock {
 }
 
 .sidebar-3d-shield-emblem {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: linear-gradient(135deg, rgba(67, 97, 238, 0.2) 0%, rgba(139, 92, 246, 0.25) 100%);
   border: 1px solid rgba(99, 102, 241, 0.35);
   display: flex;
@@ -1207,7 +1209,7 @@ html.dark-theme .sidebar-brand-dock {
 .sidebar-emblem-ring {
   position: absolute;
   inset: -2px;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px dashed rgba(99, 102, 241, 0.4);
   animation: spin 20s linear infinite;
 }
@@ -1215,13 +1217,16 @@ html.dark-theme .sidebar-brand-dock {
 .sidebar-brand-title-wrap {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .brand-name-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .brand-title-text {
@@ -1753,43 +1758,45 @@ body.sidebar-open-lock {
 
 /* Sidebar toggle & collapse buttons (3-line hamburger) */
 .sidebar-toggle-btn {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0 !important;
   margin-left: auto;
   width: 32px;
   height: 32px;
   min-width: 32px;
   border-radius: 9px;
-  border: 1px solid rgba(67, 97, 238, 0.22);
-  background: rgba(255, 255, 255, 0.55);
-  color: var(--text-primary);
-  font-size: 1.15rem;
-  font-weight: 700;
+  border: 1.5px solid rgba(67, 97, 238, 0.3);
+  background: #ffffff;
+  color: var(--primary);
+  font-size: 1.25rem;
+  font-weight: 800;
   line-height: 1;
   cursor: pointer;
+  z-index: 10;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.08);
+  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.15);
 }
 
 html.dark-theme .sidebar-toggle-btn {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5) !important;
 }
 
 .sidebar-toggle-btn:hover {
-  background: rgba(67, 97, 238, 0.15);
-  color: var(--primary);
-  border-color: rgba(67, 97, 238, 0.4);
-  transform: scale(1.05);
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: var(--primary) !important;
+  transform: scale(1.08);
 }
 
 html.dark-theme .sidebar-toggle-btn:hover {
-  background: rgba(99, 102, 241, 0.22);
-  color: #818cf8;
-  border-color: rgba(99, 102, 241, 0.45);
+  background: #6366f1 !important;
+  color: #ffffff !important;
+  border-color: #818cf8 !important;
 }
 
 /* Floating 3-line hamburger toggle when sidebar is collapsed on desktop */

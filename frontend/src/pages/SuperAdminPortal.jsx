@@ -11381,8 +11381,8 @@ export default function SuperAdminPortal() {
               </div>
 
               {/* Duration Options */}
-              <div style={{ padding: '0.85rem', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fbbf24', display: 'block', marginBottom: '8px' }}>
+              <div className="sa-delegation-duration-deck">
+                <label className="sa-delegation-box-title">
                   ⏱️ Delegation Duration / Expiry
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', marginBottom: '8px' }}>
@@ -11398,18 +11398,10 @@ export default function SuperAdminPortal() {
                       key={opt.id}
                       type="button"
                       onClick={() => setDelegationFormData((prev) => ({ ...prev, durationMode: opt.id }))}
-                      style={{
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: delegationFormData.durationMode === opt.id ? '2px solid #f59e0b' : '1px solid var(--border-color)',
-                        background: delegationFormData.durationMode === opt.id ? 'rgba(245, 158, 11, 0.2)' : 'var(--bg-secondary)',
-                        color: delegationFormData.durationMode === opt.id ? '#fbbf24' : 'var(--text-primary)',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                      }}
+                      className={`sa-delegation-duration-btn ${delegationFormData.durationMode === opt.id ? 'active' : ''}`}
                     >
                       <div style={{ fontWeight: 750, fontSize: '0.78rem' }}>{opt.label}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{opt.sub}</div>
+                      <div style={{ fontSize: '0.68rem', color: 'inherit', opacity: 0.8 }}>{opt.sub}</div>
                     </button>
                   ))}
                 </div>
@@ -11438,16 +11430,9 @@ export default function SuperAdminPortal() {
               </div>
 
               {/* Feature Permissions / Scopes Selector */}
-              <div
-                style={{
-                  padding: '0.85rem',
-                  borderRadius: '10px',
-                  background: 'rgba(59, 130, 246, 0.08)',
-                  border: '1px solid rgba(59, 130, 246, 0.25)',
-                }}
-              >
+              <div className="sa-delegation-permissions-deck">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#60a5fa', margin: 0 }}>
+                  <label className="sa-delegation-box-title" style={{ margin: 0 }}>
                     🛡️ Feature Permissions (Kaun-Kaun Se Features Dena Hai?)
                   </label>
                   {delegationFormData.scopeMode === 'custom' && (
@@ -11460,31 +11445,14 @@ export default function SuperAdminPortal() {
                             selectedScopes: DELEGATION_FEATURE_MODULES.map((m) => m.id),
                           }))
                         }
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(59, 130, 246, 0.4)',
-                          background: 'rgba(59, 130, 246, 0.2)',
-                          color: '#93c5fd',
-                          fontSize: '0.68rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
+                        className="sa-delegation-select-all-btn"
                       >
                         Select All
                       </button>
                       <button
                         type="button"
                         onClick={() => setDelegationFormData((prev) => ({ ...prev, selectedScopes: [] }))}
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          border: '1px solid var(--border-color)',
-                          background: 'transparent',
-                          color: 'var(--text-muted)',
-                          fontSize: '0.68rem',
-                          cursor: 'pointer',
-                        }}
+                        className="sa-delegation-clear-all-btn"
                       >
                         Clear All
                       </button>
@@ -11503,18 +11471,10 @@ export default function SuperAdminPortal() {
                         selectedScopes: ['all'],
                       }))
                     }
-                    style={{
-                      padding: '0.55rem 0.75rem',
-                      borderRadius: '8px',
-                      border: delegationFormData.scopeMode === 'all' ? '2px solid #3b82f6' : '1px solid var(--border-color)',
-                      background: delegationFormData.scopeMode === 'all' ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
-                      color: delegationFormData.scopeMode === 'all' ? '#93c5fd' : 'var(--text-primary)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
+                    className={`sa-delegation-mode-btn ${delegationFormData.scopeMode === 'all' ? 'active' : ''}`}
                   >
                     <div style={{ fontWeight: 750, fontSize: '0.78rem' }}>🌟 All Features (Poore Powers)</div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Complete Super Admin Access</div>
+                    <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>Complete Super Admin Access</div>
                   </button>
                   <button
                     type="button"
@@ -11527,35 +11487,15 @@ export default function SuperAdminPortal() {
                           : (prev.selectedScopes || []),
                       }))
                     }
-                    style={{
-                      padding: '0.55rem 0.75rem',
-                      borderRadius: '8px',
-                      border: delegationFormData.scopeMode === 'custom' ? '2px solid #3b82f6' : '1px solid var(--border-color)',
-                      background: delegationFormData.scopeMode === 'custom' ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-secondary)',
-                      color: delegationFormData.scopeMode === 'custom' ? '#93c5fd' : 'var(--text-primary)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
+                    className={`sa-delegation-mode-btn ${delegationFormData.scopeMode === 'custom' ? 'active' : ''}`}
                   >
                     <div style={{ fontWeight: 750, fontSize: '0.78rem' }}>🎛️ Specific Features (Custom)</div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Choose exact modules to allow</div>
+                    <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>Choose exact modules to allow</div>
                   </button>
                 </div>
 
                 {delegationFormData.scopeMode === 'all' ? (
-                  <div
-                    style={{
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '8px',
-                      background: 'rgba(16, 185, 129, 0.12)',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
-                      color: '#6ee7b7',
-                      fontSize: '0.74rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
+                  <div className="sa-delegation-all-confirm-card">
                     <span>✅</span>
                     <span>
                       User will receive <strong>unrestricted access to all 11 Super Admin modules</strong> (Mess Timetable & Alerts, Push Broadcast, Users, Sessions, Notices, Limits, Maintenance, Updates, Pilot, Audit, etc.).
@@ -11584,23 +11524,14 @@ export default function SuperAdminPortal() {
                               return { ...prev, selectedScopes: next };
                             });
                           }}
-                          style={{
-                            padding: '0.5rem 0.65rem',
-                            borderRadius: '8px',
-                            border: isChecked ? '1.5px solid #10b981' : '1px solid var(--border-color)',
-                            background: isChecked ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-secondary)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '8px',
-                          }}
+                          className={`sa-delegation-feature-card ${isChecked ? 'checked' : ''}`}
                         >
                           <span style={{ fontSize: '0.9rem', marginTop: '1px' }}>{isChecked ? '☑️' : '⬜'}</span>
                           <div>
-                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: isChecked ? '#6ee7b7' : 'var(--text-primary)' }}>
+                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'inherit' }}>
                               {mod.label}
                             </div>
-                            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: '1.2' }}>
+                            <div style={{ fontSize: '0.65rem', opacity: 0.75, lineHeight: '1.2' }}>
                               {mod.desc}
                             </div>
                           </div>

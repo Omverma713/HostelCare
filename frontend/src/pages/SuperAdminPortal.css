@@ -1323,4 +1323,215 @@ html.dark-theme .sa-notices-item-card.is-active {
   background: rgba(239, 68, 68, 0.08) !important;
 }
 
+/* =======================================================
+   SUB-ADMIN DELEGATION MODAL WARM TONE THEME
+   ======================================================= */
+.sa-delegation-duration-deck,
+.sa-delegation-permissions-deck {
+  padding: 0.95rem 1.05rem;
+  border-radius: 12px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+/* Light Theme / Not Dark Theme: Warm Golden Amber Aesthetic */
+html:not(.dark-theme) .sa-delegation-duration-deck,
+html:not(.dark-theme) .sa-delegation-permissions-deck,
+html.light-theme .sa-delegation-duration-deck,
+html.light-theme .sa-delegation-permissions-deck {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.72) 0%, rgba(253, 230, 138, 0.48) 100%) !important;
+  border: 1.5px solid rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.08) !important;
+}
+
+html.dark-theme .sa-delegation-duration-deck,
+html.dark-theme .sa-delegation-permissions-deck {
+  background: rgba(245, 158, 11, 0.08) !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.sa-delegation-box-title {
+  font-size: 0.82rem;
+  font-weight: 850;
+  display: block;
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+html:not(.dark-theme) .sa-delegation-box-title,
+html.light-theme .sa-delegation-box-title {
+  color: #92400e !important;
+}
+
+html.dark-theme .sa-delegation-box-title {
+  color: #fbbf24 !important;
+}
+
+/* Mode Switch Buttons (All Features vs Custom) */
+.sa-delegation-mode-btn {
+  padding: 0.65rem 0.85rem;
+  border-radius: 9px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+html:not(.dark-theme) .sa-delegation-mode-btn,
+html.light-theme .sa-delegation-mode-btn {
+  background: #ffffff;
+  border-color: rgba(245, 158, 11, 0.28);
+  color: #78350f;
+}
+
+.sa-delegation-mode-btn:hover {
+  transform: translateY(-1px);
+}
+
+.sa-delegation-mode-btn.active {
+  border: 2px solid #f59e0b !important;
+}
+
+html:not(.dark-theme) .sa-delegation-mode-btn.active,
+html.light-theme .sa-delegation-mode-btn.active {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(253, 230, 138, 0.8) 100%) !important;
+  color: #78350f !important;
+  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.15);
+}
+
+html.dark-theme .sa-delegation-mode-btn.active {
+  background: rgba(245, 158, 11, 0.22) !important;
+  color: #fde68a !important;
+}
+
+/* All Features Confirmation Card */
+.sa-delegation-all-confirm-card {
+  padding: 0.7rem 0.95rem;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+
+html:not(.dark-theme) .sa-delegation-all-confirm-card,
+html.light-theme .sa-delegation-all-confirm-card {
+  background: rgba(254, 243, 199, 0.92) !important;
+  border: 1.5px solid rgba(245, 158, 11, 0.45) !important;
+  color: #78350f !important;
+}
+
+html.dark-theme .sa-delegation-all-confirm-card {
+  background: rgba(245, 158, 11, 0.14) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  color: #fef3c7 !important;
+}
+
+/* Custom Feature Checkbox Cards */
+.sa-delegation-feature-card {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+html:not(.dark-theme) .sa-delegation-feature-card,
+html.light-theme .sa-delegation-feature-card {
+  background: #ffffff;
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #78350f;
+}
+
+.sa-delegation-feature-card.checked {
+  border: 1.5px solid #f59e0b !important;
+}
+
+html:not(.dark-theme) .sa-delegation-feature-card.checked,
+html.light-theme .sa-delegation-feature-card.checked {
+  background: rgba(254, 243, 199, 0.9) !important;
+  color: #78350f !important;
+}
+
+html.dark-theme .sa-delegation-feature-card.checked {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fde68a !important;
+}
+
+/* Duration options buttons */
+.sa-delegation-duration-btn {
+  padding: 0.55rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html:not(.dark-theme) .sa-delegation-duration-btn,
+html.light-theme .sa-delegation-duration-btn {
+  background: #ffffff;
+  border-color: rgba(245, 158, 11, 0.28);
+  color: #78350f;
+}
+
+.sa-delegation-duration-btn.active {
+  border: 2px solid #f59e0b !important;
+}
+
+html:not(.dark-theme) .sa-delegation-duration-btn.active,
+html.light-theme .sa-delegation-duration-btn.active {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(253, 230, 138, 0.8) 100%) !important;
+  color: #78350f !important;
+  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.15);
+}
+
+html.dark-theme .sa-delegation-duration-btn.active {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+}
+
+/* Select All / Clear All Buttons */
+.sa-delegation-select-all-btn {
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.18);
+  font-size: 0.7rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html:not(.dark-theme) .sa-delegation-select-all-btn,
+html.light-theme .sa-delegation-select-all-btn {
+  color: #92400e;
+}
+
+html.dark-theme .sa-delegation-select-all-btn {
+  color: #fde68a;
+}
+
+.sa-delegation-clear-all-btn {
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
 
