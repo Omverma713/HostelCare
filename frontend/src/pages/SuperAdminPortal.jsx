@@ -2407,7 +2407,7 @@ export default function SuperAdminPortal() {
             </p>
           </div>
 
-          <div className="sa-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+          <div className="sa-header-actions">
             <button
               type="button"
               onClick={openMyProfileModal}
@@ -2418,32 +2418,6 @@ export default function SuperAdminPortal() {
               <span>👤</span>
               <span>My Profile</span>
             </button>
-
-            {activeTab !== 'overview' && (
-              <button
-                type="button"
-                onClick={() => setCreateUserModalOpen(true)}
-                id="sa-header-create-user-btn"
-                style={{
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                  color: '#ffffff',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                  flexShrink: 0,
-                }}
-              >
-                <span>➕</span>
-                <span>Create User</span>
-              </button>
-            )}
           </div>
         </div>
 

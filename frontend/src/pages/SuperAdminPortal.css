@@ -117,6 +117,14 @@
   height: 0px;
 }
 
+.sa-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .sa-header-profile-action-btn {
   padding: 0.65rem 1.15rem;
   border-radius: 10px;
@@ -641,6 +649,21 @@ html:not(.dark-theme) .sa-delegation-card {
   .sa-header-info {
     gap: 0.75rem;
     flex: 1 1 100%;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .sa-header-actions {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.25rem;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .sa-header-profile-action-btn {
+    padding: 0.45rem 0.95rem;
+    font-size: 0.8rem;
   }
 
   .sa-header-icon {
