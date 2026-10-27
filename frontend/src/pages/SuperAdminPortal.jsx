@@ -18,6 +18,7 @@ export const DELEGATION_FEATURE_MODULES = [
   { id: 'limits', label: '⚙️ Login Limits & Policies', desc: 'Session concurrency, failed login lockouts & token lifespans' },
   { id: 'appversion', label: '📲 App Updates & APK Release', desc: 'Mandatory app update enforcement and direct APK downloads' },
   { id: 'pilottesting', label: '🧪 Pilot Testing & Testers', desc: 'Pilot user enrollment and staged feature rollout checks' },
+  { id: 'cbt', label: '🔬 Closed Beta (CBT)', desc: 'Closed beta testing release toggle, application reviews and approvals' },
   { id: 'audit', label: '📜 Security Audit Logs', desc: 'Comprehensive administrative action history and audit trails' },
   { id: 'overview', label: '📊 System Analytics & KPIs', desc: 'Live statistics, active device counters and system health' },
 ];
@@ -32,6 +33,7 @@ export const ALL_PORTAL_TABS = [
   { id: 'maintenance', label: '🛠️ Maintenance', scope: 'maintenance' },
   { id: 'appversion', label: '📲 App Updates', scope: 'appversion' },
   { id: 'pilottesting', label: '🧪 Pilot Testing', scope: 'pilottesting' },
+  { id: 'cbt', label: '🔬 Closed Beta', scope: 'cbt' },
   { id: 'notifications', label: '🔔 Push Broadcast', scope: 'notifications' },
   { id: 'messalerts', label: '🍱 Mess Auto-Alerts', scope: 'messalerts' },
   { id: 'audit', label: '📜 Audit Logs', scope: 'audit' },
@@ -178,6 +180,28 @@ export default function SuperAdminPortal() {
   const [notices, setNotices] = useState([]);
   const [newNotice, setNewNotice] = useState({ title: '', message: '', priority: 'urgent', targetRole: 'ALL' });
   const [publishingNotice, setPublishingNotice] = useState(false);
+
+  // Closed Beta Testing (CBT) State
+  const [cbtConfig, setCbtConfig] = useState({
+    formEnabled: false,
+    formTitle: 'HostelCare Beta — Apply Now',
+    formDescription: 'Join our exclusive Closed Beta Testing program.',
+    betaVersion: '1.2.2.11',
+    betaApkUrl: '',
+    formDeadline: '',
+    maxApplicants: 0,
+    openedAt: null,
+    closedAt: null,
+  });
+  const [cbtApplications, setCbtApplications] = useState([]);
+  const [cbtStats, setCbtStats] = useState({ totalAll: 0, pending: 0, approved: 0, rejected: 0 });
+  const [cbtPagination, setCbtPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+  const [cbtFilters, setCbtFilters] = useState({ status: 'all', search: '' });
+  const [loadingCbt, setLoadingCbt] = useState(false);
+  const [savingCbtConfig, setSavingCbtConfig] = useState(false);
+  const [selectedCbtApp, setSelectedCbtApp] = useState(null);
+  const [cbtReviewNote, setCbtReviewNote] = useState('');
+  const [cbtBulkSelected, setCbtBulkSelected] = useState([]);
 
   // Sessions State
   const [sessions, setSessions] = useState([]);
@@ -510,6 +534,157 @@ export default function SuperAdminPortal() {
       setLoading(false);
     }
   }, []);
+
+  // ── CBT Load & Handlers ──────────────────────────────────────────────────
+  const loadCbtConfig = useCallback(async () => {
+    try {
+      const res = await adminApi.getCbtConfig();
+      if (res.success && res.closedBeta) {
+        setCbtConfig((prev) => ({
+          ...prev,
+          ...res.closedBeta,
+          formDeadline: res.closedBeta.formDeadline
+            ? new Date(res.closedBeta.formDeadline).toISOString().slice(0, 16)
+            : '',
+        }));
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to load CBT config', 'CBT');
+    }
+  }, []);
+
+  const loadCbtApplications = useCallback(async (page = 1) => {
+    try {
+      setLoadingCbt(true);
+      const res = await adminApi.getCbtApplications({
+        status: cbtFilters.status,
+        search: cbtFilters.search,
+        page,
+        limit: cbtPagination.limit,
+      });
+      if (res.success) {
+        setCbtApplications(res.applications || []);
+        setCbtPagination(res.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 });
+        setCbtStats(res.stats || { totalAll: 0, pending: 0, approved: 0, rejected: 0 });
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to load CBT applications', 'CBT');
+    } finally {
+      setLoadingCbt(false);
+    }
+  }, [cbtFilters, cbtPagination.limit]);
+
+  const handleSaveCbtConfig = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    try {
+      setSavingCbtConfig(true);
+      const payload = {
+        formTitle: cbtConfig.formTitle,
+        formDescription: cbtConfig.formDescription,
+        betaVersion: cbtConfig.betaVersion,
+        betaApkUrl: cbtConfig.betaApkUrl,
+        maxApplicants: Number(cbtConfig.maxApplicants) || 0,
+        formDeadline: cbtConfig.formDeadline || null,
+      };
+      const res = await adminApi.updateCbtConfig(payload);
+      if (res.success) {
+        triggerToast('success', res.message || 'CBT configuration saved!', 'CBT Saved');
+        loadCbtConfig();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to save CBT config', 'CBT Error');
+    } finally {
+      setSavingCbtConfig(false);
+    }
+  };
+
+  const handleToggleCbtForm = async (enable) => {
+    try {
+      setSavingCbtConfig(true);
+      const res = await adminApi.updateCbtConfig({ formEnabled: enable });
+      if (res.success) {
+        triggerToast(
+          enable ? 'success' : 'warning',
+          enable ? '🟢 CBT Application Form is now LIVE!' : '🔴 CBT Application Form is now CLOSED.',
+          'CBT Form'
+        );
+        loadCbtConfig();
+        if (enable) loadCbtApplications(1);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to toggle CBT form', 'CBT');
+    } finally {
+      setSavingCbtConfig(false);
+    }
+  };
+
+  const handleApproveCbt = async (appId, note = '') => {
+    try {
+      const res = await adminApi.approveCbtApplication(appId, note);
+      if (res.success) {
+        triggerToast('success', res.message || 'Application approved!', 'CBT Approved ✅');
+        setSelectedCbtApp(null);
+        setCbtReviewNote('');
+        loadCbtApplications(cbtPagination.page);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to approve application', 'CBT');
+    }
+  };
+
+  const handleRejectCbt = async (appId, note = '') => {
+    if (!note.trim()) {
+      triggerToast('warning', 'Please provide a rejection note', 'Required');
+      return;
+    }
+    try {
+      const res = await adminApi.rejectCbtApplication(appId, note);
+      if (res.success) {
+        triggerToast('warning', res.message || 'Application rejected.', 'CBT Rejected ❌');
+        setSelectedCbtApp(null);
+        setCbtReviewNote('');
+        loadCbtApplications(cbtPagination.page);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to reject application', 'CBT');
+    }
+  };
+
+  const handleDeleteCbt = async (appId) => {
+    if (!window.confirm('Delete this CBT application permanently?')) return;
+    try {
+      const res = await adminApi.deleteCbtApplication(appId);
+      if (res.success) {
+        triggerToast('success', 'Application deleted', 'CBT');
+        setSelectedCbtApp(null);
+        loadCbtApplications(cbtPagination.page);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to delete application', 'CBT');
+    }
+  };
+
+  const handleBulkApproveCbt = async () => {
+    if (cbtBulkSelected.length === 0) return;
+    if (!window.confirm(`Bulk approve ${cbtBulkSelected.length} selected application(s)?`)) return;
+    try {
+      const res = await adminApi.bulkApproveCbtApplications(cbtBulkSelected);
+      if (res.success) {
+        triggerToast('success', res.message || `${res.modifiedCount} applications approved!`, 'Bulk Approved ✅');
+        setCbtBulkSelected([]);
+        loadCbtApplications(1);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Bulk approve failed', 'CBT');
+    }
+  };
+
+  // Reload CBT applications when status filter changes
+  useEffect(() => {
+    if (activeTab === 'cbt') {
+      loadCbtApplications(1);
+    }
+  }, [cbtFilters.status, activeTab, loadCbtApplications]);
 
   // Handle User Provisioning (Direct vs Pending Activation)
   const handleCreateUserSubmit = async (e) => {
@@ -1771,7 +1946,11 @@ export default function SuperAdminPortal() {
     }
     else if (activeTab === 'delegations') loadDelegations();
     else if (activeTab === 'audit') loadAuditLogs(1);
-  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadNotices, loadMessNotifications, loadDeviceRegistry, loadAuditLogs, loadDelegations]);
+    else if (activeTab === 'cbt') {
+      loadCbtConfig();
+      loadCbtApplications(1);
+    }
+  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadNotices, loadMessNotifications, loadDeviceRegistry, loadAuditLogs, loadDelegations, loadCbtConfig, loadCbtApplications]);
 
   // Fetch full details for a selected user
   const handleSelectUser = async (user) => {
@@ -7676,6 +7855,929 @@ export default function SuperAdminPortal() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── TAB: CLOSED BETA TESTING (CBT) MANAGEMENT ── */}
+      {activeTab === 'cbt' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Top Info & Action Banner */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.25rem 1.5rem',
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem' }}>🔬</span>
+                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Closed Beta Testing (CBT) Command Center
+                </h2>
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Release student application recruitment forms, review device hardware specs, and grant exclusive early access to beta APKs.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  background: cbtConfig.formEnabled ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  border: cbtConfig.formEnabled ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                  color: cbtConfig.formEnabled ? '#10b981' : '#ef4444',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: cbtConfig.formEnabled ? '#10b981' : '#ef4444',
+                    boxShadow: cbtConfig.formEnabled ? '0 0 8px #10b981' : 'none',
+                  }}
+                />
+                {cbtConfig.formEnabled ? '🟢 FORM RELEASED & LIVE' : '🔴 FORM CLOSED / OFF'}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleToggleCbtForm(!cbtConfig.formEnabled)}
+                disabled={savingCbtConfig}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: cbtConfig.formEnabled
+                    ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                    : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: savingCbtConfig ? 'not-allowed' : 'pointer',
+                  boxShadow: cbtConfig.formEnabled
+                    ? '0 4px 12px rgba(239, 68, 68, 0.25)'
+                    : '0 4px 12px rgba(16, 185, 129, 0.25)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {cbtConfig.formEnabled ? '🔴 Close Applications' : '🟢 Release Beta Form Now'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  loadCbtConfig();
+                  loadCbtApplications(cbtPagination.page);
+                }}
+                disabled={loadingCbt}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: loadingCbt ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
+
+          {/* 4 Bento KPI Stats Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--border-radius-lg)',
+                border: '1px solid var(--border-color)',
+                padding: '1.25rem',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  Total Applications
+                </span>
+                <span style={{ fontSize: '1.25rem' }}>👥</span>
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                {cbtStats.totalAll}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                All registered beta requests
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--border-radius-lg)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                padding: '1.25rem',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase' }}>
+                  Pending Reviews
+                </span>
+                <span style={{ fontSize: '1.25rem' }}>⏳</span>
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f59e0b' }}>
+                {cbtStats.pending}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                Awaiting admin review
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--border-radius-lg)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                padding: '1.25rem',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981', textTransform: 'uppercase' }}>
+                  Approved Testers
+                </span>
+                <span style={{ fontSize: '1.25rem' }}>✅</span>
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981' }}>
+                {cbtStats.approved}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                Granted APK download access
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--border-radius-lg)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '1.25rem',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#ef4444', textTransform: 'uppercase' }}>
+                  Rejected Applications
+                </span>
+                <span style={{ fontSize: '1.25rem' }}>❌</span>
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ef4444' }}>
+                {cbtStats.rejected}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                Declined or over quota
+              </div>
+            </div>
+          </div>
+
+          {/* Configuration Form Card */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.5rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  ⚙️ Closed Beta Program Configuration
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Customize the form headline, instructions, target build version, APK file URL, and application quota.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveCbtConfig}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Form Title (Headline)
+                  </label>
+                  <input
+                    type="text"
+                    value={cbtConfig.formTitle}
+                    onChange={(e) => setCbtConfig((prev) => ({ ...prev, formTitle: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-input, rgba(255,255,255,0.05))',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Target Beta Version (SemVer)
+                  </label>
+                  <input
+                    type="text"
+                    value={cbtConfig.betaVersion}
+                    onChange={(e) => setCbtConfig((prev) => ({ ...prev, betaVersion: e.target.value }))}
+                    placeholder="1.2.2.11"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-input, rgba(255,255,255,0.05))',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Max Applicants Quota (0 for unlimited)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={cbtConfig.maxApplicants}
+                    onChange={(e) => setCbtConfig((prev) => ({ ...prev, maxApplicants: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-input, rgba(255,255,255,0.05))',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Application Deadline (Optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={cbtConfig.formDeadline || ''}
+                    onChange={(e) => setCbtConfig((prev) => ({ ...prev, formDeadline: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-input, rgba(255,255,255,0.05))',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginTop: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Beta APK Direct Download URL (Sent ONLY to Approved Testers)
+                </label>
+                <input
+                  type="text"
+                  value={cbtConfig.betaApkUrl}
+                  onChange={(e) => setCbtConfig((prev) => ({ ...prev, betaApkUrl: e.target.value }))}
+                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.11/hostelcare-v1.2.2.11.apk"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-input, rgba(255,255,255,0.05))',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginTop: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Form Description & Testing Instructions
+                </label>
+                <textarea
+                  rows={2}
+                  value={cbtConfig.formDescription}
+                  onChange={(e) => setCbtConfig((prev) => ({ ...prev, formDescription: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-input, rgba(255,255,255,0.05))',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="submit"
+                  disabled={savingCbtConfig}
+                  style={{
+                    padding: '9px 20px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    cursor: savingCbtConfig ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+                  }}
+                >
+                  {savingCbtConfig ? 'Saving...' : '💾 Save CBT Configuration'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Applications Management Table Card */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.5rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            {/* Header, Filters & Search */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+                marginBottom: '1.25rem',
+              }}
+            >
+              {/* Status Filter Pills */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'all', label: `All (${cbtStats.totalAll})` },
+                  { id: 'pending', label: `Pending (${cbtStats.pending})` },
+                  { id: 'approved', label: `Approved (${cbtStats.approved})` },
+                  { id: 'rejected', label: `Rejected (${cbtStats.rejected})` },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setCbtFilters((prev) => ({ ...prev, status: f.id }))}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      border: '1px solid var(--border-color)',
+                      background:
+                        cbtFilters.status === f.id
+                          ? 'var(--primary, #3b82f6)'
+                          : 'var(--bg-card-hover, rgba(255,255,255,0.05))',
+                      color: cbtFilters.status === f.id ? '#ffffff' : 'var(--text-secondary)',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search & Bulk Actions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {cbtBulkSelected.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleBulkApproveCbt}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: '#ffffff',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                    }}
+                  >
+                    ✅ Bulk Approve ({cbtBulkSelected.length})
+                  </button>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <input
+                    type="text"
+                    value={cbtFilters.search}
+                    onChange={(e) => setCbtFilters((prev) => ({ ...prev, search: e.target.value }))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        loadCbtApplications(1);
+                      }
+                    }}
+                    placeholder="Search name, reg no, hostel, device..."
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-input, rgba(255,255,255,0.05))',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.825rem',
+                      width: '230px',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => loadCbtApplications(1)}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-card-hover, rgba(255,255,255,0.08))',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Search
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Applications Table */}
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                    <th style={{ padding: '10px 12px', width: '36px' }}>
+                      <input
+                        type="checkbox"
+                        checked={
+                          cbtApplications.length > 0 &&
+                          cbtApplications.every((a) => cbtBulkSelected.includes(a._id))
+                        }
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setCbtBulkSelected(cbtApplications.map((a) => a._id));
+                          } else {
+                            setCbtBulkSelected([]);
+                          }
+                        }}
+                      />
+                    </th>
+                    <th style={{ padding: '10px 12px' }}>Student</th>
+                    <th style={{ padding: '10px 12px' }}>Hostel / Room</th>
+                    <th style={{ padding: '10px 12px' }}>Hardware / OS</th>
+                    <th style={{ padding: '10px 12px' }}>Status</th>
+                    <th style={{ padding: '10px 12px' }}>Submitted</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingCbt ? (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem' }}>
+                        <div
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            border: '3px solid rgba(99, 102, 241, 0.2)',
+                            borderTopColor: '#6366f1',
+                            borderRadius: '50%',
+                            animation: 'spin 0.8s linear infinite',
+                            margin: '0 auto 8px',
+                          }}
+                        />
+                        <span style={{ color: 'var(--text-secondary)' }}>Loading CBT applications...</span>
+                      </td>
+                    </tr>
+                  ) : cbtApplications.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📭</div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>No CBT Applications Found</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          Students will appear here once they submit the Closed Beta registration form.
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    cbtApplications.map((app) => {
+                      const isSelected = cbtBulkSelected.includes(app._id);
+                      return (
+                        <tr
+                          key={app._id}
+                          style={{
+                            borderBottom: '1px solid var(--border-color)',
+                            background: isSelected ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                            transition: 'background 0.15s ease',
+                          }}
+                        >
+                          <td style={{ padding: '10px 12px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setCbtBulkSelected((prev) => [...prev, app._id]);
+                                } else {
+                                  setCbtBulkSelected((prev) => prev.filter((id) => id !== app._id));
+                                }
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{app.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              {app.registrationNumber}
+                            </div>
+                          </td>
+                          <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
+                            {app.hostel || 'Hostel'} {app.room ? `• ${app.room}` : ''}
+                          </td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{app.deviceModel}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#818cf8' }}>{app.androidVersion}</div>
+                          </td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                padding: '3px 10px',
+                                borderRadius: '12px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                background:
+                                  app.status === 'approved'
+                                    ? 'rgba(16, 185, 129, 0.15)'
+                                    : app.status === 'rejected'
+                                    ? 'rgba(239, 68, 68, 0.15)'
+                                    : 'rgba(245, 158, 11, 0.15)',
+                                color:
+                                  app.status === 'approved'
+                                    ? '#10b981'
+                                    : app.status === 'rejected'
+                                    ? '#ef4444'
+                                    : '#f59e0b',
+                                border: `1px solid ${
+                                  app.status === 'approved'
+                                    ? 'rgba(16, 185, 129, 0.3)'
+                                    : app.status === 'rejected'
+                                    ? 'rgba(239, 68, 68, 0.3)'
+                                    : 'rgba(245, 158, 11, 0.3)'
+                                }`,
+                              }}
+                            >
+                              {app.status === 'approved' && '✅ Approved'}
+                              {app.status === 'rejected' && '❌ Rejected'}
+                              {app.status === 'pending' && '⏳ Pending'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCbtApp(app);
+                                  setCbtReviewNote(app.reviewNote || '');
+                                }}
+                                style={{
+                                  padding: '5px 10px',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--border-color)',
+                                  background: 'var(--bg-card-hover, rgba(255,255,255,0.06))',
+                                  color: 'var(--text-primary)',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                👁️ Review
+                              </button>
+
+                              {app.status !== 'approved' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveCbt(app._id)}
+                                  title="Approve Tester"
+                                  style={{
+                                    padding: '5px 9px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: 'rgba(16, 185, 129, 0.2)',
+                                    color: '#10b981',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  ✓
+                                </button>
+                              )}
+
+                              {app.status !== 'rejected' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedCbtApp(app);
+                                    setCbtReviewNote('Application not selected for this beta cycle.');
+                                  }}
+                                  title="Reject Application"
+                                  style={{
+                                    padding: '5px 9px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: 'rgba(239, 68, 68, 0.2)',
+                                    color: '#ef4444',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCbt(app._id)}
+                                title="Delete Application"
+                                style={{
+                                  padding: '5px 9px',
+                                  borderRadius: '6px',
+                                  border: 'none',
+                                  background: 'rgba(255, 255, 255, 0.05)',
+                                  color: 'var(--text-muted)',
+                                  fontSize: '0.75rem',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {cbtPagination.totalPages > 1 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: '1.25rem',
+                  paddingTop: '1rem',
+                  borderTop: '1px solid var(--border-color)',
+                  fontSize: '0.85rem',
+                }}
+              >
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  Page {cbtPagination.page} of {cbtPagination.totalPages} • Total {cbtPagination.total} applicants
+                </span>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    disabled={cbtPagination.page <= 1}
+                    onClick={() => loadCbtApplications(cbtPagination.page - 1)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-primary)',
+                      cursor: cbtPagination.page <= 1 ? 'not-allowed' : 'pointer',
+                      opacity: cbtPagination.page <= 1 ? 0.5 : 1,
+                    }}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    disabled={cbtPagination.page >= cbtPagination.totalPages}
+                    onClick={() => loadCbtApplications(cbtPagination.page + 1)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-primary)',
+                      cursor: cbtPagination.page >= cbtPagination.totalPages ? 'not-allowed' : 'pointer',
+                      opacity: cbtPagination.page >= cbtPagination.totalPages ? 0.5 : 1,
+                    }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Applicant Review Modal */}
+          {selectedCbtApp && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(6px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '16px',
+              }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setSelectedCbtApp(null);
+              }}
+            >
+              <div
+                style={{
+                  background: 'var(--bg-card, #121626)',
+                  borderRadius: '16px',
+                  border: '1px solid var(--border-color)',
+                  maxWidth: '560px',
+                  width: '100%',
+                  padding: '1.5rem',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    🔬 Review Beta Applicant
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCbtApp(null)}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.25rem', cursor: 'pointer' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>{selectedCbtApp.name}</div>
+                    <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      {selectedCbtApp.registrationNumber} • {selectedCbtApp.hostel} Room {selectedCbtApp.room}
+                    </div>
+                    {selectedCbtApp.email && (
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '2px' }}>{selectedCbtApp.email}</div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Device Model</span>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>{selectedCbtApp.deviceModel}</div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Android OS</span>
+                      <div style={{ fontWeight: 700, color: '#818cf8', marginTop: '2px' }}>{selectedCbtApp.androidVersion}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Feedback Availability</span>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
+                      {selectedCbtApp.feedbackComfort || 'Standard'}
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Reason / Motivation</span>
+                    <div style={{ color: 'var(--text-primary)', marginTop: '4px', lineHeight: 1.5 }}>
+                      {selectedCbtApp.reason}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                      Admin Review Note (Visible to student)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={cbtReviewNote}
+                      onChange={(e) => setCbtReviewNote(e.target.value)}
+                      placeholder="Optional feedback, reason for rejection, or instructions for approved tester..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-input, rgba(255,255,255,0.05))',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleRejectCbt(selectedCbtApp._id, cbtReviewNote)}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        color: '#ef4444',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ❌ Reject
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApproveCbt(selectedCbtApp._id, cbtReviewNote)}
+                      style={{
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                      }}
+                    >
+                      ✅ Approve Tester
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

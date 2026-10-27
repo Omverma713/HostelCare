@@ -384,4 +384,50 @@ export const adminApi = {
       method: 'DELETE',
     });
   },
+
+  // Closed Beta Testing (CBT) Program
+  getCbtConfig() {
+    return adminRequest('/superadmin/cbt/config');
+  },
+
+  updateCbtConfig(configData) {
+    return adminRequest('/superadmin/cbt/config', {
+      method: 'PUT',
+      body: JSON.stringify(configData),
+    });
+  },
+
+  getCbtApplications({ status = 'all', search = '', page = 1, limit = 20 } = {}) {
+    const params = new URLSearchParams({ page, limit });
+    if (status && status !== 'all') params.append('status', status);
+    if (search) params.append('search', search);
+    return adminRequest(`/superadmin/cbt/applications?${params.toString()}`);
+  },
+
+  approveCbtApplication(id, reviewNote = '') {
+    return adminRequest(`/superadmin/cbt/applications/${id}/approve`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reviewNote }),
+    });
+  },
+
+  rejectCbtApplication(id, reviewNote = '') {
+    return adminRequest(`/superadmin/cbt/applications/${id}/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reviewNote }),
+    });
+  },
+
+  deleteCbtApplication(id) {
+    return adminRequest(`/superadmin/cbt/applications/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  bulkApproveCbtApplications(ids) {
+    return adminRequest('/superadmin/cbt/applications/bulk-approve', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
 };

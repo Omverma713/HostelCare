@@ -57,6 +57,16 @@ const {
   updateDelegationScopes,
 } = require("../controllers/superAdmin.controllers");
 
+const {
+  getCbtConfig,
+  updateCbtConfig,
+  getCbtApplications,
+  approveCbtApplication,
+  rejectCbtApplication,
+  deleteCbtApplication,
+  bulkApproveCbtApplications,
+} = require("../controllers/cbt.controllers");
+
 // Privileged operations rate limiter (120 requests per 15 minutes per IP)
 const superAdminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -160,7 +170,13 @@ router.post("/device-registry/:deviceId/ping", sensitiveActionLimiter, pingSingl
 router.delete("/device-registry/:deviceId", sensitiveActionLimiter, deleteDeviceRegistryEntry);
 router.post("/mess-notifications/broadcast-custom", sensitiveActionLimiter, broadcastCustomMessAlert);
 
-// Audit Logs
-router.get("/audit-logs", getAuditLogs);
+// Closed Beta Testing (CBT) Program
+router.get("/cbt/config", getCbtConfig);
+router.put("/cbt/config", sensitiveActionLimiter, updateCbtConfig);
+router.get("/cbt/applications", getCbtApplications);
+router.patch("/cbt/applications/:id/approve", sensitiveActionLimiter, approveCbtApplication);
+router.patch("/cbt/applications/:id/reject", sensitiveActionLimiter, rejectCbtApplication);
+router.delete("/cbt/applications/:id", sensitiveActionLimiter, deleteCbtApplication);
+router.post("/cbt/applications/bulk-approve", sensitiveActionLimiter, bulkApproveCbtApplications);
 
 module.exports = router;

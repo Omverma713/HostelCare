@@ -47,12 +47,17 @@ const auditLogSchema = new mongoose.Schema(
         "USER_IMPERSONATED",
         "MESS_MENU_UPDATED",
         "MESS_MENU_RESET",
+        "CBT_CONFIG_UPDATED",
+        "CBT_APPLICATION_APPROVED",
+        "CBT_APPLICATION_REJECTED",
+        "CBT_APPLICATION_DELETED",
+        "CBT_BULK_APPROVED",
       ],
     },
 
     targetType: {
       type: String,
-      enum: ["USER", "SESSION", "DEVICE", "SYSTEM_CONFIG", "NOTIFICATION", "MESS_MENU"],
+      enum: ["USER", "SESSION", "DEVICE", "SYSTEM_CONFIG", "NOTIFICATION", "MESS_MENU", "CBT"],
       required: true,
     },
 

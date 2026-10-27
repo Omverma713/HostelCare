@@ -347,5 +347,21 @@ export const api = {
   getActiveNotice() {
     return request('/users/active-notice');
   },
+
+  // --- CLOSED BETA TESTING (CBT) ---
+  getCbtStatus() {
+    return request('/cbt/status');
+  },
+
+  applyForCbt(applicationData) {
+    return request('/cbt/apply', {
+      method: 'POST',
+      body: JSON.stringify(applicationData),
+    });
+  },
+
+  getMyCbtApplication() {
+    return request('/cbt/my-application');
+  },
 };
 

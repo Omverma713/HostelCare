@@ -15,6 +15,7 @@ import ResolutionRingGauge3D from '../components/ResolutionRingGauge3D';
 import SpatialTicketCard from '../components/SpatialTicketCard';
 import { appUpdateService } from '../services/appUpdateService';
 import { getKolkataTime, getMealStatusForDay, DEFAULT_MESS_DATA } from '../constants/messMenuData';
+import CbtModal from '../components/CbtModal';
 
 // Department icon helper
 const getDeptIcon = (dept) => {
@@ -54,6 +55,7 @@ export default function StudentDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
   const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
+  const [isCbtOpen, setIsCbtOpen] = useState(false);
 
   useEffect(() => {
     const unsub = appUpdateService.addListener((state) => {
@@ -220,6 +222,37 @@ export default function StudentDashboard() {
               <span>⚡ Update Ready (v{latestVersion})</span>
             </button>
           )}
+
+          {/* Closed Beta Testing (CBT) Channel Access */}
+          <button
+            type="button"
+            className="btn-spatial-cbt"
+            onClick={() => setIsCbtOpen(true)}
+            id="btn-open-cbt-modal"
+            title="Closed Beta Testing (CBT) Channel"
+            style={{
+              padding: '0.65rem 0.95rem',
+              borderRadius: '12px',
+              border: '1px solid rgba(99, 102, 241, 0.4)',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.1) 100%)',
+              color: '#818cf8',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'all 0.2s ease',
+              minHeight: '44px',
+              flex: '0 0 auto',
+            }}
+          >
+            <span style={{ fontSize: '1rem' }}>🔬</span>
+            <span>Closed Beta</span>
+          </button>
+
           <button
             type="button"
             className="btn-spatial-refresh"
@@ -843,6 +876,9 @@ export default function StudentDashboard() {
           </div>
         )}
       </Modal>
+
+      {/* Closed Beta Testing (CBT) Student Channel Modal */}
+      <CbtModal isOpen={isCbtOpen} onClose={() => setIsCbtOpen(false)} />
     </div>
   );
 }

@@ -366,6 +366,49 @@ const systemConfigSchema = new mongoose.Schema(
         default: true,
       },
     },
+
+    closedBeta: {
+      formEnabled: {
+        type: Boolean,
+        default: false,
+      },
+      formTitle: {
+        type: String,
+        default: "HostelCare Beta v1.2.2.11 — Apply Now",
+        trim: true,
+      },
+      formDescription: {
+        type: String,
+        default: "Join our exclusive Closed Beta Testing (CBT) program to test early builds and shape the future of HostelCare.",
+        trim: true,
+      },
+      betaVersion: {
+        type: String,
+        default: "1.2.2.11",
+        trim: true,
+      },
+      betaApkUrl: {
+        type: String,
+        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.11/hostelcare-v1.2.2.11.apk",
+        trim: true,
+      },
+      formDeadline: {
+        type: Date,
+        default: null,
+      },
+      maxApplicants: {
+        type: Number,
+        default: 0,
+      },
+      openedAt: {
+        type: Date,
+        default: null,
+      },
+      closedAt: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,

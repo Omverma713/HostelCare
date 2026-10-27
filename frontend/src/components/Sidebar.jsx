@@ -5,6 +5,7 @@ import { useTheme } from '../hooks/ThemeContext';
 import { ROLE_LABELS } from '../constants';
 import { Capacitor } from '@capacitor/core';
 import { appUpdateService } from '../services/appUpdateService';
+import CbtModal from './CbtModal';
 
 /**
  * Ultra-Modern 3D Floating Glass Sidebar Dock
@@ -17,6 +18,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const { user, logout, setDirectToken } = useAuth();
   const { theme, setTheme } = useTheme();
 
+  const [isCbtModalOpen, setIsCbtModalOpen] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
   const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
 
@@ -243,6 +245,52 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
             </NavLink>
 
+            {/* Closed Beta Program trigger for Students & General Residents */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onClose) onClose();
+                setIsCbtModalOpen(true);
+              }}
+              id="sidebar-link-cbt-modal"
+              className="sidebar-dock-link"
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              <div className="dock-link-icon-wrap" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
+                🔬
+              </div>
+
+              <div className="dock-link-content">
+                <span className="dock-link-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  Closed Beta (CBT)
+                  <span
+                    style={{
+                      fontSize: '0.6rem',
+                      padding: '1px 6px',
+                      borderRadius: '10px',
+                      background: 'rgba(99, 102, 241, 0.25)',
+                      color: '#818cf8',
+                      fontWeight: 800,
+                    }}
+                  >
+                    BETA
+                  </span>
+                </span>
+                <span className="dock-link-subtitle">Apply for early testing</span>
+              </div>
+
+              <div className="dock-link-indicator-chip">
+                <span className="indicator-ray" />
+              </div>
+            </button>
+
             {isSuperAdmin && (
               <>
                 <NavLink
@@ -264,6 +312,32 @@ export default function Sidebar({ isOpen, onClose }) {
                   <div className="dock-link-content">
                     <span className="dock-link-title">User Directory</span>
                     <span className="dock-link-subtitle">Create & manage accounts</span>
+                  </div>
+
+                  <div className="dock-link-indicator-chip">
+                    <span className="indicator-ray" />
+                  </div>
+                </NavLink>
+
+                <NavLink
+                  to="/superadmin?tab=cbt"
+                  onClick={onClose}
+                  id="sidebar-link-cbt-admin"
+                  className={() =>
+                    `sidebar-dock-link ${
+                      location.pathname === '/superadmin' && location.search.includes('tab=cbt')
+                        ? 'active'
+                        : ''
+                    }`
+                  }
+                >
+                  <div className="dock-link-icon-wrap" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}>
+                    🔬
+                  </div>
+
+                  <div className="dock-link-content">
+                    <span className="dock-link-title">CBT Management</span>
+                    <span className="dock-link-subtitle">Release & approvals</span>
                   </div>
 
                   <div className="dock-link-indicator-chip">
@@ -455,6 +529,9 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
         </div>
       </aside>
+
+      {/* Closed Beta Testing (CBT) Student Channel Modal */}
+      <CbtModal isOpen={isCbtModalOpen} onClose={() => setIsCbtModalOpen(false)} />
     </>
   );
 }
