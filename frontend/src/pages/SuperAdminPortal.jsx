@@ -148,8 +148,13 @@ export default function SuperAdminPortal() {
     }
     if (searchParams.get('action') === 'create') {
       setCreateUserModalOpen(true);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('action');
+        return next;
+      }, { replace: true });
     }
-  }, [searchParams, activeTab]);
+  }, [searchParams, activeTab, setSearchParams]);
 
   // Clamp active tab to allowed scopes
   useEffect(() => {
@@ -157,6 +162,17 @@ export default function SuperAdminPortal() {
       handleTabChange(visibleTabs[0].id);
     }
   }, [visibleTabs, activeTab, handleTabChange]);
+
+  // Escape key handler to close user details modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && selectedUser) {
+        setSelectedUser(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedUser]);
 
   // Global Notices State
   const [notices, setNotices] = useState([]);
@@ -3295,22 +3311,43 @@ export default function SuperAdminPortal() {
             </div>
           </div>
 
-          {/* User Details & Management Drawer */}
+          {/* User Details & Management Modal Popup */}
           {selectedUser && (
             <div
-              className="sa-user-details-drawer"
+              className="sa-user-details-modal-overlay"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setSelectedUser(null);
+              }}
               style={{
-                background: 'var(--bg-card)',
-                borderRadius: 'var(--border-radius-lg)',
-                border: '1px solid var(--border-color)',
-                padding: '1.25rem',
-                boxShadow: 'var(--shadow-sm)',
-                height: 'fit-content',
-                minWidth: 0,
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0, 0, 0, 0.72)',
+                backdropFilter: 'blur(5px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9995,
+                padding: '1rem',
                 boxSizing: 'border-box',
-                overflow: 'hidden',
               }}
             >
+              <div
+                className="sa-user-details-drawer sa-user-details-modal-dialog"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: 'var(--bg-card)',
+                  borderRadius: '16px',
+                  border: '1px solid var(--border-color)',
+                  padding: '1.25rem',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
+                  maxHeight: '90vh',
+                  maxWidth: '680px',
+                  width: '100%',
+                  minWidth: 0,
+                  boxSizing: 'border-box',
+                  overflowY: 'auto',
+                }}
+              >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
@@ -4081,6 +4118,7 @@ export default function SuperAdminPortal() {
                   )}
                 </div>
               )}
+              </div>
             </div>
           )}
 

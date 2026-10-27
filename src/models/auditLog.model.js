@@ -26,6 +26,7 @@ const auditLogSchema = new mongoose.Schema(
       index: true,
       enum: [
         "PROFILE_UPDATE",
+        "SUPERADMIN_SELF_PROFILE_UPDATED",
         "ACCOUNT_ACTIVATED",
         "ACCOUNT_DEACTIVATED",
         "ACCOUNT_SUSPENDED",

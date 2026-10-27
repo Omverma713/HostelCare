@@ -336,7 +336,6 @@ const updateUserProfile = async (req, res) => {
     }
 
     if (password && password.trim().length >= 6) {
-      const Argon = require("../utils/argon");
       user.password = await Argon.hash(password.trim());
       user.isActivated = true;
       user.failedLoginAttempts = 0;
@@ -1094,7 +1093,8 @@ const flushUserAccount = async (req, res) => {
 // GET /api/v1/superadmin/me
 const getSuperAdminSelfProfile = async (req, res) => {
   try {
-    const admin = await User.findById(req.user._id).select("-password").lean();
+    const adminId = req.user?.id || req.user?._id || req.superAdminUser?._id;
+    const admin = await User.findById(adminId).select("-password").lean();
     if (!admin) {
       return res.status(404).json({ success: false, message: "Admin profile not found" });
     }
@@ -1108,13 +1108,12 @@ const getSuperAdminSelfProfile = async (req, res) => {
 const updateSuperAdminSelfProfile = async (req, res) => {
   try {
     const { name, email, registrationNumber, newPassword, currentPassword } = req.body;
-    const admin = await User.findById(req.user._id);
+    const adminId = req.user?.id || req.user?._id || req.superAdminUser?._id;
+    const admin = await User.findById(adminId);
 
     if (!admin) {
       return res.status(404).json({ success: false, message: "Admin account not found" });
     }
-
-    const Argon = require("../utils/argon");
 
     if (newPassword) {
       if (newPassword.length < 6) {

@@ -60,12 +60,18 @@ HostelCare **v1.2.2.11** introduces key administrative and user-experience upgra
 - **Ticket Locking**: Prevents overlapping admin responses by locking active chats when an admin is actively composing a reply.
 - **Flush Input Bar**: Optimized keyboard handling on mobile web and Capacitor Android views.
 
-### 6. 📱 Android APK & Full-Stack Version Parity
+### 6. 🛠️ Critical APK & User Directory Fixes
+- **Super Admin Self-Profile Resolution**: Fixed `"Admin profile not found"` error when opening "My Profile" by correctly matching `req.user.id || req.user._id` across JWT auth middleware and the `getSuperAdminSelfProfile` endpoint.
+- **User Directory Direct Navigation**: Removed erroneous `&action=create` URL parameter from the Sidebar navigation link (`Sidebar.jsx`), preventing the "Create User Account" modal from automatically popping up upon entering the User Directory.
+- **Centered User Details Modal Popup**: Converted the inline user details view into a centered, full-featured popup modal with backdrop blur overlay, smooth slide-up animation, click-outside dismissal, and Escape key listener, resolving the mobile issue where user details appeared at the bottom of the long list.
+- **Argon2 Password Update Integrity**: Replaced invalid nested require imports (`../utils/argon`) with root-level `argon2` module across `updateUserProfile` and `updateSuperAdminSelfProfile`.
+
+### 7. 📱 Android APK & Full-Stack Version Parity
 - **Production APK Build**:
   - Target: Android 8.0+ (API 26 to 34).
   - File: `mobile-app/dist-apk/hostelcare-v1.2.2.11.apk`.
-  - Package Size: **5.98 MB**.
-  - Signature: Verified via release keystore (`SHA-256: 45:12:F1:...`).
+  - Package Size: **6.05 MB**.
+  - Signature: Verified via release keystore (`SHA-256: 1B:78:F1:1D:05:56:2B:38:...`).
 - **Synchronized Versioning**:
   - `package.json` -> `1.2.2.11`
   - `frontend/package.json` -> `1.2.2.11`
@@ -82,14 +88,18 @@ HostelCare **v1.2.2.11** introduces key administrative and user-experience upgra
 
 | Test Scenario | Platform / View | Result | Status |
 | :--- | :--- | :--- | :--- |
-| **Desktop 3-Line Sidebar Toggle** | Chrome / Edge (1536x826) | Smooth collapse to icon rail, zero layout shift | ✅ PASS |
+| **Super Admin Self-Profile Modal** | Android APK / Web | Profile loads with user credentials, no 404 error | ✅ PASS |
+| **User Directory Sidebar Link** | Android APK / Web | Clean navigation to directory without auto-opening create modal | ✅ PASS |
+| **User Details Dialog Popup** | Mobile APK / Desktop | Manage Details opens centered modal overlay above content | ✅ PASS |
+| **Desktop 3-Line Sidebar Toggle** | Chrome / Edge | Smooth collapse to icon rail, zero layout shift | ✅ PASS |
 | **Delegation Modal Light Theme** | Light Mode Portal | Warm amber styling, legible contrast, no dark card bugs | ✅ PASS |
 | **Granular Scope Selection** | Delegation Modal | Custom multi-select scopes save and render properly | ✅ PASS |
 | **Global Notices Light Theme** | SuperAdmin Notices Tab | Crisp contrast, legible dark typography on soft background | ✅ PASS |
 | **Chat WhatsApp Ticks** | Dev Chat Page | Correct icon states (clock, single, double ticks) | ✅ PASS |
-| **Android APK Compilation** | Gradle Release Build | Clean build in 43s, aligned versionCode 16 | ✅ PASS |
-| **Frontend Production Bundle** | Vite Build (`npm run build`) | Zero syntax errors, bundled in 856ms | ✅ PASS |
-| **Backend API Health Check** | Node.js / Express | Route syntax clean, zero TDZ errors | ✅ PASS |
+| **Android APK Compilation** | Gradle Release Build | Clean build in 31s, verified key signature | ✅ PASS |
+| **Frontend Production Bundle** | Vite Build (`npm run build`) | Zero syntax errors, bundled clean | ✅ PASS |
+| **Backend API Health Check** | Node.js / Express | Route syntax clean, 13/13 Super Admin tests pass | ✅ PASS |
+
 
 ---
 

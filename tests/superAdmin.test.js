@@ -474,4 +474,35 @@ test("Super Admin API: Manually locks user and adjusts lock duration", async () 
   assert.equal(reduceData.user.lockMinutesRemaining, 0);
 });
 
+test("Super Admin Self-Profile: GET and PATCH /api/v1/superadmin/me return and update profile", async () => {
+  // 1. GET self-profile
+  const meRes = await fetch(`${baseUrl}/api/v1/superadmin/me`, {
+    headers: { Authorization: `Bearer ${superAdminToken}` },
+  });
+  assert.equal(meRes.status, 200);
+  const meData = await meRes.json();
+  assert.equal(meData.success, true);
+  assert.ok(meData.admin);
+  assert.equal(meData.admin.registrationNumber, TEST_SUPERADMIN.registrationNumber);
+
+  // 2. PATCH self-profile name & email
+  const updateMeRes = await fetch(`${baseUrl}/api/v1/superadmin/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${superAdminToken}`,
+    },
+    body: JSON.stringify({
+      name: "Master Super Admin Updated",
+      email: "master.updated@test.com",
+    }),
+  });
+  assert.equal(updateMeRes.status, 200);
+  const updateMeData = await updateMeRes.json();
+  assert.equal(updateMeData.success, true);
+  assert.equal(updateMeData.admin.name, "Master Super Admin Updated");
+  assert.equal(updateMeData.admin.email, "master.updated@test.com");
+});
+
+
 

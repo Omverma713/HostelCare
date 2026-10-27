@@ -246,7 +246,7 @@ export default function Sidebar({ isOpen, onClose }) {
             {isSuperAdmin && (
               <>
                 <NavLink
-                  to="/superadmin?tab=users&action=create"
+                  to="/superadmin?tab=users"
                   onClick={onClose}
                   id="sidebar-link-user-directory"
                   className={() =>

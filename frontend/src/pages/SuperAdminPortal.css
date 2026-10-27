@@ -559,15 +559,32 @@ html.dark-theme .sa-header-profile-action-btn {
   min-width: 640px;
 }
 
-@media (min-width: 1220px) {
-  .sa-users-grid.has-selection {
-    grid-template-columns: minmax(0, 1fr) 390px;
-  }
+.sa-users-grid.has-selection {
+  grid-template-columns: 1fr;
 }
 
-@media (max-width: 1219px) {
-  .sa-users-grid.has-selection {
-    grid-template-columns: 1fr;
+/* User Details Modal Popup & Animations */
+.sa-user-details-modal-overlay {
+  animation: saModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sa-user-details-modal-dialog {
+  animation: saModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes saModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes saModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

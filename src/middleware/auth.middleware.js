@@ -118,7 +118,9 @@ const authMiddleware = async (req, res, next) => {
       }
     }
 
+    decoded._id = decoded.id;
     req.user = decoded;
+    req.user._id = decoded.id;
 
     // 3. Enforce maintenance mode on active sessions (non-superadmins & non-delegated only)
     if (decoded.role !== "superadmin" && !decoded.isDelegatedSubAdmin) {

@@ -723,7 +723,8 @@ const registerPushToken = async (req, res) => {
         appVersion,
       } = req.body;
 
-      const fullUser = await User.findById(req.user._id).select("name registrationNumber hostelBlock roomNumber role").lean();
+      const effectiveUserId = req.user.id || req.user._id;
+      const fullUser = await User.findById(effectiveUserId).select("name registrationNumber hostelBlock roomNumber role").lean();
 
       // Compute stable hardware identifier
       const stableDeviceId =
@@ -732,7 +733,7 @@ const registerPushToken = async (req, res) => {
           ? `android-${crypto.createHash("md5").update(pushToken).digest("hex").slice(0, 16)}`
           : webPushSubscription?.endpoint
           ? `web-${crypto.createHash("md5").update(webPushSubscription.endpoint).digest("hex").slice(0, 16)}`
-          : `usr-${req.user._id}`);
+          : `usr-${effectiveUserId}`);
 
       const detectedPlatform =
         clientPlatform ||
@@ -743,7 +744,7 @@ const registerPushToken = async (req, res) => {
         {
           $set: {
             deviceId: stableDeviceId,
-            userId: req.user._id,
+            userId: effectiveUserId,
             userRole: fullUser?.role || req.user.role || "student",
             studentName: fullUser?.name || req.user.name || "",
             regNo: fullUser?.registrationNumber || req.user.registrationNumber || "",
