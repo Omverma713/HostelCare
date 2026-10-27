@@ -1,16 +1,16 @@
 /* ==========================================================================
-   HostelCare Global Style Sheet — Light Lavender Theme
+   HostelCare Global Style Sheet — Light Warm Theme
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Background (Tinted Frosted Lavender-Slate — Never harsh pure white) */
-  --bg-primary: #dfe4f5;
-  --bg-secondary: #e6ebf8;
-  --bg-tertiary: #d2daf2;
-  --bg-card: #e6ebf8;
+  /* Background (Warm Cream/Parchment — Never harsh pure white) */
+  --bg-primary: #f5f0e8;
+  --bg-secondary: #faf6ef;
+  --bg-tertiary: #ede8de;
+  --bg-card: #fdf9f3;
   --card-bg: var(--bg-card);
 
   /* Text */
@@ -21,12 +21,12 @@
   /* Primary Indigo/Blue */
   --primary: #4361ee;
   --primary-hover: #3451d1;
-  --primary-light: #e4eafb;
-  --primary-glow: rgba(67, 97, 238, 0.22);
+  --primary-light: #e8edfb;
+  --primary-glow: rgba(67, 97, 238, 0.18);
 
   /* Student Purple */
   --student-color: #7c3aed;
-  --student-bg: #ece5fe;
+  --student-bg: #f0e8ff;
 
   /* Status Colors */
   --status-pending-bg: #fef3c7;
@@ -50,13 +50,13 @@
   --success-border: #86efac;
 
   /* Borders and Shadows */
-  --border-color: rgba(67, 97, 238, 0.18);
+  --border-color: rgba(160, 120, 60, 0.20);
   --border-radius-sm: 10px;
   --border-radius-md: 14px;
   --border-radius-lg: 20px;
-  --shadow-sm: 0 2px 6px rgba(67, 97, 238, 0.08);
-  --shadow-md: 0 6px 20px rgba(67, 97, 238, 0.12);
-  --shadow-lg: 0 12px 36px rgba(67, 97, 238, 0.16);
+  --shadow-sm: 0 2px 6px rgba(120, 80, 20, 0.08);
+  --shadow-md: 0 6px 20px rgba(120, 80, 20, 0.10);
+  --shadow-lg: 0 12px 36px rgba(120, 80, 20, 0.13);
   --shadow-primary: 0 4px 18px rgba(67, 97, 238, 0.35);
 
   /* Typography */
@@ -286,7 +286,7 @@ textarea {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: var(--wa-bg-deep, #f0f2f5) !important;
+  background: var(--wa-bg-deep, #f0ebe0) !important;
 }
 
 .app-container.is-chat-layout .main-content {
@@ -300,7 +300,7 @@ textarea {
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  background: var(--wa-bg-deep, #f0f2f5) !important;
+  background: var(--wa-bg-deep, #f0ebe0) !important;
 }
 
 @media (min-width: 1025px) {
