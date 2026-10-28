@@ -6,6 +6,8 @@ import { ROLE_LABELS } from '../constants';
 import { Capacitor } from '@capacitor/core';
 import { appUpdateService } from '../services/appUpdateService';
 import CbtModal from './CbtModal';
+import BiometricSettingsModal from './BiometricSettingsModal';
+import { biometricService } from '../services/biometricService';
 
 /**
  * Ultra-Modern 3D Floating Glass Sidebar Dock
@@ -19,6 +21,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const { theme, setTheme } = useTheme();
 
   const [isCbtModalOpen, setIsCbtModalOpen] = useState(false);
+  const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
   const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
 
@@ -512,6 +515,45 @@ export default function Sidebar({ isOpen, onClose }) {
                 {updateAvailable ? '⚡ New Version Ready' : 'Check for Update'}
               </span>
             </button>
+
+            {/* Biometric Fingerprint Lock Button */}
+            <button
+              type="button"
+              onClick={() => {
+                onClose?.();
+                setIsBiometricModalOpen(true);
+              }}
+              style={{
+                width: '100%',
+                marginTop: '6px',
+                padding: '0.45rem 0.75rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+                background: biometricService.isEnabled() ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+                color: 'var(--text-primary)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+              }}
+              title="Configure Biometric Fingerprint Lock for this device"
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>👆</span>
+                <span>Fingerprint Lock</span>
+              </span>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  color: biometricService.isEnabled() ? '#10b981' : '#818cf8',
+                  fontWeight: 700,
+                }}
+              >
+                {biometricService.isEnabled() ? '🔒 Active' : 'Setup'}
+              </span>
+            </button>
           </div>
 
           {/* 5. Theme Switcher & Logout */}
@@ -562,6 +604,9 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Closed Beta Testing (CBT) Student Channel Modal */}
       <CbtModal isOpen={isCbtModalOpen} onClose={() => setIsCbtModalOpen(false)} />
+
+      {/* Hardware Biometric Fingerprint Lock Modal */}
+      <BiometricSettingsModal isOpen={isBiometricModalOpen} onClose={() => setIsBiometricModalOpen(false)} />
     </>
   );
 }

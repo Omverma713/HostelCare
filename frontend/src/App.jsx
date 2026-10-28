@@ -20,6 +20,7 @@ import { initMessAutoNotifications } from './services/messNotificationService';
 
 import Login from './pages/Login';
 import GlobalNoticePopup from './components/GlobalNoticePopup';
+import BiometricLockModal from './components/BiometricLockModal';
 
 // Lazy Loaded Routes for Instant Startup and Smooth Transitions
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
@@ -383,6 +384,9 @@ export default function App() {
 
           {/* Emergency / Global Pop-up Notice with corner cross */}
           <GlobalNoticePopup />
+
+          {/* Hardware Biometric Privacy Guard */}
+          <BiometricLockModal />
           </MaintenanceManager>
         </BrowserRouter>
       </AuthProvider>

@@ -1,6 +1,6 @@
 {
   "name": "hostelcare-mobile",
-  "version": "1.0.0",
+  "version": "1.2.2.11",
   "description": "HostelCare Android Mobile App Wrapper using Capacitor",
   "private": true,
   "scripts": {
@@ -19,7 +19,8 @@
     "@capacitor/push-notifications": "^6.0.5",
     "@capacitor/splash-screen": "^6.0.3",
     "@capacitor/status-bar": "^6.0.2",
-    "@capawesome/capacitor-app-update": "^6.1.0"
+    "@capawesome/capacitor-app-update": "^6.1.0",
+    "@capgo/capacitor-native-biometric": "^6.0.4"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0"

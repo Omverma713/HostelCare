@@ -780,6 +780,34 @@ const registerPushToken = async (req, res) => {
   }
 };
 
+/**
+ * Verify user's current account password
+ * Used for sensitive security actions (e.g., enabling Biometric Fingerprint Lock)
+ */
+const verifyUserPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, message: "Password is required" });
+    }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    const isValid = await Argon.verify(user.password, String(password));
+    if (!isValid) {
+      return res.status(401).json({ success: false, message: "Incorrect account password" });
+    }
+    return res.status(200).json({ success: true, message: "Password verified successfully" });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Password verification error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   activateUser,
   loggedInUser,
@@ -787,4 +815,5 @@ module.exports = {
   revokeMySession,
   logoutUser,
   registerPushToken,
+  verifyUserPassword,
 };

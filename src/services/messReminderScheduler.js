@@ -296,7 +296,14 @@ async function broadcastMealReminder(slotKey, options = {}) {
 
   if (targets.length === 0) {
     console.log(`⚠️ [MessReminderWorker] No active push devices or sessions registered for ${slotKey}. Dispatch halted.`);
-    return { success: false, targets: 0, report: null, payload, reason: "no_devices" };
+    return {
+      success: true,
+      slotKey,
+      targets: 0,
+      report: null,
+      payload,
+      reason: "no_devices",
+    };
   }
 
   const report = await sendPushToSessions(targets, payload);
@@ -369,8 +376,18 @@ async function checkAndTriggerMealAlerts() {
       const totalStartMinutes = (cfg.hour * 60 + cfg.minute - leadTimeMinutes + offsetMinutes + 1440) % 1440;
       const targetHour = Math.floor(totalStartMinutes / 60) % 24;
       const targetMinute = totalStartMinutes % 60;
+      const currentKolkataMinutes = kt.hour * 60 + kt.minute;
 
-      if (targetHour === kt.hour && targetMinute === kt.minute) {
+      // 30-Minute Resilient Catch-Up Window:
+      // Prevents missed meal notifications if server is restarting, deploying, or experiencing brief downtime.
+      // Triggers if current time is within [targetStartMinutes, targetStartMinutes + 30 minutes].
+      // Atomically claimed via MongoDB idempotencyKey so it dispatches EXACTLY ONCE.
+      const diffMinutes = (currentKolkataMinutes - totalStartMinutes + 1440) % 1440;
+      const isEligibleWindow =
+        (targetHour === kt.hour && targetMinute === kt.minute) ||
+        (diffMinutes >= 0 && diffMinutes <= 30);
+
+      if (isEligibleWindow) {
         const idempotencyKey = `${kt.dateStr}_${slotKey}_${occurrence}`;
 
         // 1. Database-backed atomic claim when connected

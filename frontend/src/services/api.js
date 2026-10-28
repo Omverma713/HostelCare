@@ -348,6 +348,14 @@ export const api = {
     return request('/users/active-notice');
   },
 
+  // --- SENSITIVE SECURITY / BIOMETRICS ---
+  verifyPassword(password) {
+    return request('/users/verify-password', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    });
+  },
+
   // --- CLOSED BETA TESTING (CBT) ---
   getCbtStatus() {
     return request('/cbt/status');

@@ -9,6 +9,7 @@ import IsometricHostelRoom3D from '../components/IsometricHostelRoom3D';
 import InteractiveLamp from '../components/InteractiveLamp';
 import Canvas3DBackground from '../components/Canvas3DBackground';
 import FuturisticLoader from '../components/login/FuturisticLoader';
+import { biometricService } from '../services/biometricService';
 
 function MessMenuGuestCard() {
   const navigate = useNavigate();
@@ -215,6 +216,22 @@ export default function Login() {
       if (error.status === 403 && msg.toLowerCase().includes('activate')) {
         setActiveTab('activate');
         setActRegNum(reg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    const handleBiometricLogin = async () => {
+    try {
+      setLoading(true);
+      const creds = await biometricService.loginWithBiometric();
+      if (creds && creds.regNum && creds.password) {
+        await doLogin(creds.regNum, creds.password);
+      }
+    } catch (err) {
+      if (err.message && !err.message.toLowerCase().includes('cancel')) {
+        triggerToast('error', err.message);
       }
     } finally {
       setLoading(false);
@@ -486,6 +503,33 @@ export default function Login() {
                   >
                     {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
                   </button>
+                  {biometricService.isEnabled() && (
+                    <button
+                      type="button"
+                      onClick={handleBiometricLogin}
+                      disabled={loading}
+                      style={{
+                        width: '100%',
+                        marginTop: '10px',
+                        padding: '11px 16px',
+                        borderRadius: '12px',
+                        border: '1.5px solid rgba(16, 185, 129, 0.4)',
+                        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.06) 100%)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.15)',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.15rem' }}>👆</span>
+                      <span>Login with Fingerprint</span>
+                    </button>
+                  )}
                 </form>
               ) : (
                 <form onSubmit={handleActivateSubmit}>

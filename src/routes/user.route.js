@@ -7,6 +7,7 @@ const {
   revokeMySession,
   logoutUser,
   registerPushToken,
+  verifyUserPassword,
 } = require("../controllers/user.controllers");
 const authMiddleware = require("../middleware/auth.middleware");
 const {
@@ -29,12 +30,21 @@ const loginLimiter = rateLimit({
   message: { success: false, message: "Too many login attempts. Please try again later." },
 });
 
+const sensitiveActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many attempts. Please try again later." },
+});
+
 router.post("/activate", activateUser);
 router.post("/login", loginLimiter, loggedInUser);
 router.post("/logout", authMiddleware, logoutUser);
 router.get("/my-sessions", authMiddleware, getMySessions);
 router.delete("/my-sessions/:sessionId", authMiddleware, revokeMySession);
 router.post("/register-push-token", authMiddleware, registerPushToken);
+router.post("/verify-password", authMiddleware, sensitiveActionLimiter, verifyUserPassword);
 
 router.post("/complaints", authMiddleware, savingComplaint);
 router.get("/hostel-complaints", authMiddleware, findingcomplaint);
