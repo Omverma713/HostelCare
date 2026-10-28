@@ -566,10 +566,17 @@ html.dark-theme .sa-header-profile-action-btn {
 /* User Details Modal Popup & Animations */
 .sa-user-details-modal-overlay {
   animation: saModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: max(24px, 4.5vh) 1rem 1.5rem !important;
+  box-sizing: border-box !important;
 }
 
 .sa-user-details-modal-dialog {
   animation: saModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0 !important;
+  max-height: calc(100vh - 4.5rem) !important;
 }
 
 @keyframes saModalFadeIn {

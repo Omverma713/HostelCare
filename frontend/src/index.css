@@ -264,7 +264,6 @@ textarea {
   padding: 28px 24px;
   background-color: var(--bg-primary);
   transition: padding var(--transition-normal);
-  transform: translateZ(0);
   -webkit-overflow-scrolling: touch;
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { adminApi } from '../services/adminApi';
@@ -3491,7 +3492,7 @@ export default function SuperAdminPortal() {
           </div>
 
           {/* User Details & Management Modal Popup */}
-          {selectedUser && (
+          {selectedUser && (typeof document !== 'undefined' ? createPortal(
             <div
               className="sa-user-details-modal-overlay"
               onClick={(e) => {
@@ -3503,11 +3504,12 @@ export default function SuperAdminPortal() {
                 background: 'rgba(0, 0, 0, 0.72)',
                 backdropFilter: 'blur(5px)',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
-                zIndex: 9995,
-                padding: '1rem',
+                zIndex: 99999,
+                padding: 'max(24px, 4.5vh) 1rem 1.5rem',
                 boxSizing: 'border-box',
+                overflowY: 'auto',
               }}
             >
               <div
@@ -3519,12 +3521,13 @@ export default function SuperAdminPortal() {
                   border: '1px solid var(--border-color)',
                   padding: '1.25rem',
                   boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
-                  maxHeight: '90vh',
+                  maxHeight: 'calc(100vh - 4.5rem)',
                   maxWidth: '680px',
                   width: '100%',
                   minWidth: 0,
                   boxSizing: 'border-box',
                   overflowY: 'auto',
+                  marginTop: '0',
                 }}
               >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
@@ -4298,8 +4301,9 @@ export default function SuperAdminPortal() {
                 </div>
               )}
               </div>
-            </div>
-          )}
+            </div>,
+            document.body
+          ) : null)}
 
           {/* Reset Password Modal */}
           {resetPasswordModal.open && (
