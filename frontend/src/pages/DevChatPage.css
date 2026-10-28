@@ -35,13 +35,16 @@
 /* WhatsApp Light Warm & Soothing Theme (Classic Sand #efeae2 & Mint #d9fdd3) */
 html.light-theme,
 .devchat-root.light-theme,
-body.light-theme {
-  --wa-bg-deep: #f0f2f5;
-  --wa-bg-panel: #ffffff;
-  --wa-bg-header: #f0f2f5;
-  --wa-bg-input-bar: #f0f2f5;
-  --wa-bg-input-field: #ffffff;
-  --wa-border: #e9edef;
+body.light-theme,
+html:not(.dark-theme),
+.devchat-root:not(.dark-theme),
+body:not(.dark-theme) {
+  --wa-bg-deep: #efeae2;
+  --wa-bg-panel: #fbf8f3;
+  --wa-bg-header: #f4efe6;
+  --wa-bg-input-bar: #f4efe6;
+  --wa-bg-input-field: #fdfaf6;
+  --wa-border: #e6dfd5;
   
   --wa-bubble-theirs: #ffffff;
   --wa-bubble-theirs-text: #111b21;
