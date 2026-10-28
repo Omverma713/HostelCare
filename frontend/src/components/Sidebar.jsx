@@ -324,6 +324,54 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
             </button>
 
+            {/* Hardware Biometric Fingerprint Lock shortcut (Universal for all users) */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onClose) onClose();
+                setIsBiometricModalOpen(true);
+              }}
+              id="sidebar-link-fingerprint-lock-main"
+              className="sidebar-dock-link"
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              <div className="dock-link-icon-wrap" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+                👆
+              </div>
+
+              <div className="dock-link-content">
+                <span className="dock-link-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  Fingerprint Lock
+                  <span
+                    style={{
+                      fontSize: '0.6rem',
+                      padding: '1px 6px',
+                      borderRadius: '10px',
+                      background: biometricService.isEnabled() ? 'rgba(16, 185, 129, 0.2)' : 'rgba(99, 102, 241, 0.2)',
+                      color: biometricService.isEnabled() ? '#10b981' : '#818cf8',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {biometricService.isEnabled() ? 'ACTIVE' : 'SETUP'}
+                  </span>
+                </span>
+                <span className="dock-link-subtitle">
+                  {biometricService.isEnabled() ? 'Biometric security enabled' : 'Touch to configure biometrics'}
+                </span>
+              </div>
+
+              <div className="dock-link-indicator-chip">
+                <span className="indicator-ray" />
+              </div>
+            </button>
+
             {isSuperAdmin && (
               <>
                 <NavLink

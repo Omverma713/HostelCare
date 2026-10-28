@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { appUpdateService } from '../services/appUpdateService';
+import BiometricSettingsModal from './BiometricSettingsModal';
+import { biometricService } from '../services/biometricService';
 
 /**
  * Mobile Top Navbar component with hamburger menu toggle, refresh action and notification shortcut
@@ -11,6 +13,7 @@ export default function Navbar({ onToggleSidebar }) {
   const [refreshing, setRefreshing] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
   const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
+  const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
 
   useEffect(() => {
     const unsub = appUpdateService.addListener((state) => {
@@ -92,6 +95,29 @@ export default function Navbar({ onToggleSidebar }) {
           </span>
         </button>
 
+        {/* 👆 Biometric Fingerprint Lock Quick Access */}
+        <button
+          type="button"
+          onClick={() => setIsBiometricModalOpen(true)}
+          aria-label="Biometric Fingerprint Lock"
+          title="Setup or manage Biometric Fingerprint Lock"
+          style={{
+            background: biometricService.isEnabled() ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255, 255, 255, 0.08)',
+            border: biometricService.isEnabled() ? '1.5px solid rgba(16, 185, 129, 0.5)' : 'none',
+            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          👆
+        </button>
+
         {user.role === 'superadmin' && (
           <Link
             to="/notifications"
@@ -117,6 +143,12 @@ export default function Navbar({ onToggleSidebar }) {
           hostel {user.hostel}
         </div>
       </div>
+
+      {/* Hardware Biometric Fingerprint Lock Modal */}
+      <BiometricSettingsModal
+        isOpen={isBiometricModalOpen}
+        onClose={() => setIsBiometricModalOpen(false)}
+      />
     </header>
   );
 }
