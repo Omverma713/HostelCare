@@ -187,7 +187,7 @@ export default function SuperAdminPortal() {
     formEnabled: false,
     formTitle: 'HostelCare Beta — Apply Now',
     formDescription: 'Join our exclusive Closed Beta Testing program.',
-    betaVersion: '1.2.2.11',
+    betaVersion: '1.2.2.12',
     betaApkUrl: '',
     formDeadline: '',
     maxApplicants: 0,
@@ -372,10 +372,10 @@ export default function SuperAdminPortal() {
 
   // App Version State
   const [appVersionConfig, setAppVersionConfig] = useState({
-    latestVersion: '1.2.2.11',
+    latestVersion: '1.2.2.12',
     minimumSupportedVersion: '1.0.0',
     updateMessage: '',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.11/hostelcare-v1.2.2.11.apk',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.12/hostelcare-v1.2.2.12.apk',
     forceUpdate: false,
     isSuspended: false,
     suspendedReason: '',
@@ -403,8 +403,8 @@ export default function SuperAdminPortal() {
     enabled: true,
     isSuspended: false,
     suspendedReason: '',
-    version: '1.2.2.11',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.11/hostelcare-v1.2.2.11.apk',
+    version: '1.2.2.12',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.12/hostelcare-v1.2.2.12.apk',
     updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
     releaseNotes: '',
     releaseMedia: [],
@@ -837,7 +837,7 @@ export default function SuperAdminPortal() {
             releaseMedia: res.pilotTesting.releaseMedia || [],
             enabled: Boolean(res.pilotTesting.enabled),
             isSuspended: Boolean(res.pilotTesting.isSuspended),
-            version: res.pilotTesting.version || '1.2.2.11',
+            version: res.pilotTesting.version || '1.2.2.12',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
           }));
         }
@@ -1064,7 +1064,7 @@ export default function SuperAdminPortal() {
           'success',
           isTargeted
             ? `Removed ${u.name || reg} from targeted pilot release`
-            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.11'})`,
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.12'})`,
           'Pilot Rollout'
         );
       }
@@ -8116,7 +8116,7 @@ export default function SuperAdminPortal() {
                     type="text"
                     value={cbtConfig.betaVersion}
                     onChange={(e) => setCbtConfig((prev) => ({ ...prev, betaVersion: e.target.value }))}
-                    placeholder="1.2.2.11"
+                    placeholder="1.2.2.12"
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -8182,7 +8182,7 @@ export default function SuperAdminPortal() {
                   type="text"
                   value={cbtConfig.betaApkUrl}
                   onChange={(e) => setCbtConfig((prev) => ({ ...prev, betaApkUrl: e.target.value }))}
-                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.11/hostelcare-v1.2.2.11.apk"
+                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.12/hostelcare-v1.2.2.12.apk"
                   style={{
                     width: '100%',
                     padding: '8px 12px',

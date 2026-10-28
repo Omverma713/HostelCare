@@ -534,7 +534,7 @@ export default function CbtModal({ isOpen, onClose }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ color: '#10b981' }}>●</span>
                   <span style={{ color: 'var(--text-secondary, #94a3b8)' }}>Current Stable Public Version:</span>
-                  <strong style={{ color: 'var(--text-primary, #ffffff)' }}>v1.2.2.11</strong>
+                  <strong style={{ color: 'var(--text-primary, #ffffff)' }}>v1.2.2.12</strong>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ color: '#f59e0b' }}>●</span>
@@ -589,7 +589,7 @@ export default function CbtModal({ isOpen, onClose }) {
                     🟢 APPLICATIONS LIVE
                   </span>
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#818cf8' }}>
-                    Target Build: v{cbtData.formDetails?.version || '1.2.2.11'}
+                    Target Build: v{cbtData.formDetails?.version || '1.2.2.12'}
                   </span>
                 </div>
                 <h4 style={{ margin: '0 0 4px', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary, #ffffff)' }}>
