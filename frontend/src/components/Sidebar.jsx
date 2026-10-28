@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/ThemeContext';
@@ -32,9 +32,13 @@ export default function Sidebar({ isOpen, onClose }) {
     return unsub;
   }, []);
 
-  // Lock background body/html scrolling cleanly and prevent touch scroll chaining when drawer is open
+  const sidebarRef = useRef(null);
+  const navContainerRef = useRef(null);
+
+  // On mobile drawer open (<= 1024px), lock background touch scrolling cleanly
   useEffect(() => {
-    if (!isOpen) return;
+    const isMobile = window.innerWidth <= 1024;
+    if (!isOpen || !isMobile) return;
 
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
@@ -48,31 +52,17 @@ export default function Sidebar({ isOpen, onClose }) {
     document.documentElement.classList.add('sidebar-open-lock');
     document.body.classList.add('sidebar-open-lock');
 
-    // Intercept touchmove & wheel to prevent background scroll chaining
     const handleTouchMove = (e) => {
       const scrollable = e.target.closest('.sidebar-nav-container');
       if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
-        // If content genuinely overflows the container, allow scrolling inside it
         return;
       }
-      // If user swipes anywhere on sidebar or backdrop, prevent default to stop background scrolling
-      if (e.target.closest('.sidebar') || e.target.closest('.sidebar-backdrop')) {
-        e.preventDefault();
-      }
-    };
-
-    const handleWheel = (e) => {
-      const scrollable = e.target.closest('.sidebar-nav-container');
-      if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
-        return;
-      }
-      if (e.target.closest('.sidebar') || e.target.closest('.sidebar-backdrop')) {
+      if (e.target.closest('.sidebar-backdrop')) {
         e.preventDefault();
       }
     };
 
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
       document.documentElement.style.overflow = originalHtmlOverflow;
@@ -82,9 +72,47 @@ export default function Sidebar({ isOpen, onClose }) {
       document.documentElement.classList.remove('sidebar-open-lock');
       document.body.classList.remove('sidebar-open-lock');
       document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('wheel', handleWheel);
     };
   }, [isOpen]);
+
+  // Independent sidebar wheel scrolling on desktop & tablet:
+  // When cursor is over the sidebar, scroll ONLY the sidebar nav without chaining to background.
+  // When cursor is over the main page, background scrolls completely freely.
+  useEffect(() => {
+    const aside = sidebarRef.current;
+    if (!aside) return;
+
+    const handleWheel = (e) => {
+      const nav = navContainerRef.current;
+      if (!nav) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = nav;
+      const canScroll = scrollHeight > clientHeight;
+
+      if (!canScroll) {
+        // If sidebar items fit on screen, absorb wheel so background doesn't scroll while hovering sidebar
+        e.preventDefault();
+        return;
+      }
+
+      // If mouse is on brand header, top area, or bottom profile deck, scroll nav container
+      if (!e.target.closest('.sidebar-nav-container')) {
+        nav.scrollTop += e.deltaY;
+        e.preventDefault();
+        return;
+      }
+
+      // When scrolling at boundary (top or bottom of sidebar nav), prevent chaining to background
+      const atTop = scrollTop <= 0 && e.deltaY < 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
+      if (atTop || atBottom) {
+        e.preventDefault();
+      }
+    };
+
+    aside.addEventListener('wheel', handleWheel, { passive: false });
+    return () => aside.removeEventListener('wheel', handleWheel);
+  }, []);
 
   if (!user) return null;
 
@@ -118,9 +146,11 @@ export default function Sidebar({ isOpen, onClose }) {
   return (
     <>
       {/* Mobile drawer overlay backdrop */}
-      {isOpen && <div className="sidebar-backdrop" onClick={onClose} />}
+      {isOpen && typeof window !== 'undefined' && window.innerWidth <= 1024 && (
+        <div className="sidebar-backdrop" onClick={onClose} />
+      )}
 
-      <aside className={`sidebar sidebar-dock-3d ${isOpen ? 'open' : ''}`}>
+      <aside ref={sidebarRef} className={`sidebar sidebar-dock-3d ${isOpen ? 'open' : ''}`}>
         {/* Ambient Top & Bottom Aura Glows */}
         <div className="sidebar-aura-glow aura-top" />
         <div className="sidebar-aura-glow aura-bottom" />
@@ -169,7 +199,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         {/* 2. Navigation Section */}
-        <div className="sidebar-nav-container">
+        <div ref={navContainerRef} className="sidebar-nav-container">
           <div className="nav-section-eyebrow">PORTAL NAVIGATION</div>
 
           <nav className="sidebar-nav-items">

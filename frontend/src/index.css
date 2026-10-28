@@ -1748,12 +1748,27 @@ html.dark-theme .btn-dock-logout:hover {
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
 }
 
-/* Prevent background scrolling when sidebar is open */
-html.sidebar-open-lock,
-body.sidebar-open-lock {
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
-  touch-action: none !important;
+/* Prevent background scrolling ONLY when mobile sidebar drawer is open */
+@media (max-width: 1024px) {
+  html.sidebar-open-lock,
+  body.sidebar-open-lock {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none !important;
+  }
+}
+
+/* Ensure backdrop is completely hidden and doesn't intercept pointer events on desktop */
+.sidebar-backdrop {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 1024px) {
+  .sidebar-backdrop {
+    display: block !important;
+    pointer-events: auto !important;
+  }
 }
 
 /* Sidebar toggle & collapse buttons (3-line hamburger) */
