@@ -1149,14 +1149,14 @@ export default function DevChatPage() {
                           onTouchMove={handleTouchEnd}
                         >
                           {!isMine && <span className="chat-sender-name">{msg.senderName}</span>}
-                          <div className={`chat-bubble ${mediaData ? 'has-media' : ''}`}>
+                          <div className={`chat-bubble ${mediaData ? 'has-media' : ''} ${mediaData && !mediaData.caption ? 'media-only' : ''}`}>
                             {mediaData ? (
                               <div className="chat-media-wrapper">
                                 <div style={{ position: 'relative' }}>
                                   <img
                                     src={mediaData.image}
                                     alt="Shared Screenshot"
-                                    className={`chat-bubble-image ${!isDownloaded ? 'blurred' : ''}`}
+                                    className={`chat-bubble-image ${!isDownloaded ? 'blurred' : ''} ${isMine && msg.status !== 'pending' ? 'uploaded-reveal' : ''}`}
                                     onClick={() => {
                                       if (isDownloaded) {
                                         setZoomedImage(mediaData.image);
@@ -1165,6 +1165,16 @@ export default function DevChatPage() {
                                       }
                                     }}
                                   />
+                                  {/* Animated Uploading Overlay when sending */}
+                                  {isMine && msg.status === 'pending' && (
+                                    <div className="image-upload-overlay">
+                                      <div className="image-upload-spinner-ring">
+                                        <div className="upload-spinner-arc" />
+                                        <span className="upload-arrow-icon">↑</span>
+                                      </div>
+                                      <span className="upload-status-text">Uploading...</span>
+                                    </div>
+                                  )}
                                   {!isDownloaded && (
                                     <div className="image-download-overlay">
                                       {isDownloading ? (
