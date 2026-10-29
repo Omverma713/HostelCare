@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { cancelAllMealReminders } from './messNotificationService';
 import { api } from './api';
 
 const CHANNEL_ID = 'hostelcare_custom_channel';
@@ -35,11 +36,17 @@ export async function initPushNotifications() {
     PushNotifications.addListener('registration', async (token) => {
       console.log('FCM Device Token registered:', token.value);
       try {
+        localStorage.setItem('hc_fcm_registered', 'true');
+        localStorage.setItem('hostelcare_push_registered', 'true');
         await api.registerPushToken(token.value, 'fcm', {
           platform: 'android',
           hardwareModel: 'Android Mobile App',
         });
         pushRegistered = true;
+        // Cancel any pending local offline meal reminders so Cloud FCM handles it exclusively without duplicates
+        try {
+          await cancelAllMealReminders();
+        } catch (_) {}
       } catch (err) {
         console.warn('Failed to send push token to backend:', err);
       }

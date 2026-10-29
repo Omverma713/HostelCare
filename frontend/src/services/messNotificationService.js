@@ -15,6 +15,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { api } from './api';
 import {
   DEFAULT_MESS_DATA,
@@ -190,7 +191,25 @@ export async function scheduleWeeklyMealReminders(customMenu = null, customConfi
     await initializeMessChannel();
     registerNotificationClickListeners();
 
-    // Verify or request notification permission
+    // Prevent duplicate 2x notifications:
+    // If native FCM Cloud Push is active or permission is granted, the backend server daemon
+    // (messReminderScheduler.js) reliably broadcasts meal reminders at the exact official start
+    // timing via FCM. Scheduling local AlarmManager notifications simultaneously causes duplicate 2x alerts.
+    const fcmRegistered = localStorage.getItem('hc_fcm_registered') === 'true' ||
+                          localStorage.getItem('hostelcare_push_registered') === 'true';
+    let hasPushPermission = false;
+    try {
+      const pushPerm = await PushNotifications.checkPermissions();
+      hasPushPermission = pushPerm.receive === 'granted';
+    } catch (_) {}
+
+    if (hasPushPermission || fcmRegistered) {
+      await cancelAllMealReminders();
+      console.log('ℹ️ [MessAutoNotice] Native Cloud FCM push is active. Local OS AlarmManager duplicate scheduling skipped.');
+      return { scheduled: 0, reason: 'fcm_cloud_active', success: true };
+    }
+
+    // Verify or request notification permission (Offline fallback when FCM is not available)
     try {
       const perm = await LocalNotifications.checkPermissions();
       if (perm.display !== 'granted') {
