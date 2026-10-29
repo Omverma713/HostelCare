@@ -24,7 +24,7 @@ async function adminRequest(endpoint, options = {}) {
       localStorage.removeItem('token');
       window.dispatchEvent(new CustomEvent('auth-session-expired'));
     }
-    const error = new Error(data.message || `HTTP error ${response.status}`);
+    const error = new Error(data.error || data.message || `HTTP error ${response.status}`);
     error.status = response.status;
     error.data = data;
     throw error;

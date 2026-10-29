@@ -1990,14 +1990,18 @@ export default function SuperAdminPortal() {
     e.preventDefault();
     if (!selectedUser) return;
     try {
-      const res = await adminApi.updateUserProfile(selectedUser._id, editUserData);
+      const payload = {
+        ...editUserData,
+        password: editUserData.newPassword,
+      };
+      const res = await adminApi.updateUserProfile(selectedUser._id, payload);
       if (res.success) {
-        triggerToast('success', res.message, 'Profile Updated');
+        triggerToast('success', res.message || 'User profile updated successfully', 'Profile Updated');
         loadUsers(userPagination.page);
         handleSelectUser(res.user);
       }
     } catch (err) {
-      triggerToast('error', err.message, 'Update Failed');
+      triggerToast('error', err.message || 'Failed to update profile', 'Update Failed');
     }
   };
 
@@ -3507,7 +3511,7 @@ export default function SuperAdminPortal() {
                 alignItems: 'flex-start',
                 justifyContent: 'center',
                 zIndex: 99999,
-                padding: 'max(24px, 4.5vh) 1rem 1.5rem',
+                padding: 'max(84px, calc(64px + 3vh)) 1rem 1.5rem',
                 boxSizing: 'border-box',
                 overflowY: 'auto',
               }}
@@ -3521,7 +3525,7 @@ export default function SuperAdminPortal() {
                   border: '1px solid var(--border-color)',
                   padding: '1.25rem',
                   boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
-                  maxHeight: 'calc(100vh - 4.5rem)',
+                  maxHeight: 'calc(100vh - 7rem)',
                   maxWidth: '680px',
                   width: '100%',
                   minWidth: 0,

@@ -34,3 +34,4 @@ HostelCare **v1.2.2.13 (Build 18)** completely refines the **Biometric Fingerpri
 ### 3. 🛡️ Automatic Keystore Protection
 - Seamlessly saves credentials upon standard mobile login via `NativeBiometric.setCredentials({ server: 'hostelcare_auth_vault', username, password })`.
 - 100% Free, offline-capable, and encrypted at Android OS hardware level (TEE / Keystore).
+

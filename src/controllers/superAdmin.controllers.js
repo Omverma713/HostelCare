@@ -306,9 +306,18 @@ const updateUserProfile = async (req, res) => {
     const allowedRoles = ["student", "caretaker", "warden", "superintendent", "chiefHostelWarden", "superadmin"];
     const changes = {};
 
-    if (name && name.trim()) {
-      changes.name = { from: user.name, to: name.trim() };
-      user.name = name.trim();
+    const inputPassword = password || req.body.newPassword;
+
+    if (name !== undefined) {
+      const trimmedName = (name || "").trim();
+      if (trimmedName !== (user.name || "")) {
+        changes.name = { from: user.name, to: trimmedName };
+        user.name = trimmedName;
+      }
+    }
+    // Fallback: Ensure user.name is never undefined or empty
+    if (!user.name) {
+      user.name = (name && name.trim()) || user.registrationNumber || "Student";
     }
 
     if (registrationNumber && registrationNumber.trim()) {
@@ -335,8 +344,8 @@ const updateUserProfile = async (req, res) => {
       }
     }
 
-    if (password && password.trim().length >= 6) {
-      user.password = await Argon.hash(password.trim());
+    if (inputPassword && inputPassword.trim().length >= 6) {
+      user.password = await Argon.hash(inputPassword.trim());
       user.isActivated = true;
       user.failedLoginAttempts = 0;
       user.lockUntil = null;
@@ -453,9 +462,10 @@ const updateUserProfile = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("updateUserProfile error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to update profile",
+      message: error.message || "Failed to update profile",
       error: error.message,
     });
   }
