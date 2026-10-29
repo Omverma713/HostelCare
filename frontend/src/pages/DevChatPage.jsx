@@ -15,7 +15,12 @@ import {
   markTicketMessagesRead,
   addChatListener,
 } from '../services/chatSocketService';
-import { encryptMessage, decryptMessage } from '../utils/e2eeCrypto';
+import {
+  encryptMessage,
+  decryptMessage,
+  batchDecryptMessages,
+  getDeviceIdentityKey,
+} from '../utils/e2eeCrypto';
 import './DevChatPage.css';
 
 function formatBytes(bytes) {
@@ -212,37 +217,32 @@ export default function DevChatPage() {
     loadTickets();
   }, [loadTickets]);
 
-  // 3. Select Ticket & Load Decrypted Messages
+  // 3. Select Ticket & Load Decrypted Messages (Ultra-Fast O(1) Cached)
   const selectTicket = async (ticket) => {
     if (activeTicket && activeTicket.ticketId !== ticket.ticketId) {
       leaveTicketRoom(activeTicket.ticketId);
     }
 
     setActiveTicket(ticket);
-    setLoadingMessages(true);
     joinTicketRoom(ticket.ticketId);
     markTicketMessagesRead(ticket.ticketId);
+
+    // Only set loading if we don't have messages for this ticket yet
+    if (!messages || messages.length === 0 || activeTicket?.ticketId !== ticket.ticketId) {
+      setLoadingMessages(true);
+    }
 
     try {
       const res = await api.getChatTicketMessages(ticket.ticketId);
       if (res.success && Array.isArray(res.messages)) {
-        // Decrypt messages client-side with ticket's unique E2EE salt
-        const decryptedList = await Promise.all(
-          res.messages.map(async (msg) => {
-            const plainText = await decryptMessage(
-              msg.encryptedContent,
-              msg.iv,
-              ticket.ticketId,
-              res.e2eeSalt || ticket.e2eeSalt
-            );
-            return {
-              ...msg,
-              text: plainText,
-            };
-          })
+        // High-speed parallel batch decryption with instant memory cache
+        const decryptedList = await batchDecryptMessages(
+          res.messages,
+          ticket.ticketId,
+          res.e2eeSalt || ticket.e2eeSalt
         );
         setMessages(decryptedList);
-        setTimeout(scrollToBottom, 80);
+        setTimeout(scrollToBottom, 40);
       }
     } catch (err) {
       console.error('Failed to load messages:', err);
@@ -1076,9 +1076,10 @@ export default function DevChatPage() {
                     </span>
                   </div>
 
-                  {loadingMessages ? (
-                    <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                      Decrypting conversation history...
+                  {loadingMessages && messages.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2.5rem 1rem' }}>
+                      <div className="whatsapp-loading-spinner" style={{ margin: '0 auto 10px', width: '24px', height: '24px' }} />
+                      <span style={{ fontSize: '0.82rem', opacity: 0.85 }}>Loading messages...</span>
                     </div>
                   ) : messages.length === 0 ? (
                     <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
