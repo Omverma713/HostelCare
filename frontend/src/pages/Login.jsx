@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/ThemeContext';
@@ -10,6 +10,7 @@ import InteractiveLamp from '../components/InteractiveLamp';
 import Canvas3DBackground from '../components/Canvas3DBackground';
 import FuturisticLoader from '../components/login/FuturisticLoader';
 import { biometricService } from '../services/biometricService';
+import { Capacitor } from '@capacitor/core';
 
 function MessMenuGuestCard() {
   const navigate = useNavigate();
@@ -108,6 +109,54 @@ function PasswordToggleEye({ visible, onToggle, label = "Toggle password visibil
   );
 }
 
+function BiometricLoginButton({ onBiometricLogin, loading, savedUser }) {
+  // STRICT: Only display on Android APK, NEVER on web browser!
+  if (!Capacitor.isNativePlatform()) return null;
+  if (!savedUser && !biometricService.isEnabled() && !biometricService.hasStoredCredentials()) return null;
+
+  return (
+    <div style={{ marginTop: '10px', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', margin: '10px 0 12px', gap: '8px' }}>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border-color, rgba(255, 255, 255, 0.15))' }} />
+        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+          ⚡ Fast 1-Touch Sign In
+        </span>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border-color, rgba(255, 255, 255, 0.15))' }} />
+      </div>
+
+      <button
+        type="button"
+        id="btn-login-with-fingerprint"
+        onClick={onBiometricLogin}
+        disabled={loading}
+        style={{
+          width: '100%',
+          padding: '12px 16px',
+          borderRadius: '12px',
+          border: '1.5px solid rgba(16, 185, 129, 0.55)',
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.14) 100%)',
+          color: 'var(--text-primary, #ffffff)',
+          fontSize: '0.92rem',
+          fontWeight: 800,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          boxShadow: '0 4px 16px rgba(16, 185, 129, 0.25)',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <span style={{ fontSize: '1.3rem' }}>👆</span>
+        <span>
+          Sign In with Fingerprint
+          {savedUser?.regNum ? ` (${savedUser.regNum})` : ''}
+        </span>
+      </button>
+    </div>
+  );
+}
+
 export default function Login() {
   const { login, logout } = useAuth();
   const navigate = useNavigate();
@@ -136,6 +185,17 @@ export default function Login() {
   // Login Fields State
   const [regNum, setRegNum] = useState('');
   const [password, setPassword] = useState('');
+  const [savedBiometricUser, setSavedBiometricUser] = useState(null);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const saved = biometricService.getSavedUser();
+      if (saved && saved.regNum) {
+        setSavedBiometricUser(saved);
+        setRegNum((prev) => prev || saved.regNum);
+      }
+    }
+  }, []);
 
   // Activation Fields State
   const [actRegNum, setActRegNum] = useState('');
@@ -201,6 +261,16 @@ export default function Login() {
         return;
       }
 
+      // Auto-save credentials on Android Mobile APK for 1-Touch Fingerprint Login
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await biometricService.saveCredentials(reg, pass, decodedUser);
+          setSavedBiometricUser({ regNum: String(reg).trim().toUpperCase(), userName: decodedUser?.name });
+        } catch (saveErr) {
+          console.warn('[Login] auto-save biometric credentials warning:', saveErr);
+        }
+      }
+
       triggerToast('success', `Welcome, ${decodedUser.name || decodedUser.registrationNumber}!`);
       switch (decodedUser.role) {
         case 'student':        navigate('/student', { replace: true }); break;
@@ -222,16 +292,18 @@ export default function Login() {
     }
   };
 
-    const handleBiometricLogin = async () => {
+  const handleBiometricLogin = async () => {
     try {
       setLoading(true);
       const creds = await biometricService.loginWithBiometric();
       if (creds && creds.regNum && creds.password) {
+        triggerToast('info', 'Fingerprint verified. Signing in...');
         await doLogin(creds.regNum, creds.password);
       }
     } catch (err) {
-      if (err.message && !err.message.toLowerCase().includes('cancel')) {
-        triggerToast('error', err.message);
+      const msg = err?.message || '';
+      if (!msg.toLowerCase().includes('cancel') && !msg.toLowerCase().includes('negative') && !msg.toLowerCase().includes('user cancelled')) {
+        triggerToast('error', msg);
       }
     } finally {
       setLoading(false);
@@ -503,33 +575,12 @@ export default function Login() {
                   >
                     {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
                   </button>
-                  {biometricService.isEnabled() && (
-                    <button
-                      type="button"
-                      onClick={handleBiometricLogin}
-                      disabled={loading}
-                      style={{
-                        width: '100%',
-                        marginTop: '10px',
-                        padding: '11px 16px',
-                        borderRadius: '12px',
-                        border: '1.5px solid rgba(16, 185, 129, 0.4)',
-                        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.06) 100%)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.88rem',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.15)',
-                      }}
-                    >
-                      <span style={{ fontSize: '1.15rem' }}>👆</span>
-                      <span>Login with Fingerprint</span>
-                    </button>
-                  )}
+
+                  <BiometricLoginButton
+                    onBiometricLogin={handleBiometricLogin}
+                    loading={loading}
+                    savedUser={savedBiometricUser}
+                  />
                 </form>
               ) : (
                 <form onSubmit={handleActivateSubmit}>
@@ -772,6 +823,12 @@ export default function Login() {
                     >
                       {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
                     </button>
+
+                    <BiometricLoginButton
+                      onBiometricLogin={handleBiometricLogin}
+                      loading={loading}
+                      savedUser={savedBiometricUser}
+                    />
                   </form>
                 ) : (
                   <form onSubmit={handleActivateSubmit}>
@@ -1043,6 +1100,12 @@ export default function Login() {
                   >
                     {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'} →` : 'Sign In →'}
                   </button>
+
+                  <BiometricLoginButton
+                    onBiometricLogin={handleBiometricLogin}
+                    loading={loading}
+                    savedUser={savedBiometricUser}
+                  />
                 </form>
               ) : (
                 <form onSubmit={handleActivateSubmit} className="concept4-form">

@@ -324,54 +324,6 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
             </button>
 
-            {/* Hardware Biometric Fingerprint Lock shortcut (Universal for all users) */}
-            <button
-              type="button"
-              onClick={() => {
-                if (onClose) onClose();
-                setIsBiometricModalOpen(true);
-              }}
-              id="sidebar-link-fingerprint-lock-main"
-              className="sidebar-dock-link"
-              style={{
-                width: '100%',
-                textAlign: 'left',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-            >
-              <div className="dock-link-icon-wrap" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-                👆
-              </div>
-
-              <div className="dock-link-content">
-                <span className="dock-link-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  Fingerprint Lock
-                  <span
-                    style={{
-                      fontSize: '0.6rem',
-                      padding: '1px 6px',
-                      borderRadius: '10px',
-                      background: biometricService.isEnabled() ? 'rgba(16, 185, 129, 0.2)' : 'rgba(99, 102, 241, 0.2)',
-                      color: biometricService.isEnabled() ? '#10b981' : '#818cf8',
-                      fontWeight: 800,
-                    }}
-                  >
-                    {biometricService.isEnabled() ? 'ACTIVE' : 'SETUP'}
-                  </span>
-                </span>
-                <span className="dock-link-subtitle">
-                  {biometricService.isEnabled() ? 'Biometric security enabled' : 'Touch to configure biometrics'}
-                </span>
-              </div>
-
-              <div className="dock-link-indicator-chip">
-                <span className="indicator-ray" />
-              </div>
-            </button>
-
             {isSuperAdmin && (
               <>
                 <NavLink
@@ -564,44 +516,46 @@ export default function Sidebar({ isOpen, onClose }) {
               </span>
             </button>
 
-            {/* Biometric Fingerprint Lock Button */}
-            <button
-              type="button"
-              onClick={() => {
-                onClose?.();
-                setIsBiometricModalOpen(true);
-              }}
-              style={{
-                width: '100%',
-                marginTop: '6px',
-                padding: '0.45rem 0.75rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
-                background: biometricService.isEnabled() ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.04)',
-                color: 'var(--text-primary)',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-              }}
-              title="Configure Biometric Fingerprint Lock for this device"
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>👆</span>
-                <span>Fingerprint Lock</span>
-              </span>
-              <span
-                style={{
-                  fontSize: '0.7rem',
-                  color: biometricService.isEnabled() ? '#10b981' : '#818cf8',
-                  fontWeight: 700,
+            {/* Biometric Fingerprint Lock Button (Mobile APK only) */}
+            {Capacitor.isNativePlatform() && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose?.();
+                  setIsBiometricModalOpen(true);
                 }}
+                style={{
+                  width: '100%',
+                  marginTop: '6px',
+                  padding: '0.45rem 0.75rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+                  background: biometricService.isEnabled() ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                }}
+                title="Configure Biometric Fingerprint Lock for this device"
               >
-                {biometricService.isEnabled() ? '🔒 Active' : 'Setup'}
-              </span>
-            </button>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>👆</span>
+                  <span>Fingerprint Lock</span>
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    color: biometricService.isEnabled() ? '#10b981' : '#818cf8',
+                    fontWeight: 700,
+                  }}
+                >
+                  {biometricService.isEnabled() ? '🔒 Active' : 'Setup'}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* 5. Theme Switcher & Logout */}
@@ -653,8 +607,10 @@ export default function Sidebar({ isOpen, onClose }) {
       {/* Closed Beta Testing (CBT) Student Channel Modal */}
       <CbtModal isOpen={isCbtModalOpen} onClose={() => setIsCbtModalOpen(false)} />
 
-      {/* Hardware Biometric Fingerprint Lock Modal */}
-      <BiometricSettingsModal isOpen={isBiometricModalOpen} onClose={() => setIsBiometricModalOpen(false)} />
+      {/* Hardware Biometric Fingerprint Lock Modal (Mobile APK only) */}
+      {Capacitor.isNativePlatform() && (
+        <BiometricSettingsModal isOpen={isBiometricModalOpen} onClose={() => setIsBiometricModalOpen(false)} />
+      )}
     </>
   );
 }

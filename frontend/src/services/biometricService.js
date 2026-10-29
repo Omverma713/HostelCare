@@ -2,13 +2,12 @@
  * biometricService.js
  * 
  * Hardware-level Biometric Authentication Engine for HostelCare.
- * Provides 100% Free, Native Android BiometricPrompt (Fingerprint / Face Unlock / Screen Lock)
- * with graceful fallback to W3C WebAuthn Platform Authenticator in desktop & mobile web browsers.
  * 
- * Security Guarantee:
- * - Requires explicit account password verification before enabling.
- * - Credentials encrypted at OS hardware level (Android TEE / Keystore).
- * - Offline-first: works with or without internet connection.
+ * STRICT RULES:
+ * 1. ONLY active on Native Mobile APK (Capacitor Android).
+ * 2. 100% DISABLED on web browsers / desktop website (no modals, no prompts, no WebAuthn noise).
+ * 3. Designed specifically for LOGIN TIME (1-Touch Fast Fingerprint Login).
+ * 4. Zero screen interruption when already logged in.
  */
 
 import { Capacitor } from '@capacitor/core';
@@ -23,57 +22,50 @@ let cachedAvailability = null;
 
 export const biometricService = {
   /**
-   * Check if biometric hardware (Fingerprint / Face ID) is supported and enrolled
+   * Check if biometric hardware (Fingerprint) is supported on this device.
+   * STRICT: Returns false on web/desktop browsers so website is never disturbed.
    */
   async isAvailable() {
+    // 1. Only available inside Native Android APK
+    if (!Capacitor.isNativePlatform()) {
+      return {
+        available: false,
+        biometryType: 'none',
+        platform: 'web',
+        label: 'Unavailable on Web',
+      };
+    }
+
     if (cachedAvailability !== null) {
       return cachedAvailability;
     }
 
     try {
-      if (Capacitor.isNativePlatform()) {
-        const result = await NativeBiometric.isAvailable();
-        cachedAvailability = {
-          available: Boolean(result.isAvailable),
-          biometryType: result.biometryType || 'fingerprint',
-          platform: 'native_android',
-          label: 'Fingerprint & Screen Lock',
-        };
-        return cachedAvailability;
-      }
-
-      // Web Browser WebAuthn Platform Authenticator check (e.g. Android Chrome Fingerprint, Touch ID, Windows Hello)
-      if (
-        typeof window !== 'undefined' &&
-        window.PublicKeyCredential &&
-        typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
-      ) {
-        const isWebAuthnAvailable = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        cachedAvailability = {
-          available: Boolean(isWebAuthnAvailable),
-          biometryType: 'webauthn',
-          platform: 'web',
-          label: 'Biometric Screen Lock',
-        };
-        return cachedAvailability;
-      }
+      const result = await NativeBiometric.isAvailable({ useFallback: true });
+      cachedAvailability = {
+        available: Boolean(result.isAvailable),
+        biometryType: result.biometryType || 'fingerprint',
+        platform: 'native_android',
+        label: 'Fingerprint & Screen Lock',
+      };
+      return cachedAvailability;
     } catch (err) {
-      console.warn('[BiometricService] Hardware check warning:', err.message);
+      console.warn('[BiometricService] Native hardware check:', err.message);
+      cachedAvailability = {
+        available: false,
+        biometryType: 'none',
+        platform: 'native_android_unavailable',
+        label: 'Unavailable',
+      };
+      return cachedAvailability;
     }
-
-    cachedAvailability = {
-      available: false,
-      biometryType: 'none',
-      platform: 'unsupported',
-      label: 'Unavailable',
-    };
-    return cachedAvailability;
   },
 
   /**
-   * Check if user has enabled biometric lock in their app settings
+   * Check if user has enabled biometric lock in their mobile app
    */
   isEnabled() {
+    if (!Capacitor.isNativePlatform()) return false;
     try {
       return localStorage.getItem(BIOMETRIC_ENABLED_KEY) === 'true';
     } catch {
@@ -82,9 +74,10 @@ export const biometricService = {
   },
 
   /**
-   * Check if stored biometric login credentials exist
+   * Check if stored biometric login credentials exist on this device
    */
   hasStoredCredentials() {
+    if (!Capacitor.isNativePlatform()) return false;
     try {
       const data = localStorage.getItem(BIOMETRIC_VAULT_KEY);
       return Boolean(data);
@@ -94,13 +87,55 @@ export const biometricService = {
   },
 
   /**
-   * Enable Biometric Lock
-   * STRICT SECURITY REQUIREMENT:
-   * 1. Must first verify current account password via server API.
-   * 2. Must successfully scan fingerprint on native hardware.
-   * 3. Stores encrypted credentials in Keystore / vault.
+   * Get metadata for the saved user account (for display on login screen)
    */
-  async enableBiometric({ password, currentUser, currentToken }) {
+  getSavedUser() {
+    if (!Capacitor.isNativePlatform()) return null;
+    try {
+      const raw = localStorage.getItem(BIOMETRIC_VAULT_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+    return null;
+  },
+
+  /**
+   * Automatically save credentials to native Keystore upon successful mobile login
+   */
+  async saveCredentials(regNum, password, user = {}) {
+    if (!Capacitor.isNativePlatform()) return false;
+    if (!regNum || !password) return false;
+
+    try {
+      await NativeBiometric.setCredentials({
+        server: BIOMETRIC_SERVER_ID,
+        username: String(regNum).trim().toUpperCase(),
+        password: String(password),
+      });
+
+      const vaultPayload = {
+        regNum: String(regNum).trim().toUpperCase(),
+        userName: user?.name || regNum,
+        savedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem(BIOMETRIC_VAULT_KEY, JSON.stringify(vaultPayload));
+      localStorage.setItem(BIOMETRIC_ENABLED_KEY, 'true');
+      return true;
+    } catch (err) {
+      console.warn('[BiometricService] Failed storing native credentials:', err.message);
+      return false;
+    }
+  },
+
+  /**
+   * Enable Biometric explicitly with password verification
+   */
+  async enableBiometric({ password, currentUser }) {
+    if (!Capacitor.isNativePlatform()) {
+      throw new Error('Biometric lock is only supported in the Android Mobile App.');
+    }
     if (!password) {
       throw new Error('Account password is required to enable Biometric Lock.');
     }
@@ -108,75 +143,33 @@ export const biometricService = {
     // 1. Verify user password against backend
     const verifyRes = await api.verifyPassword(password);
     if (!verifyRes || !verifyRes.success) {
-      throw new Error(verifyRes?.message || 'Incorrect account password. Biometric setup aborted.');
+      throw new Error(verifyRes?.message || 'Incorrect account password.');
     }
 
     // 2. Hardware biometric prompt test
     const authResult = await this.authenticate({
-      title: 'Setup Fingerprint Lock',
-      subtitle: 'Touch the fingerprint sensor to verify your identity',
-      description: 'Your biometric data never leaves your device hardware.',
+      title: 'Setup Fingerprint Login',
+      subtitle: 'Touch the fingerprint sensor to confirm',
+      description: 'Your biometric data is kept securely inside Android Keystore.',
     });
 
     if (!authResult || !authResult.success) {
-      throw new Error('Fingerprint verification failed. Please try again.');
+      throw new Error('Fingerprint scan failed. Please try again.');
     }
 
-    // 3. Store hardware encrypted credentials
     const regNum = currentUser?.registrationNumber || currentUser?.regNo || '';
-    const token = currentToken || localStorage.getItem('token') || '';
-
-    if (Capacitor.isNativePlatform()) {
-      try {
-        await NativeBiometric.setCredentials({
-          server: BIOMETRIC_SERVER_ID,
-          username: regNum,
-          password: password,
-        });
-      } catch (keystoreErr) {
-        console.warn('[BiometricService] Keystore write fallback:', keystoreErr.message);
-      }
-    }
-
-    // Local state marker
-    const vaultPayload = {
-      regNum,
-      enabledAt: new Date().toISOString(),
-      userName: currentUser?.name || '',
-      userRole: currentUser?.role || 'student',
-      hasToken: Boolean(token),
-    };
-
-    localStorage.setItem(BIOMETRIC_VAULT_KEY, JSON.stringify(vaultPayload));
-    localStorage.setItem(BIOMETRIC_ENABLED_KEY, 'true');
+    await this.saveCredentials(regNum, password, currentUser);
 
     return {
       success: true,
-      message: 'Biometric Fingerprint Lock enabled successfully!',
+      message: 'Fingerprint Login enabled successfully!',
     };
   },
 
   /**
-   * Disable Biometric Lock
-   * Requires biometric confirmation or password verification
+   * Disable Biometric Lock & clear credentials
    */
-  async disableBiometric({ password = null } = {}) {
-    if (password) {
-      const verifyRes = await api.verifyPassword(password);
-      if (!verifyRes || !verifyRes.success) {
-        throw new Error(verifyRes?.message || 'Incorrect account password.');
-      }
-    } else {
-      // Biometric scan confirmation
-      const authResult = await this.authenticate({
-        title: 'Disable Biometric Lock',
-        subtitle: 'Scan your fingerprint to confirm turning off biometric security',
-      });
-      if (!authResult || !authResult.success) {
-        throw new Error('Biometric confirmation failed.');
-      }
-    }
-
+  async disableBiometric() {
     if (Capacitor.isNativePlatform()) {
       try {
         await NativeBiometric.deleteCredentials({ server: BIOMETRIC_SERVER_ID });
@@ -188,102 +181,83 @@ export const biometricService = {
 
     return {
       success: true,
-      message: 'Biometric Fingerprint Lock has been disabled.',
+      message: 'Fingerprint Login has been disabled on this device.',
     };
   },
 
   /**
-   * Prompt hardware biometric dialog (Fingerprint / Face ID / Android BiometricPrompt)
+   * Prompt Android Native BiometricPrompt Dialog
    */
   async authenticate({
-    title = 'HostelCare Security Verification',
-    subtitle = 'Touch your fingerprint sensor to proceed',
-    description = 'Verify your identity to unlock HostelCare',
+    title = 'HostelCare Fingerprint Verification',
+    subtitle = 'Touch the fingerprint sensor to proceed',
+    description = 'Verify your identity',
     negativeButtonText = 'Cancel',
   } = {}) {
+    if (!Capacitor.isNativePlatform()) {
+      return { success: false, error: 'Biometrics unavailable on web' };
+    }
+
     try {
-      if (Capacitor.isNativePlatform()) {
-        await NativeBiometric.verifyIdentity({
-          reason: description || subtitle,
-          title,
-          subtitle,
-          description,
-          negativeButtonText,
-          maxAttempts: 3,
-        });
-        return { success: true };
-      }
-
-      // WebAuthn Browser fallback
-      if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-        // Simple assertion challenge
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-
-        // Dummy assertion options for user verification
-        return { success: true };
-      }
-
+      await NativeBiometric.verifyIdentity({
+        reason: description || subtitle,
+        title,
+        subtitle,
+        description,
+        negativeButtonText,
+        maxAttempts: 5,
+        useFallback: true,
+      });
       return { success: true };
     } catch (err) {
-      console.warn('[BiometricService] Authentication cancelled or failed:', err.message);
+      console.warn('[BiometricService] Authentication cancelled or failed:', err?.message || err);
       return {
         success: false,
-        error: err.message || 'Authentication cancelled by user',
+        error: err?.message || 'Authentication cancelled by user',
       };
     }
   },
 
   /**
-   * 1-Touch Fast Login using Biometric Credentials
+   * 1-Touch Fast Login using Fingerprint at Login screen
    */
   async loginWithBiometric() {
-    if (!this.isEnabled()) {
-      throw new Error('Biometric lock is not enabled on this device.');
+    if (!Capacitor.isNativePlatform()) {
+      throw new Error('Biometric login is only available in the Android Mobile App.');
     }
 
+    const saved = this.getSavedUser();
+    const displayName = saved?.regNum || 'HostelCare';
+
     const authResult = await this.authenticate({
-      title: 'HostelCare Biometric Login',
-      subtitle: 'Touch the fingerprint sensor to log in',
-      description: 'Quick & secure passwordless sign-in',
+      title: 'HostelCare Fingerprint Login',
+      subtitle: `Touch fingerprint sensor to sign in as ${displayName}`,
+      description: 'Quick & secure 1-touch login',
+      negativeButtonText: 'Use Password',
     });
 
     if (!authResult.success) {
       throw new Error(authResult.error || 'Biometric authentication was cancelled.');
     }
 
-    // Retrieve credentials
+    // Retrieve stored credentials from Android secure Keystore
     let regNum = '';
     let password = '';
 
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const creds = await NativeBiometric.getCredentials({ server: BIOMETRIC_SERVER_ID });
-        if (creds && creds.username && creds.password) {
-          regNum = creds.username;
-          password = creds.password;
-        }
-      } catch (err) {
-        console.warn('[BiometricService] Native credential read warning:', err.message);
+    try {
+      const creds = await NativeBiometric.getCredentials({ server: BIOMETRIC_SERVER_ID });
+      if (creds && creds.username && creds.password) {
+        regNum = creds.username;
+        password = creds.password;
       }
+    } catch (err) {
+      console.warn('[BiometricService] Native credential read error:', err.message);
     }
 
     if (!regNum || !password) {
-      // Fallback to vault metadata if stored
-      const raw = localStorage.getItem(BIOMETRIC_VAULT_KEY);
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          regNum = parsed.regNum || '';
-        } catch (_) {}
-      }
+      throw new Error('No saved biometric credentials found. Please log in with password once to set up fingerprint.');
     }
 
-    if (!regNum) {
-      throw new Error('No enrolled user account found for biometric login. Please log in with password first.');
-    }
-
-    // Perform login API call if password retrieved, or return credentials
     return {
       success: true,
       regNum,
@@ -291,4 +265,3 @@ export const biometricService = {
     };
   },
 };
-

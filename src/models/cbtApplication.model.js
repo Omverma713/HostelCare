@@ -86,7 +86,7 @@ const cbtApplicationSchema = new mongoose.Schema(
 
     betaVersion: {
       type: String,
-      default: "1.2.2.12",
+      default: "1.2.2.13",
       trim: true,
       index: true,
     },

@@ -321,7 +321,7 @@ const getStudentCbtStatus = async (req, res) => {
     const userId = req.user.id || req.user._id;
 
     // Check student's application for current beta version
-    const activeVersion = closedBeta.betaVersion || "1.2.2.12";
+    const activeVersion = closedBeta.betaVersion || "1.2.2.13";
     const application = await CbtApplication.findOne({
       userId,
       betaVersion: activeVersion,
@@ -387,7 +387,7 @@ const applyForCbt = async (req, res) => {
     }
 
     // 2. Validate applicant capacity if configured
-    const activeVersion = closedBeta.betaVersion || "1.2.2.12";
+    const activeVersion = closedBeta.betaVersion || "1.2.2.13";
     if (closedBeta.maxApplicants && closedBeta.maxApplicants > 0) {
       const currentCount = await CbtApplication.countDocuments({ betaVersion: activeVersion });
       if (currentCount >= closedBeta.maxApplicants) {
@@ -466,7 +466,7 @@ const applyForCbt = async (req, res) => {
 const getMyCbtApplication = async (req, res) => {
   try {
     const config = await SystemConfig.getEffectiveConfig();
-    const activeVersion = config.closedBeta?.betaVersion || "1.2.2.12";
+    const activeVersion = config.closedBeta?.betaVersion || "1.2.2.13";
     const userId = req.user.id || req.user._id;
 
     const application = await CbtApplication.findOne({

@@ -58,3 +58,4 @@ Every student on mobile and web now gets bank-grade biometric hardware protectio
 2. **Main Menu**: Open the sidebar navigation menu (3 horizontal lines) and tap `👆 Biometric Lock`.
 3. **Setup**: Enter your account password once to authorize, then touch the fingerprint sensor to enroll.
 4. **Login**: From then on, tap `👆 Sign in with Fingerprint` on the login page for instant 1-touch sign-in!
+

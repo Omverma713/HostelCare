@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { biometricService } from '../services/biometricService';
 import { useAuth } from '../hooks/useAuth';
 import { triggerToast } from './Toast';
+import { Capacitor } from '@capacitor/core';
 
 export default function BiometricSettingsModal({ isOpen, onClose }) {
   const { user, token } = useAuth();
@@ -33,7 +34,7 @@ export default function BiometricSettingsModal({ isOpen, onClose }) {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !Capacitor.isNativePlatform()) return null;
 
   const handleToggleClick = () => {
     setErrorMsg('');
