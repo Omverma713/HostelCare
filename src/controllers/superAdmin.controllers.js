@@ -340,7 +340,7 @@ const updateUserProfile = async (req, res) => {
         await Session.updateMany(
           { userId: user._id },
           { $set: { registrationNumber: cleanReg } }
-        ).catch(() => {});
+        ).catch(() => { });
       }
     }
 
@@ -420,7 +420,7 @@ const updateUserProfile = async (req, res) => {
           },
         }
       );
-    } catch (_) {}
+    } catch (_) { }
 
     await recordAudit({
       req,
@@ -1057,7 +1057,7 @@ const flushUserAccount = async (req, res) => {
       const DeviceRegistry = require("../models/deviceRegistry.model");
       const deviceResult = await DeviceRegistry.deleteMany({ userId: user._id });
       prunedCount = deviceResult.deletedCount || 0;
-    } catch (_) {}
+    } catch (_) { }
 
     await recordAudit({
       req,
@@ -1154,7 +1154,7 @@ const updateSuperAdminSelfProfile = async (req, res) => {
           return res.status(409).json({ success: false, message: `Registration number '${cleanReg}' is already in use.` });
         }
         admin.registrationNumber = cleanReg;
-        await Session.updateMany({ userId: admin._id }, { $set: { registrationNumber: cleanReg } }).catch(() => {});
+        await Session.updateMany({ userId: admin._id }, { $set: { registrationNumber: cleanReg } }).catch(() => { });
       }
     }
 
@@ -1547,8 +1547,8 @@ const sendAdminNotification = async (req, res) => {
       report.failed === 0
         ? "accepted_by_provider"
         : report.accepted > 0
-        ? "partially_failed"
-        : "failed";
+          ? "partially_failed"
+          : "failed";
 
     // 3. Persist Campaign Record
     const campaign = await NotificationCampaign.create({
@@ -2191,13 +2191,13 @@ const getSuperAdminAppVersionConfig = async (req, res) => {
         enabled: Boolean(config?.pilotTesting?.enabled),
         isSuspended: Boolean(config?.pilotTesting?.isSuspended),
         suspendedReason: config?.pilotTesting?.suspendedReason || "",
-        version: config?.pilotTesting?.version || "1.2.2.13",
+        version: config?.pilotTesting?.version || "1.2.2.12",
         updateMessage:
           config?.pilotTesting?.updateMessage ||
           "You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.",
         updateUrl:
           config?.pilotTesting?.updateUrl ||
-          "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.13/hostelcare-v1.2.2.13.apk",
+          "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.12/hostelcare-v1.2.2.12.apk",
         forceUpdate: Boolean(config?.pilotTesting?.forceUpdate),
         releaseNotes: config?.pilotTesting?.releaseNotes || "",
         releaseMedia: config?.pilotTesting?.releaseMedia || [],
@@ -2446,7 +2446,7 @@ const testPilotUserEligibility = async (req, res) => {
     const isTargeted = pilotTargets.includes(cleanReg);
     const isPilotActive = Boolean(pilotConfig.enabled);
     const isPilotSuspended = Boolean(pilotConfig.isSuspended);
-    const pilotVersion = pilotConfig.version || "1.2.2.13";
+    const pilotVersion = pilotConfig.version || "1.2.2.12";
 
     let updateWillTrigger = false;
     let reason = "";
@@ -2480,14 +2480,14 @@ const testPilotUserEligibility = async (req, res) => {
       registrationNumber: cleanReg,
       student: student
         ? {
-            name: student.name,
-            role: student.role,
-            hostel: student.hostel,
-            roomNumber: student.roomNumber,
-            registrationNumber: student.registrationNumber,
-            email: student.email,
-            accountStatus: student.accountStatus,
-          }
+          name: student.name,
+          role: student.role,
+          hostel: student.hostel,
+          roomNumber: student.roomNumber,
+          registrationNumber: student.registrationNumber,
+          email: student.email,
+          accountStatus: student.accountStatus,
+        }
         : null,
       verdict,
       checks,
@@ -2641,8 +2641,8 @@ async function getMessNotificationSchedule(req, res) {
       dayMode === "working"
         ? false
         : dayMode === "sunday" || dayMode === "holiday"
-        ? true
-        : timeInfo.isSunday;
+          ? true
+          : timeInfo.isSunday;
 
     return res.status(200).json({
       success: true,
@@ -3001,7 +3001,7 @@ async function simulateAutoFireMessAlert(req, res) {
       await MessNotificationDispatch.deleteMany({
         dateStr: timeInfo.dateStr,
         mealSlot: slotKey,
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     const delay = Math.max(0, Math.min(300, Number(delaySeconds) || 0));
@@ -3445,7 +3445,7 @@ const getDelegationsList = async (req, res) => {
           isDelegatedSubAdmin: false,
           delegatedRole: null,
           delegationId: null,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }
 

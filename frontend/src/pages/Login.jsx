@@ -243,7 +243,7 @@ export default function Login() {
     setCardTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
   };
 
-  const doLogin = async (reg, pass) => {
+  const doLogin = async (reg, pass, options = {}) => {
     setLoading(true);
     try {
       const decodedUser = await login(reg, pass);
@@ -271,7 +271,8 @@ export default function Login() {
         }
       }
 
-      triggerToast('success', `Welcome, ${decodedUser.name || decodedUser.registrationNumber}!`);
+      const toastTitle = options?.viaBiometric ? '👆 Fingerprint Login' : 'Success';
+      triggerToast('success', `Welcome, ${decodedUser.name || decodedUser.registrationNumber}!`, toastTitle);
       switch (decodedUser.role) {
         case 'student':        navigate('/student', { replace: true }); break;
         case 'caretaker':      navigate('/caretaker', { replace: true }); break;
@@ -297,8 +298,7 @@ export default function Login() {
       setLoading(true);
       const creds = await biometricService.loginWithBiometric();
       if (creds && creds.regNum && creds.password) {
-        triggerToast('info', 'Fingerprint verified. Signing in...');
-        await doLogin(creds.regNum, creds.password);
+        await doLogin(creds.regNum, creds.password, { viaBiometric: true });
       }
     } catch (err) {
       const msg = err?.message || '';
