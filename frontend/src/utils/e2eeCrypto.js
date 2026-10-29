@@ -93,11 +93,11 @@ export async function getDeviceIdentityKey() {
 }
 
 /**
- * Derives a 256-bit AES-GCM CryptoKey using PBKDF2 (100,000 iterations for 100% DB compatibility)
- * Result is strictly memoized in keyCache so it executes only ONCE per ticket.
+ * Derives a 256-bit AES-GCM CryptoKey using PBKDF2
+ * Result is strictly memoized in keyCache so it executes only ONCE per ticket/iteration combo.
  */
-export async function getDerivedTicketKey(ticketId, e2eeSalt = "hostelcare_default_salt") {
-  const cacheKey = `${ticketId}_${e2eeSalt}`;
+export async function getDerivedTicketKey(ticketId, e2eeSalt = "hostelcare_default_salt", iterations = 100000) {
+  const cacheKey = `${ticketId}_${e2eeSalt}_${iterations}`;
   if (keyCache.has(cacheKey)) {
     return keyCache.get(cacheKey);
   }
@@ -119,7 +119,7 @@ export async function getDerivedTicketKey(ticketId, e2eeSalt = "hostelcare_defau
     {
       name: "PBKDF2",
       salt: enc.encode(e2eeSalt),
-      iterations: 100000, // Exact 100,000 iterations to match all historical messages in DB
+      iterations, // Defaults to 100,000; supports 10,000 fallback
       hash: "SHA-256",
     },
     keyMaterial,
@@ -198,9 +198,9 @@ export async function decryptMessage(encryptedContent, ivBase64, ticketId, e2eeS
       return messagePlaintextCache.get(cacheKey);
     }
 
-    // Helper to attempt AES-GCM decryption with given key material
-    const tryDecrypt = async (tId, salt) => {
-      const key = await getDerivedTicketKey(tId, salt);
+    // Helper to attempt AES-GCM decryption with given key material and iteration count
+    const tryDecrypt = async (tId, salt, iters = 100000) => {
+      const key = await getDerivedTicketKey(tId, salt, iters);
       const cipherBytes = base64ToBuffer(encryptedContent);
       const ivBytes = base64ToBuffer(ivBase64);
 
@@ -217,35 +217,42 @@ export async function decryptMessage(encryptedContent, ivBase64, ticketId, e2eeS
       return dec.decode(decryptedBuffer);
     };
 
-    // 3. Attempt Primary Decryption (active ticketId + ticket salt)
+    // 3. Attempt Primary Decryption (active ticketId + ticket salt @ 100,000 iterations)
     try {
-      const plainText = await tryDecrypt(ticketId, e2eeSalt || "hostelcare_default_salt");
+      const plainText = await tryDecrypt(ticketId, e2eeSalt || "hostelcare_default_salt", 100000);
       messagePlaintextCache.set(cacheKey, plainText);
       return plainText;
     } catch (err1) {
-      // 4. Fallback 1: Try with 'INIT' and 'initial_salt' (for messages created during ticket initialization)
+      // 4. Fallback 1: Try with active ticketId + salt @ 10,000 iterations (for messages sent during fast-derivation window)
       try {
-        const plainText = await tryDecrypt("INIT", "initial_salt");
+        const plainText = await tryDecrypt(ticketId, e2eeSalt || "hostelcare_default_salt", 10000);
         messagePlaintextCache.set(cacheKey, plainText);
         return plainText;
-      } catch (err2) {
-        // 5. Fallback 2: Try with ticketId and default salt
-        if (e2eeSalt && e2eeSalt !== "hostelcare_default_salt") {
-          try {
-            const plainText = await tryDecrypt(ticketId, "hostelcare_default_salt");
-            messagePlaintextCache.set(cacheKey, plainText);
-            return plainText;
-          } catch (err3) {
-            // pass
+      } catch (err10k) {
+        // 5. Fallback 2: Try with 'INIT' and 'initial_salt' (for messages created during ticket initialization)
+        try {
+          const plainText = await tryDecrypt("INIT", "initial_salt", 100000);
+          messagePlaintextCache.set(cacheKey, plainText);
+          return plainText;
+        } catch (err2) {
+          // 6. Fallback 3: Try with ticketId and default salt
+          if (e2eeSalt && e2eeSalt !== "hostelcare_default_salt") {
+            try {
+              const plainText = await tryDecrypt(ticketId, "hostelcare_default_salt", 100000);
+              messagePlaintextCache.set(cacheKey, plainText);
+              return plainText;
+            } catch (err3) {
+              // pass
+            }
           }
-        }
 
-        // 6. Fallback 3: Check if content is already human-readable string
-        if (typeof encryptedContent === "string" && !/^[A-Za-z0-9+/=]{20,}$/.test(encryptedContent)) {
-          return encryptedContent;
-        }
+          // 7. Fallback 4: Check if content is already human-readable string
+          if (typeof encryptedContent === "string" && !/^[A-Za-z0-9+/=]{20,}$/.test(encryptedContent)) {
+            return encryptedContent;
+          }
 
-        throw err1;
+          throw err1;
+        }
       }
     }
   } catch (err) {
