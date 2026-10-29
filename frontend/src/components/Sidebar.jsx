@@ -24,7 +24,6 @@ export default function Sidebar({ isOpen, onClose }) {
   const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
   const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
-  const [hasMoreBelow, setHasMoreBelow] = useState(false);
 
   useEffect(() => {
     const unsub = appUpdateService.addListener((state) => {
@@ -118,73 +117,6 @@ export default function Sidebar({ isOpen, onClose }) {
     return () => aside.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // Track whether there is more scrollable content below in the sidebar nav
-  useEffect(() => {
-    const nav = navContainerRef.current;
-    if (!nav) return;
-
-    const checkScrollState = () => {
-      const canScroll = nav.scrollHeight > nav.clientHeight + 10;
-      const isBottom = nav.scrollTop + nav.clientHeight >= nav.scrollHeight - 16;
-      setHasMoreBelow(canScroll && !isBottom);
-    };
-
-    checkScrollState();
-
-    const timer = setTimeout(checkScrollState, 250);
-    nav.addEventListener('scroll', checkScrollState, { passive: true });
-    window.addEventListener('resize', checkScrollState);
-
-    return () => {
-      clearTimeout(timer);
-      nav.removeEventListener('scroll', checkScrollState);
-      window.removeEventListener('resize', checkScrollState);
-    };
-  }, [isOpen, user?.role]);
-
-  // Dynamic scroll-driven animated entrance for dock links
-  useEffect(() => {
-    const container = navContainerRef.current;
-    if (!container) return;
-
-    const links = container.querySelectorAll('.sidebar-dock-link');
-    if (!links.length) return;
-
-    links.forEach((link, idx) => {
-      link.style.setProperty('--item-index', idx);
-    });
-
-    if (!('IntersectionObserver' in window)) {
-      links.forEach((link) => link.classList.add('scroll-visible'));
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('scroll-visible');
-          } else {
-            const contRect = container.getBoundingClientRect();
-            const targetRect = entry.boundingClientRect;
-            if (targetRect.top > contRect.bottom - 10) {
-              entry.target.classList.remove('scroll-visible');
-            }
-          }
-        });
-      },
-      {
-        root: container,
-        threshold: 0.12,
-        rootMargin: '0px 0px 8px 0px',
-      }
-    );
-
-    links.forEach((link) => observer.observe(link));
-
-    return () => observer.disconnect();
-  }, [isOpen, user?.role]);
-
   if (!user) return null;
 
   const userRole = user.role;
@@ -269,9 +201,8 @@ export default function Sidebar({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* 2. Navigation Section with Smooth Animated Liquid Scroll */}
-        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-          <div ref={navContainerRef} className="sidebar-nav-container">
+        {/* 2. Navigation Section */}
+        <div ref={navContainerRef} className="sidebar-nav-container">
           <div className="nav-section-eyebrow">PORTAL NAVIGATION</div>
 
           <nav className="sidebar-nav-items">
@@ -359,6 +290,8 @@ export default function Sidebar({ isOpen, onClose }) {
               style={{
                 width: '100%',
                 textAlign: 'left',
+                background: 'transparent',
+                border: 'none',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
@@ -517,22 +450,6 @@ export default function Sidebar({ isOpen, onClose }) {
             )}
           </nav>
         </div>
-
-        {/* Floating animated scroll hint pill when items extend below */}
-        {hasMoreBelow && (
-          <button
-            type="button"
-            className="sidebar-scroll-indicator"
-            onClick={() => {
-              navContainerRef.current?.scrollBy({ top: 140, behavior: 'smooth' });
-            }}
-            title="Click or scroll down to see more items"
-          >
-            <span>Scroll down</span>
-            <span className="scroll-hint-arrow">↓</span>
-          </button>
-        )}
-      </div>
 
         {/* 4. Bottom Section: Elevated User Profile Card */}
         <div className="sidebar-bottom-deck">
