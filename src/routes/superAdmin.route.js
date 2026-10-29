@@ -148,6 +148,9 @@ router.post("/pilot-testing/test-user", testPilotUserEligibility);
 router.post("/notifications/send", sensitiveActionLimiter, sendAdminNotification);
 router.get("/notifications", getNotificationHistory);
 
+// System Audit Logs
+router.get("/audit-logs", getAuditLogs);
+
 // Autonomous Mess Menu Auto-Notification Schedule & Test Engine
 router.get("/mess-notifications", getMessNotificationSchedule);
 router.put("/mess-notifications", sensitiveActionLimiter, updateMessNotificationSchedule);

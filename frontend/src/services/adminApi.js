@@ -16,7 +16,12 @@ async function adminRequest(endpoint, options = {}) {
     data = await response.json();
   } else {
     const text = await response.text();
-    data = { success: response.ok, message: text };
+    let cleanMessage = text;
+    if (typeof text === 'string' && text.trim().startsWith('<')) {
+      const match = text.match(/<pre>(.*?)<\/pre>/is) || text.match(/<title>(.*?)<\/title>/is);
+      cleanMessage = match ? match[1].replace(/<[^>]+>/g, '').trim() : `Request failed with HTTP ${response.status}`;
+    }
+    data = { success: response.ok, message: cleanMessage };
   }
 
   if (!response.ok) {
