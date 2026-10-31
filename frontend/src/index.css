@@ -10692,8 +10692,11 @@ html:not(.dark-theme) .quick-quad-card {
 
 html:not(.dark-theme) .quick-quad-card .quad-num {
   color: #242523 !important;
-  font-family: var(--font-serif, 'Playfair Display', serif) !important;
-  font-weight: 600 !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
 }
 
 html:not(.dark-theme) .quick-quad-card .quad-lbl {
