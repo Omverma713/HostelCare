@@ -769,3 +769,5 @@ export function getMealStatusForDay(dayMeals, kolkataTime = getKolkataTime(), fo
 
   return { activeSlot, nextSlot, isHolidayTiming };
 }
+
+

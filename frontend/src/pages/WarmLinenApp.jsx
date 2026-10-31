@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import './WarmLinenApp.css';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
-import { DEFAULT_MESS_DATA, DAYS_ORDER } from '../constants/messMenuData';
+import { DEFAULT_MESS_SCHEDULE, DAYS_ORDER } from '../constants/messMenuData';
 import { triggerToast } from '../components/Toast';
 export default function WarmLinenApp({ embedded = false, initialTab }) {
   const { user, login, logout, isAuthenticated } = useAuth();
@@ -34,7 +34,8 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [selectedDay, setSelectedDay] = useState(() => {
     const d = new Date().getDay();
-    return DAYS_ORDER[d === 0 ? 6 : d - 1] || 'monday';
+    const item = DAYS_ORDER[d === 0 ? 6 : d - 1];
+    return (item && typeof item === 'object' ? item.key : item) || 'monday';
   });
 
   useEffect(() => {
@@ -323,8 +324,9 @@ const handleSendMessage = (e) => {
                   const now = new Date();
                   const currentMins = now.getHours() * 60 + now.getMinutes();
                   const d = now.getDay();
-                  const todayKey = DAYS_ORDER[d === 0 ? 6 : d - 1] || 'monday';
-                  const todayMeals = DEFAULT_MESS_DATA[todayKey]?.meals || DEFAULT_MESS_DATA.monday.meals;
+                  const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
+                  const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
+                  const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
 
                   // Determine active or upcoming meal
                   let statusText = "Dinner is being served • 08:30 PM";
@@ -344,8 +346,9 @@ const handleSendMessage = (e) => {
                     menuText = "Menu: " + (todayMeals.dinner?.items?.join(', ') || "Paneer / Chicken, Roti, Dal, Rice");
                   } else {
                     const tomorrowD = (d + 1) % 7;
-                    const tomorrowKey = DAYS_ORDER[tomorrowD === 0 ? 6 : tomorrowD - 1] || 'sunday';
-                    const tomorrowBreakfast = DEFAULT_MESS_DATA[tomorrowKey]?.meals?.breakfast;
+                    const tomorrowItem = DAYS_ORDER[tomorrowD === 0 ? 6 : tomorrowD - 1];
+                    const tomorrowKey = (tomorrowItem && typeof tomorrowItem === 'object' ? tomorrowItem.key : tomorrowItem) || 'sunday';
+                    const tomorrowBreakfast = (DEFAULT_MESS_SCHEDULE[tomorrowKey] || DEFAULT_MESS_SCHEDULE.sunday)?.meals?.breakfast;
                     statusText = "Dinner has finished • Next Meal: Tomorrow Breakfast at 07:00 AM";
                     menuText = "Menu: " + (tomorrowBreakfast?.items?.join(', ') || "Upma / Idli & Coffee");
                   }
@@ -419,15 +422,17 @@ const handleSendMessage = (e) => {
             const now = new Date();
             const currentMins = now.getHours() * 60 + now.getMinutes();
             const d = now.getDay();
-            const todayKey = DAYS_ORDER[d === 0 ? 6 : d - 1] || 'monday';
+            const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
+            const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
             const isViewingToday = selectedDay === todayKey;
 
-            const dayData = DEFAULT_MESS_DATA[selectedDay] || DEFAULT_MESS_DATA.monday;
+            const dayData = DEFAULT_MESS_SCHEDULE[selectedDay] || DEFAULT_MESS_SCHEDULE.monday || { meals: {} };
+            const meals = dayData.meals || {};
             const mealsList = [
-              { key: 'breakfast', slot: dayData.meals.breakfast, icon: '🍳', name: 'Breakfast', defaultTime: '07:00 – 09:15 AM' },
-              { key: 'lunch', slot: dayData.meals.lunch, icon: '🍛', name: 'Lunch', defaultTime: '12:30 – 02:30 PM' },
-              { key: 'snacks', slot: dayData.meals.snacks, icon: '☕', name: 'Evening Snacks', defaultTime: '05:45 – 07:30 PM' },
-              { key: 'dinner', slot: dayData.meals.dinner, icon: '🍲', name: 'Dinner', defaultTime: '08:30 – 10:00 PM' },
+              { key: 'breakfast', slot: meals.breakfast, icon: '🍳', name: 'Breakfast', defaultTime: '07:00 – 09:15 AM' },
+              { key: 'lunch', slot: meals.lunch, icon: '🍛', name: 'Lunch', defaultTime: '12:30 – 02:30 PM' },
+              { key: 'snacks', slot: meals.snacks, icon: '☕', name: 'Evening Snacks', defaultTime: '05:45 – 07:30 PM' },
+              { key: 'dinner', slot: meals.dinner, icon: '🍲', name: 'Dinner', defaultTime: '08:30 – 10:00 PM' },
             ];
 
             return (
@@ -456,10 +461,11 @@ const handleSendMessage = (e) => {
 
                 {/* Day Selector Pills (Mon - Sun) */}
                 <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 24, scrollbarWidth: 'none' }}>
-                  {DAYS_ORDER.map((dayKey) => {
+                  {DAYS_ORDER.map((item) => {
+                    const dayKey = typeof item === 'object' ? item.key : item;
                     const isSelected = selectedDay === dayKey;
                     const isToday = dayKey === todayKey;
-                    const dayLabel = DEFAULT_MESS_DATA[dayKey]?.label || dayKey.toUpperCase();
+                    const dayLabel = (typeof item === 'object' && item.label) || DEFAULT_MESS_SCHEDULE[dayKey]?.label || dayKey.toUpperCase();
 
                     return (
                       <button
