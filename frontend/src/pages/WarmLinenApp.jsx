@@ -25,7 +25,7 @@ export default function WarmLinenApp() {
     { id: 'sess_3', user: '24E122A11', name: 'Om Verma', role: 'student', device: 'Android App (FCM)', ip: '172.18.0.1', status: 'active', time: '35m ago' },
     { id: 'sess_4', user: '24E114B14', name: 'Rakesh Sharma', role: 'student', device: 'Chrome on macOS', ip: '172.18.0.1', status: 'active', time: '1h ago' },
   ]);
-  const [activeTab, setActiveTab] = useState('home'); // Default is the exact mockup home!
+  const [activeTab, setActiveTab] = useState(user?.role === 'superadmin' ? 'admin' : 'home');
   const [showQrModal, setShowQrModal] = useState(false);
   const [showComplaintModal, setShowComplaintModal] = useState(false);
   const [complaintSubmitted, setComplaintSubmitted] = useState(false);
