@@ -215,7 +215,7 @@ function DashboardLayout() {
       </header>
 
       {/* 2. WORKSPACE LAYOUT (CENTERED CONTAINER WITH FLOATING CAPSULE DOCK) */}
-      <div className={`workspace-layout ${isSuperAdmin ? 'superadmin-layout' : ''}`}>
+      <div className={`workspace-layout ${isSuperAdmin ? 'superadmin-layout' : ''} ${isChat ? 'chat-layout' : ''}`}>
         {/* DOCK SPACER TO PRESERVE NATURAL FLEX FLOW ON DESKTOP */}
         <div className="sidebar-dock-spacer" />
 

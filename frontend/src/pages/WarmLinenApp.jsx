@@ -68,8 +68,31 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [broadcastSent, setBroadcastSent] = useState(false);
 
-  // Live Maintenance & Complaints State
-  const [realComplaints, setRealComplaints] = useState([]);
+  // Live Maintenance & Complaints State (Default sample complaints from recent activity)
+  const [realComplaints, setRealComplaints] = useState([
+    {
+      _id: '8858',
+      ticketNumber: '#HC-8858',
+      department: 'Security',
+      description: 'Living room light switch repair',
+      status: 'resolved',
+      createdAt: new Date().toISOString(),
+      hostelNo: 'BH-8',
+      roomNo: '205',
+      caretaker: 'Hostel Caretaker',
+    },
+    {
+      _id: 'CC8D',
+      ticketNumber: '#HC-CC8D',
+      department: 'Internet',
+      description: 'High-speed LAN port connection check',
+      status: 'inprogress',
+      createdAt: new Date().toISOString(),
+      hostelNo: 'BH-8',
+      roomNo: '205',
+      caretaker: 'Caretaker Ramesh',
+    }
+  ]);
   const [complaintsLoading, setComplaintsLoading] = useState(false);
   const [newComplaintDept, setNewComplaintDept] = useState('Electrical');
   const [newComplaintDesc, setNewComplaintDesc] = useState('');
@@ -889,30 +912,32 @@ const handleSendMessage = (e) => {
                           </span>
                         </div>
 
-                        {/* 3-Stage Stepper */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0 16px', background: '#FAF8F5', padding: '16px 20px', borderRadius: 16, overflowX: 'auto' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#587360', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
-                            <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#587360', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>✓</span>
-                            1. Registered
-                          </div>
-                          
-                          <div style={{ flex: 1, minWidth: 24, height: 2, background: normStatus !== 'pending' ? '#728D7A' : '#E6E0D5' }} />
-                          
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: normStatus !== 'pending' ? '#587360' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
-                            <span style={{ width: 22, height: 22, borderRadius: '50%', background: normStatus !== 'pending' ? '#587360' : '#E6E0D5', color: normStatus !== 'pending' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>
+                        {/* 3-Stage Stepper - Canonical 2-tier responsive layout */}
+                        <div className="maintenance-stepper-box">
+                          <div className="stepper-dots-bar">
+                            <div className="stepper-circle active">✓</div>
+                            <div className={`stepper-connector-line ${normStatus !== 'pending' ? 'active' : ''}`} />
+                            <div className={`stepper-circle ${normStatus !== 'pending' ? 'active' : ''}`}>
                               {normStatus === 'resolved' ? '✓' : '2'}
-                            </span>
-                            2. {caretakerAssigned ? `Caretaker Assigned (${caretakerAssigned})` : 'Caretaker Assignment'}
-                          </div>
-
-                          <div style={{ flex: 1, minWidth: 24, height: 2, background: normStatus === 'resolved' ? '#728D7A' : '#E6E0D5' }} />
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: normStatus === 'resolved' ? '#587360' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
-                            <span style={{ width: 22, height: 22, borderRadius: '50%', background: normStatus === 'resolved' ? '#587360' : '#E6E0D5', color: normStatus === 'resolved' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>
+                            </div>
+                            <div className={`stepper-connector-line ${normStatus === 'resolved' ? 'active' : ''}`} />
+                            <div className={`stepper-circle ${normStatus === 'resolved' ? 'active' : ''}`}>
                               {normStatus === 'resolved' ? '✓' : '3'}
-                            </span>
-                            3. Resolved & Verified
+                            </div>
                           </div>
+
+                          <div className="stepper-labels-bar">
+                            <span className="step-lbl active">1. Registered</span>
+                            <span className={`step-lbl ${normStatus !== 'pending' ? 'active' : ''}`}>2. Assigned</span>
+                            <span className={`step-lbl ${normStatus === 'resolved' ? 'active' : ''}`}>3. Resolved</span>
+                          </div>
+
+                          {caretakerAssigned && normStatus !== 'pending' && (
+                            <div className="stepper-caretaker-badge">
+                              <span>🛠️ Caretaker:</span>
+                              <strong>{caretakerAssigned}</strong>
+                            </div>
+                          )}
                         </div>
 
                         <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
