@@ -28,6 +28,8 @@ export default function Login() {
   // false = button rests inside the password input
   // true = button pops out and expands into full pill shape below
   const [isButtonPopped, setIsButtonPopped] = useState(false);
+  const [shakeInputs, setShakeInputs] = useState(false);
+  const autoRetractTimerRef = React.useRef(null);
 
   // Biometric saved user
   const [savedBiometricUser, setSavedBiometricUser] = useState(null);
@@ -41,6 +43,19 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Auto-retract submit button after 7 seconds of inactivity
+  useEffect(() => {
+    if (isButtonPopped && !loading) {
+      if (autoRetractTimerRef.current) clearTimeout(autoRetractTimerRef.current);
+      autoRetractTimerRef.current = setTimeout(() => {
+        setIsButtonPopped(false);
+      }, 7000);
+    }
+    return () => {
+      if (autoRetractTimerRef.current) clearTimeout(autoRetractTimerRef.current);
+    };
+  }, [isButtonPopped, loading]);
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -95,6 +110,16 @@ export default function Login() {
     } catch (error) {
       const msg = error.data?.message || error.message || 'Login failed. Please verify credentials.';
       triggerToast('error', msg);
+
+      // Trigger tactile shake error on input boxes
+      setShakeInputs(true);
+      setTimeout(() => setShakeInputs(false), 650);
+
+      // Auto-tuck button back into password box after 5 seconds on error
+      if (autoRetractTimerRef.current) clearTimeout(autoRetractTimerRef.current);
+      autoRetractTimerRef.current = setTimeout(() => {
+        setIsButtonPopped(false);
+      }, 5000);
       if (error.status === 403 && msg.toLowerCase().includes('activate')) {
         setActiveTab('activate');
         setActRegNum(reg);
@@ -110,6 +135,10 @@ export default function Login() {
     if (!isButtonPopped) {
       setIsButtonPopped(true);
     }
+    if (autoRetractTimerRef.current) clearTimeout(autoRetractTimerRef.current);
+    autoRetractTimerRef.current = setTimeout(() => {
+      setIsButtonPopped(false);
+    }, 7000);
 
     // If inputs already filled, submit immediately
     if (regNum.trim() && password) {
@@ -201,19 +230,23 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Tab Switcher: Sign In vs Activate Account */}
+        {/* Tab Switcher: Sign In vs Activate Account with Smooth Sliding Pill */}
         <div className="wl-auth-tabs">
+          <div 
+            className="wl-sliding-indicator" 
+            style={{ transform: activeTab === 'login' ? 'translateX(0%)' : 'translateX(100%)' }} 
+          />
           <button
             type="button"
             className={`wl-auth-tab-btn ${activeTab === 'login' ? 'active' : ''}`}
-            onClick={() => setActiveTab('login')}
+            onClick={() => { setActiveTab('login'); setIsButtonPopped(false); }}
           >
             Sign In
           </button>
           <button
             type="button"
             className={`wl-auth-tab-btn ${activeTab === 'activate' ? 'active' : ''}`}
-            onClick={() => setActiveTab('activate')}
+            onClick={() => { setActiveTab('activate'); setIsButtonPopped(false); }}
           >
             Activate Account
           </button>
@@ -225,8 +258,12 @@ export default function Login() {
         {activeTab === 'login' ? (
           <form onSubmit={handleFormSubmit}>
 
-            {/* Dual Role Switcher */}
+            {/* Dual Role Switcher with Smooth Sliding Pill */}
             <div className="wl-role-grid">
+              <div 
+                className="wl-role-sliding-indicator" 
+                style={{ transform: selectedRole === 'student' ? 'translateX(0%)' : 'translateX(100%)' }} 
+              />
               <button
                 type="button"
                 className={`wl-role-btn ${selectedRole === 'student' ? 'active' : ''}`}
@@ -250,7 +287,7 @@ export default function Login() {
               <label className="wl-form-label" htmlFor="regNumInput">
                 {selectedRole === 'admin' ? 'Staff / Admin Registration #' : 'Registration Number'}
               </label>
-              <div className="wl-input-wrapper">
+              <div className={`wl-input-wrapper ${shakeInputs ? 'shake-error' : ''}`}>
                 <input
                   id="regNumInput"
                   type="text"
@@ -279,7 +316,7 @@ export default function Login() {
               </div>
 
               {/* Password Box */}
-              <div className="wl-input-wrapper">
+              <div className={`wl-input-wrapper ${shakeInputs ? 'shake-error' : ''}`}>
                 <input
                   id="passwordInput"
                   type={showPassword ? 'text' : 'password'}
@@ -357,13 +394,6 @@ export default function Login() {
                     </>
                   )}
                 </button>
-                <span 
-                  className="wl-retract-hint"
-                  onClick={() => setIsButtonPopped(false)}
-                  title="Click to tuck button back inside password box"
-                >
-                  ↩ Tuck back into password box
-                </span>
               </div>
             )}
 

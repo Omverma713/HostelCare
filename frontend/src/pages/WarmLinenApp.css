@@ -111,16 +111,27 @@ body {
   position: relative;
 }
 
-/* Slim Icon Sidebar */
+/* Floating Capsule Dock Sidebar (Warm Linen Luxury - matching Image 4) */
 .icon-sidebar {
-  width: 96px;
+  width: 54px;
+  background: #FFFFFF;
+  border: 1px solid #E6E0D5;
+  border-radius: 9999px; /* full rounded capsule pill */
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 32px;
-  border-right: 1px solid var(--border-subtle);
-  position: relative;
-  gap: 28px;
+  padding: 10px 5px;
+  gap: 10px;
+  box-shadow: 0 8px 28px rgba(105, 93, 76, 0.08);
+  margin-top: 36px;
+  margin-left: 8px;
+  margin-right: 20px;
+  flex-shrink: 0;
+  height: fit-content;
+  position: sticky;
+  top: 96px;
+  z-index: 50;
+  box-sizing: border-box;
 }
 
 .sidebar-icon-wrap {
@@ -132,35 +143,39 @@ body {
 }
 
 .sidebar-icon-btn {
+  width: 42px;
+  height: 42px;
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 10px;
-  border-radius: 12px;
+  border-radius: 14px; /* squircle shape matching Image 4 */
   display: flex;
   align-items: center;
   justify-content: center;
   color: #7D7F7A;
-  transition: all 0.2s ease;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar-icon-btn:hover {
-  color: #2D2E2B;
-  background-color: rgba(0, 0, 0, 0.03);
-}
-
-.sidebar-icon-btn.active {
   color: #242523;
+  background-color: #F4F1EA;
+  transform: scale(1.06);
 }
 
+/* ACTIVE STATE: Soft Sage / Matcha Squircle matching Image 4 */
+.sidebar-icon-btn.active {
+  background-color: #BACBB9;
+  color: #242523;
+  box-shadow: 0 2px 8px rgba(90, 115, 96, 0.2);
+}
+
+.sidebar-icon-btn.active:hover {
+  background-color: #B0C2AF;
+}
+
+/* Hide old vertical line indicator on the right */
 .active-indicator-bar {
-  position: absolute;
-  right: 0;
-  width: 3.5px;
-  height: 24px;
-  background-color: #555753;
-  border-top-left-radius: 3px;
-  border-bottom-left-radius: 3px;
+  display: none !important;
 }
 
 /* Main Content Area */
