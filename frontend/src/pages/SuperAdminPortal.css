@@ -1643,3 +1643,257 @@ html.dark-theme .sa-delegation-select-all-btn {
 }
 
 
+
+
+/* ==========================================================================
+   WARM LINEN & MATCHA THEME REFINEMENT FOR SUPER ADMIN CONTROL PANEL
+   ========================================================================== */
+
+.sa-portal-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 0 60px 0;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: transparent;
+}
+
+/* 1. Header Banner Warm Linen Card */
+.sa-header-banner {
+  background: #FFFFFF !important;
+  border-radius: 24px !important;
+  border: 1px solid #E6E0D5 !important;
+  padding: 24px 32px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+  margin-bottom: 24px !important;
+}
+
+.sa-header-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 16px !important;
+  background: #EEF3EE !important;
+  color: #587360 !important;
+  border: 1px solid #D5E2D7 !important;
+  box-shadow: none !important;
+  font-size: 1.3rem !important;
+}
+
+.sa-header-title {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  color: #242523 !important;
+  letter-spacing: -0.01em;
+}
+
+.sa-badge-rbac {
+  background: #EEF3EE !important;
+  color: #587360 !important;
+  border: 1px solid #D5E2D7 !important;
+  border-radius: 9999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 3px 10px !important;
+  letter-spacing: 0.02em !important;
+}
+
+.sa-header-subtitle {
+  color: #7D7F7A !important;
+  font-size: 13.5px !important;
+  margin-top: 4px !important;
+}
+
+.sa-header-profile-action-btn {
+  background: #FAF8F4 !important;
+  border: 1px solid #E6E0D5 !important;
+  color: #575854 !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.sa-header-profile-action-btn:hover {
+  background: #F0ECE4 !important;
+}
+
+/* 2. Elegant Capsule Tab Navigation */
+.sa-tab-bar {
+  background: #EBE6DC !important;
+  border: 1px solid #DFD9CE !important;
+  border-radius: 9999px !important;
+  padding: 5px !important;
+  gap: 4px !important;
+  margin-bottom: 24px !important;
+  width: auto !important;
+  display: inline-flex !important;
+}
+
+.sa-tab-btn {
+  background: transparent !important;
+  color: #73756F !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  padding: 7px 16px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.sa-tab-btn:hover {
+  color: #242523 !important;
+}
+
+.sa-tab-btn.active {
+  background: #FFFFFF !important;
+  color: #242523 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 3. Overview KPI Cards */
+.sa-kpi-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02) !important;
+}
+
+.sa-kpi-title {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #7D7F7A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.sa-kpi-value {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-size: 32px !important;
+  font-weight: 600 !important;
+  color: #242523 !important;
+  margin-top: 6px !important;
+}
+
+/* 4. Filter Bar */
+.sa-filters-bar {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 18px !important;
+  padding: 14px 18px !important;
+  margin-bottom: 20px !important;
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+.sa-filter-search, .sa-filter-select {
+  background: #FAF8F4 !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 12px !important;
+  padding: 9px 16px !important;
+  font-size: 13.5px !important;
+  color: #242523 !important;
+  outline: none !important;
+}
+
+.sa-filter-search:focus, .sa-filter-select:focus {
+  border-color: #728D7A !important;
+  background: #FFFFFF !important;
+}
+
+.sa-filter-btn {
+  background: #728D7A !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 9px 20px !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease !important;
+}
+
+.sa-filter-btn:hover {
+  background: #587360 !important;
+}
+
+/* 5. Sessions Table to Clean Warm Linen Cards/Rows */
+.sa-desktop-table {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02) !important;
+}
+
+.sa-desktop-table table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.sa-desktop-table thead tr {
+  background: #FAF8F4 !important;
+  border-bottom: 1px solid #E6E0D5 !important;
+}
+
+.sa-desktop-table th {
+  color: #73756F !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #E6E0D5 !important;
+}
+
+.sa-desktop-table td {
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #F0ECE4 !important;
+  color: #242523 !important;
+  font-size: 13.5px !important;
+  vertical-align: middle !important;
+}
+
+.sa-desktop-table tr:last-child td {
+  border-bottom: none !important;
+}
+
+.sa-desktop-table tbody tr:hover td {
+  background: #FAF8F4 !important;
+}
+
+/* Status Badges */
+span[style*="background: #10b981"],
+span[style*="background: rgb(16, 185, 129)"],
+.sa-desktop-table span[class*="active"] {
+  background: #EEF3EE !important;
+  color: #587360 !important;
+  border: 1px solid #D5E2D7 !important;
+  border-radius: 9999px !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+/* Revoke Button - Soft Terracotta */
+.sa-desktop-table button {
+  background: #FFF1ED !important;
+  color: #C9826D !important;
+  border: 1px solid #F4D3C9 !important;
+  border-radius: 9999px !important;
+  padding: 5px 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.sa-desktop-table button:hover {
+  background: #FCE8E2 !important;
+  color: #B36E59 !important;
+}

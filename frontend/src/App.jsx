@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider, useTheme } from './hooks/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -123,82 +123,158 @@ function RouteErrorFallback() {
  * Dashboard Shell Layout containing top mobile nav, 3D Canvas, and sidebar navigation drawer
  */
 function DashboardLayout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    return localStorage.getItem('hc_sidebar_collapsed') === 'true';
-  });
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const isChatRoute = location.pathname === '/chat' || location.pathname === '/feedback';
-
-  useEffect(() => {
-    if (user) {
-      initPushNotifications();
-    }
-  }, [user]);
-
-  const handleToggleSidebar = () => {
-    if (window.innerWidth <= 1024) {
-      setMobileSidebarOpen((prev) => !prev);
-    } else {
-      setSidebarCollapsed((prev) => {
-        const next = !prev;
-        localStorage.setItem('hc_sidebar_collapsed', String(next));
-        return next;
-      });
-    }
-  };
-
-  const handleCloseSidebar = () => {
-    if (window.innerWidth <= 1024) {
-      setMobileSidebarOpen(false);
-    } else {
-      setSidebarCollapsed(true);
-      localStorage.setItem('hc_sidebar_collapsed', 'true');
-    }
-  };
-
-  const isSidebarVisibleOnDesktop = !sidebarCollapsed;
+  const p = location.pathname;
+  const isHome = p === '/' || p === '/student';
+  const isMess = p.startsWith('/mess');
+  const isComplaints = p.startsWith('/complaints');
+  const isChat = p.startsWith('/chat') || p.startsWith('/feedback');
+  const isAdmin = p.startsWith('/superadmin') || p.startsWith('/admin');
 
   return (
-    <div className={`app-container ${isChatRoute ? 'is-chat-layout' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-      {!isChatRoute && <Canvas3DBackground theme={theme} role="student" />}
-      <Navbar onToggleSidebar={handleToggleSidebar} />
-
-      {/* Floating 3-line Hamburger button to re-open sidebar when collapsed */}
-      {!isChatRoute && sidebarCollapsed && (
-        <button
-          type="button"
-          className="floating-sidebar-toggle"
-          onClick={handleToggleSidebar}
-          title="Open Menu (☰)"
-          id="btn-floating-open-sidebar"
+    <div className="app-shell" style={{ minHeight: '100vh', background: '#F6F3EC', display: 'flex', flexDirection: 'column' }}>
+      {/* 1. TOP NAVBAR */}
+      <header className="top-navbar" style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px', background: '#F6F3EC', borderBottom: '1px solid #E6E0D5' }}>
+        <div 
+          style={{ fontSize: 23, fontWeight: 600, color: '#242523', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', fontFamily: "'Playfair Display', Georgia, serif" }}
+          onClick={() => navigate('/')}
         >
-          ☰
-        </button>
-      )}
+          <span>HostelCare</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#587360', background: '#EEF3EE', padding: '3px 10px', borderRadius: 9999, letterSpacing: '0.02em', border: '1px solid #D5E2D7' }}>
+            Warm Linen Edition
+          </span>
+        </div>
 
-      <Sidebar
-        isOpen={window.innerWidth <= 1024 ? mobileSidebarOpen : isSidebarVisibleOnDesktop}
-        onClose={handleCloseSidebar}
-      />
-      <main className="main-content">
-        <ErrorBoundary fallback={<RouteErrorFallback />}>
-          <Suspense fallback={<PageFallback />}>
-            <Outlet />
-          </Suspense>
-        </ErrorBoundary>
-        {!isChatRoute && <AppFooter />}
-      </main>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: '#FFFFFF', border: '1px solid #E6E0D5', borderRadius: 9999, fontSize: 13, color: '#575854' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#728D7A' }}></span>
+            <span>{user?.name || 'Resident'} • {user?.roomNumber ? `Room ${user.roomNumber}` : 'Room 205 (BH-8)'}</span>
+          </div>
+
+          <button 
+            className="terracotta-menu-btn" 
+            title={`Account: ${user?.name || 'Resident'} (${user?.role || 'student'})`}
+            onClick={() => {
+              if (window.confirm(`Logged in as ${user?.name || 'Resident'} (${user?.role || 'student'}). Sign out?`)) {
+                logout();
+                navigate('/login');
+              }
+            }}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </header>
+
+      {/* 2. WORKSPACE LAYOUT (SLIM ICON RAIL + MAIN VIEWPORT) */}
+      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+        {/* SLIM VERTICAL ICON SIDEBAR (EXACTLY LIKE IMAGE 1) */}
+        <aside style={{ width: 84, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 32, borderRight: '1px solid #E6E0D5', gap: 28, background: '#F6F3EC' }}>
+          {/* Home Icon */}
+          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button 
+              onClick={() => navigate(user?.role === 'superadmin' ? '/superadmin' : '/student')}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 10, borderRadius: 12, color: isHome ? '#242523' : '#7D7F7A' }}
+              title="Home Sanctuary"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </button>
+            {isHome && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 24, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
+          </div>
+
+          {/* Calendar / Mess Icon */}
+          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button 
+              onClick={() => navigate('/mess-menu')}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 10, borderRadius: 12, color: isMess ? '#242523' : '#7D7F7A' }}
+              title="Weekly Dining Schedule"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </button>
+            {isMess && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 24, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
+          </div>
+
+          {/* Living Space / Room Icon */}
+          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button 
+              onClick={() => navigate('/student')}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 10, borderRadius: 12, color: '#7D7F7A' }}
+              title="My Living Space & Outing Pass"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </button>
+          </div>
+
+          {/* Complaints / Wrench Icon */}
+          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button 
+              onClick={() => navigate('/student')}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 10, borderRadius: 12, color: isComplaints ? '#242523' : '#7D7F7A' }}
+              title="Maintenance Pipeline"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+              </svg>
+            </button>
+            {isComplaints && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 24, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
+          </div>
+
+          {/* Chat Icon */}
+          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button 
+              onClick={() => navigate('/chat')}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 10, borderRadius: 12, color: isChat ? '#242523' : '#7D7F7A' }}
+              title="Support Chat (E2EE)"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </button>
+            {isChat && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 24, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
+          </div>
+
+          {/* Super Admin Shield Icon (Only if user.role === 'superadmin') */}
+          {user?.role === 'superadmin' && (
+            <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button 
+                onClick={() => navigate('/superadmin')}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 10, borderRadius: 12, color: isAdmin ? '#242523' : '#7D7F7A' }}
+                title="Super Admin Suite"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </button>
+              {isAdmin && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 24, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
+            </div>
+          )}
+        </aside>
+
+        {/* MAIN VIEWPORT */}
+        <main style={{ flex: 1, padding: '36px 48px 80px', maxWidth: 1140, boxSizing: 'border-box' }}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
 
-/**
- * Helper component that intercepts authenticated roots and redirects to respective role dashboards
- */
 function HomeRedirect() {
   const { user, isAuthenticated } = useAuth();
 

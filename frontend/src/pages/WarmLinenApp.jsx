@@ -14,7 +14,17 @@ export default function WarmLinenApp() {
   const displayRoom = user?.roomNumber ? `Room ${user.roomNumber}, Block ${user.hostelBlock || user.hostel || 'BH-8'}` : 'Room 205, Block BH-8';
   const displayReg = user?.registrationNumber || '2021BCS001';
 
-  const [currentUserRole, setCurrentUserRole] = useState('student'); // 'student' or 'admin'
+  const [currentUserRole, setCurrentUserRole] = useState(user?.role === 'superadmin' ? 'admin' : 'student');
+  const [adminSubTab, setAdminSubTab] = useState('overview');
+  const [broadcastTitle, setBroadcastTitle] = useState('Important Campus Notice');
+  const [broadcastBody, setBroadcastBody] = useState('Water supply maintenance scheduled in Block BH-8 from 2:00 PM to 4:00 PM.');
+  const [broadcastTarget, setBroadcastTarget] = useState('all');
+  const [sessionsData, setSessionsData] = useState([
+    { id: 'sess_1', user: 'SA-2026-001', name: 'Master Super Admin', role: 'superadmin', device: 'Edge on Windows', ip: '172.18.0.1', status: 'active', time: 'Just now' },
+    { id: 'sess_2', user: '24E101A63', name: 'Bhavya Arnav', role: 'student', device: 'Android App (FCM)', ip: '172.18.0.1', status: 'active', time: '12m ago' },
+    { id: 'sess_3', user: '24E122A11', name: 'Om Verma', role: 'student', device: 'Android App (FCM)', ip: '172.18.0.1', status: 'active', time: '35m ago' },
+    { id: 'sess_4', user: '24E114B14', name: 'Rakesh Sharma', role: 'student', device: 'Chrome on macOS', ip: '172.18.0.1', status: 'active', time: '1h ago' },
+  ]);
   const [activeTab, setActiveTab] = useState('home'); // Default is the exact mockup home!
   const [showQrModal, setShowQrModal] = useState(false);
   const [showComplaintModal, setShowComplaintModal] = useState(false);
@@ -640,31 +650,291 @@ const handleSendMessage = (e) => {
               </div>
             ) : (
               <div className="detailed-view-container">
-                <div className="section-head">
+                <div className="section-head" style={{ marginBottom: 20 }}>
                   <button 
                     onClick={() => setActiveTab('home')} 
-                    style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
+                    style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   >
-                    ← Back to Sanctuary
+                    <span>←</span> Back to Sanctuary
                   </button>
-                  <h2>Super Admin Command Suite</h2>
-                  <p>Direct hardware device management and high-priority push broadcasting.</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                    <div>
+                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: '#242523' }}>Super Admin Command Suite</h2>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>Real-time hardware registry, emergency FCM push broadcast, and campus operations.</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <span style={{ background: '#EEF3EE', color: '#587360', padding: '6px 14px', borderRadius: 9999, fontSize: 12.5, fontWeight: 600, border: '1px solid #D5E2D7' }}>
+                        ● RBAC SuperAdmin Active
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
-                  <h4 style={{ margin: '0 0 16px', fontSize: 16, color: '#272824' }}>Instant Heads-Up Broadcast (FCM)</h4>
-                  <p style={{ margin: '0 0 16px', fontSize: 13.5, color: 'var(--text-secondary)' }}>Send instant lockscreen notification to all hostel resident Android devices.</p>
-                  
+                {/* Sub-navigation tabs in Warm Linen Pill style */}
+                <div style={{ display: 'inline-flex', background: '#EBE6DC', padding: 5, borderRadius: 9999, border: '1px solid #DFD9CE', gap: 4, marginBottom: 28 }}>
                   <button
-                    onClick={() => {
-                      setBroadcastSent(true);
-                      setTimeout(() => setBroadcastSent(false), 3000);
+                    onClick={() => setAdminSubTab('overview')}
+                    style={{
+                      border: 'none',
+                      background: adminSubTab === 'overview' ? '#FFFFFF' : 'transparent',
+                      color: adminSubTab === 'overview' ? '#242523' : '#73756F',
+                      padding: '7px 18px',
+                      borderRadius: 9999,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: adminSubTab === 'overview' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all 0.15s ease'
                     }}
-                    style={{ background: '#728D7A', color: 'white', border: 'none', padding: '12px 24px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
                   >
-                    {broadcastSent ? '✓ Broadcast Dispatched Successfully!' : 'Send Urgent Broadcast to All Devices'}
+                    Control Overview
+                  </button>
+                  <button
+                    onClick={() => setAdminSubTab('broadcast')}
+                    style={{
+                      border: 'none',
+                      background: adminSubTab === 'broadcast' ? '#FFFFFF' : 'transparent',
+                      color: adminSubTab === 'broadcast' ? '#242523' : '#73756F',
+                      padding: '7px 18px',
+                      borderRadius: 9999,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: adminSubTab === 'broadcast' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    Instant FCM Broadcast
+                  </button>
+                  <button
+                    onClick={() => setAdminSubTab('sessions')}
+                    style={{
+                      border: 'none',
+                      background: adminSubTab === 'sessions' ? '#FFFFFF' : 'transparent',
+                      color: adminSubTab === 'sessions' ? '#242523' : '#73756F',
+                      padding: '7px 18px',
+                      borderRadius: 9999,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: adminSubTab === 'sessions' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    Active Sessions ({sessionsData.length})
                   </button>
                 </div>
+
+                {/* TAB 1: OVERVIEW METRIC CARDS */}
+                {adminSubTab === 'overview' && (
+                  <div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 28 }}>
+                      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enrolled Residents</div>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>1,280</div>
+                        <div style={{ fontSize: 12.5, color: '#587360', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>●</span> Active across 4 Hostel Blocks
+                        </div>
+                      </div>
+
+                      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hardware Devices Paired</div>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>1,420</div>
+                        <div style={{ fontSize: 12.5, color: '#587360', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>●</span> FCM Push Active & Subscribed
+                        </div>
+                      </div>
+
+                      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maintenance Queue</div>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>1 In Progress</div>
+                        <div style={{ fontSize: 12.5, color: '#7D7F7A' }}>Tube-light replacement • Caretaker Ramesh</div>
+                      </div>
+
+                      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cloud API Status</div>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>99.98%</div>
+                        <div style={{ fontSize: 12.5, color: '#587360', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>●</span> EC2 Production Node Healthy
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Access Card */}
+                    <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '28px 32px', border: '1px solid #E6E0D5', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+                      <div>
+                        <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, margin: '0 0 6px', color: '#242523' }}>Full Granular Super Admin Suite</h3>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 13.5 }}>Access pilot testing, user provisioning, closed beta management, and sub-admin delegation.</p>
+                      </div>
+                      <a 
+                        href="/superadmin"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#728D7A', color: '#FFFFFF', textDecoration: 'none', padding: '10px 22px', borderRadius: 9999, fontWeight: 600, fontSize: 13.5 }}
+                      >
+                        <span>Launch Advanced Console</span>
+                        <span>→</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: INSTANT FCM BROADCAST */}
+                {adminSubTab === 'broadcast' && (
+                  <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid #E6E0D5', maxWidth: 720 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: '#EEF3EE', color: '#587360', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                      </div>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: 18, color: '#242523' }}>Emergency Push Dispatcher</h3>
+                        <p style={{ margin: 0, fontSize: 13, color: '#7D7F7A' }}>High-priority lockscreen notifications delivered instantly via Firebase Cloud Messaging.</p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#575854', marginBottom: 6 }}>Target Resident Audience</label>
+                        <select 
+                          value={broadcastTarget}
+                          onChange={(e) => setBroadcastTarget(e.target.value)}
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #E6E0D5', background: '#FAF8F4', fontSize: 14, color: '#242523', outline: 'none' }}
+                        >
+                          <option value="all">All Enrolled Residents (1,280 Devices)</option>
+                          <option value="bh8">Block BH-8 Boys Hostel (320 Residents)</option>
+                          <option value="gh1">Block GH-1 Girls Hostel (280 Residents)</option>
+                          <option value="staff">Hostel Caretakers & Wardens Only</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#575854', marginBottom: 6 }}>Notification Title</label>
+                        <input 
+                          type="text"
+                          value={broadcastTitle}
+                          onChange={(e) => setBroadcastTitle(e.target.value)}
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #E6E0D5', background: '#FAF8F4', fontSize: 14, color: '#242523', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#575854', marginBottom: 6 }}>Broadcast Message</label>
+                        <textarea 
+                          rows={3}
+                          value={broadcastBody}
+                          onChange={(e) => setBroadcastBody(e.target.value)}
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #E6E0D5', background: '#FAF8F4', fontSize: 14, color: '#242523', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                        <span style={{ fontSize: 12.5, color: '#7D7F7A' }}>Instant push bypasses silent mode on Android.</span>
+                        <button
+                          onClick={() => {
+                            setBroadcastSent(true);
+                            if (typeof triggerToast === 'function') {
+                              triggerToast('Emergency broadcast delivered to 1,280 devices successfully!', 'success');
+                            }
+                            setTimeout(() => setBroadcastSent(false), 3000);
+                          }}
+                          style={{ background: broadcastSent ? '#587360' : '#728D7A', color: 'white', border: 'none', padding: '11px 26px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease' }}
+                        >
+                          {broadcastSent ? '✓ Dispatched Successfully' : 'Send Instant Broadcast'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: ACTIVE SESSIONS (WARM LINEN CARDS) */}
+                {adminSubTab === 'sessions' && (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                      <p style={{ margin: 0, fontSize: 13.5, color: '#7D7F7A' }}>
+                        Showing {sessionsData.length} live hardware and browser sessions across the campus network.
+                      </p>
+                      <button 
+                        onClick={() => {
+                          setSessionsData([
+                            { id: 'sess_1', user: 'SA-2026-001', name: 'Master Super Admin', role: 'superadmin', device: 'Edge on Windows', ip: '172.18.0.1', status: 'active', time: 'Just now' },
+                            { id: 'sess_2', user: '24E101A63', name: 'Bhavya Arnav', role: 'student', device: 'Android App (FCM)', ip: '172.18.0.1', status: 'active', time: '12m ago' },
+                            { id: 'sess_3', user: '24E122A11', name: 'Om Verma', role: 'student', device: 'Android App (FCM)', ip: '172.18.0.1', status: 'active', time: '35m ago' },
+                            { id: 'sess_4', user: '24E114B14', name: 'Rakesh Sharma', role: 'student', device: 'Chrome on macOS', ip: '172.18.0.1', status: 'active', time: '1h ago' },
+                          ]);
+                          if (typeof triggerToast === 'function') triggerToast('Hardware session registry refreshed', 'info');
+                        }}
+                        style={{ background: '#FAF8F4', border: '1px solid #E6E0D5', borderRadius: 9999, padding: '6px 14px', fontSize: 12.5, color: '#575854', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        ↻ Refresh Registry
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {sessionsData.map((sess) => (
+                        <div 
+                          key={sess.id}
+                          style={{
+                            background: '#FFFFFF',
+                            borderRadius: 20,
+                            padding: '20px 28px',
+                            border: '1px solid #E6E0D5',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: 16,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <div style={{ width: 44, height: 44, borderRadius: 14, background: '#FAF8F4', border: '1px solid #E6E0D5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#575854', fontSize: 18 }}>
+                              {sess.device.includes('Android') ? '📱' : '💻'}
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontWeight: 700, fontSize: 15, color: '#242523' }}>{sess.user}</span>
+                                <span style={{ fontSize: 11.5, background: sess.role === 'superadmin' ? '#FAF2EE' : '#EEF3EE', color: sess.role === 'superadmin' ? '#C9826D' : '#587360', padding: '2px 8px', borderRadius: 9999, fontWeight: 600, border: `1px solid ${sess.role === 'superadmin' ? '#F4D3C9' : '#D5E2D7'}` }}>
+                                  {sess.role.toUpperCase()}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: 13, color: '#7D7F7A', marginTop: 3 }}>
+                                {sess.name} • {sess.device} • IP: {sess.ip}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#587360', fontWeight: 600 }}>
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#728D7A' }}></span>
+                                Active
+                              </span>
+                              <div style={{ fontSize: 11.5, color: '#8E8F8A', marginTop: 2 }}>{sess.time}</div>
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                setSessionsData((prev) => prev.filter((s) => s.id !== sess.id));
+                                if (typeof triggerToast === 'function') triggerToast(`Session for ${sess.user} revoked`, 'info');
+                              }}
+                              style={{
+                                background: '#FFF1ED',
+                                color: '#C9826D',
+                                border: '1px solid #F4D3C9',
+                                borderRadius: 9999,
+                                padding: '6px 16px',
+                                fontSize: 12.5,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              Revoke
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )
           )}
