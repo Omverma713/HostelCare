@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { DEPARTMENTS } from '../constants';
@@ -10,9 +10,6 @@ import ActionHistory from '../components/ActionHistory';
 import EmptyState from '../components/EmptyState';
 import HostelCareLoader from '../components/HostelCareLoader';
 import { triggerToast } from '../components/Toast';
-
-import ResolutionRingGauge3D from '../components/ResolutionRingGauge3D';
-import SpatialTicketCard from '../components/SpatialTicketCard';
 import { appUpdateService } from '../services/appUpdateService';
 import { getKolkataTime, getMealStatusForDay, DEFAULT_MESS_DATA } from '../constants/messMenuData';
 import CbtModal from '../components/CbtModal';
@@ -31,31 +28,30 @@ const getDeptIcon = (dept) => {
 };
 
 export default function StudentDashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // View switch: 'cards' | 'table'
-  const [viewMode, setViewMode] = useState('cards');
-
   // Filter & Search states
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'inprogress' | 'resolved'
   const [searchQuery, setSearchQuery] = useState('');
 
-  // New complaint form state
+  // Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [isCbtOpen, setIsCbtOpen] = useState(false);
+
+  // New complaint form state
   const [department, setDepartment] = useState('');
   const [description, setDescription] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  // Detail modal state
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
-
   const [refreshing, setRefreshing] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
   const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
-  const [isCbtOpen, setIsCbtOpen] = useState(false);
 
   useEffect(() => {
     const unsub = appUpdateService.addListener((state) => {
@@ -94,7 +90,7 @@ export default function StudentDashboard() {
         fetchComplaints(),
         appUpdateService.checkForUpdates({ manual: true }),
       ]);
-      triggerToast('info', 'Dashboard data & app status refreshed!', 'Refreshed');
+      triggerToast('info', 'Dashboard refreshed!', 'Refreshed');
     } catch (err) {
       console.warn('Refresh error:', err);
     } finally {
@@ -143,7 +139,6 @@ export default function StudentDashboard() {
     return getMealStatusForDay(todayDaySchedule?.meals, kolkataTime);
   }, [todayDaySchedule, kolkataTime]);
 
-
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     if (!department) {
@@ -151,7 +146,7 @@ export default function StudentDashboard() {
       return;
     }
     if (!description || description.trim().length < 4) {
-      triggerToast('error', 'Please provide a brief description of the issue.');
+      triggerToast('error', 'Please describe the issue.');
       return;
     }
 
@@ -159,7 +154,7 @@ export default function StudentDashboard() {
     try {
       const res = await api.createComplaint(department, description.trim());
       if (res.success) {
-        triggerToast('success', 'Complaint registered successfully!');
+        triggerToast('success', 'Complaint registered successfully! Caretaker notified.');
         setIsCreateOpen(false);
         setDepartment('');
         setDescription('');
@@ -175,710 +170,426 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="spatial-dashboard-root">
-      {/* Dynamic Cosmic Background Glow Accents */}
-      <div className="cosmic-glow-orb orb-indigo" />
-      <div className="cosmic-glow-orb orb-emerald" />
-      <div className="cosmic-glow-orb orb-cyan" />
-
-      {/* Spatial Top Hero Bar */}
-      <header className="spatial-command-header">
-        <div className="command-header-left">
-          <div className="spatial-badge-cluster">
-            <span className="spatial-live-chip">
-              <span className="live-ping-beacon" /> SPATIAL COMMAND v3.0
+    <div className="linen-sanctuary-root" style={{ minHeight: '100vh', background: 'var(--bg-primary, #F6F3EC)', padding: '24px 28px 80px', maxWidth: '1180px', margin: '0 auto', boxSizing: 'border-box' }}>
+      {/* 1. TOP SANCTUARY HEADER ROW */}
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted, #8E8F8A)' }}>
+              Resident Sanctuary • Living Overview
             </span>
-            <span className="spatial-hostel-tag-chip">
-              🏢 {user?.hostel || 'Hostel BH-1'} • Room {user?.roomNumber || '302-B'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '9999px', background: '#EEF3EE', color: '#587360', fontSize: '0.75rem', fontWeight: 600 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#728D7A' }} />
+              Active
             </span>
           </div>
-
-          <h1 className="spatial-deck-title">
-            Welcome, <span className="text-gradient-cosmic">{user?.name || 'Rahul Sharma'}</span>
+          <h1 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '2.2rem', fontWeight: 600, color: 'var(--text-primary, #242523)', margin: 0 }}>
+            Welcome, {user?.name || 'Resident'}
           </h1>
-          <p className="spatial-deck-subtitle">
-            Real-time digital twin maintenance telemetry & instant student dispatch console.
+          <p style={{ margin: '4px 0 0', fontSize: '0.95rem', color: 'var(--text-secondary, #575854)' }}>
+            Calm, un-cluttered living space management portal for room {user?.roomNumber || '205'} (Block {user?.hostelBlock || user?.hostel || 'BH-8'}).
           </p>
         </div>
 
-        <div
-          className="command-header-right"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            flexWrap: 'wrap',
-          }}
-        >
+        {/* Quick Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           {updateAvailable && (
             <button
               type="button"
               onClick={() => appUpdateService.checkForUpdates({ manual: true })}
-              className="navbar-update-pill-blink"
-              title={`New version v${latestVersion} is ready! Tap to update.`}
-              style={{ padding: '0.65rem 0.95rem', minHeight: '44px', borderRadius: '12px' }}
+              style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A', padding: '8px 16px', borderRadius: '9999px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
             >
-              <span className="blink-pulsing-dot" />
-              <span>⚡ Update Ready (v{latestVersion})</span>
+              Update v{latestVersion}
             </button>
           )}
 
-          {/* Closed Beta Testing (CBT) Channel Access */}
           <button
             type="button"
-            className="btn-spatial-cbt"
-            onClick={() => setIsCbtOpen(true)}
-            id="btn-open-cbt-modal"
-            title="Closed Beta Testing (CBT) Channel"
-            style={{
-              padding: '0.65rem 0.95rem',
-              borderRadius: '12px',
-              border: '1px solid rgba(99, 102, 241, 0.4)',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.1) 100%)',
-              color: '#818cf8',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              boxShadow: 'var(--shadow-sm)',
-              transition: 'all 0.2s ease',
-              minHeight: '44px',
-              flex: '0 0 auto',
-            }}
-          >
-            <span style={{ fontSize: '1rem' }}>🔬</span>
-            <span>Closed Beta</span>
-          </button>
-
-          <button
-            type="button"
-            className="btn-spatial-refresh"
             onClick={handleRefresh}
             disabled={refreshing}
-            id="btn-refresh-dashboard"
-            title="Refresh dashboard & check for updates"
-            style={{
-              padding: '0.65rem 0.95rem',
-              borderRadius: '12px',
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-card)',
-              color: 'var(--text-primary)',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: refreshing ? 'not-allowed' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              boxShadow: 'var(--shadow-sm)',
-              transition: 'all 0.2s ease',
-              minHeight: '44px',
-              flex: '0 0 auto',
-            }}
+            style={{ background: '#FFFFFF', border: '1px solid #E6E0D5', color: '#575854', padding: '8px 16px', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            <span
-              style={{
-                display: 'inline-block',
-                transform: refreshing ? 'rotate(360deg)' : 'none',
-                transition: refreshing ? 'transform 0.7s linear infinite' : 'none',
-                animation: refreshing ? 'spin 0.7s linear infinite' : 'none',
-                fontSize: '1rem',
-              }}
-            >
-              🔄
-            </span>
+            <span style={{ display: 'inline-block', transform: refreshing ? 'rotate(360deg)' : 'none', transition: 'transform 0.5s linear infinite' }}>🔄</span>
             <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
 
           <button
-            className="btn-spatial-primary-trigger"
             onClick={() => {
               setDepartment('');
               setIsCreateOpen(true);
             }}
-            id="btn-file-complaint-spatial"
-            style={{
-              minHeight: '44px',
-              flex: '1 1 180px',
-            }}
+            style={{ background: 'var(--primary, #728D7A)', color: '#FFFFFF', border: 'none', padding: '9px 20px', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(114, 141, 122, 0.28)' }}
           >
-            <span className="btn-trigger-glow" />
-            <span className="btn-trigger-icon">➕</span>
-            <span className="btn-trigger-label">File New Complaint</span>
+            + File New Request
           </button>
         </div>
       </header>
 
-      {/* Dining & Mess Menu Quick Access Card */}
-      <section
-        style={{
-          background: 'linear-gradient(135deg, rgba(29, 61, 46, 0.95) 0%, rgba(18, 38, 29, 0.98) 100%)',
-          borderRadius: '20px',
-          padding: '1.25rem 1.4rem',
-          margin: '0 0 1.5rem 0',
-          border: '1px solid rgba(110, 231, 183, 0.3)',
-          boxShadow: '0 10px 28px rgba(18, 38, 29, 0.25)',
-          color: '#ffffff',
-          position: 'relative',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-        }}
-        id="card-mess-menu-quick-access"
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#a7f3d0' }}>
-              DINING • WEEKLY SCHEDULE
-            </div>
-            <h2 style={{ margin: '4px 0 0', fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              Your Mess Menu 🍽️
+      {/* 2. THE TWO EXACT WARM LINEN HERO CARDS */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: '22px', marginBottom: '32px' }}>
+        {/* Card 1: Today's Meal */}
+        <Link 
+          to="/mess-menu"
+          style={{
+            textDecoration: 'none',
+            background: '#FFFFFF',
+            borderRadius: '26px',
+            padding: '30px 40px',
+            border: '1px solid #E6E0D5',
+            boxShadow: '0 6px 24px rgba(105, 93, 76, 0.04)',
+            display: 'block',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.borderColor = 'rgba(114, 141, 122, 0.5)';
+            e.currentTarget.style.boxShadow = '0 10px 30px rgba(105, 93, 76, 0.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.borderColor = '#E6E0D5';
+            e.currentTarget.style.boxShadow = '0 6px 24px rgba(105, 93, 76, 0.04)';
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <h2 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '2rem', fontWeight: 500, color: '#242523', margin: 0 }}>
+              Today's Meal
             </h2>
-            <p style={{ margin: '3px 0 0', fontSize: '0.85rem', color: '#cbd5e1' }}>
-              Check this week&apos;s verified mess menu & meal timings
+            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: '#728D7A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', boxShadow: '0 4px 14px rgba(114, 141, 122, 0.32)' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+              </svg>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 500, color: '#3C3E3A' }}>
+              {messStatus.activeSlot
+                ? `${messStatus.activeSlot.name} is being served • ${messStatus.activeSlot.timing}`
+                : `Next Meal: ${messStatus.nextSlot?.name || 'Breakfast'} • ${messStatus.nextSlot?.timing || '07:00 AM'}`}
+            </p>
+            <p style={{ margin: 0, fontSize: '0.92rem', color: '#8E8F8A' }}>
+              Menu: {todayDaySchedule.meals?.lunch?.items?.slice(0, 3).join(', ') || 'Freshly prepared hot campus meal'}
+            </p>
+          </div>
+        </Link>
+
+        {/* Card 2: My Living Space */}
+        <div
+          style={{
+            background: '#FFFFFF',
+            borderRadius: '26px',
+            padding: '30px 40px',
+            border: '1px solid #E6E0D5',
+            boxShadow: '0 6px 24px rgba(105, 93, 76, 0.04)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+          }}
+        >
+          <div>
+            <h2 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '2rem', fontWeight: 500, color: '#242523', margin: '0 0 6px 0' }}>
+              My Living Space
+            </h2>
+            <p style={{ margin: 0, fontSize: '1.05rem', color: '#575854' }}>
+              Room {user?.roomNumber || '205'}, Block {user?.hostelBlock || user?.hostel || 'BH-8'}
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setShowQrModal(true)}
+              style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', color: '#575854', padding: '9px 18px', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Gate Pass QR 🎫
+            </button>
+            <span 
+              style={{ 
+                background: counts.inprogress > 0 ? '#FEF3C7' : '#728D7A',
+                color: counts.inprogress > 0 ? '#B45309' : '#FFFFFF',
+                padding: '10px 24px', 
+                borderRadius: '9999px', 
+                fontSize: '0.9rem', 
+                fontWeight: 600,
+                boxShadow: counts.inprogress > 0 ? 'none' : '0 3px 12px rgba(114, 141, 122, 0.25)'
+              }}
+            >
+              {counts.inprogress > 0 ? `${counts.inprogress} in progress` : 'Everything in order'}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. SECONDARY ACTION CARDS (Chat & Maintenance) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '36px' }}>
+        <div 
+          onClick={() => navigate('/chat')}
+          style={{ background: '#FFFFFF', borderRadius: '22px', padding: '24px 28px', border: '1px solid #E6E0D5', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.02)', transition: 'all 0.2s ease' }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(114, 141, 122, 0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E6E0D5'; e.currentTarget.style.transform = 'translateY(0)'; }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <h3 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.25rem', margin: 0, color: '#242523' }}>Support Chat (E2EE)</h3>
+            <span style={{ fontSize: '0.72rem', background: '#EEF3EE', color: '#587360', padding: '3px 9px', borderRadius: '9999px', fontWeight: 600 }}>Secured</span>
+          </div>
+          <p style={{ margin: '0 0 16px', fontSize: '0.875rem', color: '#8E8F8A' }}>
+            Direct encrypted messaging line with Caretakers, Wardens & Administration.
+          </p>
+          <span style={{ fontSize: '0.875rem', color: '#728D7A', fontWeight: 600 }}>Open Messages →</span>
+        </div>
+
+        <div 
+          onClick={() => {
+            setDepartment('');
+            setIsCreateOpen(true);
+          }}
+          style={{ background: '#FFFFFF', borderRadius: '22px', padding: '24px 28px', border: '1px solid #E6E0D5', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.02)', transition: 'all 0.2s ease' }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(114, 141, 122, 0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E6E0D5'; e.currentTarget.style.transform = 'translateY(0)'; }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <h3 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.25rem', margin: 0, color: '#242523' }}>Quick Caretaker Dispatch</h3>
+            <span style={{ fontSize: '0.72rem', background: '#FEF3C7', color: '#B45309', padding: '3px 9px', borderRadius: '9999px', fontWeight: 600 }}>1-Tap Filing</span>
+          </div>
+          <p style={{ margin: '0 0 16px', fontSize: '0.875rem', color: '#8E8F8A' }}>
+            Report electrical, plumbing, carpentry, or clean repairs with automatic technician assignment.
+          </p>
+          <span style={{ fontSize: '0.875rem', color: '#728D7A', fontWeight: 600 }}>+ Lodge Request →</span>
+        </div>
+      </div>
+
+      {/* 4. COMPLAINTS PIPELINE SECTION */}
+      <section style={{ background: '#FFFFFF', borderRadius: '28px', padding: '32px 36px', border: '1px solid #E6E0D5', boxShadow: '0 6px 24px rgba(105, 93, 76, 0.04)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+          <div>
+            <h2 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.65rem', fontWeight: 600, color: '#242523', margin: '0 0 4px 0' }}>
+              Maintenance Pipeline
+            </h2>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#8E8F8A' }}>
+              Track real-time progress for your hostel living space requests.
             </p>
           </div>
 
-          <Link
-            to="/mess-menu"
-            id="btn-view-weekly-menu-dash"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '0.65rem 1.15rem',
-              borderRadius: '12px',
-              background: '#a7f3d0',
-              color: '#133524',
-              fontWeight: 700,
-              fontSize: '0.875rem',
-              textDecoration: 'none',
-              boxShadow: '0 4px 14px rgba(167, 243, 208, 0.35)',
-              transition: 'transform 0.15s ease',
-            }}
-          >
-            <span>View Weekly Menu</span>
-            <span>→</span>
-          </Link>
-        </div>
-
-        {/* Live Slot Status Chips */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginTop: '4px' }}>
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              borderRadius: '12px',
-              padding: '0.65rem 0.85rem',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-            }}
-          >
-            <div style={{ fontSize: '0.725rem', color: '#a7f3d0', fontWeight: 700, textTransform: 'uppercase' }}>
-              {messStatus.activeSlot
-                ? `🔴 Now Serving ${messStatus.activeSlot.countdownText ? `(${messStatus.activeSlot.countdownText})` : ''}`
-                : `⏳ Next Meal ${messStatus.nextSlot?.countdownText ? `(${messStatus.nextSlot.countdownText})` : ''}`}
-            </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff', marginTop: '2px' }}>
-              {messStatus.activeSlot ? messStatus.activeSlot.name : messStatus.nextSlot ? messStatus.nextSlot.name : "Today's Schedule"}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '2px' }}>
-              {messStatus.activeSlot ? messStatus.activeSlot.timing : messStatus.nextSlot ? messStatus.nextSlot.timing : 'Tap to view'}
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              borderRadius: '12px',
-              padding: '0.65rem 0.85rem',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-            }}
-          >
-            <div style={{ fontSize: '0.725rem', color: '#a7f3d0', fontWeight: 700, textTransform: 'uppercase' }}>
-              TODAY ({todayDaySchedule.label})
-            </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff', marginTop: '2px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-              {todayDaySchedule.meals?.lunch?.items?.slice(0, 3).join(', ') || 'Fresh meals prepared'}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '2px' }}>
-              Usuna & Arua rice + Special curry
-            </div>
+          {/* Filter Pills */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {['all', 'pending', 'inprogress', 'resolved'].map((filterKey) => (
+              <button
+                key={filterKey}
+                type="button"
+                onClick={() => setStatusFilter(filterKey)}
+                style={{
+                  background: statusFilter === filterKey ? '#728D7A' : '#FAF8F5',
+                  color: statusFilter === filterKey ? '#FFFFFF' : '#575854',
+                  border: statusFilter === filterKey ? 'none' : '1px solid #E6E0D5',
+                  padding: '6px 16px',
+                  borderRadius: '9999px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textTransform: 'capitalize',
+                  boxShadow: statusFilter === filterKey ? '0 2px 8px rgba(114, 141, 122, 0.28)' : 'none',
+                }}
+              >
+                {filterKey === 'inprogress' ? 'In Progress' : filterKey} ({counts[filterKey]})
+              </button>
+            ))}
           </div>
         </div>
-      </section>
 
-      {/* Stats & Gauge Section */}
-      <section className="bento-analytics-col">
-        {/* Holographic Circular Resolution Ring Gauge */}
-        <ResolutionRingGauge3D
-          total={counts.all}
-          pending={counts.pending}
-          inProgress={counts.inprogress}
-          resolved={counts.resolved}
-        />
-
-        {/* Quick Metrics Quad Pod */}
-        <div className="spatial-quick-quad">
-          <div className="quick-quad-card card-total">
-            <div className="quad-icon-wrap">📁</div>
-            <div className="quad-info">
-              <span className="quad-num">{counts.all}</span>
-              <span className="quad-lbl">Total Logs</span>
-            </div>
+        {/* Complaints List */}
+        {loading ? (
+          <div style={{ padding: '40px 0', textAlign: 'center' }}>
+            <HostelCareLoader size="medium" />
           </div>
-
-          <div className="quick-quad-card card-pending">
-            <div className="quad-icon-wrap">⏳</div>
-            <div className="quad-info">
-              <span className="quad-num">{counts.pending}</span>
-              <span className="quad-lbl">Pending</span>
-            </div>
+        ) : filteredComplaints.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🌱</div>
+            <h3 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.25rem', color: '#242523', margin: '0 0 6px 0' }}>No requests in this view</h3>
+            <p style={{ fontSize: '0.9rem', color: '#8E8F8A', margin: 0 }}>Everything in your room is in peaceful order.</p>
           </div>
-
-          <div className="quick-quad-card card-progress">
-            <div className="quad-icon-wrap">⚙️</div>
-            <div className="quad-info">
-              <span className="quad-num">{counts.inprogress}</span>
-              <span className="quad-lbl">In Progress</span>
-            </div>
-          </div>
-
-          <div className="quick-quad-card card-resolved">
-            <div className="quad-icon-wrap">✅</div>
-            <div className="quad-info">
-              <span className="quad-num">{counts.resolved}</span>
-              <span className="quad-lbl">Resolved</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Spatial Complaint Feed & Dispatch Console */}
-      <section className="spatial-tickets-deck">
-        <div className="tickets-deck-topbar">
-          <div className="tickets-deck-heading">
-            <h2 className="tickets-deck-title">
-              <span className="title-icon-spatial">📋</span> Maintenance Tickets
-            </h2>
-            <div className="deck-heading-actions">
-              <span className="tickets-count-pill">{filteredComplaints.length} tickets</span>
-              {/* Sleek View Mode Switcher */}
-              <div className="spatial-view-switcher">
-                <button
-                  type="button"
-                  className={`view-switch-btn ${viewMode === 'cards' ? 'active' : ''}`}
-                  onClick={() => setViewMode('cards')}
-                  title="Cards View"
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {filteredComplaints.map((item) => {
+              const normStatus = normalizeStatus(item.status);
+              return (
+                <div
+                  key={item._id}
+                  style={{
+                    background: '#FAF8F5',
+                    borderRadius: '20px',
+                    padding: '24px 28px',
+                    border: '1px solid #EAE5DB',
+                    transition: 'all 0.2s ease',
+                  }}
                 >
-                  <span className="view-switch-icon">🗂️</span>
-                  <span>Cards</span>
-                </button>
-                <button
-                  type="button"
-                  className={`view-switch-btn ${viewMode === 'table' ? 'active' : ''}`}
-                  onClick={() => setViewMode('table')}
-                  title="Table View"
-                >
-                  <span className="view-switch-icon">📊</span>
-                  <span>Table</span>
-                </button>
-              </div>
-            </div>
-          </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ width: '38px', height: '38px', borderRadius: '12px', background: '#FFFFFF', border: '1px solid #E6E0D5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem' }}>
+                        {getDeptIcon(item.department)}
+                      </span>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8E8F8A', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                          TICKET #{String(item._id).slice(-4).toUpperCase()} • {item.department}
+                        </span>
+                        <h4 style={{ margin: '2px 0 0', fontSize: '1.05rem', fontWeight: 600, color: '#242523' }}>
+                          {item.description}
+                        </h4>
+                      </div>
+                    </div>
 
-          {/* Controls: Modern Segmented Filter (NO horizontal scroller) + Search Bar */}
-          <div className="tickets-controls-bar">
-            {/* 4-Column Modern Segmented Status Tabs */}
-            <div className="spatial-segmented-control">
-              <button
-                type="button"
-                className={`segmented-tab-btn ${statusFilter === 'all' ? 'active' : ''}`}
-                onClick={() => setStatusFilter('all')}
-              >
-                <span className="tab-text">All</span>
-                <span className="tab-badge">{counts.all}</span>
-              </button>
-              <button
-                type="button"
-                className={`segmented-tab-btn tab-amber ${statusFilter === 'pending' ? 'active' : ''}`}
-                onClick={() => setStatusFilter('pending')}
-              >
-                <span className="tab-text">Pending</span>
-                <span className="tab-badge">{counts.pending}</span>
-              </button>
-              <button
-                type="button"
-                className={`segmented-tab-btn tab-blue ${statusFilter === 'inprogress' ? 'active' : ''}`}
-                onClick={() => setStatusFilter('inprogress')}
-              >
-                <span className="tab-text">In Progress</span>
-                <span className="tab-badge">{counts.inprogress}</span>
-              </button>
-              <button
-                type="button"
-                className={`segmented-tab-btn tab-green ${statusFilter === 'resolved' ? 'active' : ''}`}
-                onClick={() => setStatusFilter('resolved')}
-              >
-                <span className="tab-text">Resolved</span>
-                <span className="tab-badge">{counts.resolved}</span>
-              </button>
-            </div>
+                    <span
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '9999px',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        background: normStatus === 'resolved' ? '#EEF3EE' : normStatus === 'inprogress' ? '#E0F2FE' : '#FEF3C7',
+                        color: normStatus === 'resolved' ? '#587360' : normStatus === 'inprogress' ? '#0369A1' : '#B45309',
+                      }}
+                    >
+                      {normStatus}
+                    </span>
+                  </div>
 
-            {/* Live Search Input */}
-            <div className="spatial-search-box">
-              <span className="search-icon-spatial">🔍</span>
-              <input
-                type="text"
-                className="search-field-spatial"
-                placeholder="Search ticket description…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  className="search-reset-btn"
-                  onClick={() => setSearchQuery('')}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Content Render: Cards View OR Table View */}
-        <EmptyState
-          loading={loading}
-          error={error}
-          onRetry={fetchComplaints}
-          emptyIcon="📦"
-          emptyTitle="No tickets found"
-          emptyMessage="No maintenance complaints match your selected filters."
-        >
-          {filteredComplaints.length === 0 ? (
-            <div className="spatial-empty-box">
-              <div className="empty-floating-icon">📦</div>
-              <h3 className="empty-title">
-                {complaints.length === 0
-                  ? 'No issues reported in your room yet'
-                  : 'No tickets match the active filter'}
-              </h3>
-              <p className="empty-sub">
-                {complaints.length === 0
-                  ? 'Facing any electrical, water, or carpentry problems? Click a 3D pin above or use File New Complaint.'
-                  : 'Try adjusting your search keywords or switching status filters.'}
-              </p>
-              <div className="empty-actions-row">
-                {complaints.length === 0 ? (
-                  <button
-                    className="btn-spatial-primary-trigger mt-4"
-                    onClick={() => setIsCreateOpen(true)}
-                  >
-                    ➕ File Your First Ticket
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-spatial-secondary-action"
-                    onClick={() => {
-                      setStatusFilter('all');
-                      setSearchQuery('');
-                    }}
-                  >
-                    📋 View All Complaints ({complaints.length})
-                  </button>
-                )}
-              </div>
-            </div>
-          ) : viewMode === 'cards' ? (
-            /* --- 1. SPATIAL 3D CARDS GRID VIEW --- */
-            <div className="spatial-cards-wrapper">
-              <div className="spatial-cards-grid">
-                {filteredComplaints.map((c) => (
-                  <SpatialTicketCard
-                    key={c._id}
-                    complaint={c}
-                    onSelect={setSelectedComplaint}
-                    getDeptIcon={getDeptIcon}
-                  />
-                ))}
-              </div>
-
-              {/* View All Complaints Action */}
-              {statusFilter !== 'all' && (
-                <div className="view-all-deck-footer">
-                  <button
-                    type="button"
-                    className="btn-view-all-subtle"
-                    onClick={() => {
-                      setStatusFilter('all');
-                      setSearchQuery('');
-                    }}
-                  >
-                    📋 View All Complaints ({complaints.length})
-                  </button>
+                  {/* 3-Stage Visual Stepper */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFFFFF', padding: '12px 18px', borderRadius: '14px', border: '1px solid #EAE5DB' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: '#587360' }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#587360', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>✓</span>
+                      1. Registered
+                    </div>
+                    <div style={{ flex: 1, height: 2, background: normStatus !== 'pending' ? '#728D7A' : '#E6E0D5' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: normStatus !== 'pending' ? '#587360' : '#8E8F8A' }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: normStatus !== 'pending' ? '#587360' : '#E6E0D5', color: normStatus !== 'pending' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>
+                        {normStatus === 'resolved' ? '✓' : '2'}
+                      </span>
+                      2. Caretaker Assigned
+                    </div>
+                    <div style={{ flex: 1, height: 2, background: normStatus === 'resolved' ? '#728D7A' : '#E6E0D5' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: normStatus === 'resolved' ? '#587360' : '#8E8F8A' }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: normStatus === 'resolved' ? '#587360' : '#E6E0D5', color: normStatus === 'resolved' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>
+                        {normStatus === 'resolved' ? '✓' : '3'}
+                      </span>
+                      3. Resolved
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          ) : (
-            /* --- 2. HIGH-DENSITY COMPACT TABLE VIEW (No Horizontal Scroll on Mobile) --- */
-            <div className="table-wrapper-spatial">
-              <div className="table-container-spatial">
-                <table className="custom-table-spatial" style={{ width: '100%' }}>
-                  <thead>
-                    <tr>
-                      <th className="col-cat">Category</th>
-                      <th className="col-desc">Description</th>
-                      <th className="col-date">Date</th>
-                      <th className="col-status" style={{ textAlign: 'center' }}>Status</th>
-                      <th className="col-actions" style={{ textAlign: 'center' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredComplaints.map((c) => (
-                      <tr key={c._id} className="table-row-spatial">
-                        <td className="col-cat">
-                          <div className="cat-cell-spatial">
-                            <span className="cat-emoji-bubble">{getDeptIcon(c.department)}</span>
-                            <div className="cat-info-block">
-                              <span className="cat-name-bold">{c.department}</span>
-                              <span className="cat-desc-mobile-snippet">{c.description}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="col-desc" title={c.description}>
-                          <div className="desc-truncate-spatial">{c.description}</div>
-                        </td>
-                        <td className="col-date">
-                          <span className="date-pill-spatial">
-                            {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Recent'}
-                          </span>
-                        </td>
-                        <td className="col-status" style={{ textAlign: 'center' }}>
-                          <Badge status={c.status} />
-                        </td>
-                        <td className="col-actions" style={{ textAlign: 'center' }}>
-                          <button
-                            type="button"
-                            className="btn-view-spatial"
-                            onClick={() => setSelectedComplaint(c)}
-                          >
-                            <span>View</span>
-                            <span className="btn-view-arrow">→</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </EmptyState>
-      </section>
-
-      {/* Modal: File New Complaint */}
-      <Modal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        title="File Maintenance Complaint"
-      >
-        <form onSubmit={handleCreateSubmit} className="modal-form-3d">
-          {/* Target Location Banner */}
-          <div className="form-location-banner">
-            <span className="location-pin-icon">📍</span>
-            <div className="location-info">
-              <span className="location-label">DISPATCH LOCATION</span>
-              <span className="location-value">
-                {user?.hostel || 'Hostel BH-1'} • Room {user?.roomNumber || '302'}
-              </span>
-            </div>
-            <span className="location-verified-pill">Auto-Linked</span>
-          </div>
-
-          {/* Modern Interactive Category Grid */}
-          <div className="form-group-category">
-            <div className="category-section-header">
-              <label className="form-label mb-0">Select Issue Category</label>
-              <span className="category-selected-tag">
-                {department ? `${getDeptIcon(department)} ${department}` : 'Tap category below'}
-              </span>
-            </div>
-
-            <div className="spatial-category-grid" role="radiogroup" aria-label="Issue category">
-              {DEPARTMENTS.map((d) => {
-                const isSelected = department === d;
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    className={`category-tile-btn ${isSelected ? 'active' : ''}`}
-                    onClick={() => setDepartment(d)}
-                    disabled={submitLoading}
-                  >
-                    <span className="cat-tile-icon-bubble">{getDeptIcon(d)}</span>
-                    <span className="cat-tile-label">{d}</span>
-                    {isSelected && <span className="cat-tile-glow-indicator">✓</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Detailed Description */}
-          <div className="form-group">
-            <div className="description-section-header">
-              <label className="form-label mb-0" htmlFor="compDesc">
-                Issue Description
-              </label>
-              <span className="desc-char-hint">
-                {description.length > 0 ? `${description.length} chars` : 'Min 4 chars'}
-              </span>
-            </div>
-            <textarea
-              id="compDesc"
-              className="form-input form-textarea-3d"
-              placeholder="Describe the issue in detail (e.g. Ceiling fan regulator not functioning, water tap leaking, etc.)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              disabled={submitLoading}
-              rows={3}
-              required
-            />
-          </div>
-
-          <div className="modal-footer-cluster">
-            <button
-              type="button"
-              className="btn btn-secondary btn-glass"
-              onClick={() => setIsCreateOpen(false)}
-              disabled={submitLoading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary btn-submit-3d"
-              disabled={submitLoading || !department || description.trim().length < 4}
-            >
-              {submitLoading ? (
-                <HostelCareLoader size="sm" inline message="Filing…" />
-              ) : (
-                '🚀 Submit Complaint'
-              )}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Modal: Complaint Details Timeline (Ultra-Modern Bento View) */}
-      <Modal
-        isOpen={!!selectedComplaint}
-        onClose={() => setSelectedComplaint(null)}
-        title="Ticket Inspection Console"
-      >
-        {selectedComplaint && (
-          <div className="complaint-detail-bento-view">
-            {/* Top Category Header Banner */}
-            <div className="bento-modal-hero">
-              <div className="bento-hero-left">
-                <div className="bento-icon-disc">
-                  {getDeptIcon(selectedComplaint.department)}
-                </div>
-                <div className="bento-hero-text">
-                  <span className="bento-category-tag">CATEGORY</span>
-                  <h3 className="bento-hero-title">{selectedComplaint.department}</h3>
-                  <span className="bento-room-tag">
-                    🏢 {selectedComplaint.hostelNo || user?.hostel || 'Hostel BH-1'} • 🚪 Room {selectedComplaint.roomNo || user?.roomNumber || '302'}
-                  </span>
-                </div>
-              </div>
-              <div className="bento-hero-right">
-                <Badge status={selectedComplaint.status} />
-              </div>
-            </div>
-
-            {/* Description Glass Box */}
-            <div className="bento-desc-card">
-              <div className="bento-desc-header">
-                <span className="bento-card-label">ISSUE DESCRIPTION</span>
-                <span className="bento-desc-icon">💬</span>
-              </div>
-              <p className="bento-desc-content">
-                {selectedComplaint.description}
-              </p>
-            </div>
-
-            {/* Metadata 2x2 Bento Quad */}
-            <div className="bento-meta-quad">
-              <div className="bento-meta-item">
-                <span className="bento-meta-icon">🏢</span>
-                <div className="bento-meta-text">
-                  <span className="bento-meta-lbl">HOSTEL</span>
-                  <span className="bento-meta-val">{selectedComplaint.hostelNo || user?.hostel || 'Hostel BH-1'}</span>
-                </div>
-              </div>
-
-              <div className="bento-meta-item">
-                <span className="bento-meta-icon">🚪</span>
-                <div className="bento-meta-text">
-                  <span className="bento-meta-lbl">ROOM NO</span>
-                  <span className="bento-meta-val">Room {selectedComplaint.roomNo || user?.roomNumber || '302'}</span>
-                </div>
-              </div>
-
-              <div className="bento-meta-item">
-                <span className="bento-meta-icon">🕒</span>
-                <div className="bento-meta-text">
-                  <span className="bento-meta-lbl">LOGGED DATE</span>
-                  <span className="bento-meta-val">
-                    {selectedComplaint.createdAt ? new Date(selectedComplaint.createdAt).toLocaleDateString() : 'Recent'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bento-meta-item">
-                <span className="bento-meta-icon">⏰</span>
-                <div className="bento-meta-text">
-                  <span className="bento-meta-lbl">LOGGED TIME</span>
-                  <span className="bento-meta-val">
-                    {selectedComplaint.createdAt ? new Date(selectedComplaint.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Timeline History Box */}
-            <div className="bento-timeline-card">
-              <div className="bento-timeline-header">
-                <span className="bento-card-label">ACTION TIMELINE & UPDATES</span>
-                <span className="bento-timeline-icon">⚡</span>
-              </div>
-              <ActionHistory actions={selectedComplaint.actions} />
-            </div>
-
-            {/* Modal Footer Actions */}
-            <div className="bento-modal-footer">
-              <button
-                type="button"
-                className="btn-bento-close"
-                onClick={() => setSelectedComplaint(null)}
-              >
-                Done
-              </button>
-            </div>
+              );
+            })}
           </div>
         )}
-      </Modal>
+      </section>
 
-      {/* Closed Beta Testing (CBT) Student Channel Modal */}
-      <CbtModal isOpen={isCbtOpen} onClose={() => setIsCbtOpen(false)} />
+      {/* 5. MODAL: DIGITAL GATE OUTING PASS */}
+      {showQrModal && (
+        <div 
+          style={{ position: 'fixed', inset: 0, background: 'rgba(36, 37, 35, 0.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 16 }}
+          onClick={() => setShowQrModal(false)}
+        >
+          <div 
+            style={{ background: '#FFFFFF', borderRadius: '28px', padding: '36px 40px', width: '100%', maxWidth: '480px', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.16)', position: 'relative' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setShowQrModal(false)}
+              style={{ position: 'absolute', top: 20, right: 20, background: 'transparent', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#8E8F8A' }}
+            >
+              ×
+            </button>
+            <span style={{ fontSize: '0.72rem', background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: '9999px', fontWeight: 700, letterSpacing: '0.04em' }}>
+              CAMPUS SECURITY GATE PASS
+            </span>
+            <h3 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.65rem', margin: '12px 0 6px', color: '#242523' }}>
+              Digital Gate Clearance
+            </h3>
+            <p style={{ margin: '0 0 24px', fontSize: '0.9rem', color: '#575854' }}>
+              Present this pass at Main Security Gate 1 for evening exit & re-entry.
+            </p>
+
+            <div style={{ background: '#FAF8F5', borderRadius: '20px', padding: '24px', textAlign: 'center', border: '1px dashed #D5E2D7' }}>
+              <div style={{ width: 140, height: 140, margin: '0 auto 16px', background: '#242523', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '0.85rem' }}>
+                [QR VERIFIED]
+              </div>
+              <strong style={{ fontSize: '1.1rem', color: '#242523', display: 'block' }}>
+                {user?.name || 'Resident'} • Room {user?.roomNumber || '205'}
+              </strong>
+              <span style={{ fontSize: '0.82rem', color: '#8E8F8A', marginTop: '4px', display: 'block' }}>
+                Reg: {user?.registrationNumber || '2021BCS001'} • Valid till 09:30 PM
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MODAL: CREATE COMPLAINT */}
+      {isCreateOpen && (
+        <div 
+          style={{ position: 'fixed', inset: 0, background: 'rgba(36, 37, 35, 0.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 16 }}
+          onClick={() => setIsCreateOpen(false)}
+        >
+          <div 
+            style={{ background: '#FFFFFF', borderRadius: '28px', padding: '36px 40px', width: '100%', maxWidth: '520px', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.16)', position: 'relative' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setIsCreateOpen(false)}
+              style={{ position: 'absolute', top: 20, right: 20, background: 'transparent', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#8E8F8A' }}
+            >
+              ×
+            </button>
+            <h3 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.75rem', margin: '0 0 8px', color: '#242523' }}>
+              File Living Space Request
+            </h3>
+            <p style={{ margin: '0 0 24px', fontSize: '0.9rem', color: '#575854' }}>
+              Room {user?.roomNumber || '205'} (Block {user?.hostelBlock || user?.hostel || 'BH-8'})
+            </p>
+
+            <form onSubmit={handleCreateSubmit}>
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#242523', marginBottom: '6px' }}>
+                  Category / Department
+                </label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1px solid #E6E0D5', background: '#FAF8F5', color: '#242523', fontSize: '0.92rem', outline: 'none' }}
+                >
+                  <option value="">Select Category...</option>
+                  {DEPARTMENTS.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#242523', marginBottom: '6px' }}>
+                  Issue Description
+                </label>
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe what needs repair..."
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #E6E0D5', background: '#FAF8F5', color: '#242523', fontSize: '0.92rem', outline: 'none', resize: 'vertical' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitLoading}
+                style={{ width: '100%', background: '#728D7A', color: '#FFFFFF', border: 'none', padding: '12px', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: submitLoading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(114, 141, 122, 0.3)' }}
+              >
+                {submitLoading ? 'Registering Request...' : 'Submit Request'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CBT Modal */}
+      {isCbtOpen && <CbtModal isOpen={isCbtOpen} onClose={() => setIsCbtOpen(false)} />}
     </div>
   );
 }

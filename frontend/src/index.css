@@ -7,26 +7,28 @@
 
 :root {
   /* Background (Warm Sand & Cozy Ivory — Rich, eye-pleasing warm tones) */
-  --bg-primary: #efe7da;
-  --bg-secondary: #f6efe3;
-  --bg-tertiary: #e5dccb;
-  --bg-card: #fbf7f0;
+  --bg-primary: #F6F3EC;
+  --bg-secondary: #EFEBE2;
+  --bg-tertiary: #E6E0D5;
+  --bg-card: #FFFFFF;
   --card-bg: var(--bg-card);
 
-  /* Text (Warm deep espresso charcoal & stone) */
-  --text-primary: #1c1917;
-  --text-secondary: #57534e;
-  --text-muted: #8c827a;
+  /* Text (Warm organic charcoal & stone) */
+  --text-primary: #242523;
+  --text-secondary: #575854;
+  --text-muted: #8E8F8A;
 
-  /* Primary Indigo/Blue */
-  --primary: #4361ee;
-  --primary-hover: #3451d1;
-  --primary-light: #e8edfb;
-  --primary-glow: rgba(67, 97, 238, 0.18);
+  /* Primary Matcha Sage Green */
+  --primary: #728D7A;
+  --primary-hover: #587360;
+  --primary-light: #EEF3EE;
+  --primary-glow: rgba(114, 141, 122, 0.22);
+  --accent-terracotta: #C9826D;
+  --accent-terracotta-dark: #B36E59;
 
-  /* Student Purple */
-  --student-color: #7c3aed;
-  --student-bg: #f0e8ff;
+  /* Student Accent */
+  --student-color: #728D7A;
+  --student-bg: #EEF3EE;
 
   /* Status Colors */
   --status-pending-bg: #fef3c7;
@@ -60,7 +62,9 @@
   --shadow-primary: 0 4px 18px rgba(67, 97, 238, 0.35);
 
   /* Typography */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --theme-transition-duration: 0.18s;
@@ -2072,7 +2076,7 @@ html.is-theme-switching .auth-top-controls {
 }
 
 .auth-backdrop-light {
-  background: linear-gradient(180deg, #101c3d 0%, #1e3a8a 38%, #e11d48 68%, #fdba74 88%, #f8fafc 100%);
+  background: #F6F3EC;
   background-size: cover;
 }
 
@@ -2114,17 +2118,10 @@ html.is-theme-switching .auth-top-controls {
 /* .auth-page-container background is maintained smoothly by .auth-theme-backdrop */
 
 .auth-page-container.light-theme .auth-card {
-  /* Reduced blur for mobile GPU performance (was 28px — too expensive on Android WebView) */
-  backdrop-filter: blur(10px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(160%) !important;
   border-radius: 26px !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.92) !important;
-  background-color: rgba(255, 255, 255, 0.94) !important;
-  box-shadow:
-    inset 0 1.5px 2px #ffffff,
-    inset 0 -2px 3px rgba(251, 146, 60, 0.12),
-    0 20px 50px -10px rgba(234, 88, 12, 0.22),
-    0 10px 25px -5px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid #E6E0D5 !important;
+  background-color: #FFFFFF !important;
+  box-shadow: 0 16px 40px -8px rgba(105, 93, 76, 0.08), 0 4px 14px rgba(0, 0, 0, 0.03) !important;
 }
 
 /* Opaque fallback for devices where backdrop-filter causes jank (most Android WebViews) */
@@ -2288,19 +2285,15 @@ html.is-theme-switching .auth-top-controls {
 
 /* 3D Physical Object Submit Button */
 .auth-page-container.light-theme .btn-primary {
-  background: linear-gradient(180deg, #fb923c 0%, #f97316 45%, #ea580c 100%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+  background: #728D7A !important;
+  border: none !important;
   color: #ffffff !important;
-  font-weight: 900 !important;
+  font-weight: 700 !important;
   font-size: 0.95rem !important;
-  border-radius: 26px !important;
+  border-radius: 9999px !important;
   padding: 13px 20px !important;
-  box-shadow:
-    inset 0 2px 2px rgba(255, 255, 255, 0.95),
-    inset 0 -3px 2px rgba(0, 0, 0, 0.25),
-    0 5px 0 #9a3412,
-    0 12px 28px rgba(234, 88, 12, 0.5) !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.32) !important;
+  text-shadow: none !important;
 }
 
 .auth-page-container.light-theme .btn-primary:hover:not(:disabled) {
@@ -10422,3 +10415,350 @@ body:not(.dark-theme) .navbar-update-pill-blink:hover,
 
 
 
+
+
+/* ── Warm Linen & Matcha Light Theme Overrides ── */
+.auth-page-container.light-theme {
+  background-color: #F6F3EC !important;
+  background: #F6F3EC !important;
+}
+
+.auth-page-container.light-theme .auth-backdrop-light {
+  background: #F6F3EC !important;
+  opacity: 1 !important;
+}
+
+.auth-page-container.light-theme .classic-light-horizon-stage,
+.auth-page-container.light-theme .solar-aurora-glow,
+.auth-page-container.light-theme .classic-dark-cyber-stage {
+  display: none !important;
+}
+
+.auth-page-container.light-theme .auth-card {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 26px !important;
+  box-shadow: 0 16px 40px -8px rgba(105, 93, 76, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02) !important;
+}
+
+.auth-page-container.light-theme .auth-title {
+  font-family: var(--font-serif, 'Playfair Display', serif) !important;
+  color: #242523 !important;
+  font-weight: 600 !important;
+  font-size: 1.85rem !important;
+}
+
+.auth-page-container.light-theme .auth-subtitle {
+  color: #575854 !important;
+  font-weight: 400 !important;
+}
+
+.auth-page-container.light-theme .auth-tabs {
+  background: #EFEBE2 !important;
+  border-radius: 14px !important;
+  padding: 4px !important;
+  border-bottom: none !important;
+}
+
+.auth-page-container.light-theme .auth-tab {
+  color: #7D7F7A !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+}
+
+.auth-page-container.light-theme .auth-tab.active {
+  color: #242523 !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  border-bottom: none !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn-student.active {
+  background: #EEF3EE !important;
+  border: 1.5px solid #728D7A !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn-student.active .auth-role-btn-title {
+  color: #587360 !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn-admin.active {
+  background: #FDF4F0 !important;
+  border: 1.5px solid #C9826D !important;
+}
+
+.auth-page-container.light-theme .auth-role-btn-admin.active .auth-role-btn-title {
+  color: #B36E59 !important;
+}
+
+.auth-page-container.light-theme .form-input {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 12px !important;
+  color: #242523 !important;
+}
+
+.auth-page-container.light-theme .form-input:focus {
+  border-color: #728D7A !important;
+  box-shadow: 0 0 0 3px rgba(114, 141, 122, 0.2) !important;
+}
+
+.auth-page-container.light-theme .btn-primary {
+  background: #728D7A !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.28) !important;
+}
+
+.auth-page-container.light-theme .btn-primary:hover:not(:disabled) {
+  background: #587360 !important;
+  box-shadow: 0 6px 20px rgba(114, 141, 122, 0.38) !important;
+}
+
+
+.auth-page-container.light-theme .auth-hero-heading {
+  color: #242523 !important;
+  font-family: var(--font-serif, 'Playfair Display', serif) !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+}
+
+.auth-page-container.light-theme .auth-hero-sub {
+  color: #575854 !important;
+  text-shadow: none !important;
+}
+
+.auth-page-container.light-theme .auth-hero-tag {
+  background: #EEF3EE !important;
+  color: #587360 !important;
+  border: 1px solid #D5E2D7 !important;
+}
+
+
+/* ==========================================================================
+   WARM LINEN & MATCHA — GLOBAL NAVIGATION & DASHBOARD ELEVATION
+   ========================================================================== */
+
+/* 1. Sidebar Shell in Light Mode */
+html:not(.dark-theme) .sidebar-dock-3d {
+  background: #F6F3EC !important;
+  border-right: 1px solid #E6E0D5 !important;
+  box-shadow: 4px 0 24px rgba(105, 93, 76, 0.04) !important;
+}
+
+html:not(.dark-theme) .sidebar-brand-dock {
+  border-bottom: 1px solid #E6E0D5 !important;
+  background: #F6F3EC !important;
+}
+
+html:not(.dark-theme) .brand-title-text {
+  font-family: var(--font-serif, 'Playfair Display', serif) !important;
+  color: #242523 !important;
+  font-weight: 600 !important;
+  font-size: 1.35rem !important;
+}
+
+html:not(.dark-theme) .brand-quantum-badge {
+  background: #EEF3EE !important;
+  color: #587360 !important;
+  border: 1px solid #D5E2D7 !important;
+}
+
+html:not(.dark-theme) .nav-section-eyebrow {
+  color: #8E8F8A !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* 2. Sidebar Navigation Links */
+html:not(.dark-theme) .sidebar-dock-link {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.2s ease !important;
+}
+
+html:not(.dark-theme) .sidebar-dock-link:hover {
+  background: #F4EFE6 !important;
+  border-color: #DED6C7 !important;
+  transform: translateX(3px) !important;
+}
+
+html:not(.dark-theme) .sidebar-dock-link .dock-link-title {
+  color: #242523 !important;
+  font-weight: 600 !important;
+}
+
+html:not(.dark-theme) .sidebar-dock-link .dock-link-subtitle {
+  color: #8E8F8A !important;
+}
+
+html:not(.dark-theme) .sidebar-dock-link .dock-link-icon-wrap {
+  background: #F6F3EC !important;
+  border: 1px solid #E6E0D5 !important;
+}
+
+/* Active Nav Link (Soothing Matcha Pill with Vertical Accent Bar) */
+html:not(.dark-theme) .sidebar-dock-link.active {
+  background: #EEF3EE !important;
+  border: 1.5px solid #728D7A !important;
+  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.18) !important;
+  transform: translateX(3px) !important;
+}
+
+html:not(.dark-theme) .sidebar-dock-link.active .dock-link-title {
+  color: #385E4D !important;
+  font-weight: 700 !important;
+}
+
+html:not(.dark-theme) .sidebar-dock-link.active .dock-link-subtitle {
+  color: #587360 !important;
+}
+
+html:not(.dark-theme) .sidebar-dock-link.active .dock-link-icon-wrap {
+  background: #728D7A !important;
+  color: #FFFFFF !important;
+  border-color: #587360 !important;
+}
+
+html:not(.dark-theme) .sidebar-dock-link.active .indicator-ray {
+  background: #587360 !important;
+  width: 4px !important;
+  border-radius: 2px !important;
+}
+
+/* 3. User Profile Pod at Bottom of Sidebar */
+html:not(.dark-theme) .sidebar-profile-dock {
+  background: #FFFFFF !important;
+  border-top: 1px solid #E6E0D5 !important;
+}
+
+html:not(.dark-theme) .profile-resident-card {
+  background: #FAF8F5 !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 16px !important;
+}
+
+html:not(.dark-theme) .resident-name-text {
+  color: #242523 !important;
+  font-weight: 600 !important;
+}
+
+html:not(.dark-theme) .resident-room-sub {
+  color: #728D7A !important;
+}
+
+/* 4. Top Mobile Navbar */
+html:not(.dark-theme) .mobile-navbar {
+  background: #F6F3EC !important;
+  border-bottom: 1px solid #E6E0D5 !important;
+  color: #242523 !important;
+}
+
+html:not(.dark-theme) .mobile-nav-toggle {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  color: #242523 !important;
+}
+
+/* 5. Student Dashboard Main Canvas */
+html:not(.dark-theme) .dashboard-page,
+html:not(.dark-theme) .student-dashboard-root {
+  background-color: #F6F3EC !important;
+}
+
+html:not(.dark-theme) .bento-analytics-col {
+  background: transparent !important;
+}
+
+/* Quick Metrics Quad Pod in Warm Linen */
+html:not(.dark-theme) .quick-quad-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 16px rgba(105, 93, 76, 0.04) !important;
+}
+
+html:not(.dark-theme) .quick-quad-card .quad-num {
+  color: #242523 !important;
+  font-family: var(--font-serif, 'Playfair Display', serif) !important;
+  font-weight: 600 !important;
+}
+
+html:not(.dark-theme) .quick-quad-card .quad-lbl {
+  color: #8E8F8A !important;
+}
+
+/* Spatial Ticket Cards (Complaints List) */
+html:not(.dark-theme) .spatial-ticket-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 22px !important;
+  box-shadow: 0 4px 20px rgba(105, 93, 76, 0.04) !important;
+}
+
+html:not(.dark-theme) .spatial-ticket-card:hover {
+  border-color: rgba(114, 141, 122, 0.5) !important;
+  box-shadow: 0 8px 28px rgba(114, 141, 122, 0.12) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* 6. Filter & Search Controls in Dashboard */
+html:not(.dark-theme) .filter-tab-pill {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  color: #575854 !important;
+  border-radius: 9999px !important;
+}
+
+html:not(.dark-theme) .filter-tab-pill.active {
+  background: #728D7A !important;
+  color: #FFFFFF !important;
+  border-color: #587360 !important;
+  box-shadow: 0 3px 10px rgba(114, 141, 122, 0.25) !important;
+}
+
+html:not(.dark-theme) .btn-spatial-primary-trigger {
+  background: #728D7A !important;
+  color: #FFFFFF !important;
+  border-radius: 9999px !important;
+  border: none !important;
+  box-shadow: 0 4px 18px rgba(114, 141, 122, 0.3) !important;
+}
+
+html:not(.dark-theme) .btn-spatial-primary-trigger:hover {
+  background: #587360 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 24px rgba(114, 141, 122, 0.4) !important;
+}
+
+
+/* Super Admin Portal Light Theme Refinements */
+html:not(.dark-theme) .sa-header-icon {
+  background: #728D7A !important;
+  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.28) !important;
+}
+
+html:not(.dark-theme) .sa-header-banner {
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 24px !important;
+  box-shadow: 0 6px 24px rgba(105, 93, 76, 0.05) !important;
+}
+
+html:not(.dark-theme) .sa-tab-btn.active {
+  background: #728D7A !important;
+  color: #FFFFFF !important;
+  border-color: #587360 !important;
+}

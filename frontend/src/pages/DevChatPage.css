@@ -39,29 +39,29 @@ body.light-theme,
 html:not(.dark-theme),
 .devchat-root:not(.dark-theme),
 body:not(.dark-theme) {
-  --wa-bg-deep: #efeae2;
-  --wa-bg-panel: #fbf8f3;
-  --wa-bg-header: #f4efe6;
-  --wa-bg-input-bar: #f4efe6;
-  --wa-bg-input-field: #fdfaf6;
-  --wa-border: #e6dfd5;
+  --wa-bg-deep: #F6F3EC;
+  --wa-bg-panel: #FAF8F5;
+  --wa-bg-header: #EFEBE2;
+  --wa-bg-input-bar: #EFEBE2;
+  --wa-bg-input-field: #FFFFFF;
+  --wa-border: #E6E0D5;
   
-  --wa-bubble-theirs: #ffffff;
-  --wa-bubble-theirs-text: #111b21;
-  --wa-bubble-theirs-border: #e2e8f0;
+  --wa-bubble-theirs: #FFFFFF;
+  --wa-bubble-theirs-text: #242523;
+  --wa-bubble-theirs-border: #E6E0D5;
   
-  --wa-bubble-mine: #d9fdd3;
-  --wa-bubble-mine-text: #111b21;
+  --wa-bubble-mine: #EEF3EE;
+  --wa-bubble-mine-text: #242523;
   
-  --wa-text-primary: #111b21;
-  --wa-text-secondary: #667781;
-  --wa-text-placeholder: #8696a0;
+  --wa-text-primary: #242523;
+  --wa-text-secondary: #575854;
+  --wa-text-placeholder: #8E8F8A;
   
-  --wa-green-action: #00a884;
-  --wa-green-accent: #25d366;
-  --wa-blue-ticks: #53bdeb;
+  --wa-green-action: #728D7A;
+  --wa-green-accent: #587360;
+  --wa-blue-ticks: #587360;
   
-  --timeline-bg: #efeae2;
+  --timeline-bg: #F6F3EC;
   --doodle-url: url('/whatsapp-doodle-light.svg');
 }
 
