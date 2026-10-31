@@ -342,16 +342,16 @@ const getStudentCbtStatus = async (req, res) => {
       hasApplied: Boolean(application),
       application: application
         ? {
-            id: application._id,
-            status: application.status,
-            deviceModel: application.deviceModel,
-            androidVersion: application.androidVersion,
-            reviewNote: application.reviewNote,
-            submittedAt: application.submittedAt,
-            betaVersion: application.betaVersion,
-            // Only reveal download APK URL if approved!
-            downloadUrl: application.status === "approved" ? closedBeta.betaApkUrl : null,
-          }
+          id: application._id,
+          status: application.status,
+          deviceModel: application.deviceModel,
+          androidVersion: application.androidVersion,
+          reviewNote: application.reviewNote,
+          submittedAt: application.submittedAt,
+          betaVersion: application.betaVersion,
+          // Only reveal download APK URL if approved!
+          downloadUrl: application.status === "approved" ? closedBeta.betaApkUrl : null,
+        }
         : null,
     };
 

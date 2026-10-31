@@ -180,7 +180,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <div className="sidebar-brand-title-wrap">
             <div className="brand-name-row">
               <span className="brand-title-text">HostelCare</span>
-              <span className="brand-quantum-badge">3D</span>
+              <span className="brand-quantum-badge" style={{ background: "#EEF3EE", color: "#587360", border: "1px solid #D5E2D7" }}>Warm Linen</span>
             </div>
             <div className="brand-live-status-pill">
               <span className="live-ping-dot" />

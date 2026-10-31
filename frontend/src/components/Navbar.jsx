@@ -45,8 +45,8 @@ export default function Navbar({ onToggleSidebar }) {
       >
         ☰
       </button>
-      <div className="sidebar-logo" style={{ fontSize: '1.1rem' }}>
-        🛡️ HostelCare
+      <div className="sidebar-logo" style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary, #242523)', letterSpacing: '-0.01em' }}>
+        HostelCare
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {updateAvailable && (
@@ -113,8 +113,24 @@ export default function Navbar({ onToggleSidebar }) {
             🔔
           </Link>
         )}
-        <div style={{ fontSize: '0.8rem', fontWeight: 'bold', opacity: 0.8 }}>
-          hostel {user.hostel}
+        <div 
+          style={{
+            width: '34px',
+            height: '34px',
+            borderRadius: '50%',
+            background: 'var(--accent-terracotta, #C9826D)',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            boxShadow: '0 2px 8px rgba(201, 130, 109, 0.3)',
+            cursor: 'default',
+          }}
+          title={`${user.name || 'User'} • Block ${user.hostel || 'BH-8'}`}
+        >
+          {(user.name || user.role || 'U').charAt(0).toUpperCase()}
         </div>
       </div>
     </header>
