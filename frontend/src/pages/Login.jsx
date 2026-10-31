@@ -1,191 +1,46 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/ThemeContext';
 import { api } from '../services/api';
 import { triggerToast } from '../components/Toast';
 import { ADMIN_ROLES } from '../constants';
-import IsometricHostelRoom3D from '../components/IsometricHostelRoom3D';
-import InteractiveLamp from '../components/InteractiveLamp';
-import Canvas3DBackground from '../components/Canvas3DBackground';
-import FuturisticLoader from '../components/login/FuturisticLoader';
 import { biometricService } from '../services/biometricService';
 import { Capacitor } from '@capacitor/core';
-
-function MessMenuGuestCard() {
-  const navigate = useNavigate();
-  return (
-    <div
-      className="auth-mess-guest-card"
-      style={{
-        marginTop: '1.25rem',
-        padding: '1rem 1.15rem',
-        borderRadius: '16px',
-        background: 'linear-gradient(135deg, rgba(29, 61, 46, 0.92) 0%, rgba(18, 38, 29, 0.96) 100%)',
-        border: '1px solid rgba(110, 231, 183, 0.28)',
-        color: '#ffffff',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
-        textAlign: 'left',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-        <span style={{ fontSize: '0.975rem', fontWeight: 800, color: '#ffffff' }}>
-          Hungry? Check today&apos;s menu 🍽️
-        </span>
-        <span
-          style={{
-            fontSize: '0.675rem',
-            color: '#a7f3d0',
-            background: 'rgba(167, 243, 208, 0.15)',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-          }}
-        >
-          No Login Req.
-        </span>
-      </div>
-
-      <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
-        View the weekly hostel mess schedule — No login required
-      </p>
-
-      <button
-        type="button"
-        id="btn-login-view-mess-menu"
-        onClick={() => navigate('/mess-menu')}
-        style={{
-          marginTop: '6px',
-          padding: '0.6rem 1rem',
-          borderRadius: '10px',
-          background: '#a7f3d0',
-          color: '#133524',
-          border: 'none',
-          fontSize: '0.85rem',
-          fontWeight: 700,
-          cursor: 'pointer',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-          transition: 'transform 0.15s ease, background 0.15s ease',
-          boxShadow: '0 4px 12px rgba(167, 243, 208, 0.3)',
-        }}
-      >
-        <span>View Mess Menu</span>
-        <span>→</span>
-      </button>
-    </div>
-  );
-}
-
-function PasswordToggleEye({ visible, onToggle, label = "Toggle password visibility" }) {
-  return (
-    <button
-      type="button"
-      className="auth-password-toggle-btn"
-      onClick={onToggle}
-      aria-label={label}
-      title={visible ? "Hide password" : "Show password"}
-      tabIndex={-1}
-    >
-      {visible ? (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-          <line x1="1" y1="1" x2="23" y2="23"></line>
-        </svg>
-      ) : (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-      )}
-    </button>
-  );
-}
-
-function BiometricLoginButton({ onBiometricLogin, loading, savedUser }) {
-  // STRICT: Only display on Android APK, NEVER on web browser!
-  if (!Capacitor.isNativePlatform()) return null;
-  if (!savedUser && !biometricService.isEnabled() && !biometricService.hasStoredCredentials()) return null;
-
-  return (
-    <div style={{ marginTop: '10px', width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', margin: '10px 0 12px', gap: '8px' }}>
-        <div style={{ flex: 1, height: '1px', background: 'var(--border-color, rgba(255, 255, 255, 0.15))' }} />
-        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
-          ⚡ Fast 1-Touch Sign In
-        </span>
-        <div style={{ flex: 1, height: '1px', background: 'var(--border-color, rgba(255, 255, 255, 0.15))' }} />
-      </div>
-
-      <button
-        type="button"
-        id="btn-login-with-fingerprint"
-        onClick={onBiometricLogin}
-        disabled={loading}
-        style={{
-          width: '100%',
-          padding: '12px 16px',
-          borderRadius: '12px',
-          border: '1.5px solid rgba(16, 185, 129, 0.55)',
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.14) 100%)',
-          color: 'var(--text-primary, #ffffff)',
-          fontSize: '0.92rem',
-          fontWeight: 800,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          boxShadow: '0 4px 16px rgba(16, 185, 129, 0.25)',
-          transition: 'all 0.2s ease',
-        }}
-      >
-        <span style={{ fontSize: '1.3rem' }}>👆</span>
-        <span>
-          Sign In with Fingerprint
-          {savedUser?.regNum ? ` (${savedUser.regNum})` : ''}
-        </span>
-      </button>
-    </div>
-  );
-}
+import './WarmLinenLogin.css';
 
 export default function Login() {
   const { login, logout } = useAuth();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
 
-  // Active Concepts:
-  // 'concept1' -> 1. 🌌 Classic Portal (Original GitHub theme - Default)
-  // 'concept2' -> 2. 🏠 3D Room Pod (Split 3D Isometric Hostel Room & Floating Particles)
-  // 'concept3' -> 3. 💡 Cute Lamp (Interactive Lamp Pull-Cord Experience)
-  // 'concept4' -> 4. 🔮 Cyber Velvet
-  const [activeConcept, setActiveConcept] = useState('concept2');
-
-  // Lamp State for Concept 3 (Cute Lamp)
-  const [isLampOn, setIsLampOn] = useState(false);
-  const [isTypingPassword, setIsTypingPassword] = useState(false);
-
-  const [activeTab, setActiveTab] = useState('login'); // 'login' | 'activate'
+  // Tab State: 'login' | 'activate'
+  const [activeTab, setActiveTab] = useState('login');
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(null); // 'admin' | 'student' | null
 
-  // Password Visibility States (Web & APK)
-  const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Role Selection: 'student' | 'admin' (Defaults to student)
+  const [selectedRole, setSelectedRole] = useState('student');
 
-  // Login Fields State
+  // Login Input States
   const [regNum, setRegNum] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // POP-OUT BUTTON ANIMATION STATE
+  // false = button rests inside the password input
+  // true = button pops out and expands into full pill shape below
+  const [isButtonPopped, setIsButtonPopped] = useState(false);
+
+  // Biometric saved user
   const [savedBiometricUser, setSavedBiometricUser] = useState(null);
+
+  // Activation Fields
+  const [actRegNum, setActRegNum] = useState('');
+  const [actHostel, setActHostel] = useState('');
+  const [actRoom, setActRoom] = useState('');
+  const [actToken, setActToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -197,58 +52,13 @@ export default function Login() {
     }
   }, []);
 
-  // Activation Fields State
-  const [actRegNum, setActRegNum] = useState('');
-  const [actHostel, setActHostel] = useState('');
-  const [actRoom, setActRoom] = useState('');
-  const [actToken, setActToken] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
-  // 3D Card Tilt & Specular Glare State
-  const cardRef = useRef(null);
-  const [cardTilt, setCardTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
-  const tiltRafRef = useRef(null);
-
-  const handleCardMouseMove = (e) => {
-    if (!cardRef.current || (activeConcept === 'concept3' && !isLampOn)) return;
-    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
-
-    if (tiltRafRef.current) cancelAnimationFrame(tiltRafRef.current);
-
-    const clientX = e.clientX;
-    const clientY = e.clientY;
-
-    tiltRafRef.current = requestAnimationFrame(() => {
-      if (!cardRef.current) return;
-      const rect = cardRef.current.getBoundingClientRect();
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
-
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-
-      const rotateX = ((y - centerY) / centerY) * -7;
-      const rotateY = ((x - centerX) / centerX) * 7;
-
-      const glareX = (x / rect.width) * 100;
-      const glareY = (y / rect.height) * 100;
-
-      setCardTilt({ rotateX, rotateY, glareX, glareY });
-    });
-  };
-
-  const handleCardMouseLeave = () => {
-    if (tiltRafRef.current) cancelAnimationFrame(tiltRafRef.current);
-    setCardTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
-  };
-
+  // Core Login Procedure
   const doLogin = async (reg, pass, options = {}) => {
     setLoading(true);
     try {
       const decodedUser = await login(reg, pass);
 
-      // Role filter validation
+      // Role filter check
       if (selectedRole === 'admin' && !ADMIN_ROLES.includes(decodedUser.role)) {
         logout();
         triggerToast('error', '⛔ Access denied. This account is a Student account, not an Admin account.');
@@ -261,18 +71,19 @@ export default function Login() {
         return;
       }
 
-      // Auto-save credentials on Android Mobile APK for 1-Touch Fingerprint Login
+      // Auto-save credentials on Android Mobile APK for 1-Touch Fingerprint
       if (Capacitor.isNativePlatform()) {
         try {
           await biometricService.saveCredentials(reg, pass, decodedUser);
           setSavedBiometricUser({ regNum: String(reg).trim().toUpperCase(), userName: decodedUser?.name });
         } catch (saveErr) {
-          console.warn('[Login] auto-save biometric credentials warning:', saveErr);
+          console.warn('[Login] auto-save biometric warning:', saveErr);
         }
       }
 
-      const toastTitle = options?.viaBiometric ? '👆 Fingerprint Login' : 'Success';
-      triggerToast('success', `Welcome, ${decodedUser.name || decodedUser.registrationNumber}!`, toastTitle);
+      const toastTitle = options?.viaBiometric ? '👆 Fingerprint Login' : 'Sanctuary Access';
+      triggerToast('success', `Welcome back, ${decodedUser.name || decodedUser.registrationNumber}!`, toastTitle);
+
       switch (decodedUser.role) {
         case 'student':        navigate('/student', { replace: true }); break;
         case 'caretaker':      navigate('/caretaker', { replace: true }); break;
@@ -282,7 +93,7 @@ export default function Login() {
         default:               navigate('/', { replace: true });
       }
     } catch (error) {
-      const msg = error.data?.message || error.message || 'Login failed. Please try again.';
+      const msg = error.data?.message || error.message || 'Login failed. Please verify credentials.';
       triggerToast('error', msg);
       if (error.status === 403 && msg.toLowerCase().includes('activate')) {
         setActiveTab('activate');
@@ -293,6 +104,36 @@ export default function Login() {
     }
   };
 
+  // Pop-Out & Submit Handler
+  const handleTriggerPop = (e) => {
+    e?.preventDefault?.();
+    if (!isButtonPopped) {
+      setIsButtonPopped(true);
+    }
+
+    // If inputs already filled, submit immediately
+    if (regNum.trim() && password) {
+      doLogin(regNum.trim(), password);
+    } else if (!regNum.trim()) {
+      triggerToast('info', 'Please enter your Registration Number');
+    } else if (!password) {
+      triggerToast('info', 'Please enter your Passcode');
+    }
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (!isButtonPopped) {
+      setIsButtonPopped(true);
+    }
+    if (!regNum.trim() || !password) {
+      triggerToast('error', 'Please enter registration number and password.');
+      return;
+    }
+    doLogin(regNum.trim(), password);
+  };
+
+  // Biometric Handler
   const handleBiometricLogin = async () => {
     try {
       setLoading(true);
@@ -310,15 +151,7 @@ export default function Login() {
     }
   };
 
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    if (!regNum || !password) {
-      triggerToast('error', 'Please enter registration number and password.');
-      return;
-    }
-    await doLogin(regNum, password);
-  };
-
+  // Activation Submit Handler
   const handleActivateSubmit = async (e) => {
     e.preventDefault();
     if (!actRegNum || !actHostel || !newPassword || !confirmPassword) {
@@ -338,6 +171,7 @@ export default function Login() {
         setPassword('');
         setActToken('');
         setActiveTab('login');
+        setIsButtonPopped(false);
       } else {
         triggerToast('error', res.message || 'Activation failed.');
       }
@@ -349,863 +183,382 @@ export default function Login() {
   };
 
   return (
-    <div
-      className={`auth-page-container ${theme}-theme ${activeConcept}-mode ${
-        selectedRole ? `role-active-${selectedRole}` : ''
-      } ${activeConcept === 'concept3' ? (isLampOn ? 'lamp-state-on' : 'lamp-state-off') : ''}`}
-    >
-      {/* Smooth Theme Background Cross-Fade Overlays */}
-      <div className="auth-theme-backdrop auth-backdrop-dark" />
-      <div className="auth-theme-backdrop auth-backdrop-light" />
+    <div className="wl-login-page">
+      <div className="wl-login-card">
 
-      {/* Option 1 Unique Dark & Light Cyber/Solar Stage (Smooth Opacity Cross-Fade) */}
-      {activeConcept === 'concept1' && (
-        <>
-          <div className="classic-dark-cyber-stage" aria-hidden="true">
-            <div className="cyber-aurora-glow" />
-            <div className="cyber-horizon-line" />
-            <div className="cyber-horizon-sun" />
-            <div className="cyber-grid-plane" />
-            <div className="cyber-light-beams" />
-          </div>
-          <div className="classic-light-horizon-stage" aria-hidden="true">
-            <div className="solar-aurora-glow" />
-            <div className="solar-horizon-line" />
-            <div className="solar-horizon-sun" />
-            <div className="solar-grid-plane" />
-            <div className="solar-light-beams" />
-          </div>
-        </>
-      )}
+        {/* Top Organic Emblem Badge */}
+        <div className="wl-emblem">
+          🌿
+        </div>
 
-      {/* 3D Floating Particle Nebula Background (Active for Option 2 & 4) */}
-      {(activeConcept === 'concept2' || activeConcept === 'concept4') && (
-        <Canvas3DBackground role={selectedRole} theme={theme} concept={activeConcept} />
-      )}
+        <div className="text-center">
+          <span className="wl-badge-pill">
+            HostelCare • Warm Linen Edition
+          </span>
+          <h1 className="wl-title">Welcome Back</h1>
+          <p className="wl-subtitle">
+            Access your private student sanctuary and hostel services
+          </p>
+        </div>
 
-      {/* Top Header Control Bar: Concept Switcher & Theme Switcher */}
-      <div className="auth-top-controls">
-        <div className="auth-concept-switcher">
+        {/* Tab Switcher: Sign In vs Activate Account */}
+        <div className="wl-auth-tabs">
           <button
             type="button"
-            className={`auth-concept-btn concept-btn-1 ${activeConcept === 'concept1' ? 'active' : ''}`}
-            onClick={() => setActiveConcept('concept1')}
+            className={`wl-auth-tab-btn ${activeTab === 'login' ? 'active' : ''}`}
+            onClick={() => setActiveTab('login')}
           >
-            <span className="concept-badge">1</span>
-            <span className="concept-icon">🌌</span>
-            <span className="concept-label">Classic</span>
+            Sign In
           </button>
           <button
             type="button"
-            className={`auth-concept-btn concept-btn-2 ${activeConcept === 'concept2' ? 'active' : ''}`}
-            onClick={() => setActiveConcept('concept2')}
+            className={`wl-auth-tab-btn ${activeTab === 'activate' ? 'active' : ''}`}
+            onClick={() => setActiveTab('activate')}
           >
-            <span className="concept-badge">2</span>
-            <span className="concept-icon">🏠</span>
-            <span className="concept-label">3D Room Pod</span>
-          </button>
-          <button
-            type="button"
-            className={`auth-concept-btn concept-btn-3 ${activeConcept === 'concept3' ? 'active' : ''}`}
-            onClick={() => setActiveConcept('concept3')}
-          >
-            <span className="concept-badge">3</span>
-            <span className="concept-icon">💡</span>
-            <span className="concept-label">Cute Lamp</span>
-          </button>
-          <button
-            type="button"
-            className={`auth-concept-btn concept-btn-4 ${activeConcept === 'concept4' ? 'active' : ''}`}
-            onClick={() => setActiveConcept('concept4')}
-          >
-            <span className="concept-badge">4</span>
-            <span className="concept-icon">🔮</span>
-            <span className="concept-label">Cyber Velvet</span>
+            Activate Account
           </button>
         </div>
 
-        {/* Hanging Beta Banner in Top Bar */}
-        <div className="auth-top-beta-badge" aria-hidden="true">
-          <div className="beta-banner-cords">
-            <div className="beta-banner-cord cord-left"></div>
-            <div className="beta-banner-cord cord-right"></div>
-          </div>
-          <div className="beta-banner-sign">
-            <span className="beta-banner-text">BETA VERSION</span>
-          </div>
-        </div>
+        {/* -------------------------------------------------------------
+            TAB 1: SIGN IN (ZEN PAVILION WITH MORPHING BUTTON)
+            ------------------------------------------------------------- */}
+        {activeTab === 'login' ? (
+          <form onSubmit={handleFormSubmit}>
 
-        {/* Theme Switcher */}
-        <div className="auth-theme-toggle" role="radiogroup" aria-label="Theme selector">
-          <button
-            type="button"
-            className={`auth-theme-btn theme-btn-light ${theme === 'light' ? 'active' : ''}`}
-            onClick={() => theme !== 'light' && setTheme('light')}
-            aria-label="Switch to light mode"
-            aria-checked={theme === 'light'}
-            role="radio"
-          >
-            <span className="theme-icon">☀️</span>
-            <span className="theme-label">Light</span>
-          </button>
-          <button
-            type="button"
-            className={`auth-theme-btn theme-btn-dark ${theme === 'dark' ? 'active' : ''}`}
-            onClick={() => theme !== 'dark' && setTheme('dark')}
-            aria-label="Switch to dark mode"
-            aria-checked={theme === 'dark'}
-            role="radio"
-          >
-            <span className="theme-icon">🌙</span>
-            <span className="theme-label">Dark</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ===================================================================
-          OPTION 1 & 4: CENTERED CARD LAYOUT (CLASSIC & CYBER VELVET)
-          =================================================================== */}
-      {(activeConcept === 'concept1' || activeConcept === 'concept4') && (
-        <div className={`auth-main-layout centered-layout ${activeConcept}-layout`}>
-          <div className="auth-bg-blob auth-bg-blob-1" />
-          <div className="auth-bg-blob auth-bg-blob-2" />
-          <div className="auth-bg-blob auth-bg-blob-3" />
-
-          <div className="auth-card auth-card-classic">
-            <div className="auth-tabs">
+            {/* Dual Role Switcher */}
+            <div className="wl-role-grid">
               <button
-                className={`auth-tab ${activeTab === 'login' ? 'active' : ''}`}
-                onClick={() => setActiveTab('login')}
-                disabled={loading}
+                type="button"
+                className={`wl-role-btn ${selectedRole === 'student' ? 'active' : ''}`}
+                onClick={() => setSelectedRole('student')}
               >
-                Sign In
+                <span>🎓</span>
+                <span>Student Resident</span>
               </button>
               <button
-                className={`auth-tab ${activeTab === 'activate' ? 'active' : ''}`}
-                onClick={() => setActiveTab('activate')}
-                disabled={loading}
+                type="button"
+                className={`wl-role-btn ${selectedRole === 'admin' ? 'active' : ''}`}
+                onClick={() => setSelectedRole('admin')}
               >
-                Activate Account
+                <span>🛡️</span>
+                <span>Warden & Staff</span>
               </button>
             </div>
 
-            <div className="auth-body">
-              <div className="auth-logo">👥</div>
-
-              <h2 className="auth-title">HostelCare Portal</h2>
-              <p className="auth-subtitle">
-                {activeTab === 'login'
-                  ? 'Choose your role to continue'
-                  : 'Activate your account by establishing a secure password'}
-              </p>
-
-              {activeTab === 'login' ? (
-                <form onSubmit={handleLoginSubmit}>
-                  <div className="auth-role-grid">
-                    <button
-                      type="button"
-                      className={`auth-role-btn auth-role-btn-admin ${selectedRole === 'admin' ? 'active' : ''}`}
-                      onClick={() => setSelectedRole(selectedRole === 'admin' ? null : 'admin')}
-                      disabled={loading}
-                    >
-                      <div className="auth-role-btn-icon">🛡️</div>
-                      <div className="auth-role-btn-text">
-                        <span className="auth-role-btn-title">Admin</span>
-                        <span className="auth-role-btn-sub">Staff / Warden</span>
-                      </div>
-                      {selectedRole === 'admin' && <span className="auth-role-check">✓</span>}
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`auth-role-btn auth-role-btn-student ${selectedRole === 'student' ? 'active' : ''}`}
-                      onClick={() => setSelectedRole(selectedRole === 'student' ? null : 'student')}
-                      disabled={loading}
-                    >
-                      <div className="auth-role-btn-icon">🎓</div>
-                      <div className="auth-role-btn-text">
-                        <span className="auth-role-btn-title">Student</span>
-                        <span className="auth-role-btn-sub">Hostel Resident</span>
-                      </div>
-                      {selectedRole === 'student' && <span className="auth-role-check">✓</span>}
-                    </button>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="regNum1">
-                      {selectedRole === 'admin' ? 'Admin Registration Number' : selectedRole === 'student' ? 'Student Registration Number' : 'Registration Number'}
-                    </label>
-                    <input
-                      id="regNum1"
-                      type="text"
-                      className="form-input"
-                      placeholder={selectedRole === 'admin' ? 'e.g. SUP001 or WRD001' : 'e.g. 2021BCS001'}
-                      value={regNum}
-                      onChange={(e) => setRegNum(e.target.value.trim())}
-                      disabled={loading}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="password1">Password</label>
-                    <div className="auth-password-wrapper">
-                      <input
-                        id="password1"
-                        type={showPassword ? 'text' : 'password'}
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={loading}
-                        required
-                      />
-                      <PasswordToggleEye
-                        visible={showPassword}
-                        onToggle={() => setShowPassword(!showPassword)}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    style={{ width: '100%', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
-                    disabled={loading}
-                  >
-                    {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
-                  </button>
-
-                  <BiometricLoginButton
-                    onBiometricLogin={handleBiometricLogin}
-                    loading={loading}
-                    savedUser={savedBiometricUser}
-                  />
-                </form>
-              ) : (
-                <form onSubmit={handleActivateSubmit}>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="actRegNum1">Registration Number</label>
-                    <input
-                      id="actRegNum1"
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. 2021BCS001"
-                      value={actRegNum}
-                      onChange={(e) => setActRegNum(e.target.value.trim())}
-                      disabled={loading}
-                      required
-                    />
-                  </div>
-
-                  <div className="grid-cols-2">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="actHostel1">Hostel Name</label>
-                      <input
-                        id="actHostel1"
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. BH-1"
-                        value={actHostel}
-                        onChange={(e) => setActHostel(e.target.value.trim())}
-                        disabled={loading}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="actRoom1">Room Number</label>
-                      <input
-                        id="actRoom1"
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. 302"
-                        value={actRoom}
-                        onChange={(e) => setActRoom(e.target.value.trim())}
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="newPassword1">New Password</label>
-                    <div className="auth-password-wrapper">
-                      <input
-                        id="newPassword1"
-                        type={showNewPassword ? 'text' : 'password'}
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        disabled={loading}
-                        required
-                      />
-                      <PasswordToggleEye
-                        visible={showNewPassword}
-                        onToggle={() => setShowNewPassword(!showNewPassword)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="confirmPassword1">Confirm Password</label>
-                    <div className="auth-password-wrapper">
-                      <input
-                        id="confirmPassword1"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        disabled={loading}
-                        required
-                      />
-                      <PasswordToggleEye
-                        visible={showConfirmPassword}
-                        onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    style={{ width: '100%', marginTop: '8px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
-                    disabled={loading}
-                  >
-                    {loading ? <FuturisticLoader size="sm" /> : 'Activate Account'}
-                  </button>
-                </form>
-              )}
-
-              {/* Guest Mess Menu Quick Access Card */}
-              <MessMenuGuestCard />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===================================================================
-          OPTION 2: 3D ISOMETRIC HOSTEL ROOM POD
-          =================================================================== */}
-      {activeConcept === 'concept2' && (
-        <div className="auth-main-layout split-layout concept2-layout">
-          <div className="auth-hero-3d-column">
-            <div className="auth-hero-text">
-              <span className="auth-hero-tag">Smart Campus Living</span>
-              <h1 className="auth-hero-heading">Welcome to HostelCare</h1>
-              <p className="auth-hero-sub">
-                Your intelligent 3D portal for seamless room allocation, maintenance requests, and automated access.
-              </p>
-            </div>
-            <IsometricHostelRoom3D role={selectedRole} />
-          </div>
-
-          <div className="auth-card-3d-wrapper">
-            <div
-              ref={cardRef}
-              className="auth-card auth-card-3d"
-              onMouseMove={handleCardMouseMove}
-              onMouseLeave={handleCardMouseLeave}
-              style={{
-                transform: `perspective(1100px) rotateX(${cardTilt.rotateX}deg) rotateY(${cardTilt.rotateY}deg) scale3d(1, 1, 1)`,
-              }}
-            >
-              <div
-                className="auth-card-glare"
-                style={{
-                  background: `radial-gradient(circle at ${cardTilt.glareX}% ${cardTilt.glareY}%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 65%)`,
-                }}
-              />
-
-              <div className="auth-tabs">
-                <button
-                  className={`auth-tab ${activeTab === 'login' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('login')}
+            {/* Registration Number Field */}
+            <div className="wl-form-group">
+              <label className="wl-form-label" htmlFor="regNumInput">
+                {selectedRole === 'admin' ? 'Staff / Admin Registration #' : 'Registration Number'}
+              </label>
+              <div className="wl-input-wrapper">
+                <input
+                  id="regNumInput"
+                  type="text"
+                  className="wl-text-input"
+                  placeholder={selectedRole === 'admin' ? 'e.g. SUP001 or WRD001' : 'e.g. 24E114B14'}
+                  value={regNum}
+                  onChange={(e) => setRegNum(e.target.value.trim())}
                   disabled={loading}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password Field with Embedded Morphing Button */}
+            <div className="wl-form-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <label className="wl-form-label" htmlFor="passwordInput" style={{ margin: 0 }}>
+                  Passcode
+                </label>
+                <span
+                  style={{ fontSize: 11.5, color: '#728D7A', fontWeight: 600, cursor: 'pointer' }}
+                  onClick={() => triggerToast('info', 'Contact your Hostel Warden or Superintendent to reset password.')}
                 >
-                  Sign In
-                </button>
-                <button
-                  className={`auth-tab ${activeTab === 'activate' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('activate')}
-                  disabled={loading}
-                >
-                  Activate Account
-                </button>
+                  Forgot PIN?
+                </span>
               </div>
 
-              <div className="auth-body">
-                <div className="auth-logo auth-logo-3d">
-                  <span className="logo-3d-glyph">🏢</span>
-                </div>
+              {/* Password Box */}
+              <div className="wl-input-wrapper">
+                <input
+                  id="passwordInput"
+                  type={showPassword ? 'text' : 'password'}
+                  className="wl-text-input"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleTriggerPop();
+                    }
+                  }}
+                  disabled={loading}
+                  required
+                />
 
-                <h2 className="auth-title">HostelCare Portal</h2>
-                <p className="auth-subtitle">
-                  {activeTab === 'login'
-                    ? 'Choose your role to enter the portal'
-                    : 'Activate your account with a secure credential'}
-                </p>
+                {/* Password Eye Toggle */}
+                <button
+                  type="button"
+                  className="wl-eye-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                  aria-label="Toggle password view"
+                >
+                  {showPassword ? (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  ) : (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  )}
+                </button>
 
-                {activeTab === 'login' ? (
-                  <form onSubmit={handleLoginSubmit}>
-                    <div className="auth-role-grid">
-                      <button
-                        type="button"
-                        className={`auth-role-btn auth-role-btn-admin ${selectedRole === 'admin' ? 'active' : ''}`}
-                        onClick={() => setSelectedRole(selectedRole === 'admin' ? null : 'admin')}
-                        disabled={loading}
-                      >
-                        <div className="auth-role-btn-icon">🛡️</div>
-                        <div className="auth-role-btn-text">
-                          <span className="auth-role-btn-title">Admin</span>
-                          <span className="auth-role-btn-sub">Staff / Warden</span>
-                        </div>
-                        {selectedRole === 'admin' && <span className="auth-role-check">✓</span>}
-                      </button>
-
-                      <button
-                        type="button"
-                        className={`auth-role-btn auth-role-btn-student ${selectedRole === 'student' ? 'active' : ''}`}
-                        onClick={() => setSelectedRole(selectedRole === 'student' ? null : 'student')}
-                        disabled={loading}
-                      >
-                        <div className="auth-role-btn-icon">🎓</div>
-                        <div className="auth-role-btn-text">
-                          <span className="auth-role-btn-title">Student</span>
-                          <span className="auth-role-btn-sub">Hostel Resident</span>
-                        </div>
-                        {selectedRole === 'student' && <span className="auth-role-check">✓</span>}
-                      </button>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="regNum2">
-                        {selectedRole === 'admin' ? 'Admin Registration Number' : selectedRole === 'student' ? 'Student Registration Number' : 'Registration Number'}
-                      </label>
-                      <input
-                        id="regNum2"
-                        type="text"
-                        className="form-input"
-                        placeholder={selectedRole === 'admin' ? 'e.g. SUP001 or WRD001' : 'e.g. 2021BCS001'}
-                        value={regNum}
-                        onChange={(e) => setRegNum(e.target.value.trim())}
-                        disabled={loading}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="password2">Password</label>
-                      <div className="auth-password-wrapper">
-                        <input
-                          id="password2"
-                          type={showPassword ? 'text' : 'password'}
-                          className="form-input"
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          disabled={loading}
-                          required
-                        />
-                        <PasswordToggleEye
-                          visible={showPassword}
-                          onToggle={() => setShowPassword(!showPassword)}
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      style={{ width: '100%', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
-                      disabled={loading}
-                    >
-                      {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'}` : 'Sign In'}
-                    </button>
-
-                    <BiometricLoginButton
-                      onBiometricLogin={handleBiometricLogin}
-                      loading={loading}
-                      savedUser={savedBiometricUser}
-                    />
-                  </form>
-                ) : (
-                  <form onSubmit={handleActivateSubmit}>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="actRegNum2">Registration Number</label>
-                      <input
-                        id="actRegNum2"
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. 2021BCS001"
-                        value={actRegNum}
-                        onChange={(e) => setActRegNum(e.target.value.trim())}
-                        disabled={loading}
-                        required
-                      />
-                    </div>
-
-                    <div className="grid-cols-2">
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="actHostel2">Hostel Name</label>
-                        <input
-                          id="actHostel2"
-                          type="text"
-                          className="form-input"
-                          placeholder="e.g. BH-1"
-                          value={actHostel}
-                          onChange={(e) => setActHostel(e.target.value.trim())}
-                          disabled={loading}
-                          required
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="actRoom2">Room Number</label>
-                        <input
-                          id="actRoom2"
-                          type="text"
-                          className="form-input"
-                          placeholder="e.g. 302"
-                          value={actRoom}
-                          onChange={(e) => setActRoom(e.target.value.trim())}
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="newPassword2">New Password</label>
-                      <div className="auth-password-wrapper">
-                        <input
-                          id="newPassword2"
-                          type={showNewPassword ? 'text' : 'password'}
-                          className="form-input"
-                          placeholder="••••••••"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          disabled={loading}
-                          required
-                        />
-                        <PasswordToggleEye
-                          visible={showNewPassword}
-                          onToggle={() => setShowNewPassword(!showNewPassword)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="confirmPassword2">Confirm Password</label>
-                      <div className="auth-password-wrapper">
-                        <input
-                          id="confirmPassword2"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          className="form-input"
-                          placeholder="••••••••"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          disabled={loading}
-                          required
-                        />
-                        <PasswordToggleEye
-                          visible={showConfirmPassword}
-                          onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="actToken2">
-                        Setup / Activation Token <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Optional / Required for Super Admin)</span>
-                      </label>
-                      <input
-                        id="actToken2"
-                        type="text"
-                        className="form-input"
-                        placeholder="Paste single-use token if provisioned"
-                        value={actToken}
-                        onChange={(e) => setActToken(e.target.value.trim())}
-                        disabled={loading}
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      style={{ width: '100%', marginTop: '8px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
-                      disabled={loading}
-                    >
-                      {loading ? <FuturisticLoader size="sm" /> : 'Activate Account'}
-                    </button>
-                  </form>
+                {/* INSIDE STATE: Submit button nestled snugly right inside password box */}
+                {!isButtonPopped && (
+                  <button
+                    type="button"
+                    onClick={handleTriggerPop}
+                    className="wl-inside-submit-btn"
+                    title="Click to launch submit pill button"
+                    aria-label="Unlock Sanctuary"
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </button>
                 )}
-
-                {/* Guest Mess Menu Quick Access Card */}
-                <MessMenuGuestCard />
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* ===================================================================
-          OPTION 3: CUTE LAMP PULL-CORD EXPERIENCE
-          =================================================================== */}
-      {activeConcept === 'concept3' && (
-        <div className="concept4-lamp-layout concept3-mode">
-          <div className="concept4-lamp-column">
-            <InteractiveLamp
-              isOn={isLampOn}
-              onToggle={(newState) => setIsLampOn(newState)}
-              isTypingPassword={isTypingPassword}
-            />
-          </div>
-
-          <div className="concept4-card-column">
-            <div
-              ref={cardRef}
-              className={`concept4-card ${isLampOn ? 'card-illuminated' : 'card-dormant'}`}
-              onMouseMove={handleCardMouseMove}
-              onMouseLeave={handleCardMouseLeave}
-              style={{
-                transform: isLampOn
-                  ? `perspective(1000px) rotateX(${cardTilt.rotateX * 0.6}deg) rotateY(${cardTilt.rotateY * 0.6}deg) scale(1) translateY(0)`
-                  : 'perspective(1000px) scale(0.2) translateY(40px)',
-              }}
-            >
-              {isLampOn && <div className="concept4-card-warm-halo" />}
-
-              <div className="concept4-card-header">
-                <div className="concept4-lamp-status-pill">
-                  {isLampOn ? (
+            {/* OUTSIDE STATE: Popped-Out Pill Button (Animated Downward Morph) */}
+            {isButtonPopped && (
+              <div className="wl-popped-pill-wrap">
+                <button
+                  type="submit"
+                  className="wl-popped-pill-btn"
+                  disabled={loading}
+                  id="btn-login-submit"
+                >
+                  {loading ? (
                     <>
-                      <span className="pulse-dot on" />
-                      <span>Lamp Illuminated</span>
+                      <span className="wl-spinner"></span>
+                      <span>Authenticating Sanctuary...</span>
                     </>
                   ) : (
                     <>
-                      <span className="pulse-dot off" />
-                      <span>Pull string to turn on</span>
+                      <span>Unlock Sanctuary</span>
+                      <span>✨</span>
                     </>
                   )}
-                </div>
-                <h1 className="concept4-card-title">
-                  {activeTab === 'login' ? 'Sign in to HostelCare' : 'Activate Resident Account'}
-                </h1>
-                <p className="concept4-card-subtitle">
-                  {activeTab === 'login'
-                    ? 'Enter your institutional credentials to enter the portal'
-                    : 'Establish your room access credentials'}
-                </p>
+                </button>
+                <span 
+                  className="wl-retract-hint"
+                  onClick={() => setIsButtonPopped(false)}
+                  title="Click to tuck button back inside password box"
+                >
+                  ↩ Tuck back into password box
+                </span>
               </div>
+            )}
 
-              <div className="concept4-auth-tabs">
+            {/* Biometric Fingerprint Button (Native APK & Supported Browsers) */}
+            {(Capacitor.isNativePlatform() || savedBiometricUser) && (
+              <div style={{ marginTop: 14 }}>
                 <button
                   type="button"
-                  className={`concept4-tab-btn ${activeTab === 'login' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('login')}
-                  disabled={loading || !isLampOn}
+                  onClick={handleBiometricLogin}
+                  disabled={loading}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    borderRadius: 9999,
+                    background: '#EEF3EE',
+                    border: '1px solid #D5E2D7',
+                    color: '#587360',
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    transition: 'all 0.15s ease'
+                  }}
                 >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  className={`concept4-tab-btn ${activeTab === 'activate' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('activate')}
-                  disabled={loading || !isLampOn}
-                >
-                  Activate Account
+                  <span style={{ fontSize: 15 }}>👆</span>
+                  <span>Sign In with Fingerprint {savedBiometricUser?.regNum ? `(${savedBiometricUser.regNum})` : ''}</span>
                 </button>
               </div>
+            )}
 
-              {activeTab === 'login' ? (
-                <form onSubmit={handleLoginSubmit} className="concept4-form">
-                  <div className="auth-role-grid">
-                    <button
-                      type="button"
-                      className={`auth-role-btn auth-role-btn-admin ${selectedRole === 'admin' ? 'active' : ''}`}
-                      onClick={() => setSelectedRole(selectedRole === 'admin' ? null : 'admin')}
-                      disabled={loading || !isLampOn}
-                    >
-                      <div className="auth-role-btn-icon">🛡️</div>
-                      <div className="auth-role-btn-text">
-                        <span className="auth-role-btn-title">Admin</span>
-                        <span className="auth-role-btn-sub">Staff / Warden</span>
-                      </div>
-                      {selectedRole === 'admin' && <span className="auth-role-check">✓</span>}
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`auth-role-btn auth-role-btn-student ${selectedRole === 'student' ? 'active' : ''}`}
-                      onClick={() => setSelectedRole(selectedRole === 'student' ? null : 'student')}
-                      disabled={loading || !isLampOn}
-                    >
-                      <div className="auth-role-btn-icon">🎓</div>
-                      <div className="auth-role-btn-text">
-                        <span className="auth-role-btn-title">Student</span>
-                        <span className="auth-role-btn-sub">Hostel Resident</span>
-                      </div>
-                      {selectedRole === 'student' && <span className="auth-role-check">✓</span>}
-                    </button>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="regNum3">
-                      {selectedRole === 'admin' ? 'Admin Registration Number' : selectedRole === 'student' ? 'Student Registration Number' : 'Registration Number'}
-                    </label>
-                    <input
-                      id="regNum3"
-                      type="text"
-                      className="form-input"
-                      placeholder={selectedRole === 'admin' ? 'e.g. SUP001 or WRD001' : 'e.g. 2021BCS001'}
-                      value={regNum}
-                      onChange={(e) => setRegNum(e.target.value.trim())}
-                      disabled={loading || !isLampOn}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="password3">
-                      Password
-                      {isTypingPassword && <span className="lamp-peek-hint">🙈 Lamp is peeking away!</span>}
-                    </label>
-                    <div className="auth-password-wrapper">
-                      <input
-                        id="password3"
-                        type={showPassword ? 'text' : 'password'}
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onFocus={() => setIsTypingPassword(true)}
-                        onBlur={() => setIsTypingPassword(false)}
-                        disabled={loading || !isLampOn}
-                        required
-                      />
-                      <PasswordToggleEye
-                        visible={showPassword}
-                        onToggle={() => setShowPassword(!showPassword)}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="concept4-login-btn"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
-                    disabled={loading || !isLampOn}
-                  >
-                    {loading ? <FuturisticLoader size="sm" /> : selectedRole ? `Sign In as ${selectedRole === 'admin' ? 'Admin' : 'Student'} →` : 'Sign In →'}
-                  </button>
-
-                  <BiometricLoginButton
-                    onBiometricLogin={handleBiometricLogin}
-                    loading={loading}
-                    savedUser={savedBiometricUser}
-                  />
-                </form>
-              ) : (
-                <form onSubmit={handleActivateSubmit} className="concept4-form">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="actRegNum3">Registration Number</label>
-                    <input
-                      id="actRegNum3"
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. 2021BCS001"
-                      value={actRegNum}
-                      onChange={(e) => setActRegNum(e.target.value.trim())}
-                      disabled={loading || !isLampOn}
-                      required
-                    />
-                  </div>
-
-                  <div className="grid-cols-2">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="actHostel3">Hostel Name</label>
-                      <input
-                        id="actHostel3"
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. BH-1"
-                        value={actHostel}
-                        onChange={(e) => setActHostel(e.target.value.trim())}
-                        disabled={loading || !isLampOn}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="actRoom3">Room Number</label>
-                      <input
-                        id="actRoom3"
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. 302"
-                        value={actRoom}
-                        onChange={(e) => setActRoom(e.target.value.trim())}
-                        disabled={loading || !isLampOn}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="newPassword3">New Password</label>
-                    <div className="auth-password-wrapper">
-                      <input
-                        id="newPassword3"
-                        type={showNewPassword ? 'text' : 'password'}
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        disabled={loading || !isLampOn}
-                        required
-                      />
-                      <PasswordToggleEye
-                        visible={showNewPassword}
-                        onToggle={() => setShowNewPassword(!showNewPassword)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="confirmPassword3">Confirm Password</label>
-                    <div className="auth-password-wrapper">
-                      <input
-                        id="confirmPassword3"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        disabled={loading || !isLampOn}
-                        required
-                      />
-                      <PasswordToggleEye
-                        visible={showConfirmPassword}
-                        onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="concept4-login-btn"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}
-                    disabled={loading || !isLampOn}
-                  >
-                    {loading ? <FuturisticLoader size="sm" /> : 'Activate Account →'}
-                  </button>
-                </form>
-              )}
+          </form>
+        ) : (
+          /* -------------------------------------------------------------
+              TAB 2: ACTIVATE ACCOUNT
+              ------------------------------------------------------------- */
+          <form onSubmit={handleActivateSubmit}>
+            <div className="wl-form-group">
+              <label className="wl-form-label" htmlFor="actReg">Registration Number</label>
+              <div className="wl-input-wrapper">
+                <input
+                  id="actReg"
+                  type="text"
+                  className="wl-text-input"
+                  placeholder="e.g. 24E114B14"
+                  value={actRegNum}
+                  onChange={(e) => setActRegNum(e.target.value.trim())}
+                  disabled={loading}
+                  required
+                />
+              </div>
             </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="wl-form-group">
+                <label className="wl-form-label" htmlFor="actHostel">Hostel Name</label>
+                <div className="wl-input-wrapper">
+                  <input
+                    id="actHostel"
+                    type="text"
+                    className="wl-text-input"
+                    placeholder="e.g. BH-8"
+                    value={actHostel}
+                    onChange={(e) => setActHostel(e.target.value.trim())}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="wl-form-group">
+                <label className="wl-form-label" htmlFor="actRoom">Room Number</label>
+                <div className="wl-input-wrapper">
+                  <input
+                    id="actRoom"
+                    type="text"
+                    className="wl-text-input"
+                    placeholder="e.g. 215"
+                    value={actRoom}
+                    onChange={(e) => setActRoom(e.target.value.trim())}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="wl-form-group">
+              <label className="wl-form-label" htmlFor="newPass">New Password</label>
+              <div className="wl-input-wrapper">
+                <input
+                  id="newPass"
+                  type={showNewPassword ? 'text' : 'password'}
+                  className="wl-text-input"
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  className="wl-eye-btn"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  👁️
+                </button>
+              </div>
+            </div>
+
+            <div className="wl-form-group">
+              <label className="wl-form-label" htmlFor="confPass">Confirm Password</label>
+              <div className="wl-input-wrapper">
+                <input
+                  id="confPass"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  className="wl-text-input"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  className="wl-eye-btn"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  👁️
+                </button>
+              </div>
+            </div>
+
+            <div className="wl-form-group">
+              <label className="wl-form-label" htmlFor="tokenInput">
+                Setup Token <span style={{ textTransform: 'none', color: '#9C9B94' }}>(Optional)</span>
+              </label>
+              <div className="wl-input-wrapper">
+                <input
+                  id="tokenInput"
+                  type="text"
+                  className="wl-text-input"
+                  placeholder="Paste single-use token if provisioned"
+                  value={actToken}
+                  onChange={(e) => setActToken(e.target.value.trim())}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 18 }}>
+              <button
+                type="submit"
+                className="wl-popped-pill-btn"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="wl-spinner"></span>
+                    <span>Activating Account...</span>
+                  </>
+                ) : (
+                  <span>Complete Activation →</span>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Guest Mess Menu Shortcut Card */}
+        <div className="wl-guest-mess-card">
+          <div>
+            <h4 className="wl-mess-title">Hungry right now?</h4>
+            <p className="wl-mess-sub">Check weekly mess schedule (No login required)</p>
           </div>
+          <button
+            type="button"
+            className="wl-mess-btn"
+            onClick={() => navigate('/mess-menu')}
+          >
+            Mess Menu →
+          </button>
         </div>
-      )}
+
+        {/* Footer Support Links */}
+        <div className="wl-footer-links">
+          <a href="#" onClick={(e) => { e.preventDefault(); triggerToast('info', 'Contact campus caretaker for room assistance.'); }}>Need Help?</a>
+          <span>•</span>
+          <a href="#" onClick={(e) => { e.preventDefault(); triggerToast('info', 'ITER Security Gate 1 active 24/7.'); }}>Campus Security</a>
+          <span>•</span>
+          <a href="#" onClick={(e) => { e.preventDefault(); triggerToast('info', 'HostelCare v1.2.2 - Campus Living Sanctuary.'); }}>Terms</a>
+        </div>
+
+      </div>
     </div>
   );
 }

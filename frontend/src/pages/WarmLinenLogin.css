@@ -1,0 +1,421 @@
+/* Warm Linen Edition - Zen Pavilion Login Stylesheet */
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 4px 14px rgba(114, 141, 122, 0.35);
+  }
+  50% {
+    box-shadow: 0 8px 24px rgba(114, 141, 122, 0.6), 0 0 10px rgba(114, 141, 122, 0.3);
+  }
+}
+
+@keyframes popDownPill {
+  0% {
+    opacity: 0;
+    transform: translateY(-22px) scale(0.7);
+  }
+  65% {
+    transform: translateY(3px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes popInside {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes floatEmblem {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes spinRing {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Base Canvas */
+.wl-login-page {
+  min-height: 100vh;
+  background-color: #F6F3EC;
+  color: #242523;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Centered Luxury Card */
+.wl-login-card {
+  width: 100%;
+  max-width: 440px;
+  background-color: #FFFFFF;
+  border: 1px solid #E6E0D5;
+  border-radius: 30px;
+  padding: 36px 32px;
+  box-shadow: 0 18px 55px rgba(105, 93, 76, 0.08);
+  box-sizing: border-box;
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.wl-login-card:hover {
+  box-shadow: 0 22px 65px rgba(105, 93, 76, 0.12);
+}
+
+/* Emblem Badge */
+.wl-emblem {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 12px;
+  border-radius: 18px;
+  background: #EEF3EE;
+  border: 1px solid #D5E2D7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #587360;
+  box-shadow: 0 3px 10px rgba(114, 141, 122, 0.15);
+  animation: floatEmblem 3s ease-in-out infinite;
+}
+
+/* Top Oat Badge */
+.wl-badge-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: #FAF8F4;
+  border: 1px solid #E6E0D5;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #7D7F7A;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+/* Typography */
+.wl-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: #242523;
+  margin: 0 0 6px;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.wl-subtitle {
+  font-size: 13px;
+  color: #7D7F7A;
+  margin: 0 0 22px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Main Tab Switcher: Sign In vs Activate */
+.wl-auth-tabs {
+  display: flex;
+  background: #FAF8F4;
+  border: 1px solid #E6E0D5;
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 18px;
+  gap: 4px;
+}
+
+.wl-auth-tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #7D7F7A;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wl-auth-tab-btn.active {
+  background: #FFFFFF;
+  color: #242523;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Role Selector: Student vs Warden */
+.wl-role-grid {
+  display: flex;
+  background: #F6F3EC;
+  border: 1px solid #E6E0D5;
+  border-radius: 16px;
+  padding: 4px;
+  margin-bottom: 22px;
+  gap: 4px;
+}
+
+.wl-role-btn {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: #7D7F7A;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wl-role-btn.active {
+  background: #FFFFFF;
+  color: #242523;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* Form Groups */
+.wl-form-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.wl-form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #73756F;
+  margin-bottom: 6px;
+}
+
+.wl-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #FAF8F4;
+  border: 1px solid #E6E0D5;
+  border-radius: 16px;
+  padding: 4px 6px 4px 16px;
+  transition: all 0.2s ease;
+}
+
+.wl-input-wrapper:focus-within {
+  border-color: #728D7A;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(114, 141, 122, 0.16);
+}
+
+.wl-text-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #242523;
+  padding: 8px 0;
+  font-family: inherit;
+}
+
+.wl-text-input::placeholder {
+  color: #B5B3AC;
+}
+
+/* Password Eye Button */
+.wl-eye-btn {
+  background: transparent;
+  border: none;
+  color: #9C9B94;
+  cursor: pointer;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.wl-eye-btn:hover {
+  color: #242523;
+}
+
+/* INSIDE SUBMIT BUTTON (Before Pop) */
+.wl-inside-submit-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #728D7A 0%, #587360 100%);
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(114, 141, 122, 0.35);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: pulseGlow 2.5s infinite ease-in-out, popInside 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  margin-left: 4px;
+}
+
+.wl-inside-submit-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.55);
+}
+
+.wl-inside-submit-btn:active {
+  transform: scale(0.95);
+}
+
+/* OUTSIDE POPPED PILL BUTTON */
+.wl-popped-pill-wrap {
+  overflow: hidden;
+  margin-top: 16px;
+  animation: popDownPill 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.wl-popped-pill-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #728D7A 0%, #587360 100%);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(114, 141, 122, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+.wl-popped-pill-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(114, 141, 122, 0.55);
+  background: linear-gradient(135deg, #67836F 0%, #4D6654 100%);
+}
+
+.wl-popped-pill-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.wl-popped-pill-btn:disabled {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+/* Retract button to put it back inside if desired */
+.wl-retract-hint {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  color: #8E8F8A;
+  margin-top: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.wl-retract-hint:hover {
+  color: #728D7A;
+}
+
+/* Spinner */
+.wl-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: spinRing 0.6s linear infinite;
+  display: inline-block;
+}
+
+/* Guest Mess Card */
+.wl-guest-mess-card {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #E6E0D5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.wl-mess-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #242523;
+  margin: 0;
+}
+
+.wl-mess-sub {
+  font-size: 11px;
+  color: #8E8F8A;
+  margin: 2px 0 0;
+}
+
+.wl-mess-btn {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: #FFF1ED;
+  color: #C9826D;
+  border: 1px solid #F4D3C9;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wl-mess-btn:hover {
+  background: #FCE8E2;
+  color: #B36E59;
+}
+
+/* Footer Links */
+.wl-footer-links {
+  margin-top: 20px;
+  font-size: 11.5px;
+  color: #8E8F8A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.wl-footer-links a {
+  color: #7D7F7A;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.wl-footer-links a:hover {
+  color: #242523;
+}
