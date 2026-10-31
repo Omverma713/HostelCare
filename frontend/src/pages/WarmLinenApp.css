@@ -1092,3 +1092,42 @@ body.dark-theme .mockup-card-menu-hint {
   background-color: #FFFFFF !important;
 }
 
+
+
+/* ─── Hide Floating Dock in Active Chat Room on Mobile ─── */
+@media (max-width: 1024px) {
+  body.devchat-room-open .icon-sidebar,
+  body.devchat-room-open .sidebar-dock-spacer {
+    display: none !important;
+  }
+
+  body.devchat-room-open .top-navbar,
+  body.devchat-room-open .header-glass-bar {
+    display: none !important;
+  }
+
+  body.devchat-room-open .workspace-layout,
+  body.devchat-room-open .workspace-layout.chat-layout {
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.devchat-room-open .main-viewport,
+  body.devchat-room-open .chat-viewport {
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+

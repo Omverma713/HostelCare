@@ -1799,10 +1799,53 @@ html.light-theme .chat-image-preview-bar {
   .devchat-input-bar {
     margin-top: auto !important;
     flex-shrink: 0 !important;
-    padding: 8px 12px calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px)) !important;
     background: #FAF8F5 !important;
     border-top: 1px solid #EAE5DB !important;
     z-index: 10 !important;
+  }
+
+  /* ─── Active Chat Room: Pure 100% Edge-to-Edge Fullscreen (Hide Dock & Header) ─── */
+  body.devchat-room-open .icon-sidebar,
+  body.devchat-room-open .sidebar-dock-spacer {
+    display: none !important;
+  }
+
+  body.devchat-room-open .top-navbar,
+  body.devchat-room-open .header-glass-bar {
+    display: none !important;
+  }
+
+  body.devchat-room-open .devchat-room-header {
+    padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  body.devchat-room-open .workspace-layout,
+  body.devchat-room-open .workspace-layout.chat-layout {
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.devchat-room-open .main-viewport,
+  body.devchat-room-open .chat-viewport {
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.devchat-room-open .devchat-input-bar {
+    padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
