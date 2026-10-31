@@ -132,20 +132,34 @@ function DashboardLayout() {
   const tabParam = searchParams.get('tab');
 
   const isSuperAdmin = user?.role === 'superadmin';
-  const isAdmin = p.startsWith('/superadmin') || tabParam === 'admin';
-  const isMess = tabParam === 'mess' || p.startsWith('/mess');
-  const isRoom = tabParam === 'room';
-  const isComplaints = tabParam === 'complaints' || p.startsWith('/complaints');
-  const isChat = tabParam === 'chat' || p.startsWith('/chat') || p.startsWith('/feedback');
-  const isHome = (p === '/student' || p === '/') && !isMess && !isRoom && !isComplaints && !isChat && !isAdmin;
+  const isChat = p === '/chat' || p === '/feedback';
+  const isMess = p.startsWith('/mess') || tabParam === 'mess';
+
+  // Role-specific Active States
+  let isHome = false;
+  let isSessions = false;
+  let isRoom = false;
+  let isComplaints = false;
+  let isAdmin = false;
+
+  if (isSuperAdmin) {
+    isHome = p === '/superadmin' && !tabParam;
+    isSessions = tabParam === 'sessions';
+    isComplaints = tabParam === 'maintenance';
+    isAdmin = p.startsWith('/superadmin/advanced');
+  } else {
+    isHome = (p === '/student' || p === '/') && (tabParam === 'home' || !tabParam) && !isMess && !isChat;
+    isRoom = tabParam === 'room';
+    isComplaints = tabParam === 'complaints';
+  }
 
   return (
     <div className="app-shell" style={{ minHeight: '100vh', background: '#F6F3EC', display: 'flex', flexDirection: 'column' }}>
       {/* 1. TOP NAVBAR */}
-      <header className="top-navbar" style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px', background: '#F6F3EC', borderBottom: '1px solid #E6E0D5' }}>
+      <header className="top-navbar" style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px', background: '#F6F3EC', borderBottom: '1px solid #E6E0D5', flexShrink: 0 }}>
         <div 
           style={{ fontSize: 23, fontWeight: 600, color: '#242523', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', fontFamily: "'Playfair Display', Georgia, serif" }}
-          onClick={() => navigate(isSuperAdmin ? '/superadmin' : '/student?tab=home')}
+          onClick={() => navigate(isSuperAdmin ? '/superadmin' : '/student')}
         >
           <span>HostelCare</span>
           <span style={{ fontSize: 11, fontWeight: 600, color: '#587360', background: '#EEF3EE', padding: '3px 10px', borderRadius: 9999, letterSpacing: '0.02em', border: '1px solid #D5E2D7' }}>
@@ -184,10 +198,10 @@ function DashboardLayout() {
       <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
         {/* SLIM VERTICAL ICON SIDEBAR */}
         <aside style={{ width: 84, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 28, borderRight: '1px solid #E6E0D5', gap: 18, background: '#F6F3EC', flexShrink: 0 }}>
-          {/* Home Icon */}
+          {/* 1. Home Icon */}
           <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <button 
-              onClick={() => navigate(isSuperAdmin ? '/superadmin' : '/student?tab=home')}
+              onClick={() => navigate(isSuperAdmin ? '/superadmin' : '/student')}
               style={{
                 width: 52,
                 height: 52,
@@ -201,7 +215,7 @@ function DashboardLayout() {
                 justifyContent: 'center',
                 transition: 'all 0.15s ease',
               }}
-              title="Home Sanctuary"
+              title={isSuperAdmin ? "Super Admin Command Suite" : "Home Sanctuary"}
             >
               <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -211,10 +225,10 @@ function DashboardLayout() {
             {isHome && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
           </div>
 
-          {/* Calendar / Mess Icon */}
+          {/* 2. Calendar / Mess Icon */}
           <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <button 
-              onClick={() => navigate('/student?tab=mess')}
+              onClick={() => navigate(isSuperAdmin ? '/mess-menu' : '/student?tab=mess')}
               style={{
                 width: 52,
                 height: 52,
@@ -228,7 +242,7 @@ function DashboardLayout() {
                 justifyContent: 'center',
                 transition: 'all 0.15s ease',
               }}
-              title="Weekly Dining Schedule"
+              title="Campus Dining Schedule"
             >
               <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -240,37 +254,37 @@ function DashboardLayout() {
             {isMess && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
           </div>
 
-          {/* Living Space / Room Icon */}
+          {/* 3. Living Space / Sessions Icon */}
           <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <button 
-              onClick={() => navigate('/student?tab=room')}
+              onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=sessions' : '/student?tab=room')}
               style={{
                 width: 52,
                 height: 52,
-                background: isRoom ? '#EAE5DB' : 'transparent',
+                background: (isSuperAdmin ? isSessions : isRoom) ? '#EAE5DB' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
                 borderRadius: 16,
-                color: isRoom ? '#242523' : '#7D7F7A',
+                color: (isSuperAdmin ? isSessions : isRoom) ? '#242523' : '#7D7F7A',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 0.15s ease',
               }}
-              title="My Living Space & Outing Pass"
+              title={isSuperAdmin ? "Hardware Sessions & Active Devices" : "My Living Space & Outing Pass"}
             >
               <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
             </button>
-            {isRoom && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
+            {(isSuperAdmin ? isSessions : isRoom) && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
           </div>
 
-          {/* Complaints / Wrench Icon */}
+          {/* 4. Maintenance / Complaints Icon */}
           <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <button 
-              onClick={() => navigate('/student?tab=complaints')}
+              onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=maintenance' : '/student?tab=complaints')}
               style={{
                 width: 52,
                 height: 52,
@@ -284,7 +298,7 @@ function DashboardLayout() {
                 justifyContent: 'center',
                 transition: 'all 0.15s ease',
               }}
-              title="Maintenance Pipeline"
+              title={isSuperAdmin ? "Maintenance Oversight & Caretaker Dispatch" : "Maintenance Pipeline"}
             >
               <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
@@ -293,10 +307,10 @@ function DashboardLayout() {
             {isComplaints && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
           </div>
 
-          {/* Chat Icon */}
+          {/* 5. Chat Icon -> STRICTLY /chat for everyone! */}
           <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <button 
-              onClick={() => navigate('/student?tab=chat')}
+              onClick={() => navigate('/chat')}
               style={{
                 width: 52,
                 height: 52,
@@ -310,7 +324,7 @@ function DashboardLayout() {
                 justifyContent: 'center',
                 transition: 'all 0.15s ease',
               }}
-              title="Support Chat (E2EE)"
+              title="Real-time E2EE Support & Dev Chat"
             >
               <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -319,11 +333,11 @@ function DashboardLayout() {
             {isChat && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
           </div>
 
-          {/* Super Admin Shield Icon (Visible for Super Admin) */}
+          {/* 6. Super Admin Shield Icon (Super Admin only -> Full Granular Console) */}
           {isSuperAdmin && (
             <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <button 
-                onClick={() => navigate('/superadmin')}
+                onClick={() => navigate('/superadmin/advanced')}
                 style={{
                   width: 52,
                   height: 52,
@@ -337,7 +351,7 @@ function DashboardLayout() {
                   justifyContent: 'center',
                   transition: 'all 0.15s ease',
                 }}
-                title="Super Admin Suite"
+                title="Full Granular RBAC Console"
               >
                 <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -349,7 +363,7 @@ function DashboardLayout() {
         </aside>
 
         {/* MAIN VIEWPORT */}
-        <main style={{ flex: 1, padding: '36px 48px 80px', maxWidth: 1140, boxSizing: 'border-box' }}>
+        <main style={{ flex: 1, padding: isChat ? '0' : '36px 48px 80px', maxWidth: isChat ? '100%' : 1140, boxSizing: 'border-box' }}>
           <Outlet />
         </main>
       </div>

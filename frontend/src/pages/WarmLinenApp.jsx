@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import './WarmLinenApp.css';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { triggerToast } from '../components/Toast';
 export default function WarmLinenApp({ embedded = false, initialTab }) {
   const { user, login, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginRegNum, setLoginRegNum] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -267,7 +268,7 @@ const handleSendMessage = (e) => {
           <div className="sidebar-icon-wrap">
             <button
               className={`sidebar-icon-btn ${activeTab === 'chat' ? 'active' : ''}`}
-              onClick={() => setActiveTab('chat')}
+              onClick={() => navigate('/chat')}
               title="Support Chat (E2EE)"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -361,7 +362,7 @@ const handleSendMessage = (e) => {
                   <span style={{ fontSize: 13, color: '#728D7A', fontWeight: 600 }}>Track Status →</span>
                 </div>
 
-                <div className="secondary-mini-card" onClick={() => setActiveTab('chat')}>
+                <div className="secondary-mini-card" onClick={() => navigate('/chat')}>
                   <div className="mini-card-head">
                     <h4>Direct Support Chat</h4>
                     <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '3px 9px', borderRadius: 9999, fontWeight: 600 }}>E2EE Encrypted</span>
