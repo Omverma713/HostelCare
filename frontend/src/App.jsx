@@ -1,3 +1,4 @@
+import './pages/WarmLinenApp.css';
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -131,7 +132,13 @@ function DashboardLayout() {
   const searchParams = new URLSearchParams(location.search);
   const tabParam = searchParams.get('tab');
 
-  const isSuperAdmin = user?.role === 'superadmin';
+  const role = user?.role || 'student';
+  const isSuperAdmin = role === 'superadmin';
+  const isCaretaker = role === 'caretaker';
+  const isWarden = role === 'warden';
+  const isSuperintendent = role === 'superintendent';
+  const isStudent = role === 'student';
+
   const isChat = p === '/chat' || p === '/feedback';
   const isMess = p.startsWith('/mess') || tabParam === 'mess';
 
@@ -147,6 +154,13 @@ function DashboardLayout() {
     isUsers = tabParam === 'users';
     isComplaints = tabParam === 'maintenance';
     isSessions = tabParam === 'sessions';
+  } else if (isCaretaker) {
+    isHome = p === '/caretaker';
+    isComplaints = isHome;
+  } else if (isWarden) {
+    isHome = p === '/warden';
+  } else if (isSuperintendent) {
+    isHome = p === '/superintendent';
   } else {
     isHome = (p === '/student' || p === '/') && (!tabParam || tabParam === 'home') && !isMess && !isChat;
     isRoom = tabParam === 'room';
@@ -211,176 +225,125 @@ function DashboardLayout() {
         </div>
       </header>
 
-      {/* 2. WORKSPACE LAYOUT (SLIM ICON RAIL + MAIN VIEWPORT) */}
-      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
-        {/* SLIM VERTICAL ICON SIDEBAR */}
-        <aside style={{ width: 84, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 28, borderRight: '1px solid #E6E0D5', gap: 18, background: '#F6F3EC', flexShrink: 0 }}>
-          {/* 1. Home Icon (Overview) */}
-          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* 2. WORKSPACE LAYOUT (CENTERED CONTAINER WITH FLOATING CAPSULE DOCK) */}
+      <div className="workspace-layout" style={{ maxWidth: isSuperAdmin ? 1440 : 1180, margin: '0 auto', width: '100%', padding: '0 20px', boxSizing: 'border-box' }}>
+        {/* SLIM VERTICAL ICON SIDEBAR - FLOATING CAPSULE DOCK */}
+        <aside className="icon-sidebar">
+          {/* 1. Home / Overview */}
+          <div className="sidebar-icon-wrap">
             <button 
-              onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=overview' : '/student')}
-              style={{
-                width: 52,
-                height: 52,
-                background: isHome ? '#EAE5DB' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 16,
-                color: isHome ? '#242523' : '#7D7F7A',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.15s ease',
+              onClick={() => {
+                if (isSuperAdmin) navigate('/superadmin?tab=overview');
+                else if (isCaretaker) navigate('/caretaker');
+                else if (isWarden) navigate('/warden');
+                else if (isSuperintendent) navigate('/superintendent');
+                else navigate('/student');
               }}
-              title={isSuperAdmin ? "System Overview & Analytics" : "Home Sanctuary"}
+              className={`sidebar-icon-btn ${isHome ? 'active' : ''}`}
+              title={isSuperAdmin ? "System Overview & Analytics" : isStudent ? "Home Sanctuary" : "Dashboard Overview"}
             >
-              <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
             </button>
-            {isHome && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
           </div>
 
-          {/* 2. Calendar / Mess Icon */}
-          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* 2. Dining / Mess Schedule */}
+          <div className="sidebar-icon-wrap">
             <button 
-              onClick={() => navigate(isSuperAdmin ? '/mess-menu' : '/student?tab=mess')}
-              style={{
-                width: 52,
-                height: 52,
-                background: isMess ? '#EAE5DB' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 16,
-                color: isMess ? '#242523' : '#7D7F7A',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.15s ease',
-              }}
+              onClick={() => navigate(isStudent ? '/student?tab=mess' : '/mess-menu')}
+              className={`sidebar-icon-btn ${isMess ? 'active' : ''}`}
               title="Campus Dining Schedule"
             >
-              <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
             </button>
-            {isMess && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
           </div>
 
-          {/* 3. User Directory (Admin) / Living Space (Student) */}
-          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <button 
-              onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=users' : '/student?tab=room')}
-              style={{
-                width: 52,
-                height: 52,
-                background: (isSuperAdmin ? isUsers : isRoom) ? '#EAE5DB' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 16,
-                color: (isSuperAdmin ? isUsers : isRoom) ? '#242523' : '#7D7F7A',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.15s ease',
-              }}
-              title={isSuperAdmin ? "User Directory & Permissions" : "My Living Space & Outing Pass"}
-            >
-              <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </button>
-            {(isSuperAdmin ? isUsers : isRoom) && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
-          </div>
+          {/* 3. Section-specific 3rd icon: SuperAdmin Users OR Student Living Space */}
+          {isSuperAdmin && (
+            <div className="sidebar-icon-wrap">
+              <button 
+                onClick={() => navigate('/superadmin?tab=users')}
+                className={`sidebar-icon-btn ${isUsers ? 'active' : ''}`}
+                title="User Directory & Permissions"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </button>
+            </div>
+          )}
 
-          {/* 4. Maintenance / Complaints Icon */}
-          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <button 
-              onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=maintenance' : '/student?tab=complaints')}
-              style={{
-                width: 52,
-                height: 52,
-                background: isComplaints ? '#EAE5DB' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 16,
-                color: isComplaints ? '#242523' : '#7D7F7A',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.15s ease',
-              }}
-              title={isSuperAdmin ? "Hostel Maintenance Oversight" : "Maintenance Pipeline"}
-            >
-              <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-              </svg>
-            </button>
-            {isComplaints && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
-          </div>
+          {isStudent && (
+            <div className="sidebar-icon-wrap">
+              <button 
+                onClick={() => navigate('/student?tab=room')}
+                className={`sidebar-icon-btn ${isRoom ? 'active' : ''}`}
+                title="My Living Space & Outing Pass"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </button>
+            </div>
+          )}
 
-          {/* 5. Chat Icon */}
-          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* 4. Section-specific 4th icon: Maintenance / Complaints */}
+          {(isStudent || isSuperAdmin || isCaretaker || isWarden || isSuperintendent) && (
+            <div className="sidebar-icon-wrap">
+              <button 
+                onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=maintenance' : '/student?tab=complaints')}
+                className={`sidebar-icon-btn ${isComplaints ? 'active' : ''}`}
+                title={isSuperAdmin ? "Hostel Maintenance Oversight" : "Maintenance Pipeline"}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* 5. Support Chat */}
+          <div className="sidebar-icon-wrap">
             <button 
               onClick={() => navigate('/chat')}
-              style={{
-                width: 52,
-                height: 52,
-                background: isChat ? '#EAE5DB' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 16,
-                color: isChat ? '#242523' : '#7D7F7A',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.15s ease',
-              }}
+              className={`sidebar-icon-btn ${isChat ? 'active' : ''}`}
               title="Real-time E2EE Support & Dev Chat"
             >
-              <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
             </button>
-            {isChat && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
           </div>
 
-          {/* 6. Shield Icon -> Hardware Sessions & Device Registry */}
+          {/* 6. Hardware Sessions (SuperAdmin Only) */}
           {isSuperAdmin && (
-            <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="sidebar-icon-wrap">
               <button 
                 onClick={() => navigate('/superadmin?tab=sessions')}
-                style={{
-                  width: 52,
-                  height: 52,
-                  background: isSessions ? '#EAE5DB' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: 16,
-                  color: isSessions ? '#242523' : '#7D7F7A',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`sidebar-icon-btn ${isSessions ? 'active' : ''}`}
                 title="Hardware Sessions & Active Devices"
               >
-                <svg style={{ pointerEvents: 'none' }} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 </svg>
               </button>
-              {isSessions && <div style={{ position: 'absolute', right: 0, width: 3.5, height: 26, background: '#242523', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }} />}
             </div>
           )}
         </aside>
 
         {/* MAIN VIEWPORT */}
-        <main style={{ flex: 1, padding: isChat ? '0' : (isSuperAdmin ? '24px 28px 80px' : '36px 32px 80px'), maxWidth: isChat ? '100%' : (isSuperAdmin ? 1380 : 1060), margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        <main style={{ flex: 1, padding: isChat ? '0' : '24px 0 80px', maxWidth: '100%', width: '100%', boxSizing: 'border-box' }}>
           <Outlet />
         </main>
       </div>

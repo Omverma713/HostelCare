@@ -51,7 +51,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   useEffect(() => {
     if (urlTab) {
       setActiveTab(urlTab);
-      if (urlTab === 'room') setShowQrModal(true);
+      if (searchParams.get('action') === 'qr') setShowQrModal(true);
       if (searchParams.get('action') === 'new-complaint') setShowComplaintModal(true);
     } else if (initialTab) {
       setActiveTab(initialTab);
