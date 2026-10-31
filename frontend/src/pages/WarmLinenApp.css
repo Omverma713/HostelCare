@@ -166,8 +166,10 @@ body {
 /* Main Content Area */
 .main-viewport {
   flex: 1;
-  padding: 40px 64px 80px;
-  max-width: 1140px;
+  padding: 40px 48px 80px;
+  max-width: 1060px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Breadcrumb / Mode Pills */
@@ -203,7 +205,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 28px;
-  max-width: 860px;
+  max-width: 1060px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .mockup-card {
@@ -290,7 +294,10 @@ body {
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   margin-top: 28px;
-  max-width: 860px;
+  max-width: 1060px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .secondary-mini-card {

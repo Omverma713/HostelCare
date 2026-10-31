@@ -13,8 +13,8 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
-  const displayName = user?.name || 'Om Verma';
-  const displayRoom = user?.roomNumber ? `Room ${user.roomNumber}, Block ${user.hostelBlock || user.hostel || 'BH-8'}` : 'Room 205, Block BH-8';
+  const displayName = user?.name || (isAuthenticated ? 'Resident' : 'Student Resident');
+  const displayRoom = user?.roomNumber ? `Room ${user.roomNumber}${user.hostelBlock ? ` (Block ${user.hostelBlock})` : (user.hostel ? ` (${user.hostel})` : '')}` : 'Room 205 (BH-8)';
   const displayReg = user?.registrationNumber || '2021BCS001';
 
   const [currentUserRole, setCurrentUserRole] = useState(user?.role === 'superadmin' ? 'admin' : 'student');
@@ -71,7 +71,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
     {
       id: 2,
       sender: 'student',
-      senderName: 'Om Verma',
+      senderName: displayName,
       text: 'Sure sir, my roommate Jagat is in the room. He will assist the caretaker. Thank you for the quick resolution!',
       time: '02:18 PM',
       read: true,
@@ -106,7 +106,7 @@ const handleSendMessage = (e) => {
     const newMsg = {
       id: Date.now(),
       sender: 'student',
-      senderName: 'Om Verma',
+      senderName: displayName,
       text: inputMsg,
       time: 'Just now',
       read: false,
@@ -303,7 +303,7 @@ const handleSendMessage = (e) => {
         )}
 
         {/* MAIN VIEWPORT */}
-        <main className="main-viewport" style={embedded ? { padding: '12px 0 60px', flex: 1 } : {}}>
+        <main className="main-viewport" style={embedded ? { padding: '8px 16px 60px', flex: 1, maxWidth: 1060, margin: '0 auto', width: '100%' } : {}}>
           {/* =========================================================================
               VIEW 1: EXACT MOCKUP HOME (Today's Meal & My Living Space)
              ========================================================================= */}
@@ -311,10 +311,7 @@ const handleSendMessage = (e) => {
             <div className="detailed-view-container">
               <div className="view-mode-bar">
                 <span className="view-mode-title">Resident Sanctuary • Overview</span>
-                <div className="resident-quick-tag">
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#728D7A' }}></span>
-                  <span>Om Verma • Room 205 (BH-8)</span>
-                </div>
+                <div className="resident-quick-tag"><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#728D7A' }}></span><span>{displayName} • {displayRoom}</span></div>
               </div>
 
               {/* THE TWO EXACT HERO CARDS FROM THE MOCKUP */}
@@ -386,7 +383,7 @@ const handleSendMessage = (e) => {
                     <h2 className="mockup-card-title">My Living Space</h2>
                   </div>
                   <div className="mockup-card-footer">
-                    <p className="mockup-card-subtitle">Room 205, Block BH-8</p>
+                    <p className="mockup-card-subtitle">{displayRoom}</p>
                     <span className="matcha-pill-badge">Everything in order</span>
                   </div>
                 </div>
@@ -587,7 +584,7 @@ const handleSendMessage = (e) => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 28 }}>
                 {/* Room Info */}
                 <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)' }}>
-                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px', color: '#272824' }}>Room 205 (Block BH-8)</h3>
+                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px', color: '#272824' }}>{displayRoom}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F3EFE7', paddingBottom: 8 }}>
                       <span style={{ color: 'var(--text-muted)' }}>Assigned Bed:</span>
@@ -1079,7 +1076,7 @@ const handleSendMessage = (e) => {
               <div style={{ width: 140, height: 140, margin: '0 auto 16px', background: '#272824', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12 }}>
                 [QR CODE VERIFIED]
               </div>
-              <strong style={{ fontSize: 16, color: '#272824', display: 'block' }}>Om Verma • Room 205 (BH-8)</strong>
+              <strong style={{ fontSize: 16, color: '#272824', display: 'block' }}>{displayName} • {displayRoom}</strong>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Valid till 09:30 PM • 31 Oct 2026</span>
             </div>
           </div>

@@ -363,7 +363,7 @@ function DashboardLayout() {
         </aside>
 
         {/* MAIN VIEWPORT */}
-        <main style={{ flex: 1, padding: isChat ? '0' : '36px 48px 80px', maxWidth: isChat ? '100%' : 1140, boxSizing: 'border-box' }}>
+        <main style={{ flex: 1, padding: isChat ? '0' : '36px 32px 80px', maxWidth: isChat ? '100%' : 1120, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           <Outlet />
         </main>
       </div>
