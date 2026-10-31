@@ -22,6 +22,7 @@ import Login from './pages/Login';
 import GlobalNoticePopup from './components/GlobalNoticePopup';
 
 // Lazy Loaded Routes for Instant Startup and Smooth Transitions
+const WarmLinenApp = lazy(() => import('./pages/WarmLinenApp'));
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
 const CaretakerDashboard = lazy(() => import('./pages/CaretakerDashboard'));
 const WardenDashboard = lazy(() => import('./pages/WardenDashboard'));
@@ -324,6 +325,10 @@ export default function App() {
             <ToastContainer />
 
             <Routes>
+              {/* Primary Warm Linen Sanctuary Route */}
+              <Route path="/" element={<Suspense fallback={<PageFallback />}><WarmLinenApp /></Suspense>} />
+              <Route path="/warm-linen" element={<Suspense fallback={<PageFallback />}><WarmLinenApp /></Suspense>} />
+
               {/* Public Authentication Route */}
               <Route path="/login" element={<LoginRoute />} />
 
@@ -346,7 +351,7 @@ export default function App() {
               <Route element={<DashboardLayout />}>
                 {/* Role-specific Dashboard Views */}
                 <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-                  <Route path="/student" element={<StudentDashboard />} />
+                  <Route path="/student" element={<Suspense fallback={<PageFallback />}><WarmLinenApp /></Suspense>} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['caretaker']} />}>
@@ -379,7 +384,7 @@ export default function App() {
           </Routes>
 
           {/* Signature Hanging Beta Banner */}
-          <BetaBanner />
+          {/* <BetaBanner /> */}
 
           {/* Emergency / Global Pop-up Notice with corner cross */}
           <GlobalNoticePopup />
