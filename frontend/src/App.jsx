@@ -226,7 +226,7 @@ function DashboardLayout() {
       </header>
 
       {/* 2. WORKSPACE LAYOUT (CENTERED CONTAINER WITH FLOATING CAPSULE DOCK) */}
-      <div className="workspace-layout" style={{ maxWidth: isSuperAdmin ? 1440 : 1180, margin: '0 auto', width: '100%', padding: '0 20px', boxSizing: 'border-box' }}>
+      <div className="workspace-layout" style={{ maxWidth: isSuperAdmin ? 1440 : 1220, margin: '0 auto', width: '100%', padding: '0 24px', boxSizing: 'border-box' }}>
         {/* SLIM VERTICAL ICON SIDEBAR - FLOATING CAPSULE DOCK */}
         <aside className="icon-sidebar">
           {/* 1. Home / Overview */}

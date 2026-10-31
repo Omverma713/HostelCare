@@ -159,7 +159,8 @@ body {
   gap: 12px;
   box-shadow: 0 12px 36px rgba(105, 93, 76, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-top: 105px; /* Brought pleasantly downward alongside the content cards */
-  margin-right: 28px;
+  margin-left: -16px; /* Shifted slightly to the left as requested */
+  margin-right: 44px; /* Healthy breathing space between dock and cards */
   flex-shrink: 0;
   height: fit-content;
   position: sticky;
