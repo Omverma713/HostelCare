@@ -538,8 +538,7 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
-                  <Route path="/superadmin" element={<Suspense fallback={<PageFallback />}><WarmLinenApp embedded={true} initialTab="admin" /></Suspense>} />
-                  <Route path="/superadmin/advanced" element={<SuperAdminPortal />} />
+                  <Route path="/superadmin" element={<SuperAdminPortal />} />
                   <Route path="/superadmin/*" element={<SuperAdminPortal />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
                 </Route>
