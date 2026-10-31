@@ -5,6 +5,16 @@ import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { DEFAULT_MESS_SCHEDULE, DAYS_ORDER } from '../constants/messMenuData';
 import { triggerToast } from '../components/Toast';
+import { normalizeStatus, sortByDateDesc, isEmptyDataError } from '../utils/status';
+
+const DEPT_ICONS = {
+  Electrical: '⚡',
+  Plumbing: '🚰',
+  Carpentry: '🔨',
+  Civil: '🧱',
+  Mess: '🍲',
+  Other: '🔧',
+};
 export default function WarmLinenApp({ embedded = false, initialTab }) {
   const { user, login, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -42,7 +52,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
     if (urlTab) {
       setActiveTab(urlTab);
       if (urlTab === 'room') setShowQrModal(true);
-      if (urlTab === 'complaints') setShowComplaintModal(true);
+      if (searchParams.get('action') === 'new-complaint') setShowComplaintModal(true);
     } else if (initialTab) {
       setActiveTab(initialTab);
     } else if (window.location.pathname.startsWith('/superadmin')) {
@@ -57,6 +67,13 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [rating, setRating] = useState(5);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [broadcastSent, setBroadcastSent] = useState(false);
+
+  // Live Maintenance & Complaints State
+  const [realComplaints, setRealComplaints] = useState([]);
+  const [complaintsLoading, setComplaintsLoading] = useState(false);
+  const [newComplaintDept, setNewComplaintDept] = useState('Electrical');
+  const [newComplaintDesc, setNewComplaintDesc] = useState('');
+  const [isSubmittingComplaint, setIsSubmittingComplaint] = useState(false);
 
   // Chat state
   const [messages, setMessages] = useState([
@@ -80,6 +97,69 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [inputMsg, setInputMsg] = useState('');
 
   
+  const fetchComplaints = async () => {
+    if (!isAuthenticated) return;
+    setComplaintsLoading(true);
+    try {
+      const res = await api.getStudentComplaints();
+      if (res && res.success && Array.isArray(res.complaints)) {
+        setRealComplaints(sortByDateDesc(res.complaints));
+      } else if (Array.isArray(res)) {
+        setRealComplaints(sortByDateDesc(res));
+      } else {
+        setRealComplaints([]);
+      }
+    } catch (err) {
+      if (isEmptyDataError(err)) {
+        setRealComplaints([]);
+      } else {
+        console.warn('Error loading student complaints:', err);
+      }
+    } finally {
+      setComplaintsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchComplaints();
+    }
+  }, [isAuthenticated, activeTab]);
+
+  const handleCreateComplaint = async (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      triggerToast('info', 'Please sign in to lodge a maintenance request.');
+      return;
+    }
+    if (!newComplaintDesc.trim() || newComplaintDesc.trim().length < 4) {
+      triggerToast('error', 'Please provide a clear description (at least 4 characters).');
+      return;
+    }
+
+    setIsSubmittingComplaint(true);
+    try {
+      const res = await api.createComplaint(newComplaintDept, newComplaintDesc.trim());
+      if (res && res.success) {
+        triggerToast('success', 'Maintenance request lodged successfully! Caretaker notified.');
+        setComplaintSubmitted(true);
+        setNewComplaintDesc('');
+        await fetchComplaints();
+      } else {
+        triggerToast('error', res?.message || 'Failed to lodge complaint.');
+      }
+    } catch (err) {
+      triggerToast('error', err?.data?.message || err?.message || 'Failed to lodge complaint.');
+    } finally {
+      setIsSubmittingComplaint(false);
+    }
+  };
+
+  const activeComplaints = realComplaints.filter(c => normalizeStatus(c.status) !== 'resolved');
+  const activeComplaintsCount = activeComplaints.length;
+  const latestActiveComplaint = activeComplaints[0] || realComplaints[0];
+
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     if (!loginRegNum || !loginPassword) {
@@ -411,9 +491,22 @@ const handleSendMessage = (e) => {
                 <div className="secondary-mini-card" onClick={() => setActiveTab('complaints')}>
                   <div className="mini-card-head">
                     <h4>Maintenance Pipeline</h4>
-                    <span style={{ fontSize: 11, background: '#FEF3C7', color: '#B45309', padding: '3px 9px', borderRadius: 9999, fontWeight: 600 }}>1 In Progress</span>
+                    <span style={{ 
+                      fontSize: 11, 
+                      background: activeComplaintsCount > 0 ? '#FEF3C7' : '#EEF3EE', 
+                      color: activeComplaintsCount > 0 ? '#B45309' : '#587360', 
+                      padding: '3px 9px', 
+                      borderRadius: 9999, 
+                      fontWeight: 600 
+                    }}>
+                      {complaintsLoading ? 'Syncing...' : activeComplaintsCount > 0 ? `${activeComplaintsCount} Active` : 'All Resolved'}
+                    </span>
                   </div>
-                  <p className="mini-card-sub">Tube-light replacement • Caretaker Ramesh assigned</p>
+                  <p className="mini-card-sub">
+                    {latestActiveComplaint 
+                      ? `${latestActiveComplaint.department || 'Issue'}: ${latestActiveComplaint.description.slice(0, 48)}${latestActiveComplaint.description.length > 48 ? '...' : ''}` 
+                      : 'Living space repairs & caretaker requests'}
+                  </p>
                   <span style={{ fontSize: 13, color: '#728D7A', fontWeight: 600 }}>Track Status →</span>
                 </div>
 
@@ -694,53 +787,143 @@ const handleSendMessage = (e) => {
                 >
                   ← Back to Sanctuary
                 </button>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <div>
                     <h2>Maintenance Pipeline</h2>
                     <p>Transparent tracking for hostel living space repairs and caretaker requests.</p>
                   </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button
+                      onClick={fetchComplaints}
+                      disabled={complaintsLoading}
+                      title="Refresh complaints"
+                      style={{ background: '#FAF8F5', color: '#587360', border: '1px solid #E6E0D5', padding: '10px 16px', borderRadius: 9999, fontSize: 13, fontWeight: 600, cursor: complaintsLoading ? 'not-allowed' : 'pointer' }}
+                    >
+                      {complaintsLoading ? '↻ Refreshing...' : '↻ Refresh'}
+                    </button>
+                    <button
+                      onClick={() => { setComplaintSubmitted(false); setShowComplaintModal(true); }}
+                      style={{ background: '#728D7A', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 9999, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(114, 141, 122, 0.25)' }}
+                    >
+                      + File New Request
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Complaints List or Empty State */}
+              {complaintsLoading && realComplaints.length === 0 ? (
+                <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '48px 32px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                  <div style={{ width: 36, height: 36, border: '3px solid #E6E0D5', borderTopColor: '#728D7A', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+                  <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>Syncing live living space tickets from server...</p>
+                </div>
+              ) : realComplaints.length === 0 ? (
+                <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '48px 32px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                  <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#EEF3EE', color: '#587360', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>
+                    ✓
+                  </div>
+                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: '#272824', margin: '0 0 8px' }}>
+                    All Clear in Living Space
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 14, maxWidth: 460, margin: '0 auto 24px', lineHeight: 1.5 }}>
+                    You have no active maintenance complaints on record. Everything in {displayRoom} is in running order! If you need any electrical, plumbing, or room repair, lodge a request below.
+                  </p>
                   <button
-                    onClick={() => setShowComplaintModal(true)}
-                    style={{ background: '#728D7A', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 9999, fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => { setComplaintSubmitted(false); setShowComplaintModal(true); }}
+                    style={{ background: '#728D7A', color: 'white', border: 'none', padding: '12px 28px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(114, 141, 122, 0.2)' }}
                   >
-                    + File New Request
+                    + Lodge First Request
                   </button>
                 </div>
-              </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {realComplaints.map((item) => {
+                    const normStatus = normalizeStatus(item.status);
+                    const ticketNum = item.ticketNumber || (item._id ? `#HC-${String(item._id).slice(-4).toUpperCase()}` : '#HC-TICKET');
+                    const filedDate = item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    }) : 'Recently logged';
+                    const deptIcon = DEPT_ICONS[item.department] || '🔧';
+                    const caretakerAssigned = item.assignedCaretaker || item.caretaker || (normStatus !== 'pending' ? 'Hostel Caretaker' : null);
 
-              {/* Active Ticket Card */}
-              <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', marginBottom: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div>
-                    <span style={{ fontSize: 11, background: '#FEF3C7', color: '#B45309', padding: '3px 10px', borderRadius: 9999, fontWeight: 700 }}>TICKET #HC-2051</span>
-                    <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '8px 0 4px', color: '#272824' }}>Study Table Tube-light Flickering</h3>
-                    <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>Filed: Today at 11:30 AM • Location: Room 205 (Bed A)</p>
-                  </div>
-                  <span className="matcha-pill-badge" style={{ background: '#587360' }}>In Progress</span>
+                    return (
+                      <div key={item._id || ticketNum} style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                              <span style={{ fontSize: 11, background: '#FAF8F5', border: '1px solid #E6E0D5', color: '#555', padding: '3px 10px', borderRadius: 9999, fontWeight: 700 }}>
+                                {ticketNum}
+                              </span>
+                              <span style={{ fontSize: 12.5, fontWeight: 600, color: '#728D7A' }}>
+                                {deptIcon} {item.department || 'Maintenance'}
+                              </span>
+                            </div>
+                            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 21, margin: '4px 0 6px', color: '#272824' }}>
+                              {item.description}
+                            </h3>
+                            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>
+                              Filed: {filedDate} • Location: {item.hostelNo || displayRoom}{item.roomNo ? ` (Rm ${item.roomNo})` : ''}
+                            </p>
+                          </div>
+                          
+                          <span 
+                            style={{ 
+                              padding: '6px 14px', 
+                              borderRadius: 9999, 
+                              fontSize: 12, 
+                              fontWeight: 700, 
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.03em',
+                              background: normStatus === 'resolved' ? '#EEF3EE' : normStatus === 'inprogress' ? '#E0F2FE' : '#FEF3C7',
+                              color: normStatus === 'resolved' ? '#587360' : normStatus === 'inprogress' ? '#0369A1' : '#B45309',
+                            }}
+                          >
+                            {normStatus === 'resolved' ? '✓ Resolved & Closed' : normStatus === 'inprogress' ? '● In Progress' : '⏳ Pending Review'}
+                          </span>
+                        </div>
+
+                        {/* 3-Stage Stepper */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0 16px', background: '#FAF8F5', padding: '16px 20px', borderRadius: 16, overflowX: 'auto' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#587360', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
+                            <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#587360', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>✓</span>
+                            1. Registered
+                          </div>
+                          
+                          <div style={{ flex: 1, minWidth: 24, height: 2, background: normStatus !== 'pending' ? '#728D7A' : '#E6E0D5' }} />
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: normStatus !== 'pending' ? '#587360' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
+                            <span style={{ width: 22, height: 22, borderRadius: '50%', background: normStatus !== 'pending' ? '#587360' : '#E6E0D5', color: normStatus !== 'pending' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>
+                              {normStatus === 'resolved' ? '✓' : '2'}
+                            </span>
+                            2. {caretakerAssigned ? `Caretaker Assigned (${caretakerAssigned})` : 'Caretaker Assignment'}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 24, height: 2, background: normStatus === 'resolved' ? '#728D7A' : '#E6E0D5' }} />
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: normStatus === 'resolved' ? '#587360' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
+                            <span style={{ width: 22, height: 22, borderRadius: '50%', background: normStatus === 'resolved' ? '#587360' : '#E6E0D5', color: normStatus === 'resolved' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>
+                              {normStatus === 'resolved' ? '✓' : '3'}
+                            </span>
+                            3. Resolved & Verified
+                          </div>
+                        </div>
+
+                        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
+                          {normStatus === 'resolved'
+                            ? '✓ This living space maintenance request has been resolved and verified by hostel staff.'
+                            : normStatus === 'inprogress'
+                            ? 'Caretaker is attending to this request. Estimated resolution window: Within 24 hours.'
+                            : 'Your ticket has been logged into the queue. A caretaker will be assigned shortly.'}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {/* 3-Stage Stepper */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0', background: '#FAF8F5', padding: '16px 20px', borderRadius: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#587360', fontWeight: 600, fontSize: 13 }}>
-                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#587360', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>✓</span>
-                    1. Registered
-                  </div>
-                  <div style={{ flex: 1, height: 2, background: '#728D7A' }}></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#587360', fontWeight: 600, fontSize: 13 }}>
-                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#587360', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>2</span>
-                    2. Caretaker Assigned (Ramesh)
-                  </div>
-                  <div style={{ flex: 1, height: 2, background: '#E6E0D5' }}></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: 13 }}>
-                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#E6E0D5', color: '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>3</span>
-                    3. Resolved & Verified
-                  </div>
-                </div>
-
-                <p style={{ margin: 0, fontSize: 13.5, color: 'var(--text-secondary)' }}>
-                  Caretaker Ramesh is scheduled to visit with a replacement tube-light today at <strong>04:30 PM</strong>.
-                </p>
-              </div>
+              )}
             </div>
           )}
 
@@ -1150,32 +1333,52 @@ const handleSendMessage = (e) => {
             
             {complaintSubmitted ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <div style={{ fontSize: 36, color: '#587360', marginBottom: 12 }}>✓</div>
-                <h4 style={{ margin: '0 0 6px' }}>Request Lodged!</h4>
-                <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 20px' }}>Caretaker Ramesh has been automatically notified.</p>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#EEF3EE', color: '#587360', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>✓</div>
+                <h4 style={{ margin: '0 0 6px', fontSize: 20, fontFamily: 'var(--font-serif)', color: '#272824' }}>Request Lodged!</h4>
+                <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px' }}>Caretaker has been notified and ticket is registered in the live pipeline.</p>
                 <button 
                   onClick={() => { setComplaintSubmitted(false); setShowComplaintModal(false); }}
-                  style={{ background: '#728D7A', color: 'white', border: 'none', padding: '10px 24px', borderRadius: 9999, cursor: 'pointer' }}
+                  style={{ background: '#728D7A', color: 'white', border: 'none', padding: '12px 32px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(114, 141, 122, 0.2)' }}
                 >
-                  Done
+                  View in Pipeline →
                 </button>
               </div>
             ) : (
-              <form onSubmit={(e) => { e.preventDefault(); setComplaintSubmitted(true); }}>
+              <form onSubmit={handleCreateComplaint}>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#272824' }}>Category</label>
-                  <select style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #D5E2D7' }}>
-                    <option>Electrical (Tube-light, Fan, Switchboard)</option>
-                    <option>Plumbing (Tap, Flush, Leakage)</option>
-                    <option>Carpentry (Bed, Study Table, Door Lock)</option>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#272824' }}>Category / Department</label>
+                  <select 
+                    value={newComplaintDept} 
+                    onChange={(e) => setNewComplaintDept(e.target.value)}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #D5E2D7', background: '#FAF8F5', fontSize: 14, outline: 'none' }}
+                  >
+                    <option value="Electrical">⚡ Electrical (Tube-light, Fan, Switchboard, AC)</option>
+                    <option value="Plumbing">🚰 Plumbing (Tap, Flush, Leakage, Geyser)</option>
+                    <option value="Carpentry">🔨 Carpentry (Bed, Study Table, Door Lock, Almirah)</option>
+                    <option value="Civil">🧱 Civil (Wall Seepage, Tile, Window Glass)</option>
+                    <option value="Mess">🍲 Mess (Food Quality, Hygiene, Dining Hall)</option>
+                    <option value="Other">🔧 Other Maintenance</option>
                   </select>
                 </div>
                 <div style={{ marginBottom: 20 }}>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#272824' }}>Description</label>
-                  <textarea rows={3} placeholder="Describe the issue..." style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #D5E2D7' }} defaultValue="Water tap in washroom 2nd floor leaking slowly." />
+                  <textarea 
+                    rows={4} 
+                    value={newComplaintDesc}
+                    onChange={(e) => setNewComplaintDesc(e.target.value)}
+                    placeholder="Describe the issue in detail (e.g. Study table tube-light is flickering and needs replacement)..." 
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #D5E2D7', background: '#FAF8F5', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} 
+                  />
+                  <span style={{ fontSize: 11.5, color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
+                    Logged for: <strong>{displayName}</strong> • <strong>{displayRoom}</strong>
+                  </span>
                 </div>
-                <button type="submit" style={{ width: '100%', background: '#728D7A', color: 'white', border: 'none', padding: '12px', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  Submit Request
+                <button 
+                  type="submit" 
+                  disabled={isSubmittingComplaint}
+                  style={{ width: '100%', background: isSubmittingComplaint ? '#9AB1A1' : '#728D7A', color: 'white', border: 'none', padding: '13px', borderRadius: 14, fontWeight: 600, fontSize: 14, cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(114, 141, 122, 0.2)' }}
+                >
+                  {isSubmittingComplaint ? 'Submitting to Caretaker...' : 'Submit Request →'}
                 </button>
               </form>
             )}
