@@ -136,17 +136,29 @@ body {
 
 /* Main Workspace with Sidebar - Centered Content Container */
 .workspace-layout {
+  --layout-max-width: 1220px;
   display: flex;
   flex: 1;
   position: relative;
-  max-width: 1140px;
+  max-width: var(--layout-max-width);
   margin: 0 auto;
   width: 100%;
-  padding: 0 20px;
+  padding: 0 24px;
   box-sizing: border-box;
 }
 
-/* Floating Capsule Dock Sidebar (Warm Linen Luxury - matching Image 4) */
+.workspace-layout.superadmin-layout {
+  --layout-max-width: 1440px;
+}
+
+/* Space preserver for fixed dock in flex layout */
+.sidebar-dock-spacer {
+  width: 58px;
+  margin-right: 44px;
+  flex-shrink: 0;
+}
+
+/* Floating Capsule Dock Sidebar (Fixed in viewport so scrolling doesn't push it up) */
 .icon-sidebar {
   width: 58px;
   background: #FFFFFF;
@@ -158,14 +170,10 @@ body {
   padding: 12px 6px;
   gap: 12px;
   box-shadow: 0 12px 36px rgba(105, 93, 76, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
-  margin-top: 105px; /* Brought pleasantly downward alongside the content cards */
-  margin-left: -16px; /* Shifted slightly to the left as requested */
-  margin-right: 44px; /* Healthy breathing space between dock and cards */
-  flex-shrink: 0;
-  height: fit-content;
-  position: sticky;
+  position: fixed;
   top: 130px;
-  z-index: 50;
+  left: max(16px, calc((100vw - var(--layout-max-width, 1220px)) / 2 + 8px));
+  z-index: 100;
   box-sizing: border-box;
   animation: dockEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards, dockFloat 4s ease-in-out infinite 0.5s;
   transition: transform 0.25s ease, box-shadow 0.25s ease;

@@ -226,9 +226,11 @@ function DashboardLayout() {
       </header>
 
       {/* 2. WORKSPACE LAYOUT (CENTERED CONTAINER WITH FLOATING CAPSULE DOCK) */}
-      <div className="workspace-layout" style={{ maxWidth: isSuperAdmin ? 1440 : 1220, margin: '0 auto', width: '100%', padding: '0 24px', boxSizing: 'border-box' }}>
-        {/* SLIM VERTICAL ICON SIDEBAR - FLOATING CAPSULE DOCK */}
-        <aside className="icon-sidebar">
+      <div className={`workspace-layout ${isSuperAdmin ? 'superadmin-layout' : ''}`} style={{ maxWidth: isSuperAdmin ? 1440 : 1220, margin: '0 auto', width: '100%', padding: '0 24px', boxSizing: 'border-box' }}>
+        {/* DOCK SPACER TO PRESERVE NATURAL FLEX FLOW */}
+        <div className="sidebar-dock-spacer" style={{ width: 58, marginRight: 44, flexShrink: 0 }}>
+          {/* SLIM VERTICAL ICON SIDEBAR - FIXED FLOATING CAPSULE DOCK */}
+          <aside className="icon-sidebar">
           {/* 1. Home / Overview */}
           <div className="sidebar-icon-wrap">
             <button 
@@ -340,7 +342,8 @@ function DashboardLayout() {
               </button>
             </div>
           )}
-        </aside>
+          </aside>
+        </div>
 
         {/* MAIN VIEWPORT */}
         <main style={{ flex: 1, padding: isChat ? '0' : '24px 0 80px', maxWidth: '100%', width: '100%', boxSizing: 'border-box' }}>
