@@ -430,7 +430,7 @@ export default function App() {
               <Route element={<DashboardLayout />}>
                 {/* Role-specific Dashboard Views */}
                 <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-                  <Route path="/student" element={<Suspense fallback={<PageFallback />}><WarmLinenApp embedded={true} /></Suspense>} />
+                  <Route path="/student" element={<Suspense fallback={<PageFallback />}><WarmLinenApp embedded={true} initialTab="home" /></Suspense>} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['caretaker']} />}>
@@ -446,7 +446,8 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
-                  <Route path="/superadmin" element={<SuperAdminPortal />} />
+                  <Route path="/superadmin" element={<Suspense fallback={<PageFallback />}><WarmLinenApp embedded={true} initialTab="admin" /></Suspense>} />
+                  <Route path="/superadmin/advanced" element={<SuperAdminPortal />} />
                   <Route path="/superadmin/*" element={<SuperAdminPortal />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
                 </Route>
