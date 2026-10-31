@@ -151,7 +151,11 @@ function DashboardLayout() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: '#FFFFFF', border: '1px solid #E6E0D5', borderRadius: 9999, fontSize: 13, color: '#575854' }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#728D7A' }}></span>
-            <span>{user?.name || 'Resident'} • {user?.roomNumber ? `Room ${user.roomNumber}` : 'Room 205 (BH-8)'}</span>
+            <span>
+              {user?.role === 'superadmin' 
+                ? `${user?.name || 'Master Super Admin'} • RBAC SuperAdmin`
+                : `${user?.name || 'Resident'} • ${user?.roomNumber ? `Room ${user.roomNumber}` : 'Room 205 (BH-8)'}`}
+            </span>
           </div>
 
           <button 
@@ -401,9 +405,8 @@ export default function App() {
             <ToastContainer />
 
             <Routes>
-              {/* Primary Warm Linen Sanctuary Route */}
-              <Route path="/" element={<Suspense fallback={<PageFallback />}><WarmLinenApp /></Suspense>} />
-              <Route path="/warm-linen" element={<Suspense fallback={<PageFallback />}><WarmLinenApp /></Suspense>} />
+              {/* Public Standalone Warm Linen Showcase Preview */}
+              <Route path="/warm-linen" element={<Suspense fallback={<PageFallback />}><WarmLinenApp embedded={false} /></Suspense>} />
 
               {/* Public Authentication Route */}
               <Route path="/login" element={<LoginRoute />} />
@@ -427,7 +430,7 @@ export default function App() {
               <Route element={<DashboardLayout />}>
                 {/* Role-specific Dashboard Views */}
                 <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-                  <Route path="/student" element={<Suspense fallback={<PageFallback />}><WarmLinenApp /></Suspense>} />
+                  <Route path="/student" element={<Suspense fallback={<PageFallback />}><WarmLinenApp embedded={true} /></Suspense>} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['caretaker']} />}>

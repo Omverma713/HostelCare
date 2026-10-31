@@ -3,7 +3,7 @@ import './WarmLinenApp.css';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { triggerToast } from '../components/Toast';
-export default function WarmLinenApp() {
+export default function WarmLinenApp({ embedded = false }) {
   const { user, login, logout, isAuthenticated } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginRegNum, setLoginRegNum] = useState('');
@@ -105,6 +105,256 @@ const handleSendMessage = (e) => {
       ]);
     }, 1800);
   };
+
+  if (embedded) {
+    return (
+      <div className="warm-linen-embedded" style={{ width: '100%', maxWidth: 1040, margin: '0 auto' }}>
+        <main className="main-viewport" style={{ padding: 0 }}>
+          {/* =========================================================================
+              VIEW 1: EXACT MOCKUP HOME (Today's Meal & My Living Space)
+             ========================================================================= */}
+          {activeTab === 'home' && (
+            <div className="detailed-view-container">
+              <div className="view-mode-bar">
+                <span className="view-mode-title">Resident Sanctuary • Overview</span>
+                <div className="resident-quick-tag">
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#728D7A' }}></span>
+                  <span>{displayName} • {displayRoom}</span>
+                </div>
+              </div>
+
+              {/* THE TWO EXACT HERO CARDS FROM THE MOCKUP */}
+              <div className="mockup-hero-cards">
+                {/* 1. Today's Meal Card */}
+                <div 
+                  className="mockup-card" 
+                  onClick={() => setActiveTab('mess')}
+                  title="Click to view full weekly dining timetable"
+                >
+                  <div className="mockup-card-header">
+                    <h2 className="mockup-card-title">Today's Meal</h2>
+                    <div className="matcha-circle-badge">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+                        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="mockup-card-footer">
+                    <p className="mockup-card-subtitle">Dinner is being served • 8:30 PM</p>
+                    <p className="mockup-card-menu-hint">Menu: Lentil Stew, Organic Veg, Rice</p>
+                  </div>
+                </div>
+
+                {/* 2. My Living Space Card */}
+                <div 
+                  className="mockup-card" 
+                  onClick={() => setShowQrModal(true)}
+                  title="Click to view digital outing pass & QR validation"
+                >
+                  <div className="mockup-card-header">
+                    <h2 className="mockup-card-title">My Living Space</h2>
+                    <span className="matcha-status-pill">Everything in order</span>
+                  </div>
+                  <div className="mockup-card-footer">
+                    <p className="mockup-card-subtitle">{displayRoom}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECONDARY ROW: Maintenance Pipeline & Direct Support Chat */}
+              <div className="secondary-features-row" style={{ marginTop: 24 }}>
+                <div 
+                  className="mockup-card secondary-card"
+                  onClick={() => setShowComplaintModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="mockup-card-header">
+                    <h3 className="secondary-card-title">Maintenance Pipeline</h3>
+                    <span className="status-badge-pending">1 In Progress</span>
+                  </div>
+                  <p className="secondary-card-desc">Tube-light replacement • Caretaker Ramesh assigned</p>
+                  <span className="card-action-link">Track Status →</span>
+                </div>
+
+                <div 
+                  className="mockup-card secondary-card"
+                  onClick={() => window.location.href = '/chat'}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="mockup-card-header">
+                    <h3 className="secondary-card-title">Direct Support Chat</h3>
+                    <span className="status-badge-secure">E2EE Encrypted</span>
+                  </div>
+                  <p className="secondary-card-desc">Super Admin & Caretaker communication thread</p>
+                  <span className="card-action-link">Open Chat Room →</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'mess' && (
+            <div className="detailed-view-container">
+              <div className="section-head">
+                <button 
+                  onClick={() => setActiveTab('home')} 
+                  style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
+                >
+                  ← Back to Sanctuary
+                </button>
+                <h2>Weekly Dining Schedule</h2>
+                <p>Official ITER campus meal timetable with verified portion standards and dietary tags.</p>
+              </div>
+
+              <div className="dining-schedule-grid">
+                <div className="meal-slot-card">
+                  <div className="meal-slot-header">
+                    <span className="meal-slot-name">🍳 Breakfast</span>
+                    <span className="meal-slot-time">07:00 – 09:15 AM</span>
+                  </div>
+                  <h3 className="meal-main-dish">Idli, Sambar & Vada</h3>
+                  <p className="meal-description">Steamed rice idlis with coconut chutney and crispy medu vada.</p>
+                  <div className="meal-footer-badges">
+                    <span>🌱 100% Pure Veg</span>
+                    <span>Finished</span>
+                  </div>
+                </div>
+
+                <div className="meal-slot-card">
+                  <div className="meal-slot-header">
+                    <span className="meal-slot-name">🍛 Lunch</span>
+                    <span className="meal-slot-time">12:30 – 02:30 PM</span>
+                  </div>
+                  <h3 className="meal-main-dish">Thali Buffet Lunch</h3>
+                  <p className="meal-description">Usuna & Arua Rice, Dal Tadka, Seasonal Bhaja, Sweet Pickle.</p>
+                  <div className="meal-footer-badges">
+                    <span>🐟 Veg / Fish (120g)</span>
+                    <span>Finished</span>
+                  </div>
+                </div>
+
+                <div className="meal-slot-card">
+                  <div className="meal-slot-header">
+                    <span className="meal-slot-name">☕ Snacks</span>
+                    <span className="meal-slot-time">05:00 – 06:15 PM</span>
+                  </div>
+                  <h3 className="meal-main-dish">Adrak Chai & Samosa</h3>
+                  <p className="meal-description">Freshly brewed ginger tea with piping hot aloo samosas.</p>
+                  <div className="meal-footer-badges">
+                    <span>☕ Hot Beverage</span>
+                    <span>Finished</span>
+                  </div>
+                </div>
+
+                <div className="meal-slot-card active-dinner-card">
+                  <div className="meal-slot-header">
+                    <span className="meal-slot-name" style={{ color: '#587360' }}>🍲 Dinner (Active Now)</span>
+                    <span className="meal-slot-time">08:00 – 10:00 PM</span>
+                  </div>
+                  <h3 className="meal-main-dish">Paneer Butter Masala & Roti</h3>
+                  <p className="meal-description">Soft tawa rotis, rich paneer curry, steamed aromatic jeera rice.</p>
+                  <div className="meal-footer-badges">
+                    <span style={{ background: '#728D7A', color: 'white' }}>Serving Now</span>
+                    <span>🌱 Pure Veg Special</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* MODAL: QR GATE PASS */}
+        {showQrModal && (
+          <div className="modal-overlay" onClick={() => setShowQrModal(false)}>
+            <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+              <button 
+                className="modal-close-btn"
+                onClick={() => setShowQrModal(false)}
+              >
+                ✕
+              </button>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#587360', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Hostel Care Security Validation</span>
+                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '6px 0 16px', color: '#242523' }}>Resident Outing Pass</h3>
+                
+                <div style={{ background: '#FFFFFF', padding: 18, borderRadius: 16, border: '1px solid #E6E0D5', display: 'inline-block', marginBottom: 16 }}>
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`HC-PASS|${displayReg}|${displayName}|BH-8|VALID`)}`}
+                    alt="Digital Security Gate Pass QR"
+                    style={{ display: 'block', width: 180, height: 180 }}
+                  />
+                </div>
+
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  <div><strong>Resident:</strong> {displayName}</div>
+                  <div><strong>Reg ID:</strong> {displayReg} • {displayRoom}</div>
+                  <div style={{ color: '#587360', fontWeight: 600, marginTop: 4 }}>● Valid for Return before 09:30 PM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: LODGE MAINTENANCE COMPLAINT */}
+        {showComplaintModal && (
+          <div className="modal-overlay" onClick={() => setShowComplaintModal(false)}>
+            <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+              <button 
+                className="modal-close-btn"
+                onClick={() => setShowComplaintModal(false)}
+              >
+                ✕
+              </button>
+              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '0 0 8px', color: '#242523' }}>Report Living Space Issue</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13.5, margin: '0 0 20px' }}>
+                Direct ticket dispatch to Block BH-8 Caretaker Ramesh.
+              </p>
+
+              {complaintSubmitted ? (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>✓</div>
+                  <h4 style={{ margin: '0 0 6px', color: '#587360' }}>Ticket Successfully Created!</h4>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Caretaker Ramesh has been notified and scheduled for inspection.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Category</label>
+                    <select style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #E6E0D5', background: '#FFFFFF', fontSize: 13.5 }}>
+                      <option>Electrical (Fan, Light, Switchboard)</option>
+                      <option>Carpentry (Table, Cupboard, Bed)</option>
+                      <option>Plumbing (Tap, Shower, Geyser)</option>
+                      <option>Civil / Housekeeping</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Issue Description</label>
+                    <textarea 
+                      rows={3} 
+                      placeholder="e.g. Tube-light flickering in Room 205..."
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #E6E0D5', background: '#FFFFFF', fontSize: 13.5, resize: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      setComplaintSubmitted(true);
+                      setTimeout(() => {
+                        setShowComplaintModal(false);
+                        setComplaintSubmitted(false);
+                      }, 2000);
+                    }}
+                    style={{ background: '#728D7A', color: 'white', border: 'none', padding: '12px', borderRadius: 10, fontWeight: 600, cursor: 'pointer', fontSize: 14, marginTop: 6 }}
+                  >
+                    Submit Ticket
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
