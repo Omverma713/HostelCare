@@ -75,6 +75,43 @@ body {
   letter-spacing: 0.02em;
 }
 
+.navbar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.navbar-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.navbar-user-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #728D7A;
+  flex-shrink: 0;
+}
+
+.user-text-mobile {
+  display: none;
+}
+
+.room-living-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
 .terracotta-menu-btn {
   width: 44px;
   height: 44px;
@@ -560,5 +597,271 @@ body {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE STYLES (< 768px and < 480px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* 1. Header */
+  .top-navbar {
+    height: 62px !important;
+    padding: 0 16px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+  }
+
+  .brand-title {
+    font-size: 18px !important;
+    gap: 8px !important;
+  }
+
+  .brand-badge {
+    font-size: 10px !important;
+    padding: 2px 7px !important;
+  }
+
+  .navbar-right-group {
+    gap: 8px !important;
+  }
+
+  .navbar-user-pill {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    gap: 6px !important;
+  }
+
+  .header-logout-btn,
+  .terracotta-menu-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .header-logout-btn svg,
+  .terracotta-menu-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* 2. Workspace Layout & Remove Left Spacer */
+  .workspace-layout {
+    padding: 0 14px !important;
+    flex-direction: column !important;
+  }
+
+  .sidebar-dock-spacer {
+    display: none !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 3. Transform Fixed Left Sidebar into Mobile Bottom Floating Capsule Dock */
+  .icon-sidebar {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 16px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    max-width: calc(100vw - 28px) !important;
+    height: 54px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 4px 12px !important;
+    gap: 10px !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 12px 34px rgba(105, 93, 76, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    z-index: 1000 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    animation: dockBottomEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+
+  @keyframes dockBottomEntrance {
+    0% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(24px) scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
+
+  .icon-sidebar:hover {
+    transform: translateX(-50%) translateY(-2px) !important;
+  }
+
+  .sidebar-icon-wrap {
+    width: auto !important;
+  }
+
+  .sidebar-icon-btn {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 13px !important;
+  }
+
+  .sidebar-icon-btn svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* 4. Main Viewport Padding for Bottom Dock Clearance */
+  .main-viewport {
+    padding: 16px 0 96px 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .chat-viewport {
+    padding: 8px 0 90px 0 !important;
+  }
+
+  /* 5. View Mode Bar */
+  .view-mode-bar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .view-mode-title {
+    font-size: 12.5px !important;
+  }
+
+  .resident-quick-tag {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* 6. Mockup Hero Cards */
+  .mockup-hero-cards {
+    gap: 16px !important;
+  }
+
+  .mockup-card {
+    padding: 22px 18px !important;
+    border-radius: 20px !important;
+  }
+
+  .mockup-card-title {
+    font-size: 22px !important;
+  }
+
+  .matcha-circle-badge {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .matcha-circle-badge svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .mockup-card-footer {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .mockup-card-subtitle {
+    font-size: 14.5px !important;
+  }
+
+  .mockup-card-menu-hint {
+    font-size: 12.5px !important;
+    line-height: 1.4 !important;
+  }
+
+  .matcha-pill-badge {
+    padding: 6px 16px !important;
+    font-size: 12.5px !important;
+  }
+
+  /* 7. Secondary Mini Cards Grid */
+  .secondary-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    margin-top: 16px !important;
+  }
+
+  .secondary-mini-card {
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .mini-card-head h4 {
+    font-size: 18px !important;
+  }
+
+  /* 8. Detailed View Sections */
+  .detailed-view-container {
+    width: 100% !important;
+  }
+
+  .section-head h2 {
+    font-size: 22px !important;
+  }
+
+  .section-head p {
+    font-size: 13px !important;
+  }
+
+  /* Dining Grid */
+  .dining-schedule-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .meal-slot-card {
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  /* Living Space Grid */
+  .room-living-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    padding: 12px !important;
+  }
+
+  .modal-sheet {
+    padding: 24px 18px !important;
+    border-radius: 20px !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra compact for narrow phones <= 480px */
+  .brand-badge {
+    display: none !important;
+  }
+
+  .user-text-full {
+    display: none !important;
+  }
+
+  .user-text-mobile {
+    display: inline !important;
+  }
+
+  .mockup-card {
+    padding: 18px 16px !important;
+  }
+
+  .mockup-card-title {
+    font-size: 20px !important;
   }
 }

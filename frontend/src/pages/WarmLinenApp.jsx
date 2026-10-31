@@ -303,6 +303,9 @@ const handleSendMessage = (e) => {
       )}
       {/* 2. WORKSPACE LAYOUT (SIDEBAR + MAIN CONTENT) */}
       <div className="workspace-layout">
+        {/* DOCK SPACER TO PRESERVE NATURAL FLEX FLOW ON DESKTOP */}
+        {!embedded && <div className="sidebar-dock-spacer" />}
+
         {/* SLIM VERTICAL ICON SIDEBAR */}
         {!embedded && (
           <aside className="icon-sidebar">
@@ -732,7 +735,7 @@ const handleSendMessage = (e) => {
                 <p>Room allocation, roommate registry and digital security gate clearance pass.</p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 28 }}>
+              <div className="room-living-grid">
                 {/* Room Info */}
                 <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)' }}>
                   <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px', color: '#272824' }}>{displayRoom}</h3>

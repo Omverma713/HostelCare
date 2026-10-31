@@ -170,24 +170,27 @@ function DashboardLayout() {
   return (
     <div className="app-shell" style={{ minHeight: '100vh', background: '#F6F3EC', display: 'flex', flexDirection: 'column' }}>
       {/* 1. TOP NAVBAR */}
-      <header className="top-navbar" style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px', background: '#F6F3EC', borderBottom: '1px solid #E6E0D5', flexShrink: 0 }}>
+      <header className="top-navbar">
         <div 
-          style={{ fontSize: 23, fontWeight: 600, color: '#242523', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', fontFamily: "'Playfair Display', Georgia, serif" }}
+          className="brand-title"
           onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=overview' : '/student')}
         >
           <span>HostelCare</span>
-          <span style={{ fontSize: 11, fontWeight: 600, color: '#587360', background: '#EEF3EE', padding: '3px 10px', borderRadius: 9999, letterSpacing: '0.02em', border: '1px solid #D5E2D7' }}>
+          <span className="brand-badge">
             Warm Linen Edition
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: '#FFFFFF', border: '1px solid #E6E0D5', borderRadius: 9999, fontSize: 13, color: '#575854' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#728D7A' }}></span>
-            <span>
+        <div className="navbar-right-group">
+          <div className="navbar-user-pill">
+            <span className="navbar-user-dot"></span>
+            <span className="user-text-full">
               {isSuperAdmin 
                 ? `${user?.name || 'Master Super Admin'} • RBAC SuperAdmin`
                 : `${user?.name || 'Resident'} • ${user?.roomNumber ? `Room ${user.roomNumber}` : 'Room 205 (BH-8)'}`}
+            </span>
+            <span className="user-text-mobile">
+              {isSuperAdmin ? 'Admin' : (user?.roomNumber ? `Rm ${user.roomNumber}` : 'Rm 205')}
             </span>
           </div>
 
@@ -201,22 +204,8 @@ function DashboardLayout() {
                 navigate('/login');
               }
             }}
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: '50%',
-              backgroundColor: '#C9826D',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              boxShadow: '0 3px 12px rgba(201, 130, 109, 0.28)',
-              transition: 'all 0.18s ease',
-            }}
           >
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -226,11 +215,12 @@ function DashboardLayout() {
       </header>
 
       {/* 2. WORKSPACE LAYOUT (CENTERED CONTAINER WITH FLOATING CAPSULE DOCK) */}
-      <div className={`workspace-layout ${isSuperAdmin ? 'superadmin-layout' : ''}`} style={{ maxWidth: isSuperAdmin ? 1440 : 1220, margin: '0 auto', width: '100%', padding: '0 24px', boxSizing: 'border-box' }}>
-        {/* DOCK SPACER TO PRESERVE NATURAL FLEX FLOW */}
-        <div className="sidebar-dock-spacer" style={{ width: 58, marginRight: 44, flexShrink: 0 }}>
-          {/* SLIM VERTICAL ICON SIDEBAR - FIXED FLOATING CAPSULE DOCK */}
-          <aside className="icon-sidebar">
+      <div className={`workspace-layout ${isSuperAdmin ? 'superadmin-layout' : ''}`}>
+        {/* DOCK SPACER TO PRESERVE NATURAL FLEX FLOW ON DESKTOP */}
+        <div className="sidebar-dock-spacer" />
+
+        {/* SLIM VERTICAL ICON SIDEBAR - FIXED ON DESKTOP, FLOATING CAPSULE ON MOBILE */}
+        <aside className="icon-sidebar">
           {/* 1. Home / Overview */}
           <div className="sidebar-icon-wrap">
             <button 
@@ -342,11 +332,10 @@ function DashboardLayout() {
               </button>
             </div>
           )}
-          </aside>
-        </div>
+        </aside>
 
         {/* MAIN VIEWPORT */}
-        <main style={{ flex: 1, padding: isChat ? '0' : '24px 0 80px', maxWidth: '100%', width: '100%', boxSizing: 'border-box' }}>
+        <main className={`main-viewport ${isChat ? 'chat-viewport' : ''}`}>
           <Outlet />
         </main>
       </div>
