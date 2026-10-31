@@ -674,12 +674,7 @@ const handleSendMessage = (e) => {
             ) : (
               <div className="detailed-view-container">
                 <div className="section-head" style={{ marginBottom: 20 }}>
-                  <button 
-                    onClick={() => setActiveTab('home')} 
-                    style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                  >
-                    <span>←</span> Back to Sanctuary
-                  </button>
+                  
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                     <div>
                       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: '#242523' }}>Super Admin Command Suite</h2>
