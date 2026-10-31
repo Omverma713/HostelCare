@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import './WarmLinenApp.css';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
@@ -25,18 +26,24 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
     { id: 'sess_3', user: '24E122A11', name: 'Om Verma', role: 'student', device: 'Android App (FCM)', ip: '172.18.0.1', status: 'active', time: '35m ago' },
     { id: 'sess_4', user: '24E114B14', name: 'Rakesh Sharma', role: 'student', device: 'Chrome on macOS', ip: '172.18.0.1', status: 'active', time: '1h ago' },
   ]);
-  const defaultTab = initialTab || (window.location.pathname.startsWith('/superadmin') ? 'admin' : 'home');
+  const [searchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab');
+  const defaultTab = initialTab || urlTab || (window.location.pathname.startsWith('/superadmin') ? 'admin' : 'home');
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   useEffect(() => {
-    if (initialTab) {
+    if (urlTab) {
+      setActiveTab(urlTab);
+      if (urlTab === 'room') setShowQrModal(true);
+      if (urlTab === 'complaints') setShowComplaintModal(true);
+    } else if (initialTab) {
       setActiveTab(initialTab);
     } else if (window.location.pathname.startsWith('/superadmin')) {
       setActiveTab('admin');
     } else if (window.location.pathname.startsWith('/student')) {
       setActiveTab('home');
     }
-  }, [initialTab, window.location.pathname]);
+  }, [urlTab, initialTab, searchParams]);
   const [showQrModal, setShowQrModal] = useState(false);
   const [showComplaintModal, setShowComplaintModal] = useState(false);
   const [complaintSubmitted, setComplaintSubmitted] = useState(false);
