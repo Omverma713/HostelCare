@@ -104,34 +104,74 @@ body {
   border-radius: 2px;
 }
 
-/* Main Workspace with Sidebar */
+/* Floating Dock Keyframe Animations */
+@keyframes dockFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes dockEntrance {
+  0% {
+    opacity: 0;
+    transform: translateX(-16px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes activePulse {
+  0%, 100% {
+    box-shadow: 0 2px 10px rgba(90, 115, 96, 0.22);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(90, 115, 96, 0.42), 0 0 8px rgba(186, 203, 185, 0.5);
+  }
+}
+
+/* Main Workspace with Sidebar - Centered Content Container */
 .workspace-layout {
   display: flex;
   flex: 1;
   position: relative;
+  max-width: 1140px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 /* Floating Capsule Dock Sidebar (Warm Linen Luxury - matching Image 4) */
 .icon-sidebar {
-  width: 54px;
+  width: 58px;
   background: #FFFFFF;
   border: 1px solid #E6E0D5;
-  border-radius: 9999px; /* full rounded capsule pill */
+  border-radius: 9999px; /* full rounded capsule pill dock */
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 5px;
-  gap: 10px;
-  box-shadow: 0 8px 28px rgba(105, 93, 76, 0.08);
-  margin-top: 36px;
-  margin-left: 8px;
-  margin-right: 20px;
+  padding: 12px 6px;
+  gap: 12px;
+  box-shadow: 0 12px 36px rgba(105, 93, 76, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-top: 105px; /* Brought pleasantly downward alongside the content cards */
+  margin-right: 28px;
   flex-shrink: 0;
   height: fit-content;
   position: sticky;
-  top: 96px;
+  top: 130px;
   z-index: 50;
   box-sizing: border-box;
+  animation: dockEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards, dockFloat 4s ease-in-out infinite 0.5s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.icon-sidebar:hover {
+  box-shadow: 0 16px 44px rgba(105, 93, 76, 0.14), 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .sidebar-icon-wrap {
@@ -143,34 +183,43 @@ body {
 }
 
 .sidebar-icon-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   background: transparent;
   border: none;
   cursor: pointer;
-  border-radius: 14px; /* squircle shape matching Image 4 */
+  border-radius: 15px; /* squircle shape matching Image 4 */
   display: flex;
   align-items: center;
   justify-content: center;
   color: #7D7F7A;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
 }
 
 .sidebar-icon-btn:hover {
   color: #242523;
   background-color: #F4F1EA;
-  transform: scale(1.06);
+  transform: translateY(-3px) scale(1.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
 }
 
-/* ACTIVE STATE: Soft Sage / Matcha Squircle matching Image 4 */
+.sidebar-icon-btn:active {
+  transform: translateY(1px) scale(0.95);
+}
+
+/* ACTIVE STATE: Soft Sage / Matcha Squircle with gentle breathing pulse */
 .sidebar-icon-btn.active {
   background-color: #BACBB9;
   color: #242523;
-  box-shadow: 0 2px 8px rgba(90, 115, 96, 0.2);
+  transform: scale(1.05);
+  box-shadow: 0 3px 12px rgba(90, 115, 96, 0.25);
+  animation: activePulse 3s ease-in-out infinite;
 }
 
 .sidebar-icon-btn.active:hover {
   background-color: #B0C2AF;
+  transform: translateY(-2px) scale(1.1);
 }
 
 /* Hide old vertical line indicator on the right */
@@ -181,10 +230,11 @@ body {
 /* Main Content Area */
 .main-viewport {
   flex: 1;
-  padding: 40px 48px 80px;
-  max-width: 1060px;
-  margin: 0 auto;
+  padding: 24px 0 80px 0;
+  max-width: 100%;
+  margin: 0;
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* Breadcrumb / Mode Pills */
