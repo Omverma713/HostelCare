@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import './WarmLinenApp.css';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
+import { DEFAULT_MESS_DATA, DAYS_ORDER } from '../constants/messMenuData';
 import { triggerToast } from '../components/Toast';
 export default function WarmLinenApp({ embedded = false, initialTab }) {
   const { user, login, logout, isAuthenticated } = useAuth();
@@ -31,6 +32,10 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const urlTab = searchParams.get('tab');
   const defaultTab = initialTab || urlTab || (window.location.pathname.startsWith('/superadmin') ? 'admin' : 'home');
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [selectedDay, setSelectedDay] = useState(() => {
+    const d = new Date().getDay();
+    return DAYS_ORDER[d === 0 ? 6 : d - 1] || 'monday';
+  });
 
   useEffect(() => {
     if (urlTab) {
@@ -313,27 +318,60 @@ const handleSendMessage = (e) => {
 
               {/* THE TWO EXACT HERO CARDS FROM THE MOCKUP */}
               <div className="mockup-hero-cards">
-                {/* 1. Today's Meal Card */}
-                <div 
-                  className="mockup-card" 
-                  onClick={() => setActiveTab('mess')}
-                  title="Click to view full weekly dining timetable"
-                >
-                  <div className="mockup-card-header">
-                    <h2 className="mockup-card-title">Today's Meal</h2>
-                    <div className="matcha-circle-badge">
-                      {/* Leaf SVG */}
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
-                        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
-                      </svg>
+                {/* 1. Today's Meal Card (Real Dynamic ITER Mess Timetable) */}
+                {(() => {
+                  const now = new Date();
+                  const currentMins = now.getHours() * 60 + now.getMinutes();
+                  const d = now.getDay();
+                  const todayKey = DAYS_ORDER[d === 0 ? 6 : d - 1] || 'monday';
+                  const todayMeals = DEFAULT_MESS_DATA[todayKey]?.meals || DEFAULT_MESS_DATA.monday.meals;
+
+                  // Determine active or upcoming meal
+                  let statusText = "Dinner is being served • 08:30 PM";
+                  let menuText = todayMeals.dinner?.items?.join(', ') || "Roti, Rice, Dal, Special Curry";
+
+                  if (currentMins < 9 * 60 + 15) {
+                    statusText = currentMins >= 7 * 60 ? "Breakfast is being served • 07:00 – 09:15 AM" : "Next: Breakfast at 07:00 AM";
+                    menuText = "Menu: " + (todayMeals.breakfast?.items?.join(', ') || "Idli, Upma, Chutney");
+                  } else if (currentMins < 14 * 60 + 30) {
+                    statusText = currentMins >= 12 * 60 + 30 ? "Lunch is being served • 12:30 – 02:30 PM" : "Next: Lunch at 12:30 PM";
+                    menuText = "Menu: " + (todayMeals.lunch?.items?.join(', ') || "Rice, Dal, Seasonal Curry, Papad");
+                  } else if (currentMins < 19 * 60 + 30) {
+                    statusText = currentMins >= 17 * 60 + 45 ? "Evening Snacks is being served • 05:45 – 07:30 PM" : "Next: Evening Snacks at 05:45 PM";
+                    menuText = "Menu: " + (todayMeals.snacks?.items?.join(', ') || "Chai & Hot Snacks");
+                  } else if (currentMins <= 22 * 60) {
+                    statusText = "Dinner is being served • 08:30 – 10:00 PM";
+                    menuText = "Menu: " + (todayMeals.dinner?.items?.join(', ') || "Paneer / Chicken, Roti, Dal, Rice");
+                  } else {
+                    const tomorrowD = (d + 1) % 7;
+                    const tomorrowKey = DAYS_ORDER[tomorrowD === 0 ? 6 : tomorrowD - 1] || 'sunday';
+                    const tomorrowBreakfast = DEFAULT_MESS_DATA[tomorrowKey]?.meals?.breakfast;
+                    statusText = "Dinner has finished • Next Meal: Tomorrow Breakfast at 07:00 AM";
+                    menuText = "Menu: " + (tomorrowBreakfast?.items?.join(', ') || "Upma / Idli & Coffee");
+                  }
+
+                  return (
+                    <div 
+                      className="mockup-card" 
+                      onClick={() => setActiveTab('mess')}
+                      title="Click to view full weekly dining schedule"
+                    >
+                      <div className="mockup-card-header">
+                        <h2 className="mockup-card-title">Today's Meal</h2>
+                        <div className="matcha-circle-badge">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+                            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="mockup-card-footer">
+                        <p className="mockup-card-subtitle">{statusText}</p>
+                        <p className="mockup-card-menu-hint">{menuText}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="mockup-card-footer">
-                    <p className="mockup-card-subtitle">Dinner is being served • 8:30 PM</p>
-                    <p className="mockup-card-menu-hint">Menu: Lentil Stew, Organic Veg, Rice</p>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* 2. My Living Space Card */}
                 <div 
@@ -377,89 +415,152 @@ const handleSendMessage = (e) => {
           {/* =========================================================================
               VIEW 2: WEEKLY MESS TIMETABLE
              ========================================================================= */}
-          {activeTab === 'mess' && (
-            <div className="detailed-view-container">
-              <div className="section-head">
-                <button 
-                  onClick={() => setActiveTab('home')} 
-                  style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
-                >
-                  ← Back to Sanctuary
-                </button>
-                <h2>Weekly Dining Schedule</h2>
-                <p>Official ITER campus meal timetable with verified portion standards and dietary tags.</p>
+          {activeTab === 'mess' && (() => {
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            const d = now.getDay();
+            const todayKey = DAYS_ORDER[d === 0 ? 6 : d - 1] || 'monday';
+            const isViewingToday = selectedDay === todayKey;
+
+            const dayData = DEFAULT_MESS_DATA[selectedDay] || DEFAULT_MESS_DATA.monday;
+            const mealsList = [
+              { key: 'breakfast', slot: dayData.meals.breakfast, icon: '🍳', name: 'Breakfast', defaultTime: '07:00 – 09:15 AM' },
+              { key: 'lunch', slot: dayData.meals.lunch, icon: '🍛', name: 'Lunch', defaultTime: '12:30 – 02:30 PM' },
+              { key: 'snacks', slot: dayData.meals.snacks, icon: '☕', name: 'Evening Snacks', defaultTime: '05:45 – 07:30 PM' },
+              { key: 'dinner', slot: dayData.meals.dinner, icon: '🍲', name: 'Dinner', defaultTime: '08:30 – 10:00 PM' },
+            ];
+
+            return (
+              <div className="detailed-view-container">
+                <div className="section-head" style={{ marginBottom: 16 }}>
+                  <button 
+                    onClick={() => setActiveTab('home')} 
+                    style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <span>←</span> Back to Sanctuary
+                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                    <div>
+                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: '#242523' }}>Weekly Dining Schedule</h2>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>Official ITER campus meal timetable with verified portion standards and dietary tags.</p>
+                    </div>
+                    <button
+                      onClick={() => navigate('/mess-menu')}
+                      style={{ background: '#FAF8F4', border: '1px solid #E6E0D5', borderRadius: 9999, padding: '8px 18px', fontSize: 13, fontWeight: 600, color: '#575854', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <span>Full Matrix Table</span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Day Selector Pills (Mon - Sun) */}
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 24, scrollbarWidth: 'none' }}>
+                  {DAYS_ORDER.map((dayKey) => {
+                    const isSelected = selectedDay === dayKey;
+                    const isToday = dayKey === todayKey;
+                    const dayLabel = DEFAULT_MESS_DATA[dayKey]?.label || dayKey.toUpperCase();
+
+                    return (
+                      <button
+                        key={dayKey}
+                        onClick={() => setSelectedDay(dayKey)}
+                        style={{
+                          border: isSelected ? '1px solid #728D7A' : '1px solid #E6E0D5',
+                          background: isSelected ? '#FFFFFF' : '#FAF8F4',
+                          color: isSelected ? '#242523' : '#7D7F7A',
+                          padding: '8px 18px',
+                          borderRadius: 9999,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          whiteSpace: 'nowrap',
+                          boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {isToday && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#728D7A' }} />}
+                        <span>{dayLabel}</span>
+                        {isToday && <span style={{ fontSize: 10.5, color: '#587360', fontWeight: 700 }}>(Today)</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 4 Real Meal Cards for the Selected Day */}
+                <div className="dining-schedule-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 18 }}>
+                  {mealsList.map(({ key, slot, icon, name, defaultTime }) => {
+                    const startMins = (slot?.startHour ?? 0) * 60 + (slot?.startMinute ?? 0);
+                    const endMins = (slot?.endHour ?? 24) * 60 + (slot?.endMinute ?? 0);
+
+                    let statusBadge = null;
+                    if (isViewingToday) {
+                      if (currentMins >= startMins && currentMins <= endMins) {
+                        statusBadge = <span style={{ background: '#728D7A', color: 'white', padding: '3px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 700 }}>● LIVE NOW</span>;
+                      } else if (currentMins > endMins) {
+                        statusBadge = <span style={{ background: '#EAE5DB', color: '#7D7F7A', padding: '3px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 600 }}>Finished</span>;
+                      } else {
+                        statusBadge = <span style={{ background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 600 }}>Upcoming</span>;
+                      }
+                    } else {
+                      statusBadge = <span style={{ background: '#FAF8F4', color: '#7D7F7A', padding: '3px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 600 }}>{slot?.timing || defaultTime}</span>;
+                    }
+
+                    const items = slot?.items || [];
+                    const mainDish = items[0] || name;
+                    const otherItems = items.slice(1).join(', ');
+
+                    return (
+                      <div 
+                        key={key} 
+                        className="meal-slot-card"
+                        style={{
+                          background: '#FFFFFF',
+                          borderRadius: 20,
+                          padding: 24,
+                          border: isViewingToday && currentMins >= startMins && currentMins <= endMins ? '2px solid #728D7A' : '1px solid #E6E0D5',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: '#242523', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>{icon}</span> {name}
+                            </span>
+                            {statusBadge}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#7D7F7A', marginBottom: 10 }}>{slot?.timing || defaultTime}</div>
+
+                          <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: '#242523', margin: '0 0 8px', lineHeight: 1.3 }}>
+                            {mainDish}
+                          </h3>
+
+                          {otherItems && (
+                            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                              {otherItems}
+                            </p>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F0ECE4', paddingTop: 12, marginTop: 12, fontSize: 12 }}>
+                          <span style={{ color: slot?.dietary === 'veg' ? '#587360' : '#C9826D', fontWeight: 600 }}>
+                            {slot?.dietary === 'veg' ? '🌱 100% Pure Veg' : '🐟 Veg / Non-Veg'}
+                          </span>
+                          <span style={{ color: '#8E8F8A' }}>Standard ITER Mess</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-
-              <div className="dining-schedule-grid">
-                <div className="meal-slot-card">
-                  <div className="meal-slot-header">
-                    <span className="meal-slot-name">🍳 Breakfast</span>
-                    <span className="meal-slot-time">07:00 – 09:15 AM</span>
-                  </div>
-                  <h3 className="meal-main-dish">Idli, Sambar & Vada</h3>
-                  <p className="meal-description">Steamed rice idlis with coconut chutney and crispy medu vada.</p>
-                  <div className="meal-footer-badges">
-                    <span>• 100% Pure Veg</span>
-                    <span>Finished</span>
-                  </div>
-                </div>
-
-                <div className="meal-slot-card">
-                  <div className="meal-slot-header">
-                    <span className="meal-slot-name">🍱 Lunch</span>
-                    <span className="meal-slot-time">12:30 – 02:30 PM</span>
-                  </div>
-                  <h3 className="meal-main-dish">Thali Buffet Lunch</h3>
-                  <p className="meal-description">Usuna & Arua Rice, Dal Tadka, Seasonal Bhaja, Sweet Pickle.</p>
-                  <div className="meal-footer-badges">
-                    <span>• Veg / Fish (120g)</span>
-                    <span>Finished</span>
-                  </div>
-                </div>
-
-                <div className="meal-slot-card">
-                  <div className="meal-slot-header">
-                    <span className="meal-slot-name">☕ Evening Snacks</span>
-                    <span className="meal-slot-time">05:45 – 07:30 PM</span>
-                  </div>
-                  <h3 className="meal-main-dish">Tea & Hot Veg Chop</h3>
-                  <p className="meal-description">Crispy beetroot spiced chop with choice of ginger tea or milk tea.</p>
-                  <div className="meal-footer-badges">
-                    <span>• Pure Veg</span>
-                    <span>Finished</span>
-                  </div>
-                </div>
-
-                <div className="meal-slot-card active-meal">
-                  <div className="meal-slot-tag">LIVE NOW</div>
-                  <div className="meal-slot-header">
-                    <span className="meal-slot-name">🌙 Dinner</span>
-                    <span className="meal-slot-time">08:30 – 10:00 PM</span>
-                  </div>
-                  <h3 className="meal-main-dish">Paneer Butter Masala</h3>
-                  <p className="meal-description">Fresh tawa roti (unlimited), Steamed Rice, Dal Fry, Sweet Kheer (60g).</p>
-                  <div className="meal-footer-badges">
-                    <span style={{ color: '#587360', fontWeight: 600 }}>• Serving in Dining Hall</span>
-                    <span style={{ background: '#EEF3EE', padding: '2px 8px', borderRadius: 9999, color: '#587360' }}>Sweet Included</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Portion Standard Callout */}
-              <div style={{ background: '#FFFFFF', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <h4 style={{ margin: '0 0 4px', fontSize: 15, color: '#272824' }}>Official Portion Standards (ITER Campus-1)</h4>
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>Sweet: 60g • Paneer: 80g • Fish: 120g • Egg: 2 pcs (Lunch/Dinner) or 1 pc (Breakfast).</p>
-                </div>
-                <button 
-                  onClick={() => alert('Official ITER Mess Tender Norms: Verified compliant.')}
-                  style={{ background: '#EEF3EE', border: '1px solid #D5E2D7', color: '#587360', padding: '8px 18px', borderRadius: 9999, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  View PDF Norms
-                </button>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* =========================================================================
               VIEW 3: LIVING SPACE & OUTING PASS
