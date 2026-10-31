@@ -183,7 +183,8 @@ const handleSendMessage = (e) => {
           <div style={{ position: 'relative' }}>
             <button 
               className="terracotta-menu-btn" 
-              title={isAuthenticated ? `Logged in: ${displayName}` : "Sign In to HostelCare"}
+              title={isAuthenticated ? `Log Out (${displayName})` : "Sign In to HostelCare"}
+              aria-label={isAuthenticated ? "Log Out" : "Sign In"}
               onClick={() => {
                 if (isAuthenticated) {
                   if (window.confirm(`Logged in as ${displayName} (${displayRoom}). Sign out?`)) {
@@ -194,10 +195,26 @@ const handleSendMessage = (e) => {
                   setShowLoginModal(true);
                 }
               }}
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: '50%',
+                backgroundColor: '#C9826D',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFFFFF',
+                boxShadow: '0 3px 12px rgba(201, 130, 109, 0.28)',
+                transition: 'all 0.18s ease'
+              }}
             >
-              <span></span>
-              <span></span>
-              <span></span>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
             </button>
           </div>
         </div>
@@ -545,9 +562,50 @@ const handleSendMessage = (e) => {
                           </h3>
 
                           {otherItems && (
-                            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 12px', lineHeight: 1.5 }}>
                               {otherItems}
                             </p>
+                          )}
+
+                          {/* Non-Veg & Veg Dietary Options / Choices */}
+                          {slot?.options && slot.options.length > 0 && (
+                            <div style={{ marginTop: 10, marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#7D7F7A', display: 'flex', alignItems: 'center', gap: 5 }}>
+                                <span>⚡</span>
+                                <span>Choice / Special Option:</span>
+                              </div>
+                              {slot.options.map((opt, idx) => {
+                                const isNonVeg = opt.type === 'nonveg' || opt.type === 'egg';
+                                const icon = opt.type === 'nonveg' ? '🍗' : (opt.type === 'egg' ? '🥚' : '🥦');
+                                return (
+                                  <div 
+                                    key={idx}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      padding: '6px 10px',
+                                      borderRadius: 10,
+                                      background: isNonVeg ? '#FFF5F2' : '#F4F7F4',
+                                      border: isNonVeg ? '1px solid #FCDAD1' : '1px solid #E1EBE2',
+                                      fontSize: 12.5,
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      <span style={{ fontSize: 13 }}>{icon}</span>
+                                      <span style={{ fontWeight: 600, color: isNonVeg ? '#B85D43' : '#3E6649' }}>
+                                        {opt.name}
+                                      </span>
+                                    </div>
+                                    {opt.portion && (
+                                      <span style={{ fontSize: 11, color: isNonVeg ? '#A3533D' : '#587360', background: '#FFFFFF', padding: '2px 7px', borderRadius: 9999, border: '1px solid rgba(0,0,0,0.06)', fontWeight: 600 }}>
+                                        {opt.portion}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
                           )}
                         </div>
 

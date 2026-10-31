@@ -2838,12 +2838,15 @@ export default function SuperAdminPortal() {
         <div className={`sa-users-grid ${selectedUser ? 'has-selection' : ''}`}>
           {/* Main Users Table */}
           <div
+            className="sa-users-table-card"
             style={{
-              background: 'var(--bg-card)',
-              borderRadius: 'var(--border-radius-lg)',
-              border: '1px solid var(--border-color)',
-              padding: '1.25rem',
-              boxShadow: 'var(--shadow-sm)',
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              border: '1px solid #E6E0D5',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
+              width: '100%',
+              boxSizing: 'border-box'
             }}
           >
             {/* Locked Accounts Radar Pill / Banner */}
@@ -3005,7 +3008,7 @@ export default function SuperAdminPortal() {
                     <th style={{ padding: '0.75rem 0.5rem' }}>Hostel / Room</th>
                     <th style={{ padding: '0.75rem 0.5rem' }}>Devices</th>
                     <th style={{ padding: '0.75rem 0.5rem' }}>Status</th>
-                    <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Actions</th>
+                    <th style={{ padding: '13px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3121,8 +3124,8 @@ export default function SuperAdminPortal() {
                             )}
                           </div>
                         </td>
-                        <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
                             {u.isLocked && (
                               <>
                                 <button
@@ -3205,7 +3208,7 @@ export default function SuperAdminPortal() {
                                   gap: '4px',
                                   whiteSpace: 'nowrap',
                                 }}
-                                title={`Login as ${u.name} (${u.role})`}
+                                className="sa-btn-login-as" title={`Login as ${u.name} (${u.role})`}
                               >
                                 ⚡ Login As
                               </button>
@@ -3216,6 +3219,7 @@ export default function SuperAdminPortal() {
                                 e.stopPropagation();
                                 handleSelectUser(u);
                               }}
+                              className="sa-btn-details"
                               style={{
                                 padding: '0.35rem 0.75rem',
                                 borderRadius: '6px',
@@ -4756,12 +4760,15 @@ export default function SuperAdminPortal() {
       {/* 4. TAB: SESSIONS & DEVICES */}
       {activeTab === 'sessions' && (
         <div
+          className="sa-sessions-table-card"
           style={{
-            background: 'var(--bg-card)',
-            borderRadius: 'var(--border-radius-lg)',
-            border: '1px solid var(--border-color)',
-            padding: '1.25rem',
-            boxShadow: 'var(--shadow-sm)',
+            background: '#FFFFFF',
+            borderRadius: '24px',
+            border: '1px solid #E6E0D5',
+            padding: '24px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
+            width: '100%',
+            boxSizing: 'border-box'
           }}
         >
           {/* Filters */}
@@ -4871,7 +4878,7 @@ export default function SuperAdminPortal() {
                       <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>
                         {new Date(s.lastActivityAt).toLocaleString()}
                       </td>
-                      <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {s.status === 'active' && (
                           <button
                             type="button"
@@ -8499,7 +8506,7 @@ export default function SuperAdminPortal() {
                             {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}
                           </td>
                           <td style={{ padding: '10px 12px', textAlign: 'right' }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
                               <button
                                 type="button"
                                 onClick={() => {
@@ -9159,12 +9166,15 @@ export default function SuperAdminPortal() {
 
           {/* Past Campaigns Log */}
           <div
+            className="sa-users-table-card"
             style={{
-              background: 'var(--bg-card)',
-              borderRadius: 'var(--border-radius-lg)',
-              border: '1px solid var(--border-color)',
-              padding: '1.25rem',
-              boxShadow: 'var(--shadow-sm)',
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              border: '1px solid #E6E0D5',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
+              width: '100%',
+              boxSizing: 'border-box'
             }}
           >
             <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -11057,12 +11067,15 @@ export default function SuperAdminPortal() {
       {/* 7. TAB: AUDIT LOGS */}
       {activeTab === 'audit' && (
         <div
+          className="sa-sessions-table-card"
           style={{
-            background: 'var(--bg-card)',
-            borderRadius: 'var(--border-radius-lg)',
-            border: '1px solid var(--border-color)',
-            padding: '1.25rem',
-            boxShadow: 'var(--shadow-sm)',
+            background: '#FFFFFF',
+            borderRadius: '24px',
+            border: '1px solid #E6E0D5',
+            padding: '24px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
+            width: '100%',
+            boxSizing: 'border-box'
           }}
         >
           {/* Filters */}
@@ -11407,7 +11420,7 @@ export default function SuperAdminPortal() {
                       <th style={{ padding: '0.75rem 0.5rem' }}>Duration & Expiry</th>
                       <th style={{ padding: '0.75rem 0.5rem' }}>Status</th>
                       <th style={{ padding: '0.75rem 0.5rem' }}>Granted By</th>
-                      <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Actions</th>
+                      <th style={{ padding: '13px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -11527,7 +11540,7 @@ export default function SuperAdminPortal() {
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
                           by {d.delegatedByRegistrationNumber} • {new Date(d.createdAt).toLocaleDateString()}
                         </td>
-                        <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
+                        <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                           {d.status === 'active' && !d.isExpired ? (
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
                               <button

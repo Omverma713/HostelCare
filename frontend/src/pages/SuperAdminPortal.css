@@ -1826,8 +1826,9 @@ html.dark-theme .sa-delegation-select-all-btn {
   background: #FFFFFF !important;
   border: 1px solid #E6E0D5 !important;
   border-radius: 20px !important;
-  overflow: hidden !important;
+  overflow-x: auto !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02) !important;
+  width: 100% !important;
 }
 
 .sa-desktop-table table {
@@ -1846,16 +1847,18 @@ html.dark-theme .sa-delegation-select-all-btn {
   font-size: 11.5px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.06em !important;
-  padding: 16px 20px !important;
+  letter-spacing: 0.05em !important;
+  padding: 13px 14px !important;
   border-bottom: 1px solid #E6E0D5 !important;
+  background: #FAF8F4 !important;
+  white-space: nowrap !important;
 }
 
 .sa-desktop-table td {
-  padding: 16px 20px !important;
+  padding: 12px 14px !important;
   border-bottom: 1px solid #F0ECE4 !important;
   color: #242523 !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   vertical-align: middle !important;
 }
 
@@ -1881,7 +1884,45 @@ span[style*="background: rgb(16, 185, 129)"],
 }
 
 /* Revoke Button - Soft Terracotta */
-.sa-desktop-table button {
+/* Action Buttons in User Directory & Tables */
+.sa-desktop-table .sa-btn-login-as {
+  background: #EEF3EE !important;
+  color: #587360 !important;
+  border: 1px solid #D5E2D7 !important;
+  border-radius: 9999px !important;
+  padding: 5px 12px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.sa-desktop-table .sa-btn-login-as:hover {
+  background: #E2ECE3 !important;
+  color: #3E6649 !important;
+}
+
+.sa-desktop-table .sa-btn-details {
+  background: #FAF8F4 !important;
+  color: #575854 !important;
+  border: 1px solid #E6E0D5 !important;
+  border-radius: 9999px !important;
+  padding: 5px 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.sa-desktop-table .sa-btn-details:hover {
+  background: #F0EAE1 !important;
+  color: #242523 !important;
+}
+
+.sa-desktop-table .sa-btn-revoke {
   background: #FFF1ED !important;
   color: #C9826D !important;
   border: 1px solid #F4D3C9 !important;
@@ -1893,7 +1934,7 @@ span[style*="background: rgb(16, 185, 129)"],
   transition: all 0.15s ease !important;
 }
 
-.sa-desktop-table button:hover {
+.sa-desktop-table .sa-btn-revoke:hover {
   background: #FCE8E2 !important;
   color: #B36E59 !important;
 }

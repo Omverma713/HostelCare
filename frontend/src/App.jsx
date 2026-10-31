@@ -178,18 +178,35 @@ function DashboardLayout() {
           </div>
 
           <button 
-            className="terracotta-menu-btn" 
-            title={`Account: ${user?.name || 'Resident'} (${user?.role || 'student'})`}
+            className="terracotta-menu-btn header-logout-btn" 
+            title={`Log Out (${user?.name || 'Resident'})`}
+            aria-label="Log Out"
             onClick={() => {
               if (window.confirm(`Logged in as ${user?.name || 'Resident'} (${user?.role || 'student'}). Sign out?`)) {
                 logout();
                 navigate('/login');
               }
             }}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: '50%',
+              backgroundColor: '#C9826D',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              boxShadow: '0 3px 12px rgba(201, 130, 109, 0.28)',
+              transition: 'all 0.18s ease',
+            }}
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
           </button>
         </div>
       </header>
@@ -363,7 +380,7 @@ function DashboardLayout() {
         </aside>
 
         {/* MAIN VIEWPORT */}
-        <main style={{ flex: 1, padding: isChat ? '0' : '36px 32px 80px', maxWidth: isChat ? '100%' : 1120, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        <main style={{ flex: 1, padding: isChat ? '0' : (isSuperAdmin ? '24px 28px 80px' : '36px 32px 80px'), maxWidth: isChat ? '100%' : (isSuperAdmin ? 1380 : 1060), margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           <Outlet />
         </main>
       </div>
