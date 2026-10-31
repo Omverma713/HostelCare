@@ -1378,7 +1378,7 @@ const handleSendMessage = (e) => {
                   <select 
                     value={newComplaintDept} 
                     onChange={(e) => setNewComplaintDept(e.target.value)}
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #D5E2D7', background: '#FAF8F5', fontSize: 14, outline: 'none' }}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #D5E2D7', background: '#FFFFFF', color: '#242523', fontSize: 14, outline: 'none', fontWeight: 500 }}
                   >
                     <option value="Electrical">⚡ Electrical (Tube-light, Fan, Switchboard, AC)</option>
                     <option value="Plumbing">🚰 Plumbing (Tap, Flush, Leakage, Geyser)</option>
@@ -1395,7 +1395,7 @@ const handleSendMessage = (e) => {
                     value={newComplaintDesc}
                     onChange={(e) => setNewComplaintDesc(e.target.value)}
                     placeholder="Describe the issue in detail (e.g. Study table tube-light is flickering and needs replacement)..." 
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #D5E2D7', background: '#FAF8F5', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} 
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #D5E2D7', background: '#FFFFFF', color: '#242523', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} 
                   />
                   <span style={{ fontSize: 11.5, color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
                     Logged for: <strong>{displayName}</strong> • <strong>{displayRoom}</strong>

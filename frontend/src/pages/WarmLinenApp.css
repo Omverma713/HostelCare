@@ -1066,3 +1066,29 @@ body.dark-theme .mockup-card-menu-hint {
     min-width: 8px !important;
   }
 }
+
+
+/* ─── Modal Sheet High Contrast & Input Readability ─── */
+.modal-sheet {
+  background: #FFFFFF !important;
+  color: #242523 !important;
+}
+
+.modal-sheet input,
+.modal-sheet select,
+.modal-sheet textarea {
+  color: #242523 !important;
+  background-color: #FFFFFF !important;
+  border-color: #D5E2D7 !important;
+}
+
+.modal-sheet input::placeholder,
+.modal-sheet textarea::placeholder {
+  color: #8E8F8A !important;
+}
+
+.modal-sheet select option {
+  color: #242523 !important;
+  background-color: #FFFFFF !important;
+}
+
