@@ -1664,35 +1664,124 @@ body.login-dark-theme .brand-name {
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-/* 2. Revert Sidebar back to Original Floating Capsule Dock (User explicitly requested) */
-.icon-sidebar {
-  width: 62px !important;
-  background: #FFFFFF !important;
-  border: 1px solid #E6E0D5 !important;
-  border-radius: 9999px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  padding: 14px 7px !important;
-  gap: 14px !important;
-  box-shadow: 0 12px 36px rgba(105, 93, 76, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-  transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+/* 2. Responsive Sidebar Dock: Desktop Slim Vertical Dock vs Mobile Horizontal Bottom Capsule */
+@media (min-width: 769px) {
+  .icon-sidebar {
+    width: 62px !important;
+    height: auto !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E6E0D5 !important;
+    border-radius: 9999px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 14px 7px !important;
+    gap: 14px !important;
+    box-shadow: 0 12px 36px rgba(105, 93, 76, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+    position: fixed !important;
+    top: 110px !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    z-index: 90 !important;
+  }
+
+  html.dark-theme .icon-sidebar,
+  body.login-dark-theme .icon-sidebar {
+    background: #1F1A17 !important;
+    border: 1px solid #383028 !important;
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+  }
+
+  .sidebar-dock-spacer {
+    width: 62px !important;
+    margin-right: 44px !important;
+    flex-shrink: 0 !important;
+  }
 }
 
-html.dark-theme .icon-sidebar,
-body.login-dark-theme .icon-sidebar {
-  background: #1F1A17 !important;
-  border: 1px solid #383028 !important;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.03) !important;
-}
+@media (max-width: 768px) {
+  .sidebar-dock-spacer {
+    display: none !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+  }
 
-.sidebar-dock-spacer {
-  width: 62px !important;
-  margin-right: 44px !important;
+  .icon-sidebar {
+    position: fixed !important;
+    left: 50% !important;
+    bottom: 16px !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    min-width: 290px !important;
+    max-width: calc(100% - 32px) !important;
+    height: 58px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    padding: 0 16px !important;
+    border-radius: 9999px !important;
+    gap: 8px !important;
+    z-index: 9999 !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    border: 1px solid #DCD4C5 !important;
+    box-shadow: 0 16px 40px rgba(115, 98, 80, 0.22), 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  }
+
+  html.dark-theme .icon-sidebar,
+  body.login-dark-theme .icon-sidebar {
+    background: rgba(35, 30, 26, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  }
+
+  .workspace-layout {
+    padding-bottom: 96px !important;
+  }
+
+  .main-viewport {
+    padding: 12px 0 100px 0 !important;
+  }
+
+  .concept1-pipeline-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .concept1-stepper-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .concept1-step-name {
+    font-size: 11px !important;
+  }
+
+  .concept1-step-circle.glow-circle,
+  .concept1-step-circle.outline-circle {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .concept1-step-line {
+    transform: translateY(-9px) !important;
+  }
 }
 
 .sidebar-icon-wrap {
   width: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .sidebar-icon-btn {
