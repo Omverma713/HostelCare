@@ -796,3 +796,96 @@ body.login-dark-theme .wl-role-btn.active {
   background: #8CA993 !important;
   color: #141815 !important;
 }
+
+
+/* ==========================================================================
+   ROLE GRID & TAB SWITCHER DARK MODE FIXES (EXACT USER SCREENSHOT)
+   ========================================================================== */
+html.dark-theme .wl-auth-tabs,
+body.login-dark-theme .wl-auth-tabs {
+  background: #1A1613 !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .wl-sliding-indicator,
+body.login-dark-theme .wl-sliding-indicator {
+  background: #2D2520 !important;
+  border: 1px solid #4A3E34 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark-theme .wl-auth-tab-btn,
+body.login-dark-theme .wl-auth-tab-btn {
+  color: #9E958A !important;
+}
+
+html.dark-theme .wl-auth-tab-btn:hover,
+body.login-dark-theme .wl-auth-tab-btn:hover {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .wl-auth-tab-btn.active,
+body.login-dark-theme .wl-auth-tab-btn.active {
+  color: #F2EDE4 !important;
+  font-weight: 700 !important;
+}
+
+/* Fix the glaring white capsule in Role Switcher */
+html.dark-theme .wl-role-grid,
+body.login-dark-theme .wl-role-grid {
+  background: #1A1613 !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .wl-role-sliding-indicator,
+body.login-dark-theme .wl-role-sliding-indicator {
+  background: #8CA993 !important;
+  box-shadow: 0 2px 10px rgba(140, 169, 147, 0.4) !important;
+}
+
+html.dark-theme .wl-role-btn,
+body.login-dark-theme .wl-role-btn {
+  color: #9E958A !important;
+}
+
+html.dark-theme .wl-role-btn:hover,
+body.login-dark-theme .wl-role-btn:hover {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .wl-role-btn.active,
+body.login-dark-theme .wl-role-btn.active {
+  color: #141815 !important;
+  font-weight: 700 !important;
+}
+
+/* Guest Mess Card in Dark Mode */
+html.dark-theme .wl-guest-mess-card,
+body.login-dark-theme .wl-guest-mess-card {
+  background: #1C1815 !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .wl-mess-title,
+body.login-dark-theme .wl-mess-title {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .wl-mess-sub,
+body.login-dark-theme .wl-mess-sub {
+  color: #9E958A !important;
+}
+
+html.dark-theme .wl-mess-btn,
+body.login-dark-theme .wl-mess-btn {
+  background: #251F1B !important;
+  border: 1px solid #3D332A !important;
+  color: #DED7CB !important;
+}
+
+html.dark-theme .wl-mess-btn:hover,
+body.login-dark-theme .wl-mess-btn:hover {
+  background: #8CA993 !important;
+  color: #141815 !important;
+  border-color: #8CA993 !important;
+}
