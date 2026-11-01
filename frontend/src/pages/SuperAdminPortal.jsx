@@ -11289,26 +11289,42 @@ export default function SuperAdminPortal() {
                           </td>
 
                           <td style={{ padding: '0.65rem 0.75rem' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
+                            {dev.platform === 'web' ? (
                               <span
                                 style={{
                                   padding: '2px 8px',
                                   borderRadius: '4px',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 800,
-                                  background: dev.isLatest ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 170, 0, 0.15)',
-                                  color: dev.isLatest ? '#00ff66' : '#ffaa00',
-                                  border: dev.isLatest ? '1px solid rgba(0, 255, 102, 0.3)' : '1px solid rgba(255, 170, 0, 0.3)',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  background: 'rgba(0, 243, 255, 0.12)',
+                                  color: '#00f3ff',
+                                  border: '1px solid rgba(0, 243, 255, 0.25)',
                                 }}
                               >
-                                v{dev.appVersion || '1.0.0'}
+                                🌐 WEB (Live)
                               </span>
-                              {dev.isLatest ? (
-                                <span style={{ fontSize: '0.65rem', color: '#00ff66', fontWeight: 700 }}>🟢 LATEST</span>
-                              ) : (
-                                <span style={{ fontSize: '0.65rem', color: '#ffaa00', fontWeight: 700 }} title={`Target is v${versionStats.latestVersion || '1.2.2.13'}`}>⚠️ OLD</span>
-                              )}
-                            </div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
+                                <span
+                                  style={{
+                                    padding: '2px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 800,
+                                    background: dev.isLatest ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 170, 0, 0.15)',
+                                    color: dev.isLatest ? '#00ff66' : '#ffaa00',
+                                    border: dev.isLatest ? '1px solid rgba(0, 255, 102, 0.3)' : '1px solid rgba(255, 170, 0, 0.3)',
+                                  }}
+                                >
+                                  v{dev.appVersion || versionStats.latestVersion || '1.2.2.13'}
+                                </span>
+                                {dev.isLatest ? (
+                                  <span style={{ fontSize: '0.65rem', color: '#00ff66', fontWeight: 700 }}>🟢 LATEST</span>
+                                ) : (
+                                  <span style={{ fontSize: '0.65rem', color: '#ffaa00', fontWeight: 700 }} title={`Target is v${versionStats.latestVersion || '1.2.2.13'}`}>⚠️ OLD</span>
+                                )}
+                              </div>
+                            )}
                           </td>
 
                           <td style={{ padding: '0.65rem 0.75rem' }}>

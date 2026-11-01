@@ -55,12 +55,16 @@ const getAppVersionStatus = async (req, res) => {
     let clientRole = req.query.role ? String(req.query.role).trim().toLowerCase() : null;
     let clientHostel = req.query.hostel ? String(req.query.hostel).trim().toLowerCase() : null;
 
+    let tokenUserId = null;
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.substring(7).trim();
       try {
         const decoded = jwt.decode(token);
         if (decoded) {
+          if (decoded.id || decoded._id) {
+            tokenUserId = decoded.id || decoded._id;
+          }
           if (!clientRegistrationNumber && (decoded.registrationNumber || decoded.regNo || decoded.username)) {
             clientRegistrationNumber = String(decoded.registrationNumber || decoded.regNo || decoded.username).trim().toUpperCase();
             recordClientIdentity(req.ip, clientRegistrationNumber);
@@ -87,13 +91,22 @@ const getAppVersionStatus = async (req, res) => {
     }
 
     // Auto-Sync device appVersion in DeviceRegistry whenever an app checks for updates
-    if (currentVersion && clientRegistrationNumber) {
+    if (currentVersion && (tokenUserId || clientRegistrationNumber)) {
       try {
         const DeviceRegistry = require("../models/deviceRegistry.model");
-        DeviceRegistry.updateMany(
-          { regNo: clientRegistrationNumber, isActive: true },
-          { $set: { appVersion: currentVersion, lastSeenAt: new Date() } }
-        ).catch(() => {});
+        const orConditions = [];
+        if (tokenUserId) orConditions.push({ userId: tokenUserId });
+        if (clientRegistrationNumber) {
+          orConditions.push({
+            regNo: { $regex: new RegExp("^" + clientRegistrationNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i") },
+          });
+        }
+        if (orConditions.length > 0) {
+          DeviceRegistry.updateMany(
+            { isActive: true, $or: orConditions },
+            { $set: { appVersion: currentVersion, lastSeenAt: new Date() } }
+          ).catch(() => {});
+        }
       } catch (_) {}
     }
 

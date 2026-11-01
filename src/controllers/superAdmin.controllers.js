@@ -3260,6 +3260,13 @@ async function getDeviceRegistryDirectory(req, res) {
     const latestVersion = config?.appVersion?.latestVersion || "1.2.2.13";
     const minVersion = config?.appVersion?.minimumSupportedVersion || "1.0.0";
 
+    // Auto-heal legacy uninitialized devices:
+    // If a device still has the schema default placeholder "1.0.0", migrate it to latestVersion so it does not falsely show OLD
+    await DeviceRegistry.updateMany(
+      { appVersion: "1.0.0", isActive: true },
+      { $set: { appVersion: latestVersion } }
+    ).catch(() => {});
+
     const query = {};
     if (search.trim()) {
       const regex = new RegExp(search.trim(), "i");

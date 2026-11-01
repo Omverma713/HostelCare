@@ -122,6 +122,18 @@ const authMiddleware = async (req, res, next) => {
     req.user = decoded;
     req.user._id = decoded.id;
 
+    // Background Device Version Heartbeat Sync from x-client-version header
+    const clientVersionHeader = req.headers["x-client-version"];
+    if (clientVersionHeader && decoded.id) {
+      try {
+        const DeviceRegistry = require("../models/deviceRegistry.model");
+        DeviceRegistry.updateMany(
+          { userId: decoded.id, isActive: true },
+          { $set: { appVersion: clientVersionHeader, lastSeenAt: new Date() } }
+        ).catch(() => {});
+      } catch (_) {}
+    }
+
     // 3. Enforce maintenance mode on active sessions (non-superadmins & non-delegated only)
     if (decoded.role !== "superadmin" && !decoded.isDelegatedSubAdmin) {
       const SystemConfig = require("../models/systemConfig.model");
