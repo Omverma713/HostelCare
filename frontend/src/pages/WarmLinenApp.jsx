@@ -428,93 +428,76 @@ const handleSendMessage = (e) => {
         {/* MAIN VIEWPORT */}
         <main className="main-viewport" style={embedded ? { padding: '8px 16px 60px', flex: 1, maxWidth: 1060, margin: '0 auto', width: '100%' } : {}}>
           {/* =========================================================================
-              VIEW 1: CONCEPT 1 ESPRESSO LUXURY WORKSPACE DASHBOARD
+              VIEW 1: CONCEPT 1 ESPRESSO LUXURY WORKSPACE DASHBOARD (EXACT MATCH)
              ========================================================================= */}
           {activeTab === 'home' && (
             <div className="concept1-dashboard-container">
-              <div className="concept1-header-row">
-                <h1 className="concept1-page-title">Workspace Dashboard</h1>
-              </div>
+              {/* TOP ROW: 2 CARDS SIDE-BY-SIDE (MATCHING IMAGE 4/5) */}
+              <div className="concept1-top-grid">
+                {/* 1. Today's Meal Card */}
+                {(() => {
+                  const now = new Date();
+                  const currentMins = now.getHours() * 60 + now.getMinutes();
+                  const d = now.getDay();
+                  const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
+                  const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
+                  const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
 
-              {/* 1. Today's Meal Card */}
-              {(() => {
-                const now = new Date();
-                const currentMins = now.getHours() * 60 + now.getMinutes();
-                const d = now.getDay();
-                const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
-                const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
-                const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
+                  let mealCategory = "Breakfast";
+                  let mealItems = todayMeals.breakfast?.items?.join(', ') || "Crispy Masala Dosa, Piping Hot Sambar, Fresh Filter Coffee";
 
-                let mealCategory = "Breakfast";
-                let mealTimeLabel = "Morning meal is";
-                let mealItems = todayMeals.breakfast?.items?.join(', ') || "Crispy Masala Dosa, Sambar & Filter Coffee";
+                  if (currentMins >= 7 * 60 && currentMins < 12 * 60) {
+                    mealCategory = "Breakfast";
+                    mealItems = todayMeals.breakfast?.items?.join(', ') || "Crispy Masala Dosa, Piping Hot Sambar, Fresh Filter Coffee";
+                  } else if (currentMins >= 12 * 60 && currentMins < 17 * 60) {
+                    mealCategory = "Lunch";
+                    mealItems = todayMeals.lunch?.items?.join(', ') || "Steamed Rice, Dal Tadka, Seasonal Curry, Crispy Papad";
+                  } else if (currentMins >= 17 * 60 && currentMins < 20 * 60) {
+                    mealCategory = "Snacks";
+                    mealItems = todayMeals.snacks?.items?.join(', ') || "Hot Chai, Samosa / Veg Cutlet, Mint Chutney";
+                  } else {
+                    mealCategory = "Dinner";
+                    mealItems = todayMeals.dinner?.items?.join(', ') || "Paneer Butter Masala, Fresh Rotis, Dal Makhani, Jeera Rice";
+                  }
 
-                if (currentMins >= 7 * 60 && currentMins < 12 * 60) {
-                  mealCategory = "Breakfast";
-                  mealTimeLabel = "Morning meal is";
-                  mealItems = todayMeals.breakfast?.items?.join(', ') || "Crispy Masala Dosa, Sambar & Filter Coffee";
-                } else if (currentMins >= 12 * 60 && currentMins < 17 * 60) {
-                  mealCategory = "Lunch";
-                  mealTimeLabel = "Afternoon meal is";
-                  mealItems = todayMeals.lunch?.items?.join(', ') || "Steamed Rice, Dal Tadka, Seasonal Curry, Crispy Papad";
-                } else if (currentMins >= 17 * 60 && currentMins < 20 * 60) {
-                  mealCategory = "Snacks";
-                  mealTimeLabel = "Evening snack is";
-                  mealItems = todayMeals.snacks?.items?.join(', ') || "Hot Chai, Samosa / Veg Cutlet, Mint Chutney";
-                } else {
-                  mealCategory = "Dinner";
-                  mealTimeLabel = "Night dinner is";
-                  mealItems = todayMeals.dinner?.items?.join(', ') || "Paneer Butter Masala, Fresh Rotis, Dal Makhani, Jeera Rice";
-                }
-
-                return (
-                  <div 
-                    className="concept1-card concept1-meal-card"
-                    onClick={() => setActiveTab('mess')}
-                    title="Click to view full weekly dining schedule"
-                  >
-                    <div className="concept1-card-top">
-                      <h2 className="concept1-card-title">Today's Meal</h2>
-                      <span className="concept1-matcha-pill">{mealCategory}</span>
+                  return (
+                    <div 
+                      className="concept1-card concept1-card-half"
+                      onClick={() => setActiveTab('mess')}
+                      title="Click to view full weekly dining schedule"
+                    >
+                      <div className="concept1-card-top">
+                        <h2 className="concept1-card-title">Today's Meal</h2>
+                        <span className="concept1-matcha-pill">{mealCategory}</span>
+                      </div>
+                      <div className="concept1-card-body">
+                        <span className="concept1-label">Menu</span>
+                        <p className="concept1-hero-text">{mealItems}</p>
+                      </div>
                     </div>
-                    <div className="concept1-card-body">
-                      <span className="concept1-label">{mealTimeLabel}</span>
-                      <p className="concept1-hero-text">{mealItems}</p>
-                    </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
 
-              {/* 2. My Living Space Card */}
-              <div 
-                className="concept1-card concept1-space-card"
-                onClick={() => setActiveTab('room')}
-                title="Click to view room details, roommate & outing gate pass"
-              >
-                <div className="concept1-card-top">
-                  <h2 className="concept1-card-title">My Living Space</h2>
-                </div>
-                <div className="concept1-space-row">
-                  <div className="concept1-order-pill">
-                    <span className="glow-dot-amber" />
-                    <span>Everything in Order</span>
+                {/* 2. My Living Space Card */}
+                <div 
+                  className="concept1-card concept1-card-half"
+                  onClick={() => setActiveTab('room')}
+                  title="Click to view room details, roommate & outing gate pass"
+                >
+                  <div className="concept1-card-top">
+                    <h2 className="concept1-card-title">My Living Space</h2>
+                    <span className="concept1-matcha-pill">Everything in order</span>
                   </div>
-                  <div className="concept1-stat-item">
-                    <span className="concept1-stat-label">Living Space</span>
-                    <span className="concept1-stat-val">{displayRoom}</span>
-                  </div>
-                  <div className="concept1-stat-item">
-                    <span className="concept1-stat-label">Hostel Block</span>
-                    <span className="concept1-stat-val">{user?.hostelBlock || 'BH-8 Campus'}</span>
-                  </div>
-                  <div className="concept1-stat-item">
-                    <span className="concept1-stat-label">Room Status</span>
-                    <span className="concept1-stat-val">Clean &amp; Running</span>
+                  <div className="concept1-card-body">
+                    <span className="concept1-label">Room status</span>
+                    <p className="concept1-room-info-line">
+                      Room Status: <strong>{displayRoom}</strong> | Key: <strong>Active</strong> | Rating: <strong>5.0 ★</strong> | Caretaker: <strong>108 (BH-8)</strong>
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* 3. Maintenance Pipeline Card with Glowing Stepper */}
+              {/* MIDDLE ROW: FULL-WIDTH MAINTENANCE PIPELINE WITH EXACT GLOWING STEPPER */}
               <div 
                 className="concept1-card concept1-pipeline-card"
                 onClick={() => setActiveTab('complaints')}
@@ -528,8 +511,8 @@ const handleSendMessage = (e) => {
                     <span className="concept1-label">Progress stepper</span>
                     <p className="concept1-stepper-status-text">
                       {latestActiveComplaint 
-                        ? `1-Registered: ${latestActiveComplaint.title || latestActiveComplaint.description.slice(0, 32)}`
-                        : '1. Registered to Progress'}
+                        ? `1-Registered: ${latestActiveComplaint.title || latestActiveComplaint.description.slice(0, 36)}`
+                        : '3-Registered ready to progress'}
                     </p>
                   </div>
 
@@ -541,24 +524,39 @@ const handleSendMessage = (e) => {
                     </div>
 
                     {/* Glowing Line */}
-                    <div className={`concept1-step-line ${activeComplaintsCount > 0 ? 'glowing-line' : 'dormant-line'}`} />
+                    <div className="concept1-step-line glowing-line" />
 
                     {/* Step 2: Assigned */}
-                    <div className={`concept1-step-item ${activeComplaintsCount > 0 ? 'active' : ''}`}>
-                      <div className={`concept1-step-circle ${activeComplaintsCount > 0 ? 'glow-circle' : 'outline-circle'}`} />
+                    <div className="concept1-step-item">
+                      <div className="concept1-step-circle outline-circle" />
                       <span className="concept1-step-name">2. Assigned</span>
                     </div>
 
                     {/* Line */}
-                    <div className={`concept1-step-line ${activeComplaintsCount === 0 && !complaintsLoading ? 'glowing-line' : 'dormant-line'}`} />
+                    <div className="concept1-step-line dormant-line" />
 
                     {/* Step 3: Resolved */}
-                    <div className={`concept1-step-item ${activeComplaintsCount === 0 && !complaintsLoading ? 'active' : ''}`}>
-                      <div className={`concept1-step-circle ${activeComplaintsCount === 0 && !complaintsLoading ? 'glow-circle' : 'outline-circle'}`} />
+                    <div className="concept1-step-item">
+                      <div className="concept1-step-circle outline-circle" />
                       <span className="concept1-step-name">3. Resolved</span>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* BOTTOM ROW: ROOM STATUS CARD */}
+              <div 
+                className="concept1-card concept1-room-banner"
+                onClick={() => setActiveTab('room')}
+                title="Click to view detailed room status"
+              >
+                <div className="concept1-card-top">
+                  <h2 className="concept1-card-title">Room Status</h2>
+                  <span className="concept1-link-hint">View Allocation Details →</span>
+                </div>
+                <p className="concept1-room-banner-sub">
+                  Digital Outing Pass, Warden verification &amp; Room inventory are synced for {displayRoom}.
+                </p>
               </div>
             </div>
           )}
@@ -653,14 +651,14 @@ const handleSendMessage = (e) => {
                     let statusBadge = null;
                     if (isViewingToday) {
                       if (currentMins >= startMins && currentMins <= endMins) {
-                        statusBadge = <span style={{ background: '#728D7A', color: 'white', padding: '3px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 700 }}>● LIVE NOW</span>;
+                        statusBadge = <span className="dining-timing-chip live">● LIVE NOW</span>;
                       } else if (currentMins > endMins) {
-                        statusBadge = <span style={{ background: '#EAE5DB', color: '#7D7F7A', padding: '3px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 600 }}>Finished</span>;
+                        statusBadge = <span className="dining-timing-chip finished">Finished</span>;
                       } else {
-                        statusBadge = <span style={{ background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 600 }}>Upcoming</span>;
+                        statusBadge = <span className="dining-timing-chip upcoming">Upcoming</span>;
                       }
                     } else {
-                      statusBadge = <span style={{ background: '#FAF8F4', color: '#7D7F7A', padding: '3px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 600 }}>{slot?.timing || defaultTime}</span>;
+                      statusBadge = <span className="dining-timing-chip scheduled">{slot?.timing || defaultTime}</span>;
                     }
 
                     const items = slot?.items || [];
@@ -714,25 +712,16 @@ const handleSendMessage = (e) => {
                                 return (
                                   <div 
                                     key={idx}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'space-between',
-                                      padding: '6px 10px',
-                                      borderRadius: 10,
-                                      background: isNonVeg ? '#FFF5F2' : '#F4F7F4',
-                                      border: isNonVeg ? '1px solid #FCDAD1' : '1px solid #E1EBE2',
-                                      fontSize: 12.5,
-                                    }}
+                                    className={`dining-choice-row ${isNonVeg ? 'choice-nonveg' : 'choice-veg'}`}
                                   >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                       <span style={{ fontSize: 13 }}>{icon}</span>
-                                      <span style={{ fontWeight: 600, color: isNonVeg ? '#B85D43' : '#3E6649' }}>
+                                      <span className="choice-name">
                                         {opt.name}
                                       </span>
                                     </div>
                                     {opt.portion && (
-                                      <span style={{ fontSize: 11, color: isNonVeg ? '#A3533D' : '#587360', background: '#FFFFFF', padding: '2px 7px', borderRadius: 9999, border: '1px solid rgba(0,0,0,0.06)', fontWeight: 600 }}>
+                                      <span className="choice-portion-pill">
                                         {opt.portion}
                                       </span>
                                     )}
@@ -912,16 +901,7 @@ const handleSendMessage = (e) => {
                           </div>
                           
                           <span 
-                            style={{ 
-                              padding: '6px 14px', 
-                              borderRadius: 9999, 
-                              fontSize: 12, 
-                              fontWeight: 700, 
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.03em',
-                              background: normStatus === 'resolved' ? '#EEF3EE' : normStatus === 'inprogress' ? '#E0F2FE' : '#FEF3C7',
-                              color: normStatus === 'resolved' ? '#587360' : normStatus === 'inprogress' ? '#0369A1' : '#B45309',
-                            }}
+                            className={`maintenance-status-badge ${normStatus}`}
                           >
                             {normStatus === 'resolved' ? '✓ Resolved & Closed' : normStatus === 'inprogress' ? '● In Progress' : '⏳ Pending Review'}
                           </span>
