@@ -75,6 +75,30 @@ body {
   letter-spacing: 0.02em;
 }
 
+
+/* Theme Toggle Button in Top Navbar */
+.theme-toggle-warm-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.theme-toggle-warm-btn:hover {
+  background: #F4EFEB;
+  color: var(--text-primary);
+  border-color: rgba(114, 141, 122, 0.4);
+  transform: scale(1.05);
+}
+
 .navbar-right-group {
   display: flex;
   align-items: center;
@@ -321,13 +345,10 @@ body {
   margin: 0 auto;
 }
 
-.mockup-card,
-html.dark-theme .mockup-card,
-body.dark-theme .mockup-card,
-.dark-theme .mockup-card {
-  background-color: #FFFFFF !important;
+.mockup-card {
+  background-color: #FFFFFF;
   border-radius: 28px;
-  color: #242523 !important;
+  color: #242523;
   padding: 34px 44px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 8px 30px -4px rgba(105, 93, 76, 0.05);
@@ -348,31 +369,25 @@ body.dark-theme .mockup-card,
   margin-bottom: 12px;
 }
 
-.mockup-card-title,
-html.dark-theme .mockup-card-title,
-body.dark-theme .mockup-card-title {
+.mockup-card-title {
   font-family: var(--font-serif);
   font-size: 34px;
   font-weight: 500;
-  color: #272824 !important;
+  color: #272824;
   margin: 0;
   letter-spacing: -0.01em;
 }
 
-.mockup-card-subtitle,
-html.dark-theme .mockup-card-subtitle,
-body.dark-theme .mockup-card-subtitle {
+.mockup-card-subtitle {
   font-size: 16px;
   font-weight: 500;
-  color: #3C3E3A !important;
+  color: #3C3E3A;
   margin: 0;
 }
 
-.mockup-card-menu-hint,
-html.dark-theme .mockup-card-menu-hint,
-body.dark-theme .mockup-card-menu-hint {
+.mockup-card-menu-hint {
   font-size: 13.5px;
-  color: #7D7F7A !important;
+  color: #7D7F7A;
   font-weight: 400;
   margin: 0;
 }
@@ -1131,3 +1146,415 @@ body.dark-theme .mockup-card-menu-hint {
   }
 }
 
+
+
+/* ==========================================================================
+   CONCEPT 1: ESPRESSO & ROASTED OAK LUXURY (DARK THEME)
+   Matches Concept 1 Aesthetic: Deep roasted espresso, walnut surfaces, 
+   sage matcha accents, ivory serif headings, 100% dynamic live data.
+   ========================================================================== */
+html.dark-theme,
+body.login-dark-theme {
+  --bg-canvas: #161311;
+  --bg-card: #231E1A;
+  --bg-subtle: #1C1815;
+  --border-subtle: #383028;
+  --border-focus: rgba(140, 169, 147, 0.5);
+
+  --primary-matcha: #8CA993;
+  --primary-matcha-dark: #728D7A;
+  --primary-matcha-soft: #27342B;
+  --accent-terracotta: #D48974;
+  --accent-terracotta-dark: #B36E59;
+
+  --text-primary: #F2EDE4;
+  --text-secondary: #DED7CB;
+  --text-muted: #9E958A;
+  --color-primary: #8CA993;
+}
+
+html.dark-theme,
+html.dark-theme body,
+body.login-dark-theme {
+  background-color: #161311 !important;
+  color: #F2EDE4 !important;
+}
+
+/* App Shell & Top Navbar in Espresso Luxury */
+html.dark-theme .app-shell,
+body.login-dark-theme .app-shell {
+  background-color: #161311 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .top-navbar,
+body.login-dark-theme .top-navbar {
+  background-color: #161311 !important;
+  border-bottom: 1px solid #28211B !important;
+}
+
+html.dark-theme .brand-title,
+body.login-dark-theme .brand-title {
+  color: #F2EDE4 !important;
+  font-family: var(--font-serif) !important;
+}
+
+html.dark-theme .brand-badge,
+body.login-dark-theme .brand-badge {
+  background: #251F1B !important;
+  border: 1px solid #3D332A !important;
+  color: #C9BFAF !important;
+}
+
+html.dark-theme .navbar-user-pill,
+body.login-dark-theme .navbar-user-pill {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .navbar-user-dot,
+body.login-dark-theme .navbar-user-dot {
+  background-color: #8CA993 !important;
+  box-shadow: 0 0 10px rgba(140, 169, 147, 0.7) !important;
+}
+
+html.dark-theme .theme-toggle-warm-btn,
+body.login-dark-theme .theme-toggle-warm-btn {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .theme-toggle-warm-btn:hover,
+body.login-dark-theme .theme-toggle-warm-btn:hover {
+  background: #2D2520 !important;
+  border-color: #8CA993 !important;
+  color: #8CA993 !important;
+  box-shadow: 0 2px 10px rgba(140, 169, 147, 0.25) !important;
+}
+
+html.dark-theme .header-logout-btn,
+body.login-dark-theme .header-logout-btn {
+  background: #3A231C !important;
+  border: 1px solid #5A352B !important;
+  color: #FFB3A0 !important;
+}
+
+/* Floating Dock Capsule in Espresso Dark */
+html.dark-theme .icon-sidebar,
+body.login-dark-theme .icon-sidebar {
+  background: #1F1A17 !important;
+  border: 1px solid #383028 !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+}
+
+html.dark-theme .sidebar-icon-btn,
+body.login-dark-theme .sidebar-icon-btn {
+  color: #8E867C !important;
+}
+
+html.dark-theme .sidebar-icon-btn:hover,
+body.login-dark-theme .sidebar-icon-btn:hover {
+  color: #F2EDE4 !important;
+  background-color: #2D2520 !important;
+}
+
+html.dark-theme .sidebar-icon-btn.active,
+body.login-dark-theme .sidebar-icon-btn.active {
+  background-color: #8CA993 !important;
+  color: #141815 !important;
+  box-shadow: 0 4px 16px rgba(140, 169, 147, 0.4) !important;
+}
+
+/* Mockup Hero Cards in Concept 1 Espresso Luxury */
+html.dark-theme .mockup-card,
+body.login-dark-theme .mockup-card,
+.dark-theme .mockup-card {
+  background-color: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+html.dark-theme .mockup-card:hover,
+body.login-dark-theme .mockup-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #55483B !important;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark-theme .mockup-card-title,
+body.login-dark-theme .mockup-card-title,
+.dark-theme .mockup-card-title {
+  color: #F2EDE4 !important;
+  font-family: var(--font-serif) !important;
+}
+
+html.dark-theme .mockup-card-subtitle,
+body.login-dark-theme .mockup-card-subtitle,
+.dark-theme .mockup-card-subtitle {
+  color: #DED7CB !important;
+}
+
+html.dark-theme .mockup-card-menu-hint,
+body.login-dark-theme .mockup-card-menu-hint,
+.dark-theme .mockup-card-menu-hint {
+  color: #9E958A !important;
+}
+
+/* Leaf Badge and Matcha Pill Badge */
+html.dark-theme .matcha-circle-badge,
+body.login-dark-theme .matcha-circle-badge {
+  background-color: #27342B !important;
+  border: 1px solid #3D5042 !important;
+  color: #8CA993 !important;
+  box-shadow: 0 4px 16px rgba(140, 169, 147, 0.22) !important;
+}
+
+html.dark-theme .matcha-pill-badge,
+body.login-dark-theme .matcha-pill-badge {
+  background-color: #8CA993 !important;
+  color: #141815 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 3px 12px rgba(140, 169, 147, 0.32) !important;
+}
+
+/* Secondary Mini Cards */
+html.dark-theme .secondary-mini-card,
+body.login-dark-theme .secondary-mini-card {
+  background-color: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark-theme .secondary-mini-card:hover,
+body.login-dark-theme .secondary-mini-card:hover {
+  border-color: #55483B !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
+}
+
+html.dark-theme .mini-card-head h4,
+body.login-dark-theme .mini-card-head h4 {
+  color: #F2EDE4 !important;
+  font-family: var(--font-serif) !important;
+}
+
+html.dark-theme .mini-card-sub,
+body.login-dark-theme .mini-card-sub {
+  color: #9E958A !important;
+}
+
+html.dark-theme .resident-quick-tag,
+body.login-dark-theme .resident-quick-tag {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #C9BFAF !important;
+}
+
+/* Maintenance Stepper Box */
+html.dark-theme .maintenance-stepper-box,
+body.login-dark-theme .maintenance-stepper-box {
+  background: #1C1815 !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .stepper-dots-bar .stepper-circle,
+body.login-dark-theme .stepper-dots-bar .stepper-circle {
+  background: #2D2520 !important;
+  color: #8E867C !important;
+  border: 1px solid #3E342B !important;
+}
+
+html.dark-theme .stepper-dots-bar .stepper-circle.active,
+body.login-dark-theme .stepper-dots-bar .stepper-circle.active {
+  background: #8CA993 !important;
+  color: #141815 !important;
+  border-color: #8CA993 !important;
+  box-shadow: 0 2px 10px rgba(140, 169, 147, 0.45) !important;
+}
+
+html.dark-theme .stepper-dots-bar .stepper-connector-line,
+body.login-dark-theme .stepper-dots-bar .stepper-connector-line {
+  background: #332B25 !important;
+}
+
+html.dark-theme .stepper-dots-bar .stepper-connector-line.active,
+body.login-dark-theme .stepper-dots-bar .stepper-connector-line.active {
+  background: #8CA993 !important;
+}
+
+html.dark-theme .stepper-labels-bar .step-lbl,
+body.login-dark-theme .stepper-labels-bar .step-lbl {
+  color: #8E867C !important;
+}
+
+html.dark-theme .stepper-labels-bar .step-lbl.active,
+body.login-dark-theme .stepper-labels-bar .step-lbl.active {
+  color: #8CA993 !important;
+  font-weight: 700 !important;
+}
+
+/* Detailed Views, Headers & Modals */
+html.dark-theme .detailed-view-container,
+body.login-dark-theme .detailed-view-container {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .section-head h2,
+body.login-dark-theme .section-head h2 {
+  color: #F2EDE4 !important;
+  font-family: var(--font-serif) !important;
+}
+
+html.dark-theme .section-head p,
+body.login-dark-theme .section-head p {
+  color: #9E958A !important;
+}
+
+html.dark-theme .meal-slot-card,
+body.login-dark-theme .meal-slot-card {
+  background: #231E1A !important;
+  border-color: #383028 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark-theme .meal-slot-card h3,
+body.login-dark-theme .meal-slot-card h3 {
+  color: #F2EDE4 !important;
+  font-family: var(--font-serif) !important;
+}
+
+html.dark-theme .meal-slot-card p,
+body.login-dark-theme .meal-slot-card p {
+  color: #9E958A !important;
+}
+
+html.dark-theme .modal-backdrop,
+body.login-dark-theme .modal-backdrop {
+  background-color: rgba(12, 10, 9, 0.78) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+html.dark-theme .modal-sheet,
+body.login-dark-theme .modal-sheet {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75) !important;
+}
+
+html.dark-theme .modal-sheet input,
+html.dark-theme .modal-sheet select,
+html.dark-theme .modal-sheet textarea,
+body.login-dark-theme .modal-sheet input,
+body.login-dark-theme .modal-sheet select,
+body.login-dark-theme .modal-sheet textarea {
+  background: #1A1613 !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .modal-sheet input:focus,
+html.dark-theme .modal-sheet select:focus,
+html.dark-theme .modal-sheet textarea:focus,
+body.login-dark-theme .modal-sheet input:focus,
+body.login-dark-theme .modal-sheet select:focus,
+body.login-dark-theme .modal-sheet textarea:focus {
+  border-color: #8CA993 !important;
+  box-shadow: 0 0 0 2px rgba(140, 169, 147, 0.25) !important;
+}
+
+html.dark-theme .modal-sheet select option,
+body.login-dark-theme .modal-sheet select option {
+  background-color: #231E1A !important;
+  color: #F2EDE4 !important;
+}
+
+/* Day selector pills in dark theme */
+html.dark-theme .detailed-view-container button[style*="background: rgb(250, 248, 244)"],
+html.dark-theme .detailed-view-container button[style*="background: #FAF8F4"] {
+  background: #1F1A17 !important;
+  border-color: #383028 !important;
+  color: #9E958A !important;
+}
+
+html.dark-theme .detailed-view-container button[style*="background: rgb(255, 255, 255)"],
+html.dark-theme .detailed-view-container button[style*="background: #FFFFFF"] {
+  background: #2C241E !important;
+  border-color: #8CA993 !important;
+  color: #F2EDE4 !important;
+}
+
+
+/* Additional Concept 1 Espresso Luxury rules for Room, Complaints & Modal */
+html.dark-theme .room-info-card,
+body.login-dark-theme .room-info-card,
+html.dark-theme .room-living-grid > div,
+body.login-dark-theme .room-living-grid > div,
+html.dark-theme .complaint-item-card,
+body.login-dark-theme .complaint-item-card {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-theme .room-info-card h3,
+body.login-dark-theme .room-info-card h3,
+html.dark-theme .complaint-item-card h3,
+body.login-dark-theme .complaint-item-card h3 {
+  color: #F2EDE4 !important;
+  font-family: var(--font-serif) !important;
+}
+
+html.dark-theme .room-info-card strong,
+body.login-dark-theme .room-info-card strong {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .room-living-grid div[style*="border-bottom"],
+body.login-dark-theme .room-living-grid div[style*="border-bottom"] {
+  border-bottom: 1px solid #383028 !important;
+}
+
+html.dark-theme .complaint-item-card span[style*="background: rgb(250, 248, 245)"],
+html.dark-theme .complaint-item-card span[style*="background: #FAF8F5"],
+body.login-dark-theme .complaint-item-card span[style*="background: #FAF8F5"] {
+  background: #1C1815 !important;
+  border-color: #383028 !important;
+  color: #9E958A !important;
+}
+
+html.dark-theme .modal-sheet .modal-title,
+html.dark-theme .modal-sheet h3,
+html.dark-theme .modal-sheet h4,
+body.login-dark-theme .modal-sheet .modal-title,
+body.login-dark-theme .modal-sheet h3,
+body.login-dark-theme .modal-sheet h4 {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .modal-sheet label,
+body.login-dark-theme .modal-sheet label {
+  color: #DED7CB !important;
+}
+
+html.dark-theme .modal-sheet .modal-close-btn,
+body.login-dark-theme .modal-sheet .modal-close-btn {
+  color: #9E958A !important;
+}
+
+html.dark-theme .modal-sheet .modal-close-btn:hover,
+body.login-dark-theme .modal-sheet .modal-close-btn:hover {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme button[style*="background: rgb(250, 248, 245)"],
+html.dark-theme button[style*="background: #FAF8F5"],
+body.login-dark-theme button[style*="background: #FAF8F5"] {
+  background: #231E1A !important;
+  border-color: #383028 !important;
+  color: #9E958A !important;
+}

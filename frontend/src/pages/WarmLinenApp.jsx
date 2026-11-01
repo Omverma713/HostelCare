@@ -760,7 +760,7 @@ const handleSendMessage = (e) => {
 
               <div className="room-living-grid">
                 {/* Room Info */}
-                <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)' }}>
+                <div className="room-info-card" style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)' }}>
                   <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px', color: '#272824' }}>{displayRoom}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F3EFE7', paddingBottom: 8 }}>
@@ -877,7 +877,7 @@ const handleSendMessage = (e) => {
                     const caretakerAssigned = item.assignedCaretaker || item.caretaker || (normStatus !== 'pending' ? 'Hostel Caretaker' : null);
 
                     return (
-                      <div key={item._id || ticketNum} style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+                      <div key={item._id || ticketNum} className="complaint-item-card" style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -1357,7 +1357,7 @@ const handleSendMessage = (e) => {
         <div className="modal-overlay" onClick={() => setShowComplaintModal(false)}>
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowComplaintModal(false)}>×</button>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px', color: '#272824' }}>File Living Space Request</h3>
+            <h3 className="modal-title" style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px' }}>File Living Space Request</h3>
             
             {complaintSubmitted ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
