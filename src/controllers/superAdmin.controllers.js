@@ -3253,7 +3253,12 @@ const deleteGlobalNotice = async (req, res) => {
 async function getDeviceRegistryDirectory(req, res) {
   try {
     const DeviceRegistry = require("../models/deviceRegistry.model");
-    const { search = "", platform, isMuted, isActive, page = 1, limit = 20 } = req.query;
+    const SystemConfig = require("../models/systemConfig.model");
+    const { search = "", platform, isMuted, isActive, versionFilter = "all", page = 1, limit = 20 } = req.query;
+
+    const config = await SystemConfig.getEffectiveConfig();
+    const latestVersion = config?.appVersion?.latestVersion || "1.2.2.13";
+    const minVersion = config?.appVersion?.minimumSupportedVersion || "1.0.0";
 
     const query = {};
     if (search.trim()) {
@@ -3264,24 +3269,49 @@ async function getDeviceRegistryDirectory(req, res) {
         { roomNumber: regex },
         { hostelBlock: regex },
         { deviceId: regex },
+        { appVersion: regex },
       ];
     }
     if (platform) query.platform = platform;
     if (isMuted !== undefined) query.isMuted = isMuted === "true";
     if (isActive !== undefined) query.isActive = isActive === "true";
 
+    if (versionFilter === "latest") {
+      query.appVersion = latestVersion;
+    } else if (versionFilter === "outdated") {
+      query.appVersion = { $ne: latestVersion };
+    }
+
     const p = Math.max(1, parseInt(page, 10) || 1);
     const l = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
     const skip = (p - 1) * l;
 
-    const [devices, total] = await Promise.all([
+    const [devices, total, totalAndroid, latestCount, outdatedCount] = await Promise.all([
       DeviceRegistry.find(query).sort({ lastSeenAt: -1 }).skip(skip).limit(l).lean(),
       DeviceRegistry.countDocuments(query),
+      DeviceRegistry.countDocuments({ isActive: true, platform: "android" }),
+      DeviceRegistry.countDocuments({ isActive: true, platform: "android", appVersion: latestVersion }),
+      DeviceRegistry.countDocuments({ isActive: true, platform: "android", appVersion: { $ne: latestVersion } }),
     ]);
+
+    const enrichedDevices = devices.map((dev) => ({
+      ...dev,
+      isLatest: (dev.appVersion || "1.0.0") === latestVersion,
+      isOutdated: (dev.appVersion || "1.0.0") !== latestVersion,
+      targetLatestVersion: latestVersion,
+    }));
 
     return res.status(200).json({
       success: true,
-      devices,
+      devices: enrichedDevices,
+      versionStats: {
+        latestVersion,
+        minVersion,
+        totalAndroid,
+        latestCount,
+        outdatedCount,
+        latestPercent: totalAndroid > 0 ? Math.round((latestCount / totalAndroid) * 100) : 100,
+      },
       pagination: {
         page: p,
         limit: l,
@@ -3502,6 +3532,73 @@ async function pruneDeadDevices(req, res) {
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to prune dead devices", error: error.message });
+  }
+}
+
+/**
+ * POST /api/v1/superadmin/device-registry/nudge-outdated
+ * Multicast FCM update reminder to all active Android phones on older versions
+ */
+async function nudgeOutdatedDevices(req, res) {
+  try {
+    const DeviceRegistry = require("../models/deviceRegistry.model");
+    const SystemConfig = require("../models/systemConfig.model");
+    const { sendPushToSessions } = require("../services/pushService");
+
+    const config = await SystemConfig.getEffectiveConfig();
+    const latestVersion = config?.appVersion?.latestVersion || "1.2.2.13";
+    const updateUrl = config?.appVersion?.updateUrl || "https://github.com/Omverma713/HostelCare/releases";
+
+    const outdatedDevices = await DeviceRegistry.find({
+      isActive: true,
+      platform: "android",
+      appVersion: { $ne: latestVersion },
+      pushToken: { $ne: null },
+    }).lean();
+
+    if (outdatedDevices.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: `All registered Android devices are already on latest version v${latestVersion}!`,
+        nudgedCount: 0,
+      });
+    }
+
+    const pseudoSessions = outdatedDevices.map((d) => ({
+      _id: d.deviceId,
+      pushToken: d.pushToken,
+      pushProvider: "fcm",
+    }));
+
+    const alertPayload = {
+      title: `⚡ HostelCare Update Available (v${latestVersion})`,
+      body: `Please update your app to v${latestVersion} to get timely meal reminders and performance fixes!`,
+      data: {
+        type: "APP_UPDATE_NUDGE",
+        route: "/settings",
+        updateUrl,
+        latestVersion,
+      },
+    };
+
+    const dispatchResult = await sendPushToSessions(pseudoSessions, alertPayload);
+
+    await recordAudit({
+      req,
+      action: "OUTDATED_DEVICES_NUDGED",
+      targetType: "DEVICE",
+      summary: `Super Admin broadcasted update reminder push to ${pseudoSessions.length} devices running older versions (target: v${latestVersion})`,
+      details: { targetVersion: latestVersion, deviceCount: pseudoSessions.length, dispatchResult },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Sent update reminder push to ${pseudoSessions.length} phone(s) running older versions.`,
+      nudgedCount: pseudoSessions.length,
+      dispatchResult,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to nudge outdated devices", error: error.message });
   }
 }
 
@@ -3954,6 +4051,7 @@ module.exports = {
   pingSingleDevice,
   pingBatchDevices,
   pruneDeadDevices,
+  nudgeOutdatedDevices,
   deleteDeviceRegistryEntry,
   broadcastCustomMessAlert,
   simulateAutoFireMessAlert,

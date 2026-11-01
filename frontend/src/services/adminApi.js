@@ -345,6 +345,12 @@ export const adminApi = {
     });
   },
 
+  nudgeOutdatedDevices() {
+    return adminRequest('/superadmin/device-registry/nudge-outdated', {
+      method: 'POST',
+    });
+  },
+
   broadcastCustomMessAlert(payload) {
     return adminRequest('/superadmin/mess-notifications/broadcast-custom', {
       method: 'POST',

@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { cancelAllMealReminders, scheduleWeeklyMealReminders } from './messNotificationService';
@@ -38,9 +39,19 @@ export async function initPushNotifications() {
       try {
         localStorage.setItem('hc_fcm_registered', 'true');
         localStorage.setItem('hostelcare_push_registered', 'true');
+
+        let appVersion = '1.2.2.13';
+        try {
+          const info = await App.getInfo();
+          if (info && info.version) {
+            appVersion = info.version;
+          }
+        } catch (_) {}
+
         await api.registerPushToken(token.value, 'fcm', {
           platform: 'android',
           hardwareModel: 'Android Mobile App',
+          appVersion,
         });
         pushRegistered = true;
         // Phase 2: Hybrid Safety Net

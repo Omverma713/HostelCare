@@ -45,6 +45,7 @@ const {
   pingSingleDevice,
   pingBatchDevices,
   pruneDeadDevices,
+  nudgeOutdatedDevices,
   deleteDeviceRegistryEntry,
   broadcastCustomMessAlert,
   simulateAutoFireMessAlert,
@@ -171,6 +172,7 @@ router.delete("/notices/:noticeId", sensitiveActionLimiter, deleteGlobalNotice);
 // Hardware Device Registry & Granular Student Mute/Ping Controls
 router.get("/device-registry", getDeviceRegistryDirectory);
 router.post("/device-registry/ping-batch", sensitiveActionLimiter, pingBatchDevices);
+router.post("/device-registry/nudge-outdated", sensitiveActionLimiter, nudgeOutdatedDevices);
 router.post("/device-registry/:deviceId/toggle-mute", sensitiveActionLimiter, toggleDeviceMuteStatus);
 router.post("/device-registry/:deviceId/ping", sensitiveActionLimiter, pingSingleDevice);
 router.delete("/device-registry/prune-dead", sensitiveActionLimiter, pruneDeadDevices);

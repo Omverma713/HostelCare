@@ -339,6 +339,15 @@ export default function SuperAdminPortal() {
   const [batchTestSlot, setBatchTestSlot] = useState('all');
   const [batchTestDay, setBatchTestDay] = useState('sunday');
   const [pruningDeadDevices, setPruningDeadDevices] = useState(false);
+  const [deviceVersionFilter, setDeviceVersionFilter] = useState('all');
+  const [versionStats, setVersionStats] = useState({
+    latestVersion: '1.2.2.13',
+    totalAndroid: 0,
+    latestCount: 0,
+    outdatedCount: 0,
+    latestPercent: 100,
+  });
+  const [nudgingOutdated, setNudgingOutdated] = useState(false);
 
   // Custom / Emergency Mess Announcement State
   const [customAnnouncementTitle, setCustomAnnouncementTitle] = useState('');
@@ -1508,19 +1517,23 @@ export default function SuperAdminPortal() {
       const res = await adminApi.getDeviceRegistry({
         search: deviceSearchQuery,
         hostelBlock: deviceBlockFilter,
+        versionFilter: deviceVersionFilter,
         page,
         limit: 15,
       });
       if (res.success) {
         setDeviceRegistryList(res.devices || []);
         setDeviceRegistryPagination(res.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
+        if (res.versionStats) {
+          setVersionStats(res.versionStats);
+        }
       }
     } catch (err) {
       console.error('Failed to load device registry:', err);
     } finally {
       setLoadingDeviceRegistry(false);
     }
-  }, [deviceSearchQuery, deviceBlockFilter]);
+  }, [deviceSearchQuery, deviceBlockFilter, deviceVersionFilter]);
 
   // Single-Student Mute / Unmute Toggle
   const handleToggleDeviceMute = async (deviceId, currentMuted, studentName = '') => {
@@ -1593,6 +1606,25 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to ping device', 'Error');
     } finally {
       setPingingDeviceId(null);
+    }
+  };
+
+  // 📢 Nudge Outdated Devices Push Broadcast
+  const handleNudgeOutdatedDevices = async () => {
+    if (!window.confirm(`Broadcast update push notification to all ${versionStats.outdatedCount || 'outdated'} phone(s) running an older version?`)) return;
+    try {
+      setNudgingOutdated(true);
+      const res = await adminApi.nudgeOutdatedDevices();
+      if (res.success) {
+        triggerToast('success', res.message || 'Update reminder sent', 'Nudge Sent 📢');
+        loadDeviceRegistry(deviceRegistryPagination.page);
+      } else {
+        triggerToast('error', res.message || 'Failed to send update nudge', 'Error');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to nudge outdated devices', 'Error');
+    } finally {
+      setNudgingOutdated(false);
     }
   };
 
@@ -10935,6 +10967,66 @@ export default function SuperAdminPortal() {
                 >
                   {pruningDeadDevices ? '🧹 Pruning Dead...' : '🧹 Purge Dead Tokens'}
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleNudgeOutdatedDevices}
+                  disabled={nudgingOutdated || (versionStats.outdatedCount === 0)}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255, 170, 0, 0.4)',
+                    background: 'rgba(255, 170, 0, 0.12)',
+                    color: '#ffaa00',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    cursor: (nudgingOutdated || versionStats.outdatedCount === 0) ? 'not-allowed' : 'pointer',
+                  }}
+                  title="Send an FCM push to all phones running older versions asking them to update"
+                >
+                  {nudgingOutdated ? '📢 Nudging...' : `📢 Nudge Outdated (${versionStats.outdatedCount || 0})`}
+                </button>
+              </div>
+            </div>
+
+            {/* Version Health Radar Stats */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '10px',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: 'rgba(0, 243, 255, 0.03)',
+                border: '1px solid rgba(0, 243, 255, 0.15)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>📱</span>
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: '#88a0c4', textTransform: 'uppercase', fontWeight: 700 }}>Total Android Nodes</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{versionStats.totalAndroid || 0} Phones</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>🟢</span>
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: '#00ff66', textTransform: 'uppercase', fontWeight: 700 }}>On Latest (v{versionStats.latestVersion || '1.2.2.13'})</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#00ff66' }}>
+                    {versionStats.latestCount || 0} ({versionStats.latestPercent || 0}%)
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: '#ffaa00', textTransform: 'uppercase', fontWeight: 700 }}>Outdated / Older</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffaa00' }}>
+                    {versionStats.outdatedCount || 0} Devices
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -10964,6 +11056,20 @@ export default function SuperAdminPortal() {
                 <option value="Block B">Block B</option>
                 <option value="Block C">Block C</option>
                 <option value="Block D">Block D</option>
+              </select>
+
+              <select
+                value={deviceVersionFilter}
+                onChange={(e) => {
+                  setDeviceVersionFilter(e.target.value);
+                  setTimeout(() => loadDeviceRegistry(1), 50);
+                }}
+                className="sa-mess-input"
+                style={{ minWidth: '160px', background: 'rgba(5, 19, 41, 0.8)', color: '#ffffff', borderColor: 'rgba(0, 243, 255, 0.3)' }}
+              >
+                <option value="all">📱 All App Versions</option>
+                <option value="latest">🟢 Latest Only (v{versionStats.latestVersion || '1.2.2.13'})</option>
+                <option value="outdated">⚠️ Outdated Only</option>
               </select>
 
               <button
@@ -11118,6 +11224,7 @@ export default function SuperAdminPortal() {
                     <th style={{ padding: '0.65rem 0.75rem' }}>Student / Reg No</th>
                     <th style={{ padding: '0.65rem 0.75rem' }}>Hostel Block & Room</th>
                     <th style={{ padding: '0.65rem 0.75rem' }}>Platform / Hardware</th>
+                    <th style={{ padding: '0.65rem 0.75rem' }}>App Version</th>
                     <th style={{ padding: '0.65rem 0.75rem' }}>Alert Status</th>
                     <th style={{ padding: '0.65rem 0.75rem' }}>Last Seen</th>
                     <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right' }}>Single Device Controls</th>
@@ -11126,7 +11233,7 @@ export default function SuperAdminPortal() {
                 <tbody>
                   {deviceRegistryList.length === 0 ? (
                     <tr>
-                      <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#88a0c4' }}>
+                      <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: '#88a0c4' }}>
                         {loadingDeviceRegistry ? 'Scanning hardware registry...' : 'No registered devices found matching criteria.'}
                       </td>
                     </tr>
@@ -11178,6 +11285,29 @@ export default function SuperAdminPortal() {
                             </span>
                             <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '2px' }}>
                               {dev.hardwareModel || 'Device'}
+                            </div>
+                          </td>
+
+                          <td style={{ padding: '0.65rem 0.75rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
+                              <span
+                                style={{
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800,
+                                  background: dev.isLatest ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 170, 0, 0.15)',
+                                  color: dev.isLatest ? '#00ff66' : '#ffaa00',
+                                  border: dev.isLatest ? '1px solid rgba(0, 255, 102, 0.3)' : '1px solid rgba(255, 170, 0, 0.3)',
+                                }}
+                              >
+                                v{dev.appVersion || '1.0.0'}
+                              </span>
+                              {dev.isLatest ? (
+                                <span style={{ fontSize: '0.65rem', color: '#00ff66', fontWeight: 700 }}>🟢 LATEST</span>
+                              ) : (
+                                <span style={{ fontSize: '0.65rem', color: '#ffaa00', fontWeight: 700 }} title={`Target is v${versionStats.latestVersion || '1.2.2.13'}`}>⚠️ OLD</span>
+                              )}
                             </div>
                           </td>
 

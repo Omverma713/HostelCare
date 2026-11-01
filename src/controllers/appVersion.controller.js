@@ -86,6 +86,17 @@ const getAppVersionStatus = async (req, res) => {
       }
     }
 
+    // Auto-Sync device appVersion in DeviceRegistry whenever an app checks for updates
+    if (currentVersion && clientRegistrationNumber) {
+      try {
+        const DeviceRegistry = require("../models/deviceRegistry.model");
+        DeviceRegistry.updateMany(
+          { regNo: clientRegistrationNumber, isActive: true },
+          { $set: { appVersion: currentVersion, lastSeenAt: new Date() } }
+        ).catch(() => {});
+      } catch (_) {}
+    }
+
     // 2. Check Pilot Testing target registration numbers independently
     const pilotTargets = (pilotConfig.targetedRegistrationNumbers || []).map((r) => String(r).trim().toUpperCase());
     const isPilotTargetedUser = clientRegistrationNumber && pilotTargets.includes(clientRegistrationNumber);
