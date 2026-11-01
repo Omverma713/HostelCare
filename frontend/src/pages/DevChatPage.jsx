@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/ThemeContext';
 import { api } from '../services/api';
 import { triggerToast } from '../components/Toast';
 import {
@@ -43,6 +44,7 @@ const CATEGORIES = [
 export default function DevChatPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   const isDeveloper = user?.role === 'superadmin';
   const token = localStorage.getItem('token');
@@ -859,7 +861,7 @@ export default function DevChatPage() {
   };
 
   return (
-    <div className="devchat-root">
+    <div className={`devchat-root ${isDark ? "dark-theme" : "light-theme"}`}>
       <div className="devchat-ambient-glow" />
 
       <div className="devchat-container">
@@ -885,6 +887,15 @@ export default function DevChatPage() {
           </div>
 
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn-theme-toggle-chat"
+              onClick={toggleTheme}
+              title={isDark ? 'Switch to Warm Linen Light' : 'Switch to Espresso Luxury Dark'}
+              aria-label="Toggle Theme"
+            >
+              {isDark ? '☀️ Light' : '🌙 Dark'}
+            </button>
             <button
               type="button"
               className="btn-new-ticket"
