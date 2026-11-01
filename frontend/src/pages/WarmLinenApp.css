@@ -1178,9 +1178,9 @@ html.dark-theme body,
 body.login-dark-theme {
   background-color: #14110F !important;
   background-image: 
-    radial-gradient(ellipse at 50% -10%, rgba(212, 137, 116, 0.12) 0%, transparent 55%),
-    radial-gradient(circle at 85% 15%, rgba(140, 169, 147, 0.08), transparent 45%),
-    radial-gradient(circle at 15% 45%, rgba(212, 137, 116, 0.05), transparent 40%) !important;
+    radial-gradient(ellipse at 50% -15%, rgba(230, 148, 118, 0.32) 0%, rgba(195, 110, 80, 0.15) 38%, transparent 68%),
+    radial-gradient(circle at 85% 15%, rgba(140, 169, 147, 0.16), transparent 52%),
+    radial-gradient(circle at 15% 45%, rgba(212, 137, 116, 0.1), transparent 48%) !important;
   background-attachment: fixed !important;
   color: #F2EDE4 !important;
 }
@@ -1207,9 +1207,11 @@ body.login-dark-theme .brand-badge {
 
 html.dark-theme .navbar-user-pill,
 body.login-dark-theme .navbar-user-pill {
-  background: rgba(45, 38, 33, 0.72) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+  background: rgba(65, 52, 43, 0.48) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
   padding: 5px 14px 5px 6px !important;
   border-radius: 9999px !important;
   color: #F2EDE4 !important;
@@ -1612,11 +1614,14 @@ body.login-dark-theme button[style*="background: #FAF8F5"] {
 
 html.dark-theme .top-navbar,
 body.login-dark-theme .top-navbar {
-  background: rgba(35, 30, 26, 0.58) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  background: linear-gradient(135deg, rgba(88, 70, 58, 0.44) 0%, rgba(35, 27, 22, 0.36) 100%) !important;
+  backdrop-filter: blur(45px) saturate(240%) brightness(118%) !important;
+  -webkit-backdrop-filter: blur(45px) saturate(240%) brightness(118%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 
+    0 24px 54px rgba(0, 0, 0, 0.52), 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.32), 
+    inset 0 0 24px rgba(255, 255, 255, 0.05) !important;
 }
 
 @media (min-width: 1441px) {
