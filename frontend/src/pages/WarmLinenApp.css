@@ -1558,3 +1558,437 @@ body.login-dark-theme button[style*="background: #FAF8F5"] {
   border-color: #383028 !important;
   color: #9E958A !important;
 }
+
+
+/* ==========================================================================
+   Concept 1: Espresso & Roasted Oak Luxury Frosted Topbar, Sidebar & Dashboard
+   ========================================================================== */
+
+/* Frosted Top Navbar */
+.top-navbar {
+  height: 76px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 36px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background: rgba(246, 243, 236, 0.82) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(230, 224, 213, 0.8) !important;
+  transition: all 0.25s ease !important;
+}
+
+html.dark-theme .top-navbar,
+body.login-dark-theme .top-navbar {
+  background: rgba(28, 24, 21, 0.75) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+}
+
+.brand-name {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif !important;
+  font-size: 24px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  color: #242523 !important;
+}
+
+html.dark-theme .brand-name,
+body.login-dark-theme .brand-name {
+  color: #F2EDE4 !important;
+}
+
+.navbar-breadcrumb {
+  font-size: 13px !important;
+  color: #8E867C !important;
+  margin-left: 12px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.01em !important;
+}
+
+html.dark-theme .navbar-breadcrumb,
+body.login-dark-theme .navbar-breadcrumb {
+  color: #8E867C !important;
+}
+
+.navbar-avatar-img {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  margin-right: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Sidebar Navigation Tabs (Concept 1 Style on Desktop) */
+@media (min-width: 769px) {
+  .icon-sidebar {
+    width: 200px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E6E0D5 !important;
+    border-radius: 20px !important;
+    padding: 16px 10px !important;
+    gap: 6px !important;
+    box-shadow: 0 10px 30px rgba(105, 93, 76, 0.08) !important;
+    align-items: stretch !important;
+  }
+
+  html.dark-theme .icon-sidebar,
+  body.login-dark-theme .icon-sidebar {
+    background: rgba(35, 30, 26, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .sidebar-dock-spacer {
+    width: 200px !important;
+    margin-right: 32px !important;
+  }
+
+  .sidebar-icon-wrap {
+    width: 100% !important;
+  }
+
+  .sidebar-icon-btn {
+    width: 100% !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0 14px !important;
+    gap: 12px !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: #6B6862 !important;
+    transition: all 0.2s ease !important;
+  }
+
+  html.dark-theme .sidebar-icon-btn,
+  body.login-dark-theme .sidebar-icon-btn {
+    color: #9E958A !important;
+  }
+
+  .sidebar-icon-btn:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+    color: #242523 !important;
+  }
+
+  html.dark-theme .sidebar-icon-btn:hover,
+  body.login-dark-theme .sidebar-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #F2EDE4 !important;
+  }
+
+  .sidebar-icon-btn.active {
+    background: #EEF3EE !important;
+    border: 1px solid #D5E2D7 !important;
+    color: #242523 !important;
+    font-weight: 600 !important;
+  }
+
+  html.dark-theme .sidebar-icon-btn.active,
+  body.login-dark-theme .sidebar-icon-btn.active {
+    background: #2E2520 !important;
+    border: 1px solid #483B32 !important;
+    color: #F2EDE4 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .sidebar-tab-label {
+    display: inline-block !important;
+    font-size: 13.5px !important;
+    font-weight: inherit !important;
+    letter-spacing: -0.01em !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-tab-label {
+    display: none !important;
+  }
+}
+
+/* Concept 1 Workspace Dashboard Cards */
+.concept1-dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+.concept1-header-row {
+  margin-bottom: 4px;
+}
+
+.concept1-page-title {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif !important;
+  font-size: 32px !important;
+  font-weight: 500 !important;
+  color: #242523 !important;
+  margin: 8px 0 4px !important;
+  letter-spacing: -0.01em !important;
+}
+
+html.dark-theme .concept1-page-title,
+body.login-dark-theme .concept1-page-title {
+  color: #F2EDE4 !important;
+}
+
+.concept1-card {
+  border-radius: 20px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E6E0D5 !important;
+  padding: 24px 28px !important;
+  box-shadow: 0 4px 16px rgba(105, 93, 76, 0.05) !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.concept1-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(105, 93, 76, 0.1) !important;
+}
+
+html.dark-theme .concept1-card,
+body.login-dark-theme .concept1-card {
+  background: rgba(35, 30, 26, 0.8) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark-theme .concept1-card:hover,
+body.login-dark-theme .concept1-card:hover {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45) !important;
+}
+
+.concept1-card-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 12px !important;
+}
+
+.concept1-card-title {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif !important;
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  color: #242523 !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+html.dark-theme .concept1-card-title,
+body.login-dark-theme .concept1-card-title {
+  color: #F2EDE4 !important;
+}
+
+.concept1-matcha-pill {
+  background: #8CA993 !important;
+  color: #141815 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 4px 14px !important;
+  border-radius: 9999px !important;
+  letter-spacing: 0.02em !important;
+}
+
+.concept1-label {
+  font-size: 12px !important;
+  color: #8E867C !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 600 !important;
+  display: block !important;
+  margin-bottom: 6px !important;
+}
+
+.concept1-hero-text {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif !important;
+  font-size: 26px !important;
+  color: #242523 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+
+html.dark-theme .concept1-hero-text,
+body.login-dark-theme .concept1-hero-text {
+  color: #F2EDE4 !important;
+}
+
+/* Living Space Row */
+.concept1-space-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 32px !important;
+  flex-wrap: wrap !important;
+  margin-top: 10px !important;
+}
+
+.concept1-order-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 16px !important;
+  border-radius: 9999px !important;
+  background: rgba(224, 163, 92, 0.12) !important;
+  border: 1px solid rgba(224, 163, 92, 0.35) !important;
+  color: #242523 !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+
+html.dark-theme .concept1-order-pill,
+body.login-dark-theme .concept1-order-pill {
+  color: #F2EDE4 !important;
+}
+
+.glow-dot-amber {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #E0A35C !important;
+  box-shadow: 0 0 10px #E0A35C !important;
+}
+
+.concept1-stat-item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.concept1-stat-label {
+  font-size: 11px !important;
+  color: #8E867C !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  font-weight: 600 !important;
+}
+
+.concept1-stat-val {
+  font-size: 14.5px !important;
+  color: #242523 !important;
+  font-weight: 600 !important;
+}
+
+html.dark-theme .concept1-stat-val,
+body.login-dark-theme .concept1-stat-val {
+  color: #F2EDE4 !important;
+}
+
+/* Maintenance Pipeline Stepper (Exact Match to Concept 1) */
+.concept1-pipeline-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 28px !important;
+  flex-wrap: wrap !important;
+  margin-top: 8px !important;
+}
+
+.concept1-pipeline-info {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  min-width: 200px !important;
+}
+
+.concept1-stepper-status-text {
+  font-size: 14px !important;
+  color: #C88942 !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+html.dark-theme .concept1-stepper-status-text,
+body.login-dark-theme .concept1-stepper-status-text {
+  color: #E0A35C !important;
+}
+
+.concept1-stepper-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  flex: 1 !important;
+  max-width: 460px !important;
+  justify-content: space-between !important;
+}
+
+.concept1-step-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.concept1-step-circle.glow-circle {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: #E0A35C !important;
+  box-shadow: 0 0 14px #E0A35C, 0 0 4px #FFFFFF !important;
+  border: 2px solid #FFFFFF !important;
+}
+
+.concept1-step-circle.outline-circle {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: 2px solid rgba(142, 134, 124, 0.45) !important;
+}
+
+html.dark-theme .concept1-step-circle.outline-circle,
+body.login-dark-theme .concept1-step-circle.outline-circle {
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.concept1-step-name {
+  font-size: 12px !important;
+  color: #575854 !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+html.dark-theme .concept1-step-name,
+body.login-dark-theme .concept1-step-name {
+  color: #F2EDE4 !important;
+}
+
+.concept1-step-line {
+  flex: 1 !important;
+  height: 3px !important;
+  margin: 0 6px !important;
+  transform: translateY(-11px) !important;
+  border-radius: 2px !important;
+}
+
+.concept1-step-line.glowing-line {
+  background: linear-gradient(90deg, #E0A35C, rgba(224, 163, 92, 0.7)) !important;
+  box-shadow: 0 0 10px rgba(224, 163, 92, 0.6) !important;
+}
+
+.concept1-step-line.dormant-line {
+  background: rgba(142, 134, 124, 0.25) !important;
+}
+
+html.dark-theme .concept1-step-line.dormant-line,
+body.login-dark-theme .concept1-step-line.dormant-line {
+  background: rgba(255, 255, 255, 0.15) !important;
+}

@@ -176,19 +176,21 @@ function DashboardLayout() {
           className="brand-title"
           onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=overview' : '/student')}
         >
-          <span>HostelCare</span>
-          <span className="brand-badge">
-            {theme === 'dark' ? 'Espresso Dark Edition' : 'Warm Linen Edition'}
-          </span>
+          <span className="brand-name">HostelCare</span>
+          <span className="navbar-breadcrumb">Dashboard &rsaquo; HostelCare</span>
         </div>
 
         <div className="navbar-right-group">
           <div className="navbar-user-pill">
-            <span className="navbar-user-dot"></span>
+            <img 
+              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80" 
+              alt="Avatar" 
+              className="navbar-avatar-img" 
+            />
             <span className="user-text-full">
               {isSuperAdmin 
                 ? `${user?.name || 'Master Super Admin'} • RBAC SuperAdmin`
-                : `${user?.name || 'Resident'} • ${user?.roomNumber ? `Room ${user.roomNumber}` : 'Room 205 (BH-8)'}`}
+                : `${user?.name || 'Om Verma'} • Room ${user?.roomNumber || '205'} (${user?.hostelBlock || 'BH-8'})`}
             </span>
             <span className="user-text-mobile">
               {isSuperAdmin ? 'Admin' : (user?.roomNumber ? `Rm ${user.roomNumber}` : 'Rm 205')}
@@ -264,6 +266,7 @@ function DashboardLayout() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
+              <span className="sidebar-tab-label">Dashboard</span>
             </button>
           </div>
 
@@ -280,6 +283,7 @@ function DashboardLayout() {
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
+              <span className="sidebar-tab-label">Dining</span>
             </button>
           </div>
 
@@ -312,6 +316,7 @@ function DashboardLayout() {
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
+                <span className="sidebar-tab-label">Living Space</span>
               </button>
             </div>
           )}
@@ -327,6 +332,7 @@ function DashboardLayout() {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
                 </svg>
+                <span className="sidebar-tab-label">Maintenance</span>
               </button>
             </div>
           )}
@@ -341,6 +347,7 @@ function DashboardLayout() {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
+              <span className="sidebar-tab-label">Support Chat</span>
             </button>
           </div>
 

@@ -428,121 +428,136 @@ const handleSendMessage = (e) => {
         {/* MAIN VIEWPORT */}
         <main className="main-viewport" style={embedded ? { padding: '8px 16px 60px', flex: 1, maxWidth: 1060, margin: '0 auto', width: '100%' } : {}}>
           {/* =========================================================================
-              VIEW 1: EXACT MOCKUP HOME (Today's Meal & My Living Space)
+              VIEW 1: CONCEPT 1 ESPRESSO LUXURY WORKSPACE DASHBOARD
              ========================================================================= */}
           {activeTab === 'home' && (
-            <div className="detailed-view-container">
-              <div className="view-mode-bar">
-                <span className="view-mode-title">Resident Sanctuary • Overview</span>
-                <div className="resident-quick-tag"><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#728D7A' }}></span><span>{displayName} • {displayRoom}</span></div>
+            <div className="concept1-dashboard-container">
+              <div className="concept1-header-row">
+                <h1 className="concept1-page-title">Workspace Dashboard</h1>
               </div>
 
-              {/* THE TWO EXACT HERO CARDS FROM THE MOCKUP */}
-              <div className="mockup-hero-cards">
-                {/* 1. Today's Meal Card (Real Dynamic ITER Mess Timetable) */}
-                {(() => {
-                  const now = new Date();
-                  const currentMins = now.getHours() * 60 + now.getMinutes();
-                  const d = now.getDay();
-                  const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
-                  const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
-                  const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
+              {/* 1. Today's Meal Card */}
+              {(() => {
+                const now = new Date();
+                const currentMins = now.getHours() * 60 + now.getMinutes();
+                const d = now.getDay();
+                const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
+                const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
+                const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
 
-                  // Determine active or upcoming meal
-                  let statusText = "Dinner is being served • 08:30 PM";
-                  let menuText = todayMeals.dinner?.items?.join(', ') || "Roti, Rice, Dal, Special Curry";
+                let mealCategory = "Breakfast";
+                let mealTimeLabel = "Morning meal is";
+                let mealItems = todayMeals.breakfast?.items?.join(', ') || "Crispy Masala Dosa, Sambar & Filter Coffee";
 
-                  if (currentMins < 9 * 60 + 15) {
-                    statusText = currentMins >= 7 * 60 ? "Breakfast is being served • 07:00 – 09:15 AM" : "Next: Breakfast at 07:00 AM";
-                    menuText = "Menu: " + (todayMeals.breakfast?.items?.join(', ') || "Idli, Upma, Chutney");
-                  } else if (currentMins < 14 * 60 + 30) {
-                    statusText = currentMins >= 12 * 60 + 30 ? "Lunch is being served • 12:30 – 02:30 PM" : "Next: Lunch at 12:30 PM";
-                    menuText = "Menu: " + (todayMeals.lunch?.items?.join(', ') || "Rice, Dal, Seasonal Curry, Papad");
-                  } else if (currentMins < 19 * 60 + 30) {
-                    statusText = currentMins >= 17 * 60 + 45 ? "Evening Snacks is being served • 05:45 – 07:30 PM" : "Next: Evening Snacks at 05:45 PM";
-                    menuText = "Menu: " + (todayMeals.snacks?.items?.join(', ') || "Chai & Hot Snacks");
-                  } else if (currentMins <= 22 * 60) {
-                    statusText = "Dinner is being served • 08:30 – 10:00 PM";
-                    menuText = "Menu: " + (todayMeals.dinner?.items?.join(', ') || "Paneer / Chicken, Roti, Dal, Rice");
-                  } else {
-                    const tomorrowD = (d + 1) % 7;
-                    const tomorrowItem = DAYS_ORDER[tomorrowD === 0 ? 6 : tomorrowD - 1];
-                    const tomorrowKey = (tomorrowItem && typeof tomorrowItem === 'object' ? tomorrowItem.key : tomorrowItem) || 'sunday';
-                    const tomorrowBreakfast = (DEFAULT_MESS_SCHEDULE[tomorrowKey] || DEFAULT_MESS_SCHEDULE.sunday)?.meals?.breakfast;
-                    statusText = "Dinner has finished • Next Meal: Tomorrow Breakfast at 07:00 AM";
-                    menuText = "Menu: " + (tomorrowBreakfast?.items?.join(', ') || "Upma / Idli & Coffee");
-                  }
+                if (currentMins >= 7 * 60 && currentMins < 12 * 60) {
+                  mealCategory = "Breakfast";
+                  mealTimeLabel = "Morning meal is";
+                  mealItems = todayMeals.breakfast?.items?.join(', ') || "Crispy Masala Dosa, Sambar & Filter Coffee";
+                } else if (currentMins >= 12 * 60 && currentMins < 17 * 60) {
+                  mealCategory = "Lunch";
+                  mealTimeLabel = "Afternoon meal is";
+                  mealItems = todayMeals.lunch?.items?.join(', ') || "Steamed Rice, Dal Tadka, Seasonal Curry, Crispy Papad";
+                } else if (currentMins >= 17 * 60 && currentMins < 20 * 60) {
+                  mealCategory = "Snacks";
+                  mealTimeLabel = "Evening snack is";
+                  mealItems = todayMeals.snacks?.items?.join(', ') || "Hot Chai, Samosa / Veg Cutlet, Mint Chutney";
+                } else {
+                  mealCategory = "Dinner";
+                  mealTimeLabel = "Night dinner is";
+                  mealItems = todayMeals.dinner?.items?.join(', ') || "Paneer Butter Masala, Fresh Rotis, Dal Makhani, Jeera Rice";
+                }
 
-                  return (
-                    <div 
-                      className="mockup-card" 
-                      onClick={() => setActiveTab('mess')}
-                      title="Click to view full weekly dining schedule"
-                    >
-                      <div className="mockup-card-header">
-                        <h2 className="mockup-card-title">Today's Meal</h2>
-                        <div className="matcha-circle-badge">
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
-                            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="mockup-card-footer">
-                        <p className="mockup-card-subtitle">{statusText}</p>
-                        <p className="mockup-card-menu-hint">{menuText}</p>
-                      </div>
+                return (
+                  <div 
+                    className="concept1-card concept1-meal-card"
+                    onClick={() => setActiveTab('mess')}
+                    title="Click to view full weekly dining schedule"
+                  >
+                    <div className="concept1-card-top">
+                      <h2 className="concept1-card-title">Today's Meal</h2>
+                      <span className="concept1-matcha-pill">{mealCategory}</span>
                     </div>
-                  );
-                })()}
-
-                {/* 2. My Living Space Card */}
-                <div 
-                  className="mockup-card" 
-                  onClick={() => setActiveTab('room')}
-                  title="Click to view room details, roommate & outing gate pass"
-                >
-                  <div className="mockup-card-header">
-                    <h2 className="mockup-card-title">My Living Space</h2>
+                    <div className="concept1-card-body">
+                      <span className="concept1-label">{mealTimeLabel}</span>
+                      <p className="concept1-hero-text">{mealItems}</p>
+                    </div>
                   </div>
-                  <div className="mockup-card-footer">
-                    <p className="mockup-card-subtitle">{displayRoom}</p>
-                    <span className="matcha-pill-badge">Everything in order</span>
+                );
+              })()}
+
+              {/* 2. My Living Space Card */}
+              <div 
+                className="concept1-card concept1-space-card"
+                onClick={() => setActiveTab('room')}
+                title="Click to view room details, roommate & outing gate pass"
+              >
+                <div className="concept1-card-top">
+                  <h2 className="concept1-card-title">My Living Space</h2>
+                </div>
+                <div className="concept1-space-row">
+                  <div className="concept1-order-pill">
+                    <span className="glow-dot-amber" />
+                    <span>Everything in Order</span>
+                  </div>
+                  <div className="concept1-stat-item">
+                    <span className="concept1-stat-label">Living Space</span>
+                    <span className="concept1-stat-val">{displayRoom}</span>
+                  </div>
+                  <div className="concept1-stat-item">
+                    <span className="concept1-stat-label">Hostel Block</span>
+                    <span className="concept1-stat-val">{user?.hostelBlock || 'BH-8 Campus'}</span>
+                  </div>
+                  <div className="concept1-stat-item">
+                    <span className="concept1-stat-label">Room Status</span>
+                    <span className="concept1-stat-val">Clean &amp; Running</span>
                   </div>
                 </div>
               </div>
 
-              {/* SECONDARY QUICK ACTION CARDS */}
-              <div className="secondary-cards-grid">
-                <div className="secondary-mini-card" onClick={() => setActiveTab('complaints')}>
-                  <div className="mini-card-head">
-                    <h4>Maintenance Pipeline</h4>
-                    <span style={{ 
-                      fontSize: 11, 
-                      background: activeComplaintsCount > 0 ? '#FEF3C7' : '#EEF3EE', 
-                      color: activeComplaintsCount > 0 ? '#B45309' : '#587360', 
-                      padding: '3px 9px', 
-                      borderRadius: 9999, 
-                      fontWeight: 600 
-                    }}>
-                      {complaintsLoading ? 'Syncing...' : activeComplaintsCount > 0 ? `${activeComplaintsCount} Active` : 'All Resolved'}
-                    </span>
-                  </div>
-                  <p className="mini-card-sub">
-                    {latestActiveComplaint 
-                      ? `${latestActiveComplaint.department || 'Issue'}: ${latestActiveComplaint.description.slice(0, 48)}${latestActiveComplaint.description.length > 48 ? '...' : ''}` 
-                      : 'Living space repairs & caretaker requests'}
-                  </p>
-                  <span style={{ fontSize: 13, color: '#728D7A', fontWeight: 600 }}>Track Status →</span>
+              {/* 3. Maintenance Pipeline Card with Glowing Stepper */}
+              <div 
+                className="concept1-card concept1-pipeline-card"
+                onClick={() => setActiveTab('complaints')}
+                title="Click to track maintenance requests"
+              >
+                <div className="concept1-card-top">
+                  <h2 className="concept1-card-title">Maintenance Pipeline</h2>
                 </div>
-
-                <div className="secondary-mini-card" onClick={() => navigate('/chat')}>
-                  <div className="mini-card-head">
-                    <h4>Direct Support Chat</h4>
-                    <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '3px 9px', borderRadius: 9999, fontWeight: 600 }}>E2EE Encrypted</span>
+                <div className="concept1-pipeline-row">
+                  <div className="concept1-pipeline-info">
+                    <span className="concept1-label">Progress stepper</span>
+                    <p className="concept1-stepper-status-text">
+                      {latestActiveComplaint 
+                        ? `1-Registered: ${latestActiveComplaint.title || latestActiveComplaint.description.slice(0, 32)}`
+                        : '1. Registered to Progress'}
+                    </p>
                   </div>
-                  <p className="mini-card-sub">Super Admin & Caretaker communication thread</p>
-                  <span style={{ fontSize: 13, color: '#728D7A', fontWeight: 600 }}>Open Chat Room →</span>
+
+                  <div className="concept1-stepper-container">
+                    {/* Step 1: Registered */}
+                    <div className="concept1-step-item active">
+                      <div className="concept1-step-circle glow-circle" />
+                      <span className="concept1-step-name">1. Registered</span>
+                    </div>
+
+                    {/* Glowing Line */}
+                    <div className={`concept1-step-line ${activeComplaintsCount > 0 ? 'glowing-line' : 'dormant-line'}`} />
+
+                    {/* Step 2: Assigned */}
+                    <div className={`concept1-step-item ${activeComplaintsCount > 0 ? 'active' : ''}`}>
+                      <div className={`concept1-step-circle ${activeComplaintsCount > 0 ? 'glow-circle' : 'outline-circle'}`} />
+                      <span className="concept1-step-name">2. Assigned</span>
+                    </div>
+
+                    {/* Line */}
+                    <div className={`concept1-step-line ${activeComplaintsCount === 0 && !complaintsLoading ? 'glowing-line' : 'dormant-line'}`} />
+
+                    {/* Step 3: Resolved */}
+                    <div className={`concept1-step-item ${activeComplaintsCount === 0 && !complaintsLoading ? 'active' : ''}`}>
+                      <div className={`concept1-step-circle ${activeComplaintsCount === 0 && !complaintsLoading ? 'glow-circle' : 'outline-circle'}`} />
+                      <span className="concept1-step-name">3. Resolved</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
