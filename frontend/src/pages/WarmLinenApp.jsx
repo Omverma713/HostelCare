@@ -123,14 +123,34 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const handleTestMyPhonePush = async () => {
     try {
       setTestingPhonePush(true);
-      const res = await api.testMyDevice({ slotKey: 'snacks' });
+      const dayToTest = selectedDay || 'sunday';
+      const dayLabel = dayToTest.charAt(0).toUpperCase() + dayToTest.slice(1);
+      const res = await api.testMyDevice({ slotKey: 'snacks', targetDay: dayToTest });
       if (res && res.success) {
-        triggerToast('success', '📱 Test push dispatched to your phone! Check notification shade.');
+        triggerToast('success', `📱 [${dayLabel} Snacks] test push dispatched to this mobile!`);
       } else {
         triggerToast('error', res?.message || 'Failed to dispatch test notification.');
       }
     } catch (err) {
       triggerToast('error', err?.message || 'Push test failed. Check internet.');
+    } finally {
+      setTestingPhonePush(false);
+    }
+  };
+
+  const handleTestFullDayPush = async () => {
+    try {
+      setTestingPhonePush(true);
+      const dayToTest = selectedDay || 'sunday';
+      const dayLabel = dayToTest.charAt(0).toUpperCase() + dayToTest.slice(1);
+      const res = await api.testMyDevice({ slotKey: 'all', targetDay: dayToTest });
+      if (res && res.success) {
+        triggerToast('success', `🌟 All 4 meals for ${dayLabel} (Breakfast, Lunch, Snacks, Dinner) dispatched to your phone!`);
+      } else {
+        triggerToast('error', res?.message || 'Failed to dispatch full day simulation.');
+      }
+    } catch (err) {
+      triggerToast('error', err?.message || 'Full day simulation failed. Check internet.');
     } finally {
       setTestingPhonePush(false);
     }
@@ -612,7 +632,29 @@ const handleSendMessage = (e) => {
                       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: '#242523' }}>Weekly Dining Schedule</h2>
                       <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>Official ITER campus meal timetable with verified portion standards and dietary tags.</p>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={handleTestFullDayPush}
+                        disabled={testingPhonePush}
+                        style={{
+                          background: '#FBF5EA',
+                          border: '1px solid #D4B483',
+                          borderRadius: 9999,
+                          padding: '8px 15px',
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                          color: '#7C5A23',
+                          cursor: testingPhonePush ? 'not-allowed' : 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                        title={`Simulate all 4 meals for ${selectedDay ? selectedDay.toUpperCase() : 'SUNDAY'} on this mobile`}
+                      >
+                        <span>{testingPhonePush ? '⚡ Simulating...' : `🌟 Test Full Day (${selectedDay ? selectedDay.toUpperCase() : 'SUNDAY'})`}</span>
+                      </button>
+
                       <button
                         type="button"
                         onClick={handleTestMyPhonePush}
@@ -621,25 +663,25 @@ const handleSendMessage = (e) => {
                           background: '#EEF3EE',
                           border: '1px solid #728D7A',
                           borderRadius: 9999,
-                          padding: '8px 16px',
-                          fontSize: 13,
+                          padding: '8px 15px',
+                          fontSize: 12.5,
                           fontWeight: 700,
                           color: '#3E6649',
                           cursor: testingPhonePush ? 'not-allowed' : 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 6,
+                          gap: 5,
                           boxShadow: '0 2px 6px rgba(114, 141, 122, 0.2)',
                         }}
-                        title="Send immediate test push notification directly to this mobile phone"
+                        title="Send immediate test snacks push notification directly to this mobile phone"
                       >
-                        <span>{testingPhonePush ? '⚡ Sending Alert...' : '📱 Test Push on this Mobile'}</span>
+                        <span>{testingPhonePush ? '⚡...' : '📱 Test Snacks Alert'}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => navigate('/mess-menu')}
-                        style={{ background: '#FAF8F4', border: '1px solid #E6E0D5', borderRadius: 9999, padding: '8px 18px', fontSize: 13, fontWeight: 600, color: '#575854', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                        style={{ background: '#FAF8F4', border: '1px solid #E6E0D5', borderRadius: 9999, padding: '8px 16px', fontSize: 12.5, fontWeight: 600, color: '#575854', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                       >
                         <span>Full Matrix Table</span>
                         <span>→</span>

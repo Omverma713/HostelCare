@@ -179,13 +179,15 @@ async function broadcastMealReminder(slotKey, options = {}) {
   const Session = require("../models/session.model");
   const menu = await fetchCurrentMessMenu();
   const timeInfo = getKolkataTime();
-  const daySchedule = menu.schedule?.[timeInfo.weekday] || menu.schedule?.monday || DEFAULT_MESS_DATA.schedule.monday;
+  const targetDay = (options.targetDay || options.day || timeInfo.weekday).toLowerCase();
+  const isTargetSunday = targetDay === "sunday";
+  const daySchedule = menu.schedule?.[targetDay] || menu.schedule?.monday || DEFAULT_MESS_DATA.schedule.monday;
   const meal = daySchedule.meals?.[slotKey] || {};
 
   const items = meal.items || [];
   const itemsText = items.length > 0 ? items.slice(0, 4).join(", ") : "Special menu items";
 
-  const timingConfig = timeInfo.isSunday
+  const timingConfig = isTargetSunday
     ? OFFICIAL_START_TIMINGS.sundayAndHolidays[slotKey]
     : OFFICIAL_START_TIMINGS.working[slotKey];
 
@@ -200,9 +202,11 @@ async function broadcastMealReminder(slotKey, options = {}) {
     title = `📢 Final Call (+30m): ${metadata.title}`;
   }
 
+  const dayLabel = targetDay.charAt(0).toUpperCase() + targetDay.slice(1);
+  const isManualSim = options.isTest && options.targetDay;
   const customTpl = options.customTemplate || {};
-  const finalTitle = options.customTitle || customTpl.title || title;
-  const finalBody = options.customBody || customTpl.body || `Today's Menu: ${itemsText}${items.length > 4 ? " & more" : ""} (${timingText}). Tap to view full timetable.`;
+  const finalTitle = options.customTitle || customTpl.title || (isManualSim ? `[${dayLabel} Test] ${title}` : title);
+  const finalBody = options.customBody || customTpl.body || `${isManualSim ? `[${dayLabel} Menu] ` : "Today's Menu: "}${itemsText}${items.length > 4 ? " & more" : ""} (${timingText}). Tap to view full timetable.`;
   const finalImageUrl = options.imageUrl || customTpl.imageUrl || null;
 
   const payload = {
@@ -214,7 +218,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
     data: {
       route: options.customRoute || "/mess-menu",
       slotKey,
-      day: timeInfo.weekday,
+      day: targetDay,
       broadcastType: options.isTest ? "mess_manual_test" : "mess_auto_reminder",
       alertIndex: String(occurrence),
       occurrence: String(occurrence),

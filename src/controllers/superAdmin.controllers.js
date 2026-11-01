@@ -3342,24 +3342,50 @@ async function pingSingleDevice(req, res) {
     const DeviceRegistry = require("../models/deviceRegistry.model");
     const { broadcastMealReminder } = require("../services/messReminderScheduler");
     const { deviceId } = req.params;
-    const { customTitle, customBody, slotKey = "breakfast" } = req.body;
+    const { customTitle, customBody, slotKey = "breakfast", targetDay } = req.body;
 
     const device = await DeviceRegistry.findOne({ deviceId }).lean();
     if (!device) {
       return res.status(404).json({ success: false, message: "Target device not found" });
     }
 
+    const simDay = (targetDay || "").toLowerCase();
+    const dayLabel = simDay ? simDay.charAt(0).toUpperCase() + simDay.slice(1) : "Today";
+
+    // Simulate full day (all 4 meals)
+    if (slotKey === "all" || slotKey === "full_day") {
+      const slots = ["breakfast", "lunch", "snacks", "dinner"];
+      const mealResults = {};
+      for (const slot of slots) {
+        mealResults[slot] = await broadcastMealReminder(slot, {
+          isManualTest: true,
+          isTest: true,
+          targetDay: simDay || undefined,
+          targetDeviceId: deviceId,
+        });
+        await new Promise((r) => setTimeout(r, 800));
+      }
+      return res.status(200).json({
+        success: true,
+        message: `Full 4-meal cycle for ${dayLabel} delivered to ${device.studentName || device.regNo || deviceId}`,
+        simulatedDay: dayLabel,
+        results: mealResults,
+      });
+    }
+
     const result = await broadcastMealReminder(slotKey, {
       isManualTest: true,
       isTest: true,
+      targetDay: simDay || undefined,
       targetDeviceId: deviceId,
-      customTitle: customTitle || `🎯 Direct Alert for ${device.studentName || device.regNo || "Student"}`,
-      customBody: customBody || `Meal Alert: Today's ${slotKey.toUpperCase()} is active. Sent directly by Super Admin.`,
+      customTitle: customTitle || `🎯 [${dayLabel} Test] ${device.studentName || device.regNo || "Student"}`,
+      customBody: customBody,
     });
 
     return res.status(200).json({
       success: true,
-      message: `Direct ping delivered to device of ${device.studentName || device.regNo || deviceId}`,
+      message: `Direct ping for ${dayLabel} ${slotKey.toUpperCase()} delivered to ${device.studentName || device.regNo || deviceId}`,
+      simulatedDay: dayLabel,
       result,
     });
   } catch (error) {
@@ -3369,13 +3395,15 @@ async function pingSingleDevice(req, res) {
 
 /**
  * POST /api/v1/superadmin/device-registry/ping-batch
- * Tests meal push notifications on multiple selected devices simultaneously
+ * Tests meal push notifications on multiple selected devices simultaneously.
+ * Supports simulating any day of the week (e.g. testing Sunday on Monday),
+ * and full-day 4-meal cycle simulation.
  */
 async function pingBatchDevices(req, res) {
   try {
     const DeviceRegistry = require("../models/deviceRegistry.model");
     const { broadcastMealReminder } = require("../services/messReminderScheduler");
-    const { deviceIds = [], slotKey = "breakfast", customTitle, customBody } = req.body;
+    const { deviceIds = [], slotKey = "breakfast", targetDay, customTitle, customBody } = req.body;
 
     if (!Array.isArray(deviceIds) || deviceIds.length === 0) {
       return res.status(400).json({ success: false, message: "deviceIds array is required" });
@@ -3387,18 +3415,48 @@ async function pingBatchDevices(req, res) {
     }
 
     const targetNames = devices.map(d => d.studentName || d.regNo || d.deviceId).join(", ");
+    const simDay = (targetDay || "").toLowerCase();
+    const dayLabel = simDay ? simDay.charAt(0).toUpperCase() + simDay.slice(1) : "Today";
+
+    // Simulate full day (all 4 meals in sequence)
+    if (slotKey === "all" || slotKey === "full_day") {
+      const slots = ["breakfast", "lunch", "snacks", "dinner"];
+      const batchResults = {};
+      for (const slot of slots) {
+        batchResults[slot] = await broadcastMealReminder(slot, {
+          isManualTest: true,
+          isTest: true,
+          targetDay: simDay || undefined,
+          targetDeviceIds: deviceIds,
+          customTitle: customTitle ? `${customTitle} (${slot.toUpperCase()})` : null,
+          customBody: customBody,
+        });
+        await new Promise((r) => setTimeout(r, 800));
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Full-day 4-meal simulation for ${dayLabel.toUpperCase()} dispatched to ${devices.length} device(s): ${targetNames}`,
+        targetCount: devices.length,
+        simulatedDay: dayLabel,
+        results: batchResults,
+      });
+    }
+
     const result = await broadcastMealReminder(slotKey, {
       isManualTest: true,
       isTest: true,
+      targetDay: simDay || undefined,
       targetDeviceIds: deviceIds,
-      customTitle: customTitle || `🎯 Test Alert for Selected Devices (${devices.length})`,
-      customBody: customBody || `Test ping for ${slotKey.toUpperCase()} sent to selected devices by Super Admin.`,
+      customTitle: customTitle || `🎯 [${dayLabel} Test] (${devices.length} Mobiles)`,
+      customBody: customBody,
     });
 
     return res.status(200).json({
       success: true,
-      message: `Batch test push dispatched to ${devices.length} selected device(s): ${targetNames}`,
+      message: `Test push for ${dayLabel} ${slotKey.toUpperCase()} dispatched to ${devices.length} selected device(s): ${targetNames}`,
       targetCount: devices.length,
+      simulatedDay: dayLabel,
       result,
     });
   } catch (error) {

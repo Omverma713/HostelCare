@@ -814,21 +814,46 @@ const verifyUserPassword = async (req, res) => {
  */
 const testMyDevice = async (req, res) => {
   try {
-    const { slotKey = "snacks", customTitle, customBody } = req.body;
+    const { slotKey = "snacks", targetDay, customTitle, customBody } = req.body;
     const userId = req.user._id;
     const { broadcastMealReminder } = require("../services/messReminderScheduler");
+
+    const simDay = (targetDay || "").toLowerCase();
+    const dayLabel = simDay ? simDay.charAt(0).toUpperCase() + simDay.slice(1) : "Today";
+
+    if (slotKey === "all" || slotKey === "full_day") {
+      const slots = ["breakfast", "lunch", "snacks", "dinner"];
+      const selfResults = {};
+      for (const slot of slots) {
+        selfResults[slot] = await broadcastMealReminder(slot, {
+          isManualTest: true,
+          isTest: true,
+          targetDay: simDay || undefined,
+          targetUserId: userId,
+        });
+        await new Promise((r) => setTimeout(r, 800));
+      }
+      return res.status(200).json({
+        success: true,
+        message: `Full-day 4-meal cycle for ${dayLabel} delivered to your device!`,
+        simulatedDay: dayLabel,
+        results: selfResults,
+      });
+    }
 
     const result = await broadcastMealReminder(slotKey, {
       isManualTest: true,
       isTest: true,
+      targetDay: simDay || undefined,
       targetUserId: userId,
-      customTitle: customTitle || `📱 Self Test Alert: ${req.user.name || "Student"}`,
-      customBody: customBody || `HostelCare Push is 100% active on this device for ${slotKey.toUpperCase()}!`,
+      customTitle: customTitle || `📱 Self Test Alert: ${dayLabel} ${slotKey.toUpperCase()}`,
+      customBody: customBody,
     });
 
     return res.status(200).json({
       success: true,
-      message: `Test push notification dispatched to device of ${req.user.name || "Student"}`,
+      message: `Test push notification for ${dayLabel} ${slotKey.toUpperCase()} dispatched to your registered device`,
+      simulatedDay: dayLabel,
       result,
     });
   } catch (error) {

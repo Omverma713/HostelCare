@@ -336,7 +336,8 @@ export default function SuperAdminPortal() {
   const [mutingDeviceId, setMutingDeviceId] = useState(null);
   const [selectedDeviceIds, setSelectedDeviceIds] = useState([]);
   const [batchPinging, setBatchPinging] = useState(false);
-  const [batchTestSlot, setBatchTestSlot] = useState('snacks');
+  const [batchTestSlot, setBatchTestSlot] = useState('all');
+  const [batchTestDay, setBatchTestDay] = useState('sunday');
 
   // Custom / Emergency Mess Announcement State
   const [customAnnouncementTitle, setCustomAnnouncementTitle] = useState('');
@@ -1562,8 +1563,8 @@ export default function SuperAdminPortal() {
       setBatchPinging(true);
       const res = await adminApi.pingBatchDevices(selectedDeviceIds, {
         slotKey: batchTestSlot,
-        customTitle: `🎯 Test Alert for ${selectedDeviceIds.length} Mobile(s)`,
-        customBody: `Test ping dispatched to your mobile by Super Admin for ${batchTestSlot.toUpperCase()}.`,
+        targetDay: batchTestDay,
+        customTitle: `🎯 Test Alert [${batchTestDay.toUpperCase()}] (${selectedDeviceIds.length} Mobiles)`,
       });
       if (res.success) {
         triggerToast('success', res.message || `Dispatched to ${selectedDeviceIds.length} device(s)!`, 'Batch Ping Delivered 🚀');
@@ -10969,10 +10970,10 @@ export default function SuperAdminPortal() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <label style={{ fontSize: '0.75rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>Test Meal:</span>
+                  <span>Simulate Day:</span>
                   <select
-                    value={batchTestSlot}
-                    onChange={(e) => setBatchTestSlot(e.target.value)}
+                    value={batchTestDay}
+                    onChange={(e) => setBatchTestDay(e.target.value)}
                     style={{
                       background: 'rgba(5, 19, 41, 0.9)',
                       color: '#00f3ff',
@@ -10983,10 +10984,36 @@ export default function SuperAdminPortal() {
                       fontWeight: 700,
                     }}
                   >
-                    <option value="breakfast">🍳 Breakfast</option>
-                    <option value="lunch">🍛 Lunch</option>
-                    <option value="snacks">☕ Evening Snacks</option>
-                    <option value="dinner">🍲 Dinner</option>
+                    <option value="sunday">☀️ Sunday (Special Menu & Sunday Timings)</option>
+                    <option value="monday">Monday (Working Day)</option>
+                    <option value="tuesday">Tuesday</option>
+                    <option value="wednesday">Wednesday</option>
+                    <option value="thursday">Thursday</option>
+                    <option value="friday">Friday</option>
+                    <option value="saturday">Saturday</option>
+                  </select>
+                </label>
+
+                <label style={{ fontSize: '0.75rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>Meal Slot:</span>
+                  <select
+                    value={batchTestSlot}
+                    onChange={(e) => setBatchTestSlot(e.target.value)}
+                    style={{
+                      background: 'rgba(5, 19, 41, 0.9)',
+                      color: '#00ff66',
+                      border: '1px solid rgba(0, 255, 102, 0.4)',
+                      borderRadius: '5px',
+                      padding: '3px 8px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    <option value="all">🌟 Entire Day (All 4 Meals in Sequence)</option>
+                    <option value="breakfast">🍳 Breakfast Only</option>
+                    <option value="lunch">🍛 Lunch Only</option>
+                    <option value="snacks">☕ Evening Snacks Only</option>
+                    <option value="dinner">🍲 Dinner Only</option>
                   </select>
                 </label>
 
