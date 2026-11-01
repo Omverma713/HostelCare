@@ -859,33 +859,47 @@ body.login-dark-theme .wl-role-btn.active {
   font-weight: 700 !important;
 }
 
-/* Guest Mess Card in Dark Mode */
+/* Guest Mess Card in Dark Mode: Clean top separator line, no harsh surrounding border */
 html.dark-theme .wl-guest-mess-card,
 body.login-dark-theme .wl-guest-mess-card {
-  background: #1C1815 !important;
-  border: 1px solid #383028 !important;
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px solid #383028 !important;
+  border-radius: 0 !important;
+  padding-top: 18px !important;
+  margin-top: 24px !important;
 }
 
 html.dark-theme .wl-mess-title,
 body.login-dark-theme .wl-mess-title {
-  color: #F2EDE4 !important;
+  color: #DED7CB !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
 }
 
 html.dark-theme .wl-mess-sub,
 body.login-dark-theme .wl-mess-sub {
-  color: #9E958A !important;
+  color: #8E867C !important;
+  font-size: 11px !important;
 }
 
 html.dark-theme .wl-mess-btn,
 body.login-dark-theme .wl-mess-btn {
-  background: #251F1B !important;
-  border: 1px solid #3D332A !important;
-  color: #DED7CB !important;
+  background: #3A231C !important;
+  border: 1px solid #5A352B !important;
+  color: #FFB3A0 !important;
+  padding: 6px 14px !important;
+  border-radius: 9999px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
 }
 
 html.dark-theme .wl-mess-btn:hover,
 body.login-dark-theme .wl-mess-btn:hover {
-  background: #8CA993 !important;
-  color: #141815 !important;
-  border-color: #8CA993 !important;
+  background: #4A2C23 !important;
+  color: #FFC5B5 !important;
+  border-color: #6E4034 !important;
+  transform: translateY(-1px);
 }
