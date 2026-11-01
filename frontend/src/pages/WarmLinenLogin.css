@@ -581,3 +581,218 @@
     margin-top: 16px !important;
   }
 }
+
+
+/* Floating Theme Toggle on Login Page */
+.wl-login-theme-toggle {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1px solid #E6E0D5;
+  color: #575854;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 50;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(105, 93, 76, 0.08);
+}
+
+.wl-login-theme-toggle:hover {
+  background: #F4EFEB;
+  color: #242523;
+  border-color: rgba(114, 141, 122, 0.45);
+  transform: scale(1.06);
+}
+
+/* ==========================================================================
+   LOGIN PAGE - CONCEPT 1: ESPRESSO & ROASTED OAK LUXURY (DARK THEME)
+   ========================================================================== */
+html.dark-theme .wl-login-page,
+body.login-dark-theme .wl-login-page {
+  background-color: #161311 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .wl-login-theme-toggle,
+body.login-dark-theme .wl-login-theme-toggle {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-theme .wl-login-theme-toggle:hover,
+body.login-dark-theme .wl-login-theme-toggle:hover {
+  background: #2D2520 !important;
+  border-color: #8CA993 !important;
+  color: #8CA993 !important;
+}
+
+html.dark-theme .wl-login-card,
+body.login-dark-theme .wl-login-card {
+  background-color: #231E1A !important;
+  border: 1px solid #383028 !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .wl-emblem,
+body.login-dark-theme .wl-emblem {
+  background: #27342B !important;
+  border: 1px solid #3D5042 !important;
+  color: #8CA993 !important;
+}
+
+html.dark-theme .wl-badge-pill,
+body.login-dark-theme .wl-badge-pill {
+  background: #251F1B !important;
+  border: 1px solid #3D332A !important;
+  color: #C9BFAF !important;
+}
+
+html.dark-theme .wl-title,
+body.login-dark-theme .wl-title {
+  color: #F2EDE4 !important;
+  font-family: 'Playfair Display', Georgia, serif !important;
+}
+
+html.dark-theme .wl-subtitle,
+body.login-dark-theme .wl-subtitle {
+  color: #9E958A !important;
+}
+
+html.dark-theme .wl-auth-tabs,
+body.login-dark-theme .wl-auth-tabs {
+  background: #1C1815 !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .wl-sliding-indicator,
+body.login-dark-theme .wl-sliding-indicator {
+  background: #2D2520 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-theme .wl-tab-btn,
+body.login-dark-theme .wl-tab-btn {
+  color: #8E867C !important;
+}
+
+html.dark-theme .wl-tab-btn.active,
+body.login-dark-theme .wl-tab-btn.active {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .wl-role-pills,
+body.login-dark-theme .wl-role-pills {
+  background: #1C1815 !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .wl-role-btn,
+body.login-dark-theme .wl-role-btn {
+  color: #8E867C !important;
+}
+
+html.dark-theme .wl-role-btn.active,
+body.login-dark-theme .wl-role-btn.active {
+  background: #8CA993 !important;
+  color: #141815 !important;
+  box-shadow: 0 2px 8px rgba(140, 169, 147, 0.3) !important;
+}
+
+html.dark-theme .wl-input-field,
+body.login-dark-theme .wl-input-field {
+  background-color: #1A1613 !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .wl-input-field:focus,
+body.login-dark-theme .wl-input-field:focus {
+  background-color: #1F1A17 !important;
+  border-color: #8CA993 !important;
+  box-shadow: 0 0 0 2px rgba(140, 169, 147, 0.25) !important;
+}
+
+html.dark-theme .wl-input-icon,
+body.login-dark-theme .wl-input-icon {
+  color: #8E867C !important;
+}
+
+html.dark-theme .wl-label,
+body.login-dark-theme .wl-label {
+  color: #DED7CB !important;
+}
+
+html.dark-theme .wl-pop-button,
+body.login-dark-theme .wl-pop-button {
+  background: #8CA993 !important;
+  color: #141815 !important;
+}
+
+html.dark-theme .wl-submit-btn,
+body.login-dark-theme .wl-submit-btn {
+  background: #8CA993 !important;
+  color: #141815 !important;
+}
+
+
+/* Additional input wrapper and button dark rules */
+html.dark-theme .wl-input-wrapper,
+body.login-dark-theme .wl-input-wrapper {
+  background: #1A1613 !important;
+  border-color: #383028 !important;
+}
+
+html.dark-theme .wl-input-wrapper:hover,
+body.login-dark-theme .wl-input-wrapper:hover {
+  background: #1F1A17 !important;
+  border-color: #4A3E34 !important;
+}
+
+html.dark-theme .wl-input-wrapper:focus-within,
+body.login-dark-theme .wl-input-wrapper:focus-within {
+  background: #1F1A17 !important;
+  border-color: #8CA993 !important;
+  box-shadow: 0 0 0 4px rgba(140, 169, 147, 0.2), 0 8px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-theme .wl-text-input,
+body.login-dark-theme .wl-text-input {
+  color: #F2EDE4 !important;
+  background: transparent !important;
+}
+
+html.dark-theme .wl-text-input::placeholder,
+body.login-dark-theme .wl-text-input::placeholder {
+  color: #7D756B !important;
+}
+
+html.dark-theme .wl-eye-btn,
+body.login-dark-theme .wl-eye-btn {
+  color: #8E867C !important;
+}
+
+html.dark-theme .wl-eye-btn:hover,
+body.login-dark-theme .wl-eye-btn:hover {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .wl-role-btn,
+body.login-dark-theme .wl-role-btn {
+  background: transparent !important;
+  color: #8E867C !important;
+}
+
+html.dark-theme .wl-role-btn.active,
+body.login-dark-theme .wl-role-btn.active {
+  background: #8CA993 !important;
+  color: #141815 !important;
+}

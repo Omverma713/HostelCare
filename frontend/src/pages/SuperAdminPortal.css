@@ -1951,3 +1951,299 @@ span[style*="background: rgb(16, 185, 129)"],
   background: #FCE8E2 !important;
   color: #B36E59 !important;
 }
+
+
+/* ==========================================================================
+   SUPERADMIN PORTAL - CONCEPT 1: ESPRESSO & ROASTED OAK LUXURY (DARK THEME)
+   ========================================================================== */
+html.dark-theme .sa-portal-container,
+body.login-dark-theme .sa-portal-container {
+  color: #F2EDE4 !important;
+  background: transparent !important;
+}
+
+/* 1. Header Banner */
+html.dark-theme .sa-header-banner,
+body.login-dark-theme .sa-header-banner {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+html.dark-theme .sa-header-icon,
+body.login-dark-theme .sa-header-icon {
+  background: #27342B !important;
+  color: #8CA993 !important;
+  border: 1px solid #3D5042 !important;
+}
+
+html.dark-theme .sa-header-title,
+body.login-dark-theme .sa-header-title {
+  color: #F2EDE4 !important;
+  font-family: 'Playfair Display', Georgia, serif !important;
+}
+
+html.dark-theme .sa-badge-rbac,
+body.login-dark-theme .sa-badge-rbac {
+  background: #27342B !important;
+  color: #8CA993 !important;
+  border: 1px solid #3D5042 !important;
+}
+
+html.dark-theme .sa-header-subtitle,
+body.login-dark-theme .sa-header-subtitle {
+  color: #9E958A !important;
+}
+
+html.dark-theme .sa-header-profile-action-btn,
+body.login-dark-theme .sa-header-profile-action-btn {
+  background: #1F1A17 !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-header-profile-action-btn:hover,
+body.login-dark-theme .sa-header-profile-action-btn:hover {
+  background: #2D2520 !important;
+  border-color: #8CA993 !important;
+  color: #8CA993 !important;
+}
+
+/* 2. Capsule Tab Navigation */
+html.dark-theme .sa-tab-bar,
+body.login-dark-theme .sa-tab-bar {
+  background: #1C1815 !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .sa-tab-btn,
+body.login-dark-theme .sa-tab-btn {
+  color: #8E867C !important;
+}
+
+html.dark-theme .sa-tab-btn:hover,
+body.login-dark-theme .sa-tab-btn:hover {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-tab-btn.active,
+body.login-dark-theme .sa-tab-btn.active {
+  background: #2C241E !important;
+  color: #F2EDE4 !important;
+  border: 1px solid #8CA993 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 3. Overview KPI Cards */
+html.dark-theme .sa-kpi-card,
+body.login-dark-theme .sa-kpi-card {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.38) !important;
+}
+
+html.dark-theme .sa-kpi-title,
+body.login-dark-theme .sa-kpi-title {
+  color: #9E958A !important;
+}
+
+html.dark-theme .sa-kpi-value,
+body.login-dark-theme .sa-kpi-value {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-kpi-icon-box,
+body.login-dark-theme .sa-kpi-icon-box {
+  background: #1C1815 !important;
+  border: 1px solid #383028 !important;
+}
+
+/* 4. Filter Bar & Search */
+html.dark-theme .sa-filters-bar,
+body.login-dark-theme .sa-filters-bar {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .sa-filter-search,
+html.dark-theme .sa-filter-select,
+body.login-dark-theme .sa-filter-search,
+body.login-dark-theme .sa-filter-select {
+  background: #1A1613 !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-filter-search:focus,
+html.dark-theme .sa-filter-select:focus,
+body.login-dark-theme .sa-filter-search:focus,
+body.login-dark-theme .sa-filter-select:focus {
+  border-color: #8CA993 !important;
+  background: #1F1A17 !important;
+  box-shadow: 0 0 0 2px rgba(140, 169, 147, 0.25) !important;
+}
+
+html.dark-theme .sa-filter-btn,
+body.login-dark-theme .sa-filter-btn {
+  background: #8CA993 !important;
+  color: #141815 !important;
+}
+
+html.dark-theme .sa-filter-btn:hover,
+body.login-dark-theme .sa-filter-btn:hover {
+  background: #7A9681 !important;
+}
+
+/* 5. Desktop Table (Sessions, Users, Delegations) */
+html.dark-theme .sa-desktop-table,
+body.login-dark-theme .sa-desktop-table {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-theme .sa-desktop-table thead tr,
+body.login-dark-theme .sa-desktop-table thead tr {
+  background: #1C1815 !important;
+  border-bottom: 1px solid #383028 !important;
+}
+
+html.dark-theme .sa-desktop-table th,
+body.login-dark-theme .sa-desktop-table th {
+  background: #1C1815 !important;
+  border-bottom: 1px solid #383028 !important;
+  color: #8E867C !important;
+}
+
+html.dark-theme .sa-desktop-table td,
+body.login-dark-theme .sa-desktop-table td {
+  border-bottom: 1px solid #2C241E !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-desktop-table tbody tr:hover td,
+body.login-dark-theme .sa-desktop-table tbody tr:hover td {
+  background: #2A231E !important;
+}
+
+/* 6. Security Audit Logs (Fix Image 1) */
+html.dark-theme .sa-audit-item,
+body.login-dark-theme .sa-audit-item,
+html.dark-theme .sa-audit-card,
+body.login-dark-theme .sa-audit-card {
+  background: #1C1815 !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-audit-badge,
+body.login-dark-theme .sa-audit-badge {
+  color: #8CA993 !important;
+}
+
+html.dark-theme .sa-audit-summary,
+body.login-dark-theme .sa-audit-summary {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-audit-item-meta,
+body.login-dark-theme .sa-audit-item-meta {
+  color: #8E867C !important;
+}
+
+html.dark-theme .sa-breakdown-card,
+body.login-dark-theme .sa-breakdown-card {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-breakdown-card h3,
+body.login-dark-theme .sa-breakdown-card h3 {
+  color: #F2EDE4 !important;
+}
+
+/* 7. Maintenance Mode & Config Cards (Fix Image 3) */
+html.dark-theme .sa-config-card,
+body.login-dark-theme .sa-config-card {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.38) !important;
+}
+
+html.dark-theme .sa-config-card input,
+html.dark-theme .sa-config-card textarea,
+html.dark-theme .sa-config-card select,
+body.login-dark-theme .sa-config-card input,
+body.login-dark-theme .sa-config-card textarea,
+body.login-dark-theme .sa-config-card select {
+  background: #1A1613 !important;
+  border: 1px solid #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .sa-config-card input:focus,
+html.dark-theme .sa-config-card textarea:focus,
+html.dark-theme .sa-config-card select:focus,
+body.login-dark-theme .sa-config-card input:focus,
+body.login-dark-theme .sa-config-card textarea:focus,
+body.login-dark-theme .sa-config-card select:focus {
+  border-color: #8CA993 !important;
+  box-shadow: 0 0 0 2px rgba(140, 169, 147, 0.25) !important;
+}
+
+html.dark-theme .sa-config-card button[style*="var(--bg-secondary)"],
+body.login-dark-theme .sa-config-card button[style*="var(--bg-secondary)"] {
+  background: #1C1815 !important;
+  border-color: #383028 !important;
+  color: #9E958A !important;
+}
+
+html.dark-theme .sa-config-card button.sa-btn-primary,
+html.dark-theme .sa-config-card button[style*="background: #10b981"],
+html.dark-theme .sa-config-card button[style*="background: rgb(16, 185, 129)"] {
+  background: #8CA993 !important;
+  color: #141815 !important;
+  border: none !important;
+  font-weight: 600 !important;
+}
+
+/* User Directory & Table Buttons */
+html.dark-theme .sa-desktop-table .sa-btn-login-as,
+body.login-dark-theme .sa-desktop-table .sa-btn-login-as {
+  background: #27342B !important;
+  color: #8CA993 !important;
+  border: 1px solid #3D5042 !important;
+}
+
+html.dark-theme .sa-desktop-table .sa-btn-details,
+body.login-dark-theme .sa-desktop-table .sa-btn-details {
+  background: #1F1A17 !important;
+  color: #DED7CB !important;
+  border: 1px solid #383028 !important;
+}
+
+html.dark-theme .sa-desktop-table .sa-btn-revoke,
+body.login-dark-theme .sa-desktop-table .sa-btn-revoke {
+  background: #3A231C !important;
+  color: #FFB3A0 !important;
+  border: 1px solid #5A352B !important;
+}
+
+
+/* Table cards and outer containers in SuperAdmin (Fix Image 4 outer white card) */
+html.dark-theme .sa-sessions-table-card,
+body.login-dark-theme .sa-sessions-table-card,
+html.dark-theme .sa-users-table-card,
+body.login-dark-theme .sa-users-table-card,
+html.dark-theme .sa-delegations-deck,
+body.login-dark-theme .sa-delegations-deck,
+html.dark-theme .sa-delegation-card,
+body.login-dark-theme .sa-delegation-card,
+html.dark-theme div[style*="background: rgb(255, 255, 255)"],
+html.dark-theme div[style*="background: #FFFFFF"],
+body.login-dark-theme div[style*="background: #FFFFFF"] {
+  background: #231E1A !important;
+  border-color: #383028 !important;
+}

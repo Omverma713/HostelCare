@@ -75,50 +75,51 @@
    Global Dark Mode Variable Configuration
    ========================================================================== */
 html.dark-theme {
-  /* Background */
-  --bg-primary: #0b0d19;
-  --bg-secondary: #13162b;
-  --bg-tertiary: #191c36;
-  --bg-card: #13162b;
+  /* Background - Espresso & Roasted Oak Luxury */
+  --bg-primary: #161311;
+  --bg-secondary: #1C1815;
+  --bg-tertiary: #251F1B;
+  --bg-card: #231E1A;
   --card-bg: var(--bg-card);
 
   /* Text */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
+  --text-primary: #F2EDE4;
+  --text-secondary: #DED7CB;
+  --text-muted: #9E958A;
 
   /* Borders and Shadows */
-  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color: #383028;
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-primary: 0 4px 18px rgba(67, 97, 238, 0.5);
+  --shadow-primary: 0 4px 18px rgba(140, 169, 147, 0.4);
 
   /* Primary Overrides */
-  --primary-light: #1e2448;
-  --primary-glow: rgba(99, 102, 241, 0.25);
+  --primary: #8CA993;
+  --primary-light: #27342B;
+  --primary-glow: rgba(140, 169, 147, 0.25);
 
   /* Student Overrides */
-  --student-bg: #211c47;
+  --student-bg: #231E1A;
 
   /* Scoped Status Colors for Dark Mode */
-  --status-pending-bg: rgba(199, 119, 0, 0.15);
-  --status-pending-text: #ffb74d;
-  --status-pending-border: rgba(199, 119, 0, 0.3);
+  --status-pending-bg: rgba(224, 163, 82, 0.15);
+  --status-pending-text: #E0A352;
+  --status-pending-border: rgba(224, 163, 82, 0.35);
 
   /* Scoped Status Colors for Dark Mode */
-  --status-inprogress-bg: rgba(21, 101, 192, 0.15);
-  --status-inprogress-text: #64b5f6;
-  --status-inprogress-border: rgba(21, 101, 192, 0.3);
+  --status-inprogress-bg: rgba(140, 169, 147, 0.15);
+  --status-inprogress-text: #8CA993;
+  --status-inprogress-border: rgba(140, 169, 147, 0.35);
 
   /* Scoped Status Colors for Dark Mode */
-  --status-resolved-bg: rgba(27, 122, 62, 0.15);
-  --status-resolved-text: #81c784;
-  --status-resolved-border: rgba(27, 122, 62, 0.3);
+  --status-resolved-bg: rgba(140, 169, 147, 0.2);
+  --status-resolved-text: #8CA993;
+  --status-resolved-border: rgba(140, 169, 147, 0.4);
 
-  --danger-bg: rgba(198, 40, 40, 0.15);
-  --danger-text: #e57373;
-  --danger-border: rgba(198, 40, 40, 0.3);
+  --danger-bg: rgba(212, 137, 116, 0.18);
+  --danger-text: #FFB3A0;
+  --danger-border: rgba(212, 137, 116, 0.35);
 }
 
 /* Global focused inputs styling override in dark theme */
