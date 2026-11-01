@@ -617,26 +617,11 @@ const handleSendMessage = (e) => {
                       <button
                         key={dayKey}
                         onClick={() => setSelectedDay(dayKey)}
-                        style={{
-                          border: isSelected ? '1px solid #728D7A' : '1px solid #E6E0D5',
-                          background: isSelected ? '#FFFFFF' : '#FAF8F4',
-                          color: isSelected ? '#242523' : '#7D7F7A',
-                          padding: '8px 18px',
-                          borderRadius: 9999,
-                          fontSize: 13,
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          whiteSpace: 'nowrap',
-                          boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                          transition: 'all 0.15s ease',
-                        }}
+                        className={`dining-day-pill ${isSelected ? 'active' : ''}`}
                       >
-                        {isToday && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#728D7A' }} />}
+                        {isToday && <span className="dining-day-dot" />}
                         <span>{dayLabel}</span>
-                        {isToday && <span style={{ fontSize: 10.5, color: '#587360', fontWeight: 700 }}>(Today)</span>}
+                        {isToday && <span className="dining-day-today-tag">(Today)</span>}
                       </button>
                     );
                   })}
@@ -668,33 +653,24 @@ const handleSendMessage = (e) => {
                     return (
                       <div 
                         key={key} 
-                        className="meal-slot-card"
-                        style={{
-                          background: '#FFFFFF',
-                          borderRadius: 20,
-                          padding: 24,
-                          border: isViewingToday && currentMins >= startMins && currentMins <= endMins ? '2px solid #728D7A' : '1px solid #E6E0D5',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-                        }}
+                        className={`meal-slot-card ${isViewingToday && currentMins >= startMins && currentMins <= endMins ? 'live-slot' : ''}`}
                       >
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: '#242523', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span>{icon}</span> {name}
+                          <div className="meal-card-header">
+                            <span className="meal-slot-name">
+                              <span className="meal-slot-icon">{icon}</span>
+                              <span className="meal-slot-title">{name}</span>
                             </span>
                             {statusBadge}
                           </div>
-                          <div style={{ fontSize: 12, color: '#7D7F7A', marginBottom: 10 }}>{slot?.timing || defaultTime}</div>
+                          <div className="meal-slot-timing">{slot?.timing || defaultTime}</div>
 
-                          <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: '#242523', margin: '0 0 8px', lineHeight: 1.3 }}>
+                          <h3 className="meal-slot-dish">
                             {mainDish}
                           </h3>
 
                           {otherItems && (
-                            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 12px', lineHeight: 1.5 }}>
+                            <p className="meal-slot-accompaniments">
                               {otherItems}
                             </p>
                           )}
@@ -702,7 +678,7 @@ const handleSendMessage = (e) => {
                           {/* Non-Veg & Veg Dietary Options / Choices */}
                           {slot?.options && slot.options.length > 0 && (
                             <div style={{ marginTop: 10, marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#7D7F7A', display: 'flex', alignItems: 'center', gap: 5 }}>
+                              <div className="meal-slot-options-heading">
                                 <span>⚡</span>
                                 <span>Choice / Special Option:</span>
                               </div>
@@ -732,11 +708,11 @@ const handleSendMessage = (e) => {
                           )}
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F0ECE4', paddingTop: 12, marginTop: 12, fontSize: 12 }}>
-                          <span style={{ color: slot?.dietary === 'veg' ? '#587360' : '#C9826D', fontWeight: 600 }}>
+                        <div className="meal-card-footer">
+                          <span className={`meal-dietary-badge ${slot?.dietary === 'veg' ? 'veg' : 'nonveg'}`}>
                             {slot?.dietary === 'veg' ? '🌱 100% Pure Veg' : '🐟 Veg / Non-Veg'}
                           </span>
-                          <span style={{ color: '#8E8F8A' }}>Standard ITER Mess</span>
+                          <span className="meal-mess-vendor">Standard ITER Mess</span>
                         </div>
                       </div>
                     );
@@ -765,19 +741,19 @@ const handleSendMessage = (e) => {
               <div className="room-living-grid">
                 {/* Room Info */}
                 <div className="room-info-card" style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)' }}>
-                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px', color: '#272824' }}>{displayRoom}</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F3EFE7', paddingBottom: 8 }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Assigned Bed:</span>
-                      <strong style={{ color: '#272824' }}>Bed 205-A (Window side)</strong>
+                  <h3 className="room-info-title">{displayRoom}</h3>
+                  <div className="room-info-specs-list">
+                    <div className="room-info-row">
+                      <span className="room-info-lbl">Assigned Bed:</span>
+                      <strong className="room-info-val">Bed 205-A (Window side)</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F3EFE7', paddingBottom: 8 }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Roommate:</span>
-                      <strong style={{ color: '#272824' }}>Jagat Singh (Bed 205-B)</strong>
+                    <div className="room-info-row">
+                      <span className="room-info-lbl">Roommate:</span>
+                      <strong className="room-info-val">Jagat Singh (Bed 205-B)</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F3EFE7', paddingBottom: 8 }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Hostel Warden:</span>
-                      <strong style={{ color: '#272824' }}>Prof. P. K. Rout (9437xxxxxx)</strong>
+                    <div className="room-info-row">
+                      <span className="room-info-lbl">Hostel Warden:</span>
+                      <strong className="room-info-val">Prof. P. K. Rout (9437xxxxxx)</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Inventory Status:</span>
@@ -790,7 +766,7 @@ const handleSendMessage = (e) => {
                 <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: 9999, fontWeight: 700, letterSpacing: '0.04em' }}>DIGITAL GATE PASS</span>
-                    <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '12px 0 8px', color: '#272824' }}>Evening Campus Outing</h3>
+                    <h3 className="gate-pass-title">Evening Campus Outing</h3>
                     <p style={{ margin: 0, fontSize: 13.5, color: 'var(--text-secondary)' }}>Valid for exit through ITER Main Gate 1 between 05:00 PM and 09:30 PM.</p>
                   </div>
 
@@ -892,9 +868,7 @@ const handleSendMessage = (e) => {
                                 {deptIcon} {item.department || 'Maintenance'}
                               </span>
                             </div>
-                            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 21, margin: '4px 0 6px', color: '#272824' }}>
-                              {item.description}
-                            </h3>
+                            <h3 className="complaint-card-title">{item.description}</h3>
                             <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>
                               Filed: {filedDate} • Location: {item.hostelNo || displayRoom}{item.roomNo ? ` (Rm ${item.roomNo})` : ''}
                             </p>
@@ -970,7 +944,7 @@ const handleSendMessage = (e) => {
                 {/* Chat Header */}
                 <div style={{ background: '#FAF8F5', borderBottom: '1px solid #EFEAE0', padding: '14px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: 15, color: '#272824' }}>Hostel Caretaker & Admin Line</h4>
+                    <h4 className="chat-header-title">Hostel Caretaker & Admin Line</h4>
                     <span style={{ fontSize: 12, color: '#587360' }}>● Online • AES-256-GCM Secured</span>
                   </div>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ticket #HC-2051</span>
@@ -991,7 +965,7 @@ const handleSendMessage = (e) => {
                       }}
                     >
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#587360', marginBottom: 4 }}>{msg.senderName}</div>
-                      <div style={{ fontSize: 14, color: '#272824', lineHeight: 1.4 }}>{msg.text}</div>
+                      <div className="chat-msg-text">{msg.text}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'right', marginTop: 4 }}>
                         {msg.time} {msg.sender === 'student' && '✓✓'}
                       </div>

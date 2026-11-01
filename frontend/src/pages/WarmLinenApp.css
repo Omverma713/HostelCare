@@ -2292,3 +2292,352 @@ html.dark-theme .concept1-room-banner-sub,
 body.login-dark-theme .concept1-room-banner-sub {
   color: #9E958A !important;
 }
+
+/* ==========================================================================
+   DINING SCHEDULE & MEAL CARD TYPOGRAPHY (LIGHT & DARK THEMING)
+   ========================================================================== */
+
+/* 1. Day Selector Pills */
+.dining-day-pill {
+  border: 1px solid #E6E0D5 !important;
+  background: #FAF8F4 !important;
+  color: #7D7F7A !important;
+  padding: 8px 18px !important;
+  border-radius: 9999px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+}
+
+.dining-day-pill.active {
+  border: 1px solid #728D7A !important;
+  background: #FFFFFF !important;
+  color: #242523 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+.dining-day-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #728D7A !important;
+}
+
+.dining-day-today-tag {
+  font-size: 10.5px !important;
+  color: #587360 !important;
+  font-weight: 700 !important;
+}
+
+html.dark-theme .dining-day-pill,
+body.login-dark-theme .dining-day-pill {
+  border: 1px solid #383028 !important;
+  background: #1C1815 !important;
+  color: #9E958A !important;
+}
+
+html.dark-theme .dining-day-pill:hover,
+body.login-dark-theme .dining-day-pill:hover {
+  background: #251F1B !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .dining-day-pill.active,
+body.login-dark-theme .dining-day-pill.active {
+  border: 1px solid #8CA993 !important;
+  background: #27342B !important;
+  color: #F2EDE4 !important;
+  box-shadow: 0 2px 10px rgba(140, 169, 147, 0.3) !important;
+}
+
+html.dark-theme .dining-day-dot,
+body.login-dark-theme .dining-day-dot {
+  background: #8CA993 !important;
+}
+
+html.dark-theme .dining-day-today-tag,
+body.login-dark-theme .dining-day-today-tag {
+  color: #8CA993 !important;
+}
+
+/* 2. Meal Slot Card & Content */
+.meal-slot-card {
+  background: #FFFFFF !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+  border: 1px solid #E6E0D5 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.meal-slot-card.live-slot {
+  border: 2px solid #728D7A !important;
+}
+
+html.dark-theme .meal-slot-card,
+body.login-dark-theme .meal-slot-card {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-theme .meal-slot-card.live-slot,
+body.login-dark-theme .meal-slot-card.live-slot {
+  border: 2px solid #8CA993 !important;
+  box-shadow: 0 8px 30px rgba(140, 169, 147, 0.25) !important;
+}
+
+.meal-card-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 12px !important;
+}
+
+/* Meal Slot Name (Breakfast, Lunch, Evening Snacks, Dinner) */
+.meal-slot-name {
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  color: #242523 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  letter-spacing: -0.01em !important;
+}
+
+.meal-slot-icon {
+  font-size: 16px !important;
+}
+
+.meal-slot-title {
+  font-weight: 700 !important;
+}
+
+/* Critical Fix: In Dark Mode, Breakfast / Lunch / Dinner MUST BE Warm Ivory */
+html.dark-theme .meal-slot-name,
+body.login-dark-theme .meal-slot-name,
+html.dark-theme .meal-slot-title,
+body.login-dark-theme .meal-slot-title {
+  color: #F2EDE4 !important;
+}
+
+.meal-slot-timing {
+  font-size: 12px !important;
+  color: #7D7F7A !important;
+  margin-bottom: 10px !important;
+  font-weight: 500 !important;
+}
+
+html.dark-theme .meal-slot-timing,
+body.login-dark-theme .meal-slot-timing {
+  color: #C8B9A6 !important;
+}
+
+.meal-slot-dish {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif !important;
+  font-size: 19px !important;
+  color: #242523 !important;
+  margin: 0 0 8px !important;
+  line-height: 1.35 !important;
+  font-weight: 600 !important;
+}
+
+html.dark-theme .meal-slot-dish,
+body.login-dark-theme .meal-slot-dish {
+  color: #F2EDE4 !important;
+}
+
+.meal-slot-accompaniments {
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  margin: 0 0 12px !important;
+  line-height: 1.5 !important;
+}
+
+html.dark-theme .meal-slot-accompaniments,
+body.login-dark-theme .meal-slot-accompaniments {
+  color: #DED7CB !important;
+}
+
+.meal-slot-options-heading {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #7D7F7A !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin-bottom: 6px !important;
+}
+
+html.dark-theme .meal-slot-options-heading,
+body.login-dark-theme .meal-slot-options-heading {
+  color: #C8B9A6 !important;
+}
+
+.meal-card-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-top: 1px solid #F0ECE4 !important;
+  padding-top: 12px !important;
+  margin-top: 14px !important;
+  font-size: 12px !important;
+}
+
+html.dark-theme .meal-card-footer,
+body.login-dark-theme .meal-card-footer {
+  border-top: 1px solid #332B24 !important;
+}
+
+.meal-dietary-badge {
+  font-weight: 600 !important;
+}
+
+.meal-dietary-badge.veg {
+  color: #587360 !important;
+}
+
+.meal-dietary-badge.nonveg {
+  color: #C9826D !important;
+}
+
+html.dark-theme .meal-dietary-badge.veg,
+body.login-dark-theme .meal-dietary-badge.veg {
+  color: #8CA993 !important;
+}
+
+html.dark-theme .meal-dietary-badge.nonveg,
+body.login-dark-theme .meal-dietary-badge.nonveg {
+  color: #E0A35C !important;
+}
+
+.meal-mess-vendor {
+  color: #8E8F8A !important;
+}
+
+html.dark-theme .meal-mess-vendor,
+body.login-dark-theme .meal-mess-vendor {
+  color: #9E958A !important;
+}
+
+/* 3. Living Space Card Typography */
+.room-info-card {
+  background: #FFFFFF !important;
+  border-radius: 24px !important;
+  padding: 32px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+html.dark-theme .room-info-card,
+body.login-dark-theme .room-info-card {
+  background: #231E1A !important;
+  border: 1px solid #383028 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.room-info-title {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif !important;
+  font-size: 24px !important;
+  margin: 0 0 16px !important;
+  color: #272824 !important;
+}
+
+html.dark-theme .room-info-title,
+body.login-dark-theme .room-info-title {
+  color: #F2EDE4 !important;
+}
+
+.room-info-specs-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  font-size: 14px !important;
+}
+
+.room-info-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  border-bottom: 1px solid #F3EFE7 !important;
+  padding-bottom: 8px !important;
+}
+
+html.dark-theme .room-info-row,
+body.login-dark-theme .room-info-row {
+  border-bottom: 1px solid #332B24 !important;
+}
+
+.room-info-lbl {
+  color: var(--text-muted) !important;
+}
+
+html.dark-theme .room-info-lbl,
+body.login-dark-theme .room-info-lbl {
+  color: #9E958A !important;
+}
+
+.room-info-val {
+  color: #272824 !important;
+}
+
+html.dark-theme .room-info-val,
+body.login-dark-theme .room-info-val {
+  color: #F2EDE4 !important;
+}
+
+.gate-pass-title {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif !important;
+  font-size: 22px !important;
+  margin: 12px 0 8px !important;
+  color: #272824 !important;
+}
+
+html.dark-theme .gate-pass-title,
+body.login-dark-theme .gate-pass-title {
+  color: #F2EDE4 !important;
+}
+
+/* 4. Complaints Card Title */
+.complaint-card-title {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif !important;
+  font-size: 21px !important;
+  margin: 4px 0 6px !important;
+  color: #272824 !important;
+}
+
+html.dark-theme .complaint-card-title,
+body.login-dark-theme .complaint-card-title {
+  color: #F2EDE4 !important;
+}
+
+/* 5. Caretaker Chat Titles */
+.chat-header-title {
+  margin: 0 !important;
+  font-size: 15px !important;
+  color: #272824 !important;
+}
+
+html.dark-theme .chat-header-title,
+body.login-dark-theme .chat-header-title {
+  color: #F2EDE4 !important;
+}
+
+.chat-msg-text {
+  font-size: 14px !important;
+  color: #272824 !important;
+  line-height: 1.4 !important;
+}
+
+html.dark-theme .chat-msg-text,
+body.login-dark-theme .chat-msg-text {
+  color: #F2EDE4 !important;
+}
