@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { cancelAllMealReminders } from './messNotificationService';
+import { cancelAllMealReminders, scheduleWeeklyMealReminders } from './messNotificationService';
 import { api } from './api';
 
 const CHANNEL_ID = 'hostelcare_custom_channel';
@@ -43,9 +43,12 @@ export async function initPushNotifications() {
           hardwareModel: 'Android Mobile App',
         });
         pushRegistered = true;
-        // Cancel any pending local offline meal reminders so Cloud FCM handles it exclusively without duplicates
+        // Phase 2: Hybrid Safety Net
+        // Keep offline LocalNotifications schedule active as a hardware fallback!
+        // If Cloud FCM delivers, the local notification is suppressed. If Cloud FCM fails or drops in Doze mode,
+        // the local AlarmManager notification fires right on time!
         try {
-          await cancelAllMealReminders();
+          await scheduleWeeklyMealReminders();
         } catch (_) {}
       } catch (err) {
         console.warn('Failed to send push token to backend:', err);

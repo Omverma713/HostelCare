@@ -108,162 +108,243 @@ async function sendPushToSessions(sessions, payload) {
   }
 
   const Session = require("../models/session.model");
+  const DeviceRegistry = require("../models/deviceRegistry.model");
 
-  // Track unique tokens and endpoints to ensure exactly 1 push per device even with multiple sessions
+  // Track unique tokens and endpoints to ensure exactly 1 push per device
   const seenFcmTokens = new Set();
   const seenWebPushEndpoints = new Set();
+  const fcmTargets = [];
+  const webPushTargets = [];
 
   for (const session of sessions) {
     const { pushToken, webPushSubscription, pushProvider, _id: sessionId } = session;
 
-    // 1. Android FCM Notification
-    if (pushToken && (pushProvider === "fcm" || pushProvider === "none")) {
+    // Collect FCM Targets
+    if (pushToken && (pushProvider === "fcm" || pushProvider === "none" || !pushProvider)) {
       const normalizedToken = typeof pushToken === "string" ? pushToken.trim() : "";
-      if (!normalizedToken) continue;
-
-      // Skip duplicate sends if the same FCM token exists across multiple active sessions
-      if (seenFcmTokens.has(normalizedToken)) {
-        continue;
-      }
-      seenFcmTokens.add(normalizedToken);
-
-      report.attempted++;
-      report.fcm.attempted++;
-
-      if (!isFcmReady) {
-        report.failed++;
-        report.fcm.failed++;
-        report.errors.push({
-          sessionId: sessionId.toString(),
-          provider: "fcm",
-          error: "FCM provider credentials not configured on server",
-        });
-        continue;
-      }
-
-      try {
-        const message = {
-          token: normalizedToken,
-          notification: {
-            title: payload.title || "HostelCare",
-            body: payload.body || "",
-            ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
-          },
-          data: {
-            route: payload.route || "/",
-            imageUrl: payload.imageUrl || "",
-            sentAt: new Date().toISOString(),
-            ...(payload.data || {}),
-          },
-          android: {
-            priority: "high",
-            notification: {
-              channelId: payload.channelId || "hostelcare_custom_channel",
-              sound: "default",
-              icon: "ic_stat_hostelcare",
-              color: "#00f3ff",
-              defaultSound: true,
-              defaultVibrateTimings: true,
-              notificationPriority: "PRIORITY_MAX",
-              visibility: "PUBLIC",
-              ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
-            },
-          },
-        };
-
-        if (messagingInstance) {
-          await messagingInstance.send(message);
-        } else if (typeof admin.messaging === "function") {
-          await admin.messaging().send(message);
-        } else {
-          throw new Error("FCM messaging instance not available");
-        }
-        report.accepted++;
-        report.fcm.accepted++;
-      } catch (err) {
-        report.failed++;
-        report.fcm.failed++;
-        report.errors.push({
-          sessionId: sessionId.toString(),
-          provider: "fcm",
-          error: err.message,
-        });
-
-        // Automatically clean up stale or invalid registration tokens
-        if (
-          err.code === "messaging/registration-token-not-registered" ||
-          err.code === "messaging/invalid-registration-token"
-        ) {
-          await Session.updateOne(
-            { _id: sessionId },
-            { $set: { pushToken: null, pushProvider: "none" } }
-          ).catch(() => {});
-          try {
-            const DeviceRegistry = require("../models/deviceRegistry.model");
-            await DeviceRegistry.updateOne(
-              { pushToken: normalizedToken },
-              { $set: { isActive: false, "metadata.cleanedReason": err.code, "metadata.cleanedAt": new Date() } }
-            );
-          } catch (_) {}
-          report.staleTokensRemoved++;
-        }
+      if (normalizedToken && !seenFcmTokens.has(normalizedToken)) {
+        seenFcmTokens.add(normalizedToken);
+        fcmTargets.push({ token: normalizedToken, sessionId });
       }
     }
 
-    // 2. Web Push Notification
-    else if (webPushSubscription && pushProvider === "webpush") {
+    // Collect WebPush Targets
+    if (webPushSubscription && pushProvider === "webpush") {
       const endpoint = webPushSubscription.endpoint;
-      if (!endpoint || seenWebPushEndpoints.has(endpoint)) {
-        continue;
+      if (endpoint && !seenWebPushEndpoints.has(endpoint)) {
+        seenWebPushEndpoints.add(endpoint);
+        webPushTargets.push({ subscription: webPushSubscription, sessionId });
       }
-      seenWebPushEndpoints.add(endpoint);
-      report.attempted++;
-      report.webpush.attempted++;
+    }
+  }
 
-      if (!isWebPushReady) {
-        report.failed++;
-        report.webpush.failed++;
-        report.errors.push({
-          sessionId: sessionId.toString(),
-          provider: "webpush",
-          error: "Web Push VAPID keys not configured on server",
-        });
-        continue;
-      }
+  // ──────────────────────────────────────────────────────────────────────────
+  // 1. Android FCM High-Priority Multicast Batch Delivery (Phase 1 Turbo Boost)
+  // ──────────────────────────────────────────────────────────────────────────
+  if (fcmTargets.length > 0) {
+    report.attempted += fcmTargets.length;
+    report.fcm.attempted += fcmTargets.length;
 
-      try {
-        const pushPayload = JSON.stringify({
+    if (!isFcmReady) {
+      report.failed += fcmTargets.length;
+      report.fcm.failed += fcmTargets.length;
+      report.errors.push({
+        provider: "fcm",
+        error: "FCM provider credentials not configured on server",
+      });
+    } else {
+      const staleTokensToClean = [];
+
+      // Construct High Priority Android FCM payload designed to penetrate Android Deep Doze Mode
+      const baseFcmPayload = {
+        notification: {
           title: payload.title || "HostelCare",
           body: payload.body || "",
-          image: payload.imageUrl || undefined,
-          data: {
-            route: payload.route || "/",
-            imageUrl: payload.imageUrl || "",
-            sentAt: new Date().toISOString(),
+          ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
+        },
+        data: {
+          route: payload.route || "/",
+          imageUrl: payload.imageUrl || "",
+          sentAt: new Date().toISOString(),
+          ...(payload.data || {}),
+        },
+        android: {
+          priority: "high",
+          ttl: 7200, // 2-hour TTL to ensure delivery as soon as device surfaces
+          notification: {
+            channelId: payload.channelId || "hostelcare_custom_channel",
+            sound: "default",
+            icon: "ic_stat_hostelcare",
+            color: "#00f3ff",
+            defaultSound: true,
+            defaultVibrateTimings: true,
+            notificationPriority: "PRIORITY_MAX",
+            visibility: "PUBLIC",
+            ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
           },
-        });
+        },
+      };
 
-        await webpush.sendNotification(webPushSubscription, pushPayload);
-        report.accepted++;
-        report.webpush.accepted++;
-      } catch (err) {
-        report.failed++;
-        report.webpush.failed++;
-        report.errors.push({
-          sessionId: sessionId.toString(),
-          provider: "webpush",
-          error: err.message,
-        });
+      // Case A: Single Target Optimization
+      if (fcmTargets.length === 1) {
+        const { token, sessionId } = fcmTargets[0];
+        try {
+          const singleMsg = { token, ...baseFcmPayload };
+          if (messagingInstance) {
+            await messagingInstance.send(singleMsg);
+          } else if (typeof admin.messaging === "function") {
+            await admin.messaging().send(singleMsg);
+          } else {
+            throw new Error("FCM messaging instance not available");
+          }
+          report.accepted++;
+          report.fcm.accepted++;
+        } catch (err) {
+          report.failed++;
+          report.fcm.failed++;
+          report.errors.push({
+            sessionId: sessionId ? sessionId.toString() : "",
+            provider: "fcm",
+            error: err.message,
+          });
+          if (
+            err.code === "messaging/registration-token-not-registered" ||
+            err.code === "messaging/invalid-registration-token"
+          ) {
+            staleTokensToClean.push(token);
+          }
+        }
+      } 
+      // Case B: Multicast Batching (up to 500 devices per Google FCM call)
+      else {
+        const CHUNK_SIZE = 500;
+        for (let i = 0; i < fcmTargets.length; i += CHUNK_SIZE) {
+          const chunk = fcmTargets.slice(i, i + CHUNK_SIZE);
+          const chunkTokens = chunk.map((t) => t.token);
 
-        // 404 or 410 Gone indicates expired or unsubscribed endpoint
-        if (err.statusCode === 404 || err.statusCode === 410) {
-          await Session.updateOne(
-            { _id: sessionId },
-            { $set: { webPushSubscription: null, pushProvider: "none" } }
-          ).catch(() => {});
-          report.staleTokensRemoved++;
+          try {
+            if (messagingInstance && typeof messagingInstance.sendEachForMulticast === "function") {
+              const multicastMsg = { tokens: chunkTokens, ...baseFcmPayload };
+              const batchRes = await messagingInstance.sendEachForMulticast(multicastMsg);
+
+              report.accepted += batchRes.successCount;
+              report.fcm.accepted += batchRes.successCount;
+              report.failed += batchRes.failureCount;
+              report.fcm.failed += batchRes.failureCount;
+
+              batchRes.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                  const err = resp.error;
+                  report.errors.push({
+                    token: chunkTokens[idx].slice(0, 15) + "...",
+                    provider: "fcm",
+                    error: err?.message || "Delivery failed",
+                  });
+                  if (
+                    err?.code === "messaging/registration-token-not-registered" ||
+                    err?.code === "messaging/invalid-registration-token"
+                  ) {
+                    staleTokensToClean.push(chunkTokens[idx]);
+                  }
+                }
+              });
+            } else {
+              // Fallback to concurrent single sends if sendEachForMulticast is not exposed
+              await Promise.allSettled(
+                chunk.map(async ({ token, sessionId }) => {
+                  try {
+                    const singleMsg = { token, ...baseFcmPayload };
+                    await (messagingInstance ? messagingInstance.send(singleMsg) : admin.messaging().send(singleMsg));
+                    report.accepted++;
+                    report.fcm.accepted++;
+                  } catch (err) {
+                    report.failed++;
+                    report.fcm.failed++;
+                    if (
+                      err.code === "messaging/registration-token-not-registered" ||
+                      err.code === "messaging/invalid-registration-token"
+                    ) {
+                      staleTokensToClean.push(token);
+                    }
+                  }
+                })
+              );
+            }
+          } catch (batchErr) {
+            report.failed += chunk.length;
+            report.fcm.failed += chunk.length;
+            report.errors.push({ provider: "fcm", error: batchErr.message });
+          }
         }
       }
+
+      // Automatically prune stale / uninstalled device tokens
+      if (staleTokensToClean.length > 0) {
+        try {
+          await DeviceRegistry.updateMany(
+            { pushToken: { $in: staleTokensToClean } },
+            { $set: { isActive: false, "metadata.cleanedReason": "unregistered_token", "metadata.cleanedAt": new Date() } }
+          );
+          await Session.updateMany(
+            { pushToken: { $in: staleTokensToClean } },
+            { $set: { pushToken: null, pushProvider: "none" } }
+          );
+          report.staleTokensRemoved += staleTokensToClean.length;
+        } catch (_) {}
+      }
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 2. Web Push Notifications (Parallelized)
+  // ──────────────────────────────────────────────────────────────────────────
+  if (webPushTargets.length > 0) {
+    report.attempted += webPushTargets.length;
+    report.webpush.attempted += webPushTargets.length;
+
+    if (!isWebPushReady) {
+      report.failed += webPushTargets.length;
+      report.webpush.failed += webPushTargets.length;
+      report.errors.push({
+        provider: "webpush",
+        error: "Web Push VAPID keys not configured on server",
+      });
+    } else {
+      const pushPayload = JSON.stringify({
+        title: payload.title || "HostelCare",
+        body: payload.body || "",
+        image: payload.imageUrl || undefined,
+        data: {
+          route: payload.route || "/",
+          imageUrl: payload.imageUrl || "",
+          sentAt: new Date().toISOString(),
+        },
+      });
+
+      await Promise.allSettled(
+        webPushTargets.map(async ({ subscription, sessionId }) => {
+          try {
+            await webpush.sendNotification(subscription, pushPayload);
+            report.accepted++;
+            report.webpush.accepted++;
+          } catch (err) {
+            report.failed++;
+            report.webpush.failed++;
+            report.errors.push({
+              sessionId: sessionId ? sessionId.toString() : "",
+              provider: "webpush",
+              error: err.message,
+            });
+            if (err.statusCode === 404 || err.statusCode === 410) {
+              await Session.updateOne(
+                { _id: sessionId },
+                { $set: { webPushSubscription: null, pushProvider: "none" } }
+              ).catch(() => {});
+              report.staleTokensRemoved++;
+            }
+          }
+        })
+      );
     }
   }
 

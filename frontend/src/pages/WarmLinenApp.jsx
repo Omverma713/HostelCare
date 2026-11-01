@@ -19,6 +19,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const { user, login, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showBatteryGuide, setShowBatteryGuide] = useState(false);
   const [loginRegNum, setLoginRegNum] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
@@ -676,6 +677,27 @@ const handleSendMessage = (e) => {
                         title="Send immediate test snacks push notification directly to this mobile phone"
                       >
                         <span>{testingPhonePush ? '⚡...' : '📱 Test Snacks Alert'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowBatteryGuide(true)}
+                        style={{
+                          background: '#FFF1F2',
+                          border: '1px solid #FECDD3',
+                          borderRadius: 9999,
+                          padding: '8px 14px',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: '#BE123C',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                        title="Fix missed notifications on Xiaomi, Vivo, Oppo & Samsung"
+                      >
+                        <span>🔋 100% Alert Guide</span>
                       </button>
 
                       <button
@@ -1468,6 +1490,80 @@ const handleSendMessage = (e) => {
         </div>
       )}
     
+      {/* MODAL: 100% NOTIFICATION BATTERY OPTIMIZATION GUIDE */}
+      {showBatteryGuide && (
+        <div className="modal-overlay" onClick={() => setShowBatteryGuide(false)}>
+          <div className="modal-sheet" style={{ maxWidth: 540 }} onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setShowBatteryGuide(false)}>×</button>
+            <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>
+              ANDROID DOZE & BATTERY GUIDE
+            </span>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px', color: '#272824' }}>
+              Ensure 100% On-Time Meal Notifications
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              On Sundays & idle hours, brands like Xiaomi, Vivo, Oppo, Realme, and Samsung kill background sockets to save battery. Follow these 2 quick steps for your phone:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '60vh', overflowY: 'auto', paddingRight: 4 }}>
+              {/* Xiaomi / POCO / Redmi */}
+              <div style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', borderRadius: 14, padding: '12px 16px' }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: '#D97706', marginBottom: 4 }}>
+                  📱 Xiaomi / POCO / Redmi (MIUI / HyperOS)
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#575854', lineHeight: 1.5 }}>
+                  <li>Long press <strong>HostelCare</strong> icon ➔ tap <strong>App Info (ℹ️)</strong>.</li>
+                  <li>Go to <strong>Battery Saver</strong> ➔ Select <strong>"No restrictions"</strong>.</li>
+                  <li>Enable <strong>Autostart</strong> toggle ➔ tap OK.</li>
+                </ul>
+              </div>
+
+              {/* Vivo / iQOO */}
+              <div style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', borderRadius: 14, padding: '12px 16px' }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: '#2563EB', marginBottom: 4 }}>
+                  📱 Vivo / iQOO (Funtouch OS / OriginOS)
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#575854', lineHeight: 1.5 }}>
+                  <li>Go to phone <strong>Settings</strong> ➔ <strong>Battery</strong>.</li>
+                  <li>Tap <strong>Background power consumption</strong> ➔ select <strong>HostelCare</strong> ➔ choose <strong>"High background power usage"</strong>.</li>
+                  <li>Go to <strong>Settings ➔ Applications ➔ Autostart</strong> ➔ turn <strong>HostelCare ON</strong>.</li>
+                </ul>
+              </div>
+
+              {/* Oppo / Realme / OnePlus */}
+              <div style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', borderRadius: 14, padding: '12px 16px' }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: '#059669', marginBottom: 4 }}>
+                  📱 Oppo / Realme / OnePlus (ColorOS / OxygenOS)
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#575854', lineHeight: 1.5 }}>
+                  <li>Long press <strong>HostelCare</strong> icon ➔ <strong>App info</strong> ➔ <strong>Battery usage</strong>.</li>
+                  <li>Enable <strong>"Allow background activity"</strong> and <strong>"Allow auto-launch"</strong>.</li>
+                </ul>
+              </div>
+
+              {/* Samsung */}
+              <div style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', borderRadius: 14, padding: '12px 16px' }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: '#7C3AED', marginBottom: 4 }}>
+                  📱 Samsung (One UI)
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#575854', lineHeight: 1.5 }}>
+                  <li>Phone <strong>Settings ➔ Apps ➔ HostelCare ➔ Battery</strong> ➔ select <strong>"Unrestricted"</strong>.</li>
+                  <li>Under <strong>Device care ➔ Battery ➔ Background usage limits</strong>, ensure HostelCare is not in "Deep sleeping apps".</li>
+                </ul>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowBatteryGuide(false)}
+              style={{ marginTop: 16, width: '100%', background: '#728D7A', color: 'white', border: 'none', padding: '10px', borderRadius: 9999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Got it! My alerts are protected ✓
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: RESIDENT SIGN IN */}
       {showLoginModal && (
         <div className="modal-overlay" onClick={() => setShowLoginModal(false)}>
