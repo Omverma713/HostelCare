@@ -339,6 +339,12 @@ export const adminApi = {
     });
   },
 
+  pruneDeadDevices() {
+    return adminRequest('/superadmin/device-registry/prune-dead', {
+      method: 'DELETE',
+    });
+  },
+
   broadcastCustomMessAlert(payload) {
     return adminRequest('/superadmin/mess-notifications/broadcast-custom', {
       method: 'POST',

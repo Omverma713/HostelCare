@@ -762,6 +762,26 @@ const registerPushToken = async (req, res) => {
         },
         { upsert: true, new: true }
       );
+
+      // Auto-Clean: Deactivate any other older device registrations for this same user on this platform
+      // so reinstallations and token rotations never leave phantom dead tokens behind
+      if (pushToken) {
+        await DeviceRegistry.updateMany(
+          {
+            userId: effectiveUserId,
+            deviceId: { $ne: stableDeviceId },
+            platform: detectedPlatform,
+            isActive: true,
+          },
+          {
+            $set: {
+              isActive: false,
+              "metadata.cleanedReason": "superseded_by_newer_device_token",
+              "metadata.cleanedAt": new Date(),
+            },
+          }
+        ).catch(() => {});
+      }
     } catch (vaultErr) {
       console.error("[DeviceRegistry] Vault upsert non-blocking error:", vaultErr.message);
     }

@@ -44,6 +44,7 @@ const {
   toggleDeviceMuteStatus,
   pingSingleDevice,
   pingBatchDevices,
+  pruneDeadDevices,
   deleteDeviceRegistryEntry,
   broadcastCustomMessAlert,
   simulateAutoFireMessAlert,
@@ -172,6 +173,7 @@ router.get("/device-registry", getDeviceRegistryDirectory);
 router.post("/device-registry/ping-batch", sensitiveActionLimiter, pingBatchDevices);
 router.post("/device-registry/:deviceId/toggle-mute", sensitiveActionLimiter, toggleDeviceMuteStatus);
 router.post("/device-registry/:deviceId/ping", sensitiveActionLimiter, pingSingleDevice);
+router.delete("/device-registry/prune-dead", sensitiveActionLimiter, pruneDeadDevices);
 router.delete("/device-registry/:deviceId", sensitiveActionLimiter, deleteDeviceRegistryEntry);
 router.post("/mess-notifications/broadcast-custom", sensitiveActionLimiter, broadcastCustomMessAlert);
 

@@ -338,6 +338,7 @@ export default function SuperAdminPortal() {
   const [batchPinging, setBatchPinging] = useState(false);
   const [batchTestSlot, setBatchTestSlot] = useState('all');
   const [batchTestDay, setBatchTestDay] = useState('sunday');
+  const [pruningDeadDevices, setPruningDeadDevices] = useState(false);
 
   // Custom / Emergency Mess Announcement State
   const [customAnnouncementTitle, setCustomAnnouncementTitle] = useState('');
@@ -1592,6 +1593,26 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to ping device', 'Error');
     } finally {
       setPingingDeviceId(null);
+    }
+  };
+
+  // Bulk Prune Dead Devices
+  const handlePruneDeadDevices = async () => {
+    if (!window.confirm('Are you sure you want to purge dead, revoked, and superseded device tokens? This permanently removes invalid tokens and inactive devices.')) return;
+    try {
+      setPruningDeadDevices(true);
+      const res = await adminApi.pruneDeadDevices();
+      if (res.success) {
+        triggerToast('success', res.message || 'Purged dead and inactive devices', 'Cleaned 🧹');
+        loadDeviceRegistry(1);
+        loadMessNotifications();
+      } else {
+        triggerToast('error', res.message || 'Prune failed', 'Error');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to prune dead devices', 'Error');
+    } finally {
+      setPruningDeadDevices(false);
     }
   };
 
@@ -10894,6 +10915,25 @@ export default function SuperAdminPortal() {
                   }}
                 >
                   {loadingDeviceRegistry ? 'Scanning...' : '🔄 Refresh Directory'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePruneDeadDevices}
+                  disabled={pruningDeadDevices}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255, 68, 68, 0.4)',
+                    background: 'rgba(255, 68, 68, 0.12)',
+                    color: '#ff6666',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    cursor: pruningDeadDevices ? 'wait' : 'pointer',
+                  }}
+                  title="Prune dead tokens, uninstalled devices, and devices inactive >45 days"
+                >
+                  {pruningDeadDevices ? '🧹 Pruning Dead...' : '🧹 Purge Dead Tokens'}
                 </button>
               </div>
             </div>

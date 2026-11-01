@@ -3465,6 +3465,47 @@ async function pingBatchDevices(req, res) {
 }
 
 /**
+ * DELETE /api/v1/superadmin/device-registry/prune-dead
+ * 1-click administrative purge of all inactive, uninstalled, or stale device tokens
+ */
+async function pruneDeadDevices(req, res) {
+  try {
+    const DeviceRegistry = require("../models/deviceRegistry.model");
+    const Session = require("../models/session.model");
+
+    const [registryResult, sessionResult] = await Promise.all([
+      DeviceRegistry.deleteMany({
+        $or: [
+          { isActive: false },
+          { pushToken: { $in: [null, ""] }, "webPushSubscription.endpoint": { $in: [null, ""] } },
+          { lastSeenAt: { $lt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000) } },
+        ],
+      }),
+      Session.updateMany(
+        { status: { $ne: "active" } },
+        { $set: { pushToken: null, pushProvider: "none" } }
+      ),
+    ]);
+
+    await recordAudit({
+      req,
+      action: "DEAD_TOKENS_PURGED",
+      targetType: "DEVICE",
+      summary: `Super Admin purged ${registryResult.deletedCount || 0} dead hardware devices and cleaned inactive sessions.`,
+      details: { deletedDevices: registryResult.deletedCount, updatedSessions: sessionResult.modifiedCount },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully purged ${registryResult.deletedCount || 0} dead/inactive device token(s) from hardware vault.`,
+      prunedCount: registryResult.deletedCount || 0,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to prune dead devices", error: error.message });
+  }
+}
+
+/**
  * DELETE /api/v1/superadmin/device-registry/:deviceId
  * Unregisters / prunes a device from hardware vault
  */
@@ -3912,6 +3953,7 @@ module.exports = {
   toggleDeviceMuteStatus,
   pingSingleDevice,
   pingBatchDevices,
+  pruneDeadDevices,
   deleteDeviceRegistryEntry,
   broadcastCustomMessAlert,
   simulateAutoFireMessAlert,
