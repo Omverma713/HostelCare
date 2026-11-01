@@ -178,6 +178,13 @@ export const api = {
     });
   },
 
+  testMyDevice(payload = {}) {
+    return request('/users/test-my-device', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
   // --- MESS MENU (OFFLINE-FIRST & STAFF MANAGED) ---
   async getMessMenu() {
     try {

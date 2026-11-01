@@ -808,6 +808,38 @@ const verifyUserPassword = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/v1/users/test-my-device
+ * Allows student/user to instantly trigger a test push notification to their own current phone
+ */
+const testMyDevice = async (req, res) => {
+  try {
+    const { slotKey = "snacks", customTitle, customBody } = req.body;
+    const userId = req.user._id;
+    const { broadcastMealReminder } = require("../services/messReminderScheduler");
+
+    const result = await broadcastMealReminder(slotKey, {
+      isManualTest: true,
+      isTest: true,
+      targetUserId: userId,
+      customTitle: customTitle || `📱 Self Test Alert: ${req.user.name || "Student"}`,
+      customBody: customBody || `HostelCare Push is 100% active on this device for ${slotKey.toUpperCase()}!`,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Test push notification dispatched to device of ${req.user.name || "Student"}`,
+      result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send test push to device",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   activateUser,
   loggedInUser,
@@ -816,4 +848,5 @@ module.exports = {
   logoutUser,
   registerPushToken,
   verifyUserPassword,
+  testMyDevice,
 };

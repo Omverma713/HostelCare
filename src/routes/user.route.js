@@ -8,6 +8,7 @@ const {
   logoutUser,
   registerPushToken,
   verifyUserPassword,
+  testMyDevice,
 } = require("../controllers/user.controllers");
 const authMiddleware = require("../middleware/auth.middleware");
 const {
@@ -44,6 +45,7 @@ router.post("/logout", authMiddleware, logoutUser);
 router.get("/my-sessions", authMiddleware, getMySessions);
 router.delete("/my-sessions/:sessionId", authMiddleware, revokeMySession);
 router.post("/register-push-token", authMiddleware, registerPushToken);
+router.post("/test-my-device", authMiddleware, sensitiveActionLimiter, testMyDevice);
 router.post("/verify-password", authMiddleware, sensitiveActionLimiter, verifyUserPassword);
 
 router.post("/complaints", authMiddleware, savingComplaint);

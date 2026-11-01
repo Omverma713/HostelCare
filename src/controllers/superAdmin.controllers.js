@@ -3368,6 +3368,45 @@ async function pingSingleDevice(req, res) {
 }
 
 /**
+ * POST /api/v1/superadmin/device-registry/ping-batch
+ * Tests meal push notifications on multiple selected devices simultaneously
+ */
+async function pingBatchDevices(req, res) {
+  try {
+    const DeviceRegistry = require("../models/deviceRegistry.model");
+    const { broadcastMealReminder } = require("../services/messReminderScheduler");
+    const { deviceIds = [], slotKey = "breakfast", customTitle, customBody } = req.body;
+
+    if (!Array.isArray(deviceIds) || deviceIds.length === 0) {
+      return res.status(400).json({ success: false, message: "deviceIds array is required" });
+    }
+
+    const devices = await DeviceRegistry.find({ deviceId: { $in: deviceIds } }).lean();
+    if (!devices.length) {
+      return res.status(404).json({ success: false, message: "No matching target devices found" });
+    }
+
+    const targetNames = devices.map(d => d.studentName || d.regNo || d.deviceId).join(", ");
+    const result = await broadcastMealReminder(slotKey, {
+      isManualTest: true,
+      isTest: true,
+      targetDeviceIds: deviceIds,
+      customTitle: customTitle || `🎯 Test Alert for Selected Devices (${devices.length})`,
+      customBody: customBody || `Test ping for ${slotKey.toUpperCase()} sent to selected devices by Super Admin.`,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Batch test push dispatched to ${devices.length} selected device(s): ${targetNames}`,
+      targetCount: devices.length,
+      result,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to ping batch devices", error: error.message });
+  }
+}
+
+/**
  * DELETE /api/v1/superadmin/device-registry/:deviceId
  * Unregisters / prunes a device from hardware vault
  */
@@ -3814,6 +3853,7 @@ module.exports = {
   getDeviceRegistryDirectory,
   toggleDeviceMuteStatus,
   pingSingleDevice,
+  pingBatchDevices,
   deleteDeviceRegistryEntry,
   broadcastCustomMessAlert,
   simulateAutoFireMessAlert,

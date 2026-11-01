@@ -334,6 +334,9 @@ export default function SuperAdminPortal() {
   const [loadingDeviceRegistry, setLoadingDeviceRegistry] = useState(false);
   const [pingingDeviceId, setPingingDeviceId] = useState(null);
   const [mutingDeviceId, setMutingDeviceId] = useState(null);
+  const [selectedDeviceIds, setSelectedDeviceIds] = useState([]);
+  const [batchPinging, setBatchPinging] = useState(false);
+  const [batchTestSlot, setBatchTestSlot] = useState('snacks');
 
   // Custom / Emergency Mess Announcement State
   const [customAnnouncementTitle, setCustomAnnouncementTitle] = useState('');
@@ -1532,6 +1535,43 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to toggle device mute', 'Error');
     } finally {
       setMutingDeviceId(null);
+    }
+  };
+
+  // Batch Device Ping for Multi-Mobile Testing
+  const handleToggleSelectDevice = (deviceId) => {
+    setSelectedDeviceIds((prev) =>
+      prev.includes(deviceId) ? prev.filter((id) => id !== deviceId) : [...prev, deviceId]
+    );
+  };
+
+  const handleSelectAllDevices = () => {
+    if (selectedDeviceIds.length === deviceRegistryList.length && deviceRegistryList.length > 0) {
+      setSelectedDeviceIds([]);
+    } else {
+      setSelectedDeviceIds(deviceRegistryList.map((d) => d.deviceId));
+    }
+  };
+
+  const handlePingBatchDevices = async () => {
+    if (!selectedDeviceIds.length) {
+      triggerToast('error', 'Please select at least 1 device to test', 'Selection Required');
+      return;
+    }
+    try {
+      setBatchPinging(true);
+      const res = await adminApi.pingBatchDevices(selectedDeviceIds, {
+        slotKey: batchTestSlot,
+        customTitle: `🎯 Test Alert for ${selectedDeviceIds.length} Mobile(s)`,
+        customBody: `Test ping dispatched to your mobile by Super Admin for ${batchTestSlot.toUpperCase()}.`,
+      });
+      if (res.success) {
+        triggerToast('success', res.message || `Dispatched to ${selectedDeviceIds.length} device(s)!`, 'Batch Ping Delivered 🚀');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to ping batch devices', 'Error');
+    } finally {
+      setBatchPinging(false);
     }
   };
 
@@ -3034,7 +3074,7 @@ export default function SuperAdminPortal() {
                 <tbody>
                   {users.length === 0 ? (
                     <tr>
-                      <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                         {loading ? 'Loading users...' : 'No users found matching query.'}
                       </td>
                     </tr>
@@ -4848,7 +4888,7 @@ export default function SuperAdminPortal() {
               <tbody>
                 {sessions.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                       No session records found.
                     </td>
                   </tr>
@@ -10903,11 +10943,111 @@ export default function SuperAdminPortal() {
               </button>
             </div>
 
+            {/* Multi-Mobile Batch Test Action Bar */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                background: 'rgba(0, 243, 255, 0.05)',
+                border: '1px solid rgba(0, 243, 255, 0.25)',
+                marginBottom: '10px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#00f3ff' }}>
+                  📱 Separate Mobile Push Tester
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#88a0c4' }}>
+                  Selected: <strong style={{ color: selectedDeviceIds.length > 0 ? '#00ff66' : '#cbd5e1' }}>{selectedDeviceIds.length}</strong> device(s)
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <label style={{ fontSize: '0.75rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>Test Meal:</span>
+                  <select
+                    value={batchTestSlot}
+                    onChange={(e) => setBatchTestSlot(e.target.value)}
+                    style={{
+                      background: 'rgba(5, 19, 41, 0.9)',
+                      color: '#00f3ff',
+                      border: '1px solid rgba(0, 243, 255, 0.4)',
+                      borderRadius: '5px',
+                      padding: '3px 8px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    <option value="breakfast">🍳 Breakfast</option>
+                    <option value="lunch">🍛 Lunch</option>
+                    <option value="snacks">☕ Evening Snacks</option>
+                    <option value="dinner">🍲 Dinner</option>
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  disabled={batchPinging || selectedDeviceIds.length === 0}
+                  onClick={handlePingBatchDevices}
+                  style={{
+                    padding: '5px 14px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: selectedDeviceIds.length > 0 ? 'linear-gradient(135deg, #00ff66 0%, #00a884 100%)' : 'rgba(255, 255, 255, 0.1)',
+                    color: selectedDeviceIds.length > 0 ? '#051329' : '#88a0c4',
+                    fontWeight: 800,
+                    fontSize: '0.75rem',
+                    cursor: (batchPinging || selectedDeviceIds.length === 0) ? 'not-allowed' : 'pointer',
+                    boxShadow: selectedDeviceIds.length > 0 ? '0 0 12px rgba(0, 255, 102, 0.35)' : 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  title="Send immediate push notification alert to selected phones"
+                >
+                  <span>{batchPinging ? '⚡ Pinging...' : '🚀 Test Selected Mobiles'}</span>
+                  {selectedDeviceIds.length > 0 && <span>({selectedDeviceIds.length})</span>}
+                </button>
+
+                {selectedDeviceIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDeviceIds([])}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#ef4444',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      padding: '4px 6px',
+                    }}
+                  >
+                    Clear Selection
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Device Registry Table */}
             <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid rgba(0, 243, 255, 0.2)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
                 <thead>
                   <tr style={{ background: 'rgba(0, 243, 255, 0.08)', color: '#00f3ff', borderBottom: '1px solid rgba(0, 243, 255, 0.2)' }}>
+                    <th style={{ padding: '0.65rem 0.75rem', width: '36px' }}>
+                      <input
+                        type="checkbox"
+                        checked={deviceRegistryList.length > 0 && selectedDeviceIds.length === deviceRegistryList.length}
+                        onChange={handleSelectAllDevices}
+                        style={{ cursor: 'pointer' }}
+                        title="Select All Mobiles"
+                      />
+                    </th>
                     <th style={{ padding: '0.65rem 0.75rem' }}>Student / Reg No</th>
                     <th style={{ padding: '0.65rem 0.75rem' }}>Hostel Block & Room</th>
                     <th style={{ padding: '0.65rem 0.75rem' }}>Platform / Hardware</th>
@@ -10919,7 +11059,7 @@ export default function SuperAdminPortal() {
                 <tbody>
                   {deviceRegistryList.length === 0 ? (
                     <tr>
-                      <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: '#88a0c4' }}>
+                      <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#88a0c4' }}>
                         {loadingDeviceRegistry ? 'Scanning hardware registry...' : 'No registered devices found matching criteria.'}
                       </td>
                     </tr>
@@ -10934,6 +11074,14 @@ export default function SuperAdminPortal() {
                             background: isMuted ? 'rgba(255, 170, 0, 0.03)' : 'transparent',
                           }}
                         >
+                          <td style={{ padding: '0.65rem 0.75rem', width: '36px' }}>
+                            <input
+                              type="checkbox"
+                              checked={selectedDeviceIds.includes(dev.deviceId)}
+                              onChange={() => handleToggleSelectDevice(dev.deviceId)}
+                              style={{ cursor: 'pointer' }}
+                            />
+                          </td>
                           <td style={{ padding: '0.65rem 0.75rem' }}>
                             <div style={{ fontWeight: 700, color: '#ffffff' }}>
                               {dev.studentName || 'Hostel Student'}

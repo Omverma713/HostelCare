@@ -326,6 +326,13 @@ export const adminApi = {
     });
   },
 
+  pingBatchDevices(deviceIds, payload = {}) {
+    return adminRequest('/superadmin/device-registry/ping-batch', {
+      method: 'POST',
+      body: JSON.stringify({ deviceIds, ...payload }),
+    });
+  },
+
   deleteDeviceRegistryEntry(deviceId) {
     return adminRequest(`/superadmin/device-registry/${encodeURIComponent(deviceId)}`, {
       method: 'DELETE',

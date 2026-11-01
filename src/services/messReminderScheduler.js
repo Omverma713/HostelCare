@@ -248,8 +248,20 @@ async function broadcastMealReminder(slotKey, options = {}) {
         ],
       };
 
+      const isTargetedSpecific = Boolean(
+        options.targetDeviceId ||
+        (Array.isArray(options.targetDeviceIds) && options.targetDeviceIds.length > 0) ||
+        (Array.isArray(options.targetRegNos) && options.targetRegNos.length > 0)
+      );
+
       if (options.targetDeviceId) {
         deviceQuery.deviceId = options.targetDeviceId;
+      } else if (Array.isArray(options.targetDeviceIds) && options.targetDeviceIds.length > 0) {
+        deviceQuery.deviceId = { $in: options.targetDeviceIds };
+      }
+
+      if (Array.isArray(options.targetRegNos) && options.targetRegNos.length > 0) {
+        deviceQuery.regNo = { $in: options.targetRegNos };
       }
 
       if (options.targetUserId) {
@@ -266,9 +278,14 @@ async function broadcastMealReminder(slotKey, options = {}) {
       }
 
       const devices = await DeviceRegistry.find(deviceQuery).lean();
-      const sessions = await Session.find(sessionQuery)
-        .select("+pushToken +webPushSubscription")
-        .lean();
+
+      // Only query generic sessions if NOT testing specific device(s)
+      let sessions = [];
+      if (!isTargetedSpecific) {
+        sessions = await Session.find(sessionQuery)
+          .select("+pushToken +webPushSubscription")
+          .lean();
+      }
 
       // Deduplicate targets across vault and legacy sessions
       const seenTokens = new Set();

@@ -118,6 +118,23 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
     },
   ]);
   const [inputMsg, setInputMsg] = useState('');
+  const [testingPhonePush, setTestingPhonePush] = useState(false);
+
+  const handleTestMyPhonePush = async () => {
+    try {
+      setTestingPhonePush(true);
+      const res = await api.testMyDevice({ slotKey: 'snacks' });
+      if (res && res.success) {
+        triggerToast('success', '📱 Test push dispatched to your phone! Check notification shade.');
+      } else {
+        triggerToast('error', res?.message || 'Failed to dispatch test notification.');
+      }
+    } catch (err) {
+      triggerToast('error', err?.message || 'Push test failed. Check internet.');
+    } finally {
+      setTestingPhonePush(false);
+    }
+  };
 
   
   const fetchComplaints = async () => {
@@ -595,13 +612,39 @@ const handleSendMessage = (e) => {
                       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: '#242523' }}>Weekly Dining Schedule</h2>
                       <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>Official ITER campus meal timetable with verified portion standards and dietary tags.</p>
                     </div>
-                    <button
-                      onClick={() => navigate('/mess-menu')}
-                      style={{ background: '#FAF8F4', border: '1px solid #E6E0D5', borderRadius: 9999, padding: '8px 18px', fontSize: 13, fontWeight: 600, color: '#575854', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                    >
-                      <span>Full Matrix Table</span>
-                      <span>→</span>
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={handleTestMyPhonePush}
+                        disabled={testingPhonePush}
+                        style={{
+                          background: '#EEF3EE',
+                          border: '1px solid #728D7A',
+                          borderRadius: 9999,
+                          padding: '8px 16px',
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: '#3E6649',
+                          cursor: testingPhonePush ? 'not-allowed' : 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          boxShadow: '0 2px 6px rgba(114, 141, 122, 0.2)',
+                        }}
+                        title="Send immediate test push notification directly to this mobile phone"
+                      >
+                        <span>{testingPhonePush ? '⚡ Sending Alert...' : '📱 Test Push on this Mobile'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate('/mess-menu')}
+                        style={{ background: '#FAF8F4', border: '1px solid #E6E0D5', borderRadius: 9999, padding: '8px 18px', fontSize: 13, fontWeight: 600, color: '#575854', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <span>Full Matrix Table</span>
+                        <span>→</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
