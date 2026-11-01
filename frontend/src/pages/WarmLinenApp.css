@@ -1634,11 +1634,84 @@ body.login-dark-theme .top-navbar {
 
 @media (max-width: 768px) {
   .top-navbar {
-    width: calc(100% - 24px) !important;
-    margin: 10px auto 14px auto !important;
-    padding: 0 16px !important;
-    height: 60px !important;
+    width: calc(100% - 20px) !important;
+    margin: 8px auto 14px auto !important;
+    padding: 0 12px !important;
+    height: 56px !important;
     border-radius: 16px !important;
+    gap: 8px !important;
+  }
+
+  .brand-title {
+    flex-shrink: 0 !important;
+    gap: 0 !important;
+  }
+
+  .brand-name {
+    font-size: 20px !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .navbar-right-group {
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .navbar-user-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 4px 10px 4px 5px !important;
+    height: 34px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    border-radius: 9999px !important;
+    box-sizing: border-box !important;
+  }
+
+  .navbar-avatar-img {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .user-text-full {
+    display: none !important;
+  }
+
+  .user-text-mobile {
+    display: inline-block !important;
+    white-space: nowrap !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.01em !important;
+  }
+
+  .theme-toggle-warm-btn,
+  .header-logout-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    padding: 0 !important;
+    border-radius: 9999px !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand-name {
+    font-size: 17.5px !important;
+  }
+  .navbar-user-pill {
+    padding: 3px 8px 3px 4px !important;
+  }
+  .top-navbar {
+    padding: 0 10px !important;
   }
 }
 
