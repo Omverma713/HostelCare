@@ -1,6 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://hostelcare-api.duckdns.org/api/v1' : '/api/v1');
 
-async function adminRequest(endpoint, options = {}) {
+async function adminRequest(endpoint, options = {}, retries = 1) {
   const token = localStorage.getItem('token');
   const headers = {
     'Content-Type': 'application/json',
@@ -8,34 +8,54 @@ async function adminRequest(endpoint, options = {}) {
     ...(options.headers || {}),
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
 
-  let data = {};
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
-  } else {
-    const text = await response.text();
-    let cleanMessage = text;
-    if (typeof text === 'string' && text.trim().startsWith('<')) {
-      const match = text.match(/<pre>(.*?)<\/pre>/is) || text.match(/<title>(.*?)<\/title>/is);
-      cleanMessage = match ? match[1].replace(/<[^>]+>/g, '').trim() : `Request failed with HTTP ${response.status}`;
+    let data = {};
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      let cleanMessage = text;
+      if (typeof text === 'string' && text.trim().startsWith('<')) {
+        const match = text.match(/<pre>(.*?)<\/pre>/is) || text.match(/<title>(.*?)<\/title>/is);
+        cleanMessage = match ? match[1].replace(/<[^>]+>/g, '').trim() : `Request failed with HTTP ${response.status}`;
+      }
+      data = { success: response.ok, message: cleanMessage };
     }
-    data = { success: response.ok, message: cleanMessage };
-  }
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      window.dispatchEvent(new CustomEvent('auth-session-expired'));
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        window.dispatchEvent(new CustomEvent('auth-session-expired'));
+      }
+      const error = new Error(data.error || data.message || `HTTP error ${response.status}`);
+      error.status = response.status;
+      error.data = data;
+      throw error;
     }
-    const error = new Error(data.error || data.message || `HTTP error ${response.status}`);
-    error.status = response.status;
-    error.data = data;
+
+    return data;
+  } catch (error) {
+    const isNetworkError = !error.status || error.name === 'TypeError' || error.message?.includes('fetch');
+    if (isNetworkError && retries > 0) {
+      await new Promise((r) => setTimeout(r, 600));
+      return adminRequest(endpoint, options, retries - 1);
+    }
+
+    if (!error.status) {
+      error.status = 500;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        error.message = 'You are currently offline. Please check your internet connection.';
+      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        error.message = 'Unable to connect to server. Please check your connection and try again.';
+      } else {
+        error.message = error.message || 'Network error. Please try again.';
+      }
+    }
     throw error;
   }
-
-  return data;
 }
 
 export const adminApi = {

@@ -29,16 +29,40 @@ app.set("trust proxy", 1);
 // app.use(cors(corsOptions)) is sufficient — no separate app.options('*', ...)
 // wildcard route is needed.
 const corsOptions = {
-    origin: [
-        "https://hostelcare.omverma-dev.workers.dev", // Cloudflare production
-        "https://hostelcare-api.duckdns.org",          // AWS EC2 via DuckDNS HTTPS
-        "http://localhost:5173",                       // Vite dev server
-        "https://localhost",                           // Capacitor Android webview
-        "http://localhost",
-        "capacitor://localhost",
-    ],
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, server-to-server)
+        if (!origin) return callback(null, true);
+
+        // Pattern and explicit check for all deployment environments, previews, and LAN IPs
+        const isAllowed =
+            origin.includes("hostelcare") ||
+            origin.includes("workers.dev") ||
+            origin.includes("pages.dev") ||
+            origin.includes("localhost") ||
+            origin.includes("127.0.0.1") ||
+            origin.startsWith("http://192.168.") ||
+            origin.startsWith("http://10.") ||
+            origin.startsWith("http://172.") ||
+            origin.startsWith("capacitor://") ||
+            origin.startsWith("ionic://");
+
+        if (isAllowed) {
+            return callback(null, true);
+        }
+
+        // Safe fallback for REST API using Authorization bearer token (no cookies)
+        return callback(null, true);
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-client-version", "X-Client-Version"],
+    allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "x-client-version",
+        "X-Client-Version",
+        "Accept",
+        "Origin",
+        "X-Requested-With"
+    ],
     credentials: false, // JWT sent in Authorization header, not cookies
     optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };

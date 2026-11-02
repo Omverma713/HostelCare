@@ -28,7 +28,7 @@ function getInstallationId() {
   }
 }
 
-async function request(endpoint, options = {}) {
+async function request(endpoint, options = {}, retries = 1) {
   const token = localStorage.getItem('token');
   const headers = {
     'Content-Type': 'application/json',
@@ -67,9 +67,22 @@ async function request(endpoint, options = {}) {
 
     return data;
   } catch (error) {
+    // If it's a transient network/connection error and we have retries left, retry once
+    const isNetworkError = !error.status || error.name === 'TypeError' || error.message?.includes('fetch');
+    if (isNetworkError && retries > 0) {
+      await new Promise((r) => setTimeout(r, 600));
+      return request(endpoint, options, retries - 1);
+    }
+
     if (!error.status) {
       error.status = 500;
-      error.message = error.message || 'Network error. Please try again.';
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        error.message = 'You are currently offline. Please check your internet connection.';
+      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        error.message = 'Unable to connect to server. Please check your connection and try again.';
+      } else {
+        error.message = error.message || 'Network error. Please try again.';
+      }
     }
     throw error;
   }
