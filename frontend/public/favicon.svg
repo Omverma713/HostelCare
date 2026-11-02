@@ -1,28 +1,107 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <linearGradient id="hcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4f46e5"/>
-      <stop offset="50%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#ec4899"/>
-    </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#1e1b4b" flood-opacity="0.3"/>
+    <style>
+      .hc-bg { fill: #FAF7F2; }
+      .hc-border { stroke: #C9826D; fill: none; stroke-width: 24; }
+      .hc-inner-rim { stroke: rgba(201, 130, 109, 0.15); fill: none; stroke-width: 3; }
+      .hc-letter-h { fill: #1A1816; }
+      .hc-letter-c { fill: #C9826D; }
+      .hc-sparkle { fill: #C9826D; }
+      .hc-sparkle-core { fill: #FAF7F2; }
+
+      @media (prefers-color-scheme: dark) {
+        .hc-bg { fill: #181615; }
+        .hc-border { stroke: #C9826D; }
+        .hc-inner-rim { stroke: rgba(201, 130, 109, 0.25); }
+        .hc-letter-h { fill: #FAF7F2; }
+        .hc-letter-c { fill: #D98C77; }
+        .hc-sparkle { fill: #E5A894; }
+        .hc-sparkle-core { fill: #181615; }
+      }
+    </style>
+
+    <filter id="hcDropShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#1A1816" flood-opacity="0.12"/>
+    </filter>
+
+    <filter id="cShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="-2" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.2"/>
     </filter>
   </defs>
-  
-  <!-- Rounded Base Tile -->
-  <rect width="64" height="64" rx="16" fill="url(#hcGrad)"/>
-  
-  <!-- Subtle inner border highlight -->
-  <rect x="1" y="1" width="62" height="62" rx="15" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
 
-  <!-- Hostel Building & Roof -->
-  <path d="M32 13 L49 26 L44 26 L44 48 C44 49.5 42.8 51 41 51 L23 51 C21.2 51 20 49.5 20 48 L20 26 L15 26 Z" fill="#ffffff" filter="url(#glow)"/>
+  <!-- Squircle Base Tile -->
+  <rect x="20" y="20" width="472" height="472" rx="116" class="hc-bg" filter="url(#hcDropShadow)"/>
   
-  <!-- Door / Arch with Gradient -->
-  <path d="M28 51 L28 38 C28 35.8 29.8 34 32 34 C34.2 34 36 35.8 36 38 L36 51 Z" fill="url(#hcGrad)"/>
+  <!-- Subtle Inner Guide Rim -->
+  <rect x="36" y="36" width="440" height="440" rx="100" class="hc-inner-rim"/>
+  
+  <!-- Terracotta Border -->
+  <rect x="20" y="20" width="472" height="472" rx="116" class="hc-border"/>
 
-  <!-- Windows -->
-  <rect x="24" y="27" width="5" height="5" rx="1.5" fill="#4f46e5"/>
-  <rect x="35" y="27" width="5" height="5" rx="1.5" fill="#4f46e5"/>
+  <g transform="translate(6, 0)">
+    <!-- ─── SERIF LETTER 'H' ─── -->
+    <!-- Left Stem with Classical Serif Terminals -->
+    <path class="hc-letter-h" d="
+      M 112 142
+      L 186 142
+      L 186 160
+      C 174 160 166 166 166 178
+      L 166 334
+      C 166 346 174 352 186 352
+      L 186 370
+      L 112 370
+      L 112 352
+      C 124 352 132 346 132 334
+      L 132 178
+      C 132 166 124 160 112 160
+      Z
+    "/>
+
+    <!-- Right Stem with Classical Serif Terminals -->
+    <path class="hc-letter-h" d="
+      M 244 142
+      L 318 142
+      L 318 160
+      C 306 160 298 166 298 178
+      L 298 334
+      C 298 346 306 352 318 352
+      L 318 370
+      L 244 370
+      L 244 352
+      C 256 352 264 346 264 334
+      L 264 178
+      C 264 166 256 160 244 160
+      Z
+    "/>
+
+    <!-- Crossbar -->
+    <rect x="156" y="238" width="118" height="36" class="hc-letter-h" rx="2"/>
+
+    <!-- ─── INTERLOCKING SERIF LETTER 'C' ─── -->
+    <!-- Weaving across the right stem of H -->
+    <path class="hc-letter-c" filter="url(#cShadow)" d="
+      M 390 188
+      C 368 152 324 144 286 166
+      C 246 189 226 238 238 288
+      C 250 338 296 368 344 364
+      C 374 361 398 342 408 318
+      L 378 308
+      C 368 322 352 332 332 330
+      C 300 328 274 298 270 262
+      C 266 226 288 194 322 188
+      C 344 184 366 194 378 208
+      Z
+    "/>
+
+    <!-- ─── 4-POINT CARE SPARKLE STAR ─── -->
+    <path class="hc-sparkle" d="
+      M 406 130
+      Q 406 146 422 146
+      Q 406 146 406 162
+      Q 406 146 390 146
+      Q 406 146 406 130
+      Z
+    "/>
+    <circle cx="406" cy="146" r="2.5" class="hc-sparkle-core"/>
+  </g>
 </svg>

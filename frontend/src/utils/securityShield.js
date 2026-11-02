@@ -91,3 +91,4 @@ export function initSecurityShield() {
     setInterval(checkTrap, 1200);
   } catch (_) {}
 }
+
