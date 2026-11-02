@@ -38,7 +38,7 @@ const corsOptions = {
         "capacitor://localhost",
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-client-version", "X-Client-Version"],
     credentials: false, // JWT sent in Authorization header, not cookies
     optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
