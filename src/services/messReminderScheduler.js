@@ -344,6 +344,18 @@ async function broadcastMealReminder(slotKey, options = {}) {
  * Atomically claims each scheduled occurrence before dispatching.
  */
 async function checkAndTriggerMealAlerts() {
+  // Safety guard: Instances without push credentials (such as inactive Render instances
+  // or local development machines connected to production DB) must NEVER claim meal alerts.
+  // Claiming without credentials locks out the real AWS EC2 production worker.
+  const hasPushCreds = Boolean(
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+    (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY)
+  );
+  if (!hasPushCreds) {
+    return;
+  }
+
   const effective = await getEffectiveStartTimings();
   if (!effective.enabled || effective.vacationMode) {
     return;
@@ -451,6 +463,10 @@ async function checkAndTriggerMealAlerts() {
                 }
               );
               console.log(`⚠️ [MessReminderWorker] Marked ${idempotencyKey} as 'no_devices' (0 reachable hardware nodes).`);
+            } else if (broadcastResult.report && broadcastResult.report.accepted === 0 && broadcastResult.report.failed > 0) {
+              const errMsg = broadcastResult.report.errors?.[0]?.error || "Zero push targets accepted by provider";
+              await MessNotificationDispatch.markFailed(idempotencyKey, new Error(errMsg));
+              console.error(`❌ [MessReminderWorker] Alert ${idempotencyKey} failed to deliver to any device: ${errMsg}`);
             } else {
               await MessNotificationDispatch.markDispatched(idempotencyKey, {
                 targets: broadcastResult.targets,
@@ -496,6 +512,16 @@ function clearFiredMealBroadcasts() {
  */
 function startMessReminderScheduler() {
   if (schedulerInterval) {
+    return;
+  }
+
+  const hasPushCreds = Boolean(
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+    (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY)
+  );
+  if (!hasPushCreds) {
+    console.warn("⚠️ [MessReminderWorker] Push credentials not detected in environment. Meal reminder scheduler disabled on this instance to prevent locking production dispatches.");
     return;
   }
 
