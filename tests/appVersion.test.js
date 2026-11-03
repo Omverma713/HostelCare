@@ -62,9 +62,20 @@ const TEST_STUDENT = {
 
 let superAdminToken;
 let studentToken;
+let originalAppVersionConfig = null;
 
 before(async () => {
   await connectDB();
+
+  // Snapshot original appVersion configuration so production state is pristine after tests
+  try {
+    const existingConfig = await SystemConfig.getEffectiveConfig();
+    if (existingConfig && existingConfig.appVersion) {
+      originalAppVersionConfig = JSON.parse(JSON.stringify(existingConfig.appVersion));
+    }
+  } catch (err) {
+    // ignore
+  }
 
   server = http.createServer(app);
   await new Promise((resolve) => server.listen(0, resolve));
@@ -396,19 +407,12 @@ test("Super Admin can configure targeted rollout and only matching users receive
 after(async () => {
   try {
     const SystemConfig = require("../src/models/systemConfig.model");
-    await SystemConfig.updateOne(
-      { key: "default" },
-      {
-        $set: {
-          "appVersion.latestVersion": "1.0.0",
-          "appVersion.minimumSupportedVersion": "1.0.0",
-          "appVersion.forceUpdate": false,
-          "appVersion.updateUrl": "",
-          "appVersion.updateMessage": "",
-          "appVersion.releaseNotes": "",
-        },
-      }
-    );
+    if (originalAppVersionConfig) {
+      await SystemConfig.updateOne(
+        { key: "default" },
+        { $set: { appVersion: originalAppVersionConfig } }
+      );
+    }
   } catch (err) {
     // ignore
   }
