@@ -144,16 +144,94 @@ export async function cancelAllMealReminders() {
 }
 
 /**
- * Formats a clean list of meal dishes for notification body
+ * Prioritizes dishes in a meal so that main items (sabjis, curries, protein options)
+ * appear first, sweets/specials next, and base staples (rice, roti, dal, papad, salad) appear after.
+ *
+ * @param {Object} mealObj
+ * @returns {string[]} Array of dish names in prioritized order
  */
-function formatMealSummary(mealObj) {
-  if (!mealObj) return '';
-  const items = mealObj.items || [];
-  if (items.length === 0) return '';
-  if (items.length <= 4) {
-    return items.join(', ');
+export function prioritizeMealDishes(mealObj) {
+  if (!mealObj) return [];
+  const options = (mealObj.options || [])
+    .map((o) => (typeof o === 'string' ? o : o?.name))
+    .filter(Boolean);
+
+  const rawItems = Array.isArray(mealObj.items) ? mealObj.items : [];
+
+  const isStaple = (n) => {
+    const s = n.toLowerCase();
+    if (/^rice\b/i.test(s) || s.includes('(usuna') || s.includes('arua')) return true;
+    if (/^roti\b/i.test(s) || /^chapati\b/i.test(s) || /^phulka\b/i.test(s)) return true;
+    if (/^puri\b/i.test(s) || /^poori\b/i.test(s)) return true;
+    if (/^dal\b/i.test(s) || /^moong dal\b/i.test(s) || /^dal fry\b/i.test(s)) return true;
+    return false;
+  };
+
+  const isSideOrBeverage = (n) => {
+    const s = n.toLowerCase();
+    if (s.includes('papad')) return true;
+    if (s.includes('salad')) return true;
+    if (s.includes('pickle') || s.includes('achar')) return true;
+    if (s.includes('sauce') || s.includes('chutney') || s.includes('chetney')) return true;
+    if (s.includes('sew') || s.includes('black salt') || s.trim() === 'onion') return true;
+    if (s.includes('tea') || s.includes('coffee') || s.includes('campa cola') || s.includes('fruit juice') || s.includes('spice jeera')) return true;
+    return false;
+  };
+
+  const isSweet = (n) => {
+    const s = n.toLowerCase();
+    return (
+      s.includes('sweet') ||
+      s.includes('rasgola') ||
+      s.includes('gulab jamun') ||
+      s.includes('gaja') ||
+      s.includes('khiri') ||
+      s.includes('kheer') ||
+      s.includes('ice cream')
+    );
+  };
+
+  const mains = [];
+  const sweets = [];
+  const staples = [];
+  const sides = [];
+
+  for (const item of rawItems) {
+    if (!item) continue;
+    if (isSweet(item)) {
+      sweets.push(item);
+    } else if (isSideOrBeverage(item)) {
+      sides.push(item);
+    } else if (isStaple(item)) {
+      staples.push(item);
+    } else {
+      mains.push(item);
+    }
   }
-  return items.slice(0, 3).join(', ') + ' & more';
+
+  const prioritized = [];
+  if (options.length > 0) {
+    prioritized.push(options.join(' / '));
+  }
+  prioritized.push(...mains);
+  prioritized.push(...sweets);
+  prioritized.push(...staples);
+  prioritized.push(...sides);
+
+  return prioritized;
+}
+
+/**
+ * Formats a clean list of meal dishes for notification body with main items first
+ */
+export function formatMealSummary(mealObj, maxItems = 4) {
+  if (!mealObj) return '';
+  const dishes = prioritizeMealDishes(mealObj);
+  if (dishes.length === 0) return '';
+  if (dishes.length <= maxItems) {
+    return dishes.join(', ');
+  }
+  return dishes.slice(0, maxItems).join(', ') + ' & more';
 }
 
 /**

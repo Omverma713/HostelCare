@@ -165,6 +165,102 @@ async function fetchCurrentMessMenu() {
 }
 
 /**
+ * Prioritizes dishes in a meal so that main items (sabjis, curries, protein options)
+ * appear first, sweets/specials next, and base staples (rice, roti, dal, papad, salad) appear after.
+ * This ensures that on mobile lock-screens with truncated push previews, students immediately
+ * see what is being served today instead of just "Rice, Roti, Dal".
+ *
+ * @param {Object} meal - The meal object containing items and optional options
+ * @returns {string[]} Array of dish names in prioritized order
+ */
+function prioritizeMealDishes(meal) {
+  if (!meal) return [];
+  const options = (meal.options || [])
+    .map((o) => (typeof o === "string" ? o : o?.name))
+    .filter(Boolean);
+
+  const rawItems = Array.isArray(meal.items) ? meal.items : [];
+
+  const isStaple = (n) => {
+    const s = n.toLowerCase();
+    if (/^rice\b/i.test(s) || s.includes("(usuna") || s.includes("arua")) return true;
+    if (/^roti\b/i.test(s) || /^chapati\b/i.test(s) || /^phulka\b/i.test(s)) return true;
+    if (/^puri\b/i.test(s) || /^poori\b/i.test(s)) return true;
+    if (/^dal\b/i.test(s) || /^moong dal\b/i.test(s) || /^dal fry\b/i.test(s)) return true;
+    return false;
+  };
+
+  const isSideOrBeverage = (n) => {
+    const s = n.toLowerCase();
+    if (s.includes("papad")) return true;
+    if (s.includes("salad")) return true;
+    if (s.includes("pickle") || s.includes("achar")) return true;
+    if (s.includes("sauce") || s.includes("chutney") || s.includes("chetney")) return true;
+    if (s.includes("sew") || s.includes("black salt") || s.trim() === "onion") return true;
+    if (s.includes("tea") || s.includes("coffee") || s.includes("campa cola") || s.includes("fruit juice") || s.includes("spice jeera")) return true;
+    return false;
+  };
+
+  const isSweet = (n) => {
+    const s = n.toLowerCase();
+    return (
+      s.includes("sweet") ||
+      s.includes("rasgola") ||
+      s.includes("gulab jamun") ||
+      s.includes("gaja") ||
+      s.includes("khiri") ||
+      s.includes("kheer") ||
+      s.includes("ice cream")
+    );
+  };
+
+  const mains = [];
+  const sweets = [];
+  const staples = [];
+  const sides = [];
+
+  for (const item of rawItems) {
+    if (!item) continue;
+    if (isSweet(item)) {
+      sweets.push(item);
+    } else if (isSideOrBeverage(item)) {
+      sides.push(item);
+    } else if (isStaple(item)) {
+      staples.push(item);
+    } else {
+      mains.push(item);
+    }
+  }
+
+  const prioritized = [];
+  if (options.length > 0) {
+    prioritized.push(options.join(" / "));
+  }
+  prioritized.push(...mains);
+  prioritized.push(...sweets);
+  prioritized.push(...staples);
+  prioritized.push(...sides);
+
+  return prioritized;
+}
+
+/**
+ * Formats a clean list of meal dishes for notification body with main items first.
+ *
+ * @param {Object} meal
+ * @param {number} maxItems
+ * @returns {string} e.g. "Chicken Aloo Kasa / Paneer Butter Masala, Karela Bhaja, Rice & more"
+ */
+function formatPrioritizedMealMenu(meal, maxItems = 4) {
+  const dishes = prioritizeMealDishes(meal);
+  if (dishes.length === 0) return "Special menu items";
+  if (dishes.length <= maxItems) {
+    return dishes.join(", ");
+  }
+  return dishes.slice(0, maxItems).join(", ") + " & more";
+}
+
+/**
  * Broadcasts an auto-reminder for a specific meal slot to all active devices
  * 
  * @param {string} slotKey - 'breakfast' | 'lunch' | 'snacks' | 'dinner'
@@ -184,8 +280,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
   const daySchedule = menu.schedule?.[targetDay] || menu.schedule?.monday || DEFAULT_MESS_DATA.schedule.monday;
   const meal = daySchedule.meals?.[slotKey] || {};
 
-  const items = meal.items || [];
-  const itemsText = items.length > 0 ? items.slice(0, 4).join(", ") : "Special menu items";
+  const itemsText = formatPrioritizedMealMenu(meal, 4);
 
   const timingConfig = isTargetSunday
     ? OFFICIAL_START_TIMINGS.sundayAndHolidays[slotKey]
@@ -206,7 +301,7 @@ async function broadcastMealReminder(slotKey, options = {}) {
   const isManualSim = options.isTest && options.targetDay;
   const customTpl = options.customTemplate || {};
   const finalTitle = options.customTitle || customTpl.title || (isManualSim ? `[${dayLabel} Test] ${title}` : title);
-  const finalBody = options.customBody || customTpl.body || `${isManualSim ? `[${dayLabel} Menu] ` : "Today's Menu: "}${itemsText}${items.length > 4 ? " & more" : ""} (${timingText}). Tap to view full timetable.`;
+  const finalBody = options.customBody || customTpl.body || `${isManualSim ? `[${dayLabel} Menu] ` : "Today's Menu: "}${itemsText} (${timingText}). Tap to view full timetable.`;
   const finalImageUrl = options.imageUrl || customTpl.imageUrl || null;
 
   const payload = {
@@ -558,4 +653,6 @@ module.exports = {
   getKolkataTime,
   getEffectiveStartTimings,
   OFFICIAL_START_TIMINGS,
+  prioritizeMealDishes,
+  formatPrioritizedMealMenu,
 };
