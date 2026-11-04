@@ -54,12 +54,9 @@ export async function initPushNotifications() {
           appVersion,
         });
         pushRegistered = true;
-        // Phase 2: Hybrid Safety Net
-        // Keep offline LocalNotifications schedule active as a hardware fallback!
-        // If Cloud FCM delivers, the local notification is suppressed. If Cloud FCM fails or drops in Doze mode,
-        // the local AlarmManager notification fires right on time!
+        // Purge any local AlarmManager notifications so only the single Cloud FCM push appears!
         try {
-          await scheduleWeeklyMealReminders();
+          await cancelAllMealReminders();
         } catch (_) {}
       } catch (err) {
         console.warn('Failed to send push token to backend:', err);

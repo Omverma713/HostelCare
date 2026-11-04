@@ -130,12 +130,17 @@ export async function cancelAllMealReminders() {
   try {
     const pending = await LocalNotifications.getPending();
     if (pending && pending.notifications && pending.notifications.length > 0) {
-      // Filter out notifications that belong to our meal ID scheme (20000000 - 99999999)
+      // Match all meal notifications (both 7-digit, 8-digit schemes, channelId, or extra metadata)
       const mealNotifications = pending.notifications.filter(
-        (n) => n.id >= 20000000 && n.id <= 99999999
+        (n) =>
+          (n.id >= 1000000 && n.id <= 99999999) ||
+          n.channelId === MESS_CHANNEL_ID ||
+          n.extra?.type === 'meal_reminder' ||
+          n.extra?.slotKey
       );
       if (mealNotifications.length > 0) {
         await LocalNotifications.cancel({ notifications: mealNotifications });
+        console.log(`🧹 [MessAutoNotice] Successfully purged ${mealNotifications.length} local meal reminders to prevent duplicate alerts.`);
       }
     }
   } catch (err) {

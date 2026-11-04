@@ -68,3 +68,4 @@ test("Mess Dish Prioritization: Gracefully handles empty, missing, or malformed 
   assert.equal(formatPrioritizedMealMenu(null), "Special menu items");
   assert.equal(formatPrioritizedMealMenu({ items: [] }), "Special menu items");
 });
+

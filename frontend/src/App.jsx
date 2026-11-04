@@ -462,6 +462,18 @@ function MaintenanceManager({ children }) {
  * Registers OS alarm schedules for all meal start timings immediately on app launch,
  * completely independent of whether user is authenticated or guest.
  */
+function PushNotificationRegistrar() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    initPushNotifications().catch((err) => {
+      console.warn('Push notification initialization notice:', err);
+    });
+  }, [user]);
+
+  return null;
+}
+
 function MessMealAlarmScheduler() {
   useEffect(() => {
     initMessAutoNotifications().catch((err) => {
@@ -479,6 +491,7 @@ export default function App() {
         <BrowserRouter>
           <MaintenanceManager>
             {/* Autonomous Meal Start Timings Alarm Scheduler (Works logged in or logged out) */}
+            <PushNotificationRegistrar />
             <MessMealAlarmScheduler />
 
             {/* Super Admin User Impersonation Session Banner */}

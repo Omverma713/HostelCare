@@ -180,6 +180,7 @@ async function sendPushToSessions(sessions, payload) {
             defaultVibrateTimings: true,
             notificationPriority: "PRIORITY_MAX",
             visibility: "PUBLIC",
+            tag: payload.tag || (payload.data?.slotKey ? "hostelcare_meal_" + payload.data.slotKey : undefined),
             ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
           },
         },
