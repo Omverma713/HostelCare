@@ -472,29 +472,28 @@ const handleSendMessage = (e) => {
         )}
 
         {/* MAIN VIEWPORT */}
-        <main className="main-viewport" style={embedded ? { padding: '8px 16px 60px', flex: 1, maxWidth: 1060, margin: '0 auto', width: '100%' } : {}}>
+        <main className="main-viewport" style={embedded ? { padding: '8px 16px 140px', flex: 1, maxWidth: 1060, margin: '0 auto', width: '100%', boxSizing: 'border-box' } : {}}>
           {/* =========================================================================
               VIEW 1: CONCEPT 1 ESPRESSO LUXURY WORKSPACE DASHBOARD (EXACT MATCH)
              ========================================================================= */}
           {activeTab === 'home' && (
-            <div className="concept1-dashboard-container">
-              {/* 1. STUDENT SUITE & RESIDENT HEADER CARD */}
+            <div className="concept1-dashboard-container" style={{ paddingBottom: '40px' }}>
+              {/* 1. STUDENT SUITE & RESIDENT HEADER CARD (MATCHING IMAGE 1) */}
               <div className="tactile-resident-suite-card">
                 <div className="tactile-suite-left">
                   <div className="tactile-suite-avatar">
-                    {user?.name 
-                      ? user.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase()
-                      : 'SR'}
+                    <img 
+                      src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80" 
+                      alt="Avatar" 
+                      className="tactile-avatar-img" 
+                    />
                   </div>
                   <div className="tactile-suite-details">
-                    <h2 className="tactile-suite-title">
-                      {user?.roomNumber ? `Suite ${user.roomNumber}` : 'Suite B-304'}
-                      {user?.hostelBlock ? ` • Block ${user.hostelBlock}` : (user?.hostel ? ` • ${user.hostel}` : ' • APJ Kalam Block')}
-                    </h2>
+                    <h2 className="tactile-suite-title">Resident Dashboard</h2>
                     <p className="tactile-suite-sub">
-                      <span>Resident: <strong>{displayName}</strong></span>
+                      <span>Suite {user?.roomNumber || '205'}</span>
                       <span>•</span>
-                      <span>ID: <strong>{displayReg}</strong></span>
+                      <span>{user?.hostelBlock ? `Block ${user.hostelBlock}` : (user?.hostel ? user.hostel : 'APJ Kalam Block')}</span>
                     </p>
                   </div>
                 </div>
@@ -505,48 +504,17 @@ const handleSendMessage = (e) => {
                 </div>
               </div>
 
-              {/* 2. SECURITY GATE PARCEL / COURIER ALERT BANNER */}
-              <div className="tactile-parcel-banner">
-                <div className="tactile-parcel-left">
-                  <div className="tactile-parcel-icon-box">📦</div>
-                  <div>
-                    <h3 className="tactile-parcel-heading">
-                      {parcelPickedUp ? 'Package Collected from Guard Post' : 'Package Arrived at Main Gate'}
-                    </h3>
-                    <p className="tactile-parcel-desc">
-                      BlueDart Express • Security Desk #{user?.hostelBlock || 'BH-8'} Gate 
-                      {!parcelPickedUp && (
-                        <> • Pickup PIN: <span className="tactile-pin-badge">4821</span></>
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = !parcelPickedUp;
-                    setParcelPickedUp(next);
-                    localStorage.setItem('hc_parcel_picked_up', String(next));
-                    triggerToast('success', next ? 'Marked as collected from gate!' : 'Parcel reset to pending.');
-                  }}
-                  className={`tactile-parcel-btn ${parcelPickedUp ? 'collected' : ''}`}
-                >
-                  {parcelPickedUp ? '✓ Collected' : 'Mark as Picked Up'}
-                </button>
-              </div>
-
-              {/* 3. TACTILE QUICK ACTION CARDS (4-CARD GRID) */}
+              {/* 2. TACTILE QUICK ACTION CARDS (4-CARD GRID - EXACT IMAGE 1) */}
               <div className="tactile-quick-grid">
                 <div 
                   className="tactile-quick-card"
                   onClick={() => setShowQrModal(true)}
-                  title="View your digital Outing Pass & Gate QR code"
+                  title="Request digital Outing Pass & Gate QR code"
                 >
                   <div className="tactile-quick-icon">🎫</div>
                   <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Outing Pass</h4>
-                    <p className="tactile-quick-sub">Digital QR &amp; Return timer</p>
+                    <h4 className="tactile-quick-title">Request Outing Pass</h4>
+                    <p className="tactile-quick-sub">Digital QR &amp; Gate Pass</p>
                   </div>
                 </div>
 
@@ -555,7 +523,7 @@ const handleSendMessage = (e) => {
                   onClick={() => setShowComplaintModal(true)}
                   title="Report a maintenance or facility issue"
                 >
-                  <div className="tactile-quick-icon">🛠️</div>
+                  <div className="tactile-quick-icon">⚠️</div>
                   <div className="tactile-quick-text">
                     <h4 className="tactile-quick-title">Report Issue</h4>
                     <p className="tactile-quick-sub">Plumbing, Electrical...</p>
@@ -574,14 +542,14 @@ const handleSendMessage = (e) => {
                   <div className="tactile-quick-icon">🧺</div>
                   <div className="tactile-quick-text">
                     <h4 className="tactile-quick-title">Laundry Queue</h4>
-                    <p className="tactile-quick-sub">{laundryBooked ? '🟢 Washer #2: Booked (30m)' : 'Washer #2: Available'}</p>
+                    <p className="tactile-quick-sub">{laundryBooked ? '🟢 Washer #2: Booked' : 'Washer #2: Available'}</p>
                   </div>
                 </div>
 
                 <div 
                   className="tactile-quick-card"
                   onClick={() => setActiveTab('mess')}
-                  title="View full weekly mess schedule"
+                  title="View full weekly dining timetable"
                 >
                   <div className="tactile-quick-icon">🍲</div>
                   <div className="tactile-quick-text">
@@ -591,7 +559,7 @@ const handleSendMessage = (e) => {
                 </div>
               </div>
 
-              {/* 4. TODAY'S ACTIVE MEAL SPOTLIGHT CARD */}
+              {/* 3. TODAY'S ACTIVE MEAL SPOTLIGHT CARD (EXACT IMAGE 1 LEFT PHONE) */}
               {(() => {
                 const now = new Date();
                 const currentMins = now.getHours() * 60 + now.getMinutes();
@@ -636,30 +604,34 @@ const handleSendMessage = (e) => {
                     <div className="tactile-spotlight-header">
                       <span className="tactile-spotlight-meal-tag">
                         <span>{slotKey === 'breakfast' ? '🍳' : slotKey === 'lunch' ? '🍛' : slotKey === 'snacks' ? '☕' : '🍲'}</span>
-                        <span>{slotName} Serving Today</span>
+                        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 700 }}>{slotName}</span>
                       </span>
                       <span className="tactile-live-badge">
                         <span className="tactile-pulse-dot" />
-                        <span>{slotTiming}</span>
+                        <span>Serving Now: {slotTiming}</span>
                       </span>
                     </div>
 
+                    <div className="tactile-section-label">Main dishes</div>
                     <h3 className="tactile-dish-headline">{headlineDish}</h3>
 
                     {accompaniments.length > 0 && (
-                      <div className="tactile-pills-row">
-                        {accompaniments.map((item, idx) => (
-                          <span key={idx} className="tactile-dish-pill">
-                            <span>•</span> {item}
-                          </span>
-                        ))}
-                      </div>
+                      <>
+                        <div className="tactile-section-label" style={{ marginTop: 14 }}>Accompaniment</div>
+                        <div className="tactile-pills-row">
+                          {accompaniments.map((item, idx) => (
+                            <span key={idx} className="tactile-dish-pill-solid">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </>
                     )}
 
                     <div className="tactile-rating-widget" onClick={(e) => e.stopPropagation()}>
                       <div className="tactile-rating-score">
                         <span className="tactile-rating-star">★</span>
-                        <span>4.8 Community Score (142 reviews)</span>
+                        <span>4.8 Community Rating (from 142 students)</span>
                       </div>
 
                       <div className="tactile-emoji-group">
@@ -680,7 +652,7 @@ const handleSendMessage = (e) => {
                           onClick={() => {
                             setMealRating('average');
                             localStorage.setItem('hc_meal_rating_today', 'average');
-                            triggerToast('info', 'Feedback recorded: 😐 Average');
+                            triggerToast('info', 'Feedback recorded: 😐 OK');
                           }}
                           className={`tactile-emoji-btn ${mealRating === 'average' ? 'active' : ''}`}
                         >
@@ -703,11 +675,12 @@ const handleSendMessage = (e) => {
                 );
               })()}
 
-              {/* 5. MAINTENANCE PIPELINE STEPPER */}
+              {/* 4. MAINTENANCE PIPELINE STEPPER (WITH AMPLE BOTTOM CLEARANCE) */}
               <div 
                 className="concept1-card concept1-pipeline-card"
                 onClick={() => setActiveTab('complaints')}
                 title="Click to track maintenance requests"
+                style={{ marginBottom: '32px' }}
               >
                 <div className="concept1-card-top">
                   <h2 className="concept1-card-title">Maintenance Pipeline</h2>

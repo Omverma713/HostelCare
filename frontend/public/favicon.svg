@@ -1,46 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <!-- Definitions for luxury glow & gradients -->
   <defs>
-    <style>
-      .hc-bg { fill: #FAF7F2; }
-      .hc-border { stroke: #C9826D; fill: none; stroke-width: 28; }
-      .hc-inner-rim { stroke: #E8D9D0; fill: none; stroke-width: 4; }
-      .hc-h { fill: #1A1816; }
-      .hc-c { fill: #C9826D; }
-      .hc-star { fill: #D98C77; }
-      .hc-core { fill: #FAF7F2; }
-
-      @media (prefers-color-scheme: dark) {
-        .hc-bg { fill: #181615; }
-        .hc-border { stroke: #C9826D; }
-        .hc-inner-rim { stroke: #332B27; }
-        .hc-h { fill: #FAF7F2; }
-        .hc-c { fill: #D98C77; }
-        .hc-star { fill: #E5A894; }
-        .hc-core { fill: #181615; }
-      }
-    </style>
+    <filter id="hcGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#C07660" flood-opacity="0.25"/>
+    </filter>
+    <linearGradient id="terracottaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C8826D"/>
+      <stop offset="100%" stop-color="#B66C56"/>
+    </linearGradient>
   </defs>
 
-  <!-- Squircle Base Tile -->
-  <rect x="24" y="24" width="464" height="464" rx="116" class="hc-bg"/>
-  <rect x="42" y="42" width="428" height="428" rx="98" class="hc-inner-rim"/>
-  <rect x="24" y="24" width="464" height="464" rx="116" class="hc-border"/>
+  <!-- 1. Outer Squircle Card -->
+  <rect x="12" y="12" width="176" height="176" rx="46" fill="#FFF9F5" stroke="#C07660" stroke-width="12" filter="url(#hcGlow)"/>
 
-  <g transform="translate(6, 0)">
-    <!-- Serif Letter 'H' - Left Pillar -->
-    <path class="hc-h" d="M 112 142 L 186 142 L 186 160 C 174 160 166 166 166 178 L 166 334 C 166 346 174 352 186 352 L 186 370 L 112 370 L 112 352 C 124 352 132 346 132 334 L 132 178 C 132 166 124 160 112 160 Z"/>
-    
-    <!-- Serif Letter 'H' - Right Pillar -->
-    <path class="hc-h" d="M 244 142 L 318 142 L 318 160 C 306 160 298 166 298 178 L 298 334 C 298 346 306 352 318 352 L 318 370 L 244 370 L 244 352 C 256 352 264 346 264 334 L 264 178 C 264 166 256 160 244 160 Z"/>
+  <!-- 2. Bold Black Serif "H" -->
+  <!-- Left Column with top/bottom bracketed serifs -->
+  <path d="M 42 48 H 70 V 58 H 63 V 90 H 87 V 58 H 80 V 48 H 108 V 58 H 101 V 142 H 108 V 152 H 80 V 142 H 87 V 104 H 63 V 142 H 70 V 152 H 42 V 142 H 49 V 58 H 42 Z" fill="#1C1B1A"/>
 
-    <!-- Crossbar of H -->
-    <rect x="156" y="238" width="118" height="36" class="hc-h" rx="2"/>
+  <!-- 3. Terracotta "C" (Overlapping the right leg and crossbar) -->
+  <path d="M 148 64 C 143 56 133 50 119 50 C 97 50 82 68 82 100 C 82 132 97 150 119 150 C 134 150 144 143 149 135 L 136 122 C 132 128 126 132 119 132 C 108 132 101 120 101 100 C 101 80 108 68 119 68 C 126 68 131 72 135 77 Z" fill="url(#terracottaGrad)"/>
 
-    <!-- Interlocking Serif Letter 'C' in Terracotta -->
-    <path class="hc-c" d="M 390 188 C 368 152 324 144 286 166 C 246 189 226 238 238 288 C 250 338 296 368 344 364 C 374 361 398 342 408 318 L 378 308 C 368 322 352 332 332 330 C 300 328 274 298 270 262 C 266 226 288 194 322 188 C 344 184 366 194 378 208 Z"/>
-
-    <!-- 4-Point Care Sparkle Star -->
-    <path class="hc-star" d="M 406 130 Q 406 146 422 146 Q 406 146 406 162 Q 406 146 390 146 Q 406 146 406 130 Z"/>
-    <circle cx="406" cy="146" r="3" class="hc-core"/>
-  </g>
+  <!-- 4. Top-Right 4-Point Sparkle Star -->
+  <path d="M 152 46 Q 152 36 156 32 Q 160 36 160 46 Q 160 56 156 60 Q 152 56 152 46 Z" fill="#C07660"/>
+  <path d="M 142 46 Q 152 46 156 42 Q 152 38 142 46 Z" fill="#C07660"/>
+  <!-- Diamond star polygon -->
+  <polygon points="156,26 160,39 173,43 160,47 156,60 152,47 139,43 152,39" fill="#C07660"/>
 </svg>

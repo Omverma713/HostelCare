@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <!-- Definitions for luxury glow & gradients -->
+  <defs>
+    <filter id="hcGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#C07660" flood-opacity="0.25"/>
+    </filter>
+    <linearGradient id="terracottaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C8826D"/>
+      <stop offset="100%" stop-color="#B66C56"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 1. Outer Squircle Card -->
+  <rect x="12" y="12" width="176" height="176" rx="46" fill="#FFF9F5" stroke="#C07660" stroke-width="12" filter="url(#hcGlow)"/>
+
+  <!-- 2. Bold Black Serif "H" -->
+  <!-- Left Column with top/bottom bracketed serifs -->
+  <path d="M 42 48 H 70 V 58 H 63 V 90 H 87 V 58 H 80 V 48 H 108 V 58 H 101 V 142 H 108 V 152 H 80 V 142 H 87 V 104 H 63 V 142 H 70 V 152 H 42 V 142 H 49 V 58 H 42 Z" fill="#1C1B1A"/>
+
+  <!-- 3. Terracotta "C" (Overlapping the right leg and crossbar) -->
+  <path d="M 148 64 C 143 56 133 50 119 50 C 97 50 82 68 82 100 C 82 132 97 150 119 150 C 134 150 144 143 149 135 L 136 122 C 132 128 126 132 119 132 C 108 132 101 120 101 100 C 101 80 108 68 119 68 C 126 68 131 72 135 77 Z" fill="url(#terracottaGrad)"/>
+
+  <!-- 4. Top-Right 4-Point Sparkle Star -->
+  <path d="M 152 46 Q 152 36 156 32 Q 160 36 160 46 Q 160 56 156 60 Q 152 56 152 46 Z" fill="#C07660"/>
+  <path d="M 142 46 Q 152 46 156 42 Q 152 38 142 46 Z" fill="#C07660"/>
+  <!-- Diamond star polygon -->
+  <polygon points="156,26 160,39 173,43 160,47 156,60 152,47 139,43 152,39" fill="#C07660"/>
+</svg>

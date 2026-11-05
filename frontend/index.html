@@ -58,60 +58,95 @@
           z-index: 999999;
           user-select: none;
           -webkit-user-select: none;
-          transition: opacity 0.3s ease-out;
+          transition: opacity 0.35s ease-out;
         }
         @media (prefers-color-scheme: dark) {
           #hc-initial-boot-splash {
             background: #141312;
-            color: #F5F2EB;
+            color: #FAF7F2;
           }
         }
-        .hc-boot-crest-wrap {
+        .hc-emblem-box {
           position: relative;
-          width: 84px;
-          height: 84px;
+          width: 106px;
+          height: 106px;
+          border-radius: 28px;
+          background: #FFF9F5;
+          border: 7px solid #C07660;
+          box-shadow: 0 16px 40px rgba(192, 118, 96, 0.22);
           display: flex;
           align-items: center;
           justify-content: center;
           margin-bottom: 20px;
-          animation: hcPulse 2s ease-in-out infinite;
+          overflow: visible;
+          animation: hcCardFloat 2.6s ease-in-out infinite;
         }
-        .hc-boot-glow-ring {
+        @media (prefers-color-scheme: dark) {
+          .hc-emblem-box {
+            background: #201A17;
+            border-color: #BD7762;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+          }
+        }
+        .hc-glow-aura {
           position: absolute;
-          inset: -10px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(88, 115, 96, 0.22) 0%, rgba(212, 180, 131, 0.1) 60%, transparent 80%);
-          filter: blur(8px);
+          inset: -14px;
+          border-radius: 36px;
+          background: radial-gradient(circle, rgba(192, 118, 96, 0.28) 0%, rgba(88, 115, 96, 0.12) 60%, transparent 80%);
+          filter: blur(10px);
+          animation: hcPulseAura 2s ease-in-out infinite;
+          z-index: -1;
         }
-        .hc-boot-crest-svg {
-          width: 72px;
-          height: 72px;
-          filter: drop-shadow(0 4px 12px rgba(36, 37, 35, 0.12));
+        /* Animated Letter H (Glides in from left) */
+        .hc-anim-h {
+          transform-origin: center;
+          animation: hcGlideH 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        /* Animated Letter C (Glides in from right) */
+        .hc-anim-c {
+          transform-origin: center;
+          animation: hcGlideC 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        /* Animated Sparkle Star (Twinkles after H and C dock) */
+        .hc-anim-star {
+          transform-origin: 156px 43px;
+          animation: hcSparklePop 0.95s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @media (prefers-color-scheme: dark) {
+          .hc-anim-h {
+            fill: #FAF7F2 !important;
+          }
         }
         .hc-boot-title {
           font-family: 'Playfair Display', Georgia, serif;
-          font-size: 26px;
+          font-size: 28px;
           font-weight: 700;
           letter-spacing: -0.02em;
           margin: 0 0 6px 0;
           text-align: center;
+          opacity: 0;
+          animation: hcFadeUp 0.6s ease-out 0.4s forwards;
         }
         .hc-boot-subtitle {
-          font-size: 12.5px;
-          font-weight: 600;
-          letter-spacing: 0.08em;
+          font-size: 11.5px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #728D7A;
+          color: #587360;
           margin: 0 0 24px 0;
           text-align: center;
+          opacity: 0;
+          animation: hcFadeUp 0.6s ease-out 0.55s forwards;
         }
         .hc-boot-progress-track {
-          width: 140px;
-          height: 3.5px;
+          width: 130px;
+          height: 3px;
           border-radius: 999px;
-          background: rgba(114, 141, 122, 0.18);
+          background: rgba(192, 118, 96, 0.2);
           overflow: hidden;
           position: relative;
+          opacity: 0;
+          animation: hcFadeUp 0.6s ease-out 0.7s forwards;
         }
         .hc-boot-progress-bar {
           position: absolute;
@@ -120,12 +155,63 @@
           left: -40%;
           width: 40%;
           border-radius: 999px;
-          background: linear-gradient(90deg, #728D7A 0%, #D4B483 100%);
-          animation: hcShimmer 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          background: linear-gradient(90deg, #BD7762 0%, #587360 100%);
+          animation: hcShimmer 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
-        @keyframes hcPulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.04); opacity: 0.88; }
+        @keyframes hcGlideH {
+          0% {
+            transform: translateX(-60px) scale(0.65);
+            opacity: 0;
+          }
+          65% {
+            transform: translateX(4px) scale(1.04);
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+          }
+        }
+        @keyframes hcGlideC {
+          0% {
+            transform: translateX(60px) scale(0.65);
+            opacity: 0;
+          }
+          65% {
+            transform: translateX(-4px) scale(1.04);
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+          }
+        }
+        @keyframes hcSparklePop {
+          0%, 45% {
+            transform: scale(0) rotate(-60deg);
+            opacity: 0;
+          }
+          80% {
+            transform: scale(1.35) rotate(18deg);
+            opacity: 1;
+            filter: drop-shadow(0 0 8px rgba(192, 118, 96, 0.8));
+          }
+          100% {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+          }
+        }
+        @keyframes hcCardFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3.5px); }
+        }
+        @keyframes hcPulseAura {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+        @keyframes hcFadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes hcShimmer {
           0% { left: -40%; width: 40%; }
@@ -134,18 +220,19 @@
         }
       </style>
       <div id="hc-initial-boot-splash">
-        <div class="hc-boot-crest-wrap">
-          <div class="hc-boot-glow-ring"></div>
-          <svg class="hc-boot-crest-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" rx="24" fill="#587360"/>
-            <path d="M50 18L76 28V48C76 66 65 79 50 84C35 79 24 66 24 48V28L50 18Z" fill="#FAF7F2" fill-opacity="0.95"/>
-            <path d="M50 25L70 33V47C70 61 61 72 50 76C39 72 30 61 30 47V33L50 25Z" fill="#587360"/>
-            <path d="M44 40H56V60H44V40Z" fill="#D4B483"/>
-            <circle cx="50" cy="36" r="4" fill="#D4B483"/>
+        <div class="hc-emblem-box">
+          <div class="hc-glow-aura"></div>
+          <svg viewBox="0 0 200 200" width="88" height="88" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+            <!-- Bold Black Serif Letter H -->
+            <path class="hc-anim-h" d="M 42 48 H 70 V 58 H 63 V 90 H 87 V 58 H 80 V 48 H 108 V 58 H 101 V 142 H 108 V 152 H 80 V 142 H 87 V 104 H 63 V 142 H 70 V 152 H 42 V 142 H 49 V 58 H 42 Z" fill="#1C1B1A"/>
+            <!-- Terracotta Curved Letter C -->
+            <path class="hc-anim-c" d="M 148 64 C 143 56 133 50 119 50 C 97 50 82 68 82 100 C 82 132 97 150 119 150 C 134 150 144 143 149 135 L 136 122 C 132 128 126 132 119 132 C 108 132 101 120 101 100 C 101 80 108 68 119 68 C 126 68 131 72 135 77 Z" fill="#BD7762"/>
+            <!-- 4-Point Terracotta Sparkle Star -->
+            <polygon class="hc-anim-star" points="156,26 160,39 173,43 160,47 156,60 152,47 139,43 152,39" fill="#BD7762"/>
           </svg>
         </div>
         <h1 class="hc-boot-title">HostelCare</h1>
-        <p class="hc-boot-subtitle">Campus Life &amp; Dining</p>
+        <p class="hc-boot-subtitle">Campus Living Sanctuary</p>
         <div class="hc-boot-progress-track">
           <div class="hc-boot-progress-bar"></div>
         </div>

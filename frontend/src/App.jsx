@@ -176,7 +176,13 @@ function DashboardLayout() {
         <div 
           className="brand-title"
           onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=overview' : '/student')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
         >
+          <img 
+            src="/hostelcare-logo.svg" 
+            alt="HostelCare" 
+            style={{ width: '32px', height: '32px', borderRadius: '9px', objectFit: 'contain', flexShrink: 0 }} 
+          />
           <span className="brand-name">HostelCare</span>
         </div>
 

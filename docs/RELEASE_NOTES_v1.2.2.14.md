@@ -38,3 +38,4 @@ HostelCare **v1.2.2.14 (Build 19)** brings the **Tactile Linen & Daily Living (V
   - **Warden**: Disciplinary oversight, gate pass approvals, and student roster.
   - **Superintendent**: Administrative management, budget reviews, and hostel operations.
   - **Super Admin**: User directory, hardware sessions, automated DB maintenance, push announcements, and app updates.
+

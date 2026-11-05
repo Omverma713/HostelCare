@@ -3217,3 +3217,74 @@ body.login-dark-theme .tactile-emoji-btn.active {
     font-size: 13.5px !important;
   }
 }
+
+
+/* =========================================================================
+   VARIATION 2 EXTENSIONS: SOLID ACCOMPANIMENT PILLS & BOTTOM CLEARANCE
+   ========================================================================= */
+
+.tactile-dish-pill-solid {
+  background: #587360;
+  color: #FFFFFF;
+  border-radius: 9999px;
+  padding: 7px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(88, 115, 96, 0.22);
+  transition: transform 0.15s ease;
+}
+
+.tactile-dish-pill-solid:hover {
+  transform: translateY(-1px);
+}
+
+html.dark-theme .tactile-dish-pill-solid,
+body.login-dark-theme .tactile-dish-pill-solid {
+  background: #587360;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.tactile-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7D7F7A;
+  margin-bottom: 6px;
+}
+
+html.dark-theme .tactile-section-label,
+body.login-dark-theme .tactile-section-label {
+  color: #A8A59E;
+}
+
+/* Ensure bottom floating capsule dock NEVER overlaps Maintenance Pipeline card */
+.concept1-dashboard-container {
+  padding-bottom: 150px !important;
+}
+
+.main-viewport {
+  padding-bottom: 150px !important;
+}
+
+.warm-linen-embedded {
+  padding-bottom: 150px !important;
+}
+
+@media (max-width: 768px) {
+  .concept1-dashboard-container {
+    padding-bottom: 170px !important;
+  }
+  .main-viewport {
+    padding-bottom: 170px !important;
+  }
+  .workspace-layout {
+    padding-bottom: 170px !important;
+  }
+  .concept1-pipeline-card {
+    margin-bottom: 40px !important;
+  }
+}
