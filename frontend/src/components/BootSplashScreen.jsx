@@ -32,13 +32,7 @@ export default function BootSplashScreen({ onComplete }) {
   });
 
   useEffect(() => {
-    // 1. Lock scrolling completely during boot animation so NO scrollbar is ever visible
-    try {
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-    } catch (e) {}
-
-    // 2. Crossfade dismiss native splash after first React DOM paint (seamless transition)
+    // Crossfade dismiss native splash after first React DOM paint (seamless transition)
     if (Capacitor.isNativePlatform()) {
       requestAnimationFrame(() => {
         try {
@@ -48,13 +42,6 @@ export default function BootSplashScreen({ onComplete }) {
         }
       });
     }
-
-    return () => {
-      try {
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-      } catch (e) {}
-    };
   }, []);
 
   useEffect(() => {
@@ -91,9 +78,7 @@ export default function BootSplashScreen({ onComplete }) {
     const t5 = setTimeout(() => {
       setVisible(false);
       try {
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-      } catch (e) {}
+        } catch (e) {}
       if (onComplete) onComplete();
     }, 2950);
 

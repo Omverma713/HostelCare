@@ -1635,15 +1635,15 @@ body.login-dark-theme .top-navbar {
     width: calc(100% - 16px) !important;
     max-width: calc(100% - 16px) !important;
     margin: 8px auto 12px auto !important;
-    padding: 0 8px 0 10px !important;
+    padding: 0 14px 0 12px !important;
     height: 52px !important;
-    border-radius: 9999px !important;
+    border-radius: 20px !important;
     box-sizing: border-box !important;
     gap: 6px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     transform: translateZ(0);
   }
 
@@ -1653,25 +1653,26 @@ body.login-dark-theme .top-navbar {
   }
 
   .brand-name {
-    font-size: 17.5px !important;
+    font-size: 16.5px !important;
     white-space: nowrap !important;
     letter-spacing: -0.02em !important;
   }
 
   .navbar-right-group {
-    gap: 4px !important;
+    gap: 6px !important;
     flex-shrink: 0 !important;
     display: flex !important;
     align-items: center !important;
     margin-right: 0 !important;
+    padding-right: 0 !important;
   }
 
   .navbar-user-pill {
     display: inline-flex !important;
     align-items: center !important;
     gap: 4px !important;
-    padding: 3px 7px 3px 4px !important;
-    height: 30px !important;
+    padding: 2px 7px 2px 3px !important;
+    height: 28px !important;
     white-space: nowrap !important;
     flex-shrink: 0 !important;
     border-radius: 9999px !important;
@@ -1679,8 +1680,8 @@ body.login-dark-theme .top-navbar {
   }
 
   .navbar-avatar-img {
-    width: 20px !important;
-    height: 20px !important;
+    width: 18px !important;
+    height: 18px !important;
     margin: 0 !important;
     flex-shrink: 0 !important;
   }
@@ -1692,30 +1693,47 @@ body.login-dark-theme .top-navbar {
   .user-text-mobile {
     display: inline-block !important;
     white-space: nowrap !important;
-    font-size: 11px !important;
+    font-size: 10.5px !important;
     font-weight: 600 !important;
     line-height: 1 !important;
     letter-spacing: 0.01em !important;
   }
 
-  .theme-toggle-warm-btn,
-  .header-logout-btn {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    max-width: 30px !important;
+  .theme-toggle-warm-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
     padding: 0 !important;
-    border-radius: 9999px !important;
+    border-radius: 50% !important;
     flex-shrink: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
   }
 
+  .header-logout-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #C9826D !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(201, 130, 109, 0.4) !important;
+    margin-right: 2px !important;
+    box-sizing: border-box !important;
+  }
+
   .theme-toggle-warm-btn svg,
   .header-logout-btn svg {
-    width: 15px !important;
-    height: 15px !important;
+    width: 14px !important;
+    height: 14px !important;
   }
 }
 
@@ -3355,8 +3373,11 @@ body.login-dark-theme .tactile-section-label {
 /* Ensure smooth touch scrolling with invisible scrollbars */
 .main-viewport,
 .detailed-view-container,
-.workspace-layout {
-  -webkit-overflow-scrolling: touch;
+.workspace-layout,
+.concept1-dashboard-container {
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }

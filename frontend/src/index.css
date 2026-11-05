@@ -344,6 +344,30 @@ textarea {
    Global Invisible Scrollbars (100% Native Touch & Wheel Scroll Retained)
    ========================================================================== */
 
+html {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: auto !important;
+}
+
+#root,
+.app-shell {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
 * {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
@@ -356,19 +380,10 @@ textarea {
   background: transparent !important;
 }
 
-::-webkit-scrollbar-track {
-  display: none !important;
-  background: transparent !important;
-}
-
+::-webkit-scrollbar-track,
 ::-webkit-scrollbar-thumb {
   display: none !important;
   background: transparent !important;
-}
-
-html, body {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
 }
 
 /* ==========================================================================
