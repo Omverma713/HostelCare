@@ -22,6 +22,7 @@ import { initMessAutoNotifications } from './services/messNotificationService';
 
 import Login from './pages/Login';
 import GlobalNoticePopup from './components/GlobalNoticePopup';
+import BootSplashScreen from './components/BootSplashScreen';
 
 // Lazy Loaded Routes for Instant Startup and Smooth Transitions
 const WarmLinenApp = lazy(() => import('./pages/WarmLinenApp'));
