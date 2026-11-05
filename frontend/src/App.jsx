@@ -493,16 +493,19 @@ function MessMealAlarmScheduler() {
 }
 
 export default function App() {
+  const [showBootSplash, setShowBootSplash] = useState(true);
+
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       import('@capacitor/splash-screen').then(({ SplashScreen }) => {
-        SplashScreen.hide({ fadeOutDuration: 350 }).catch(() => {});
+        SplashScreen.hide({ fadeOutDuration: 0 }).catch(() => {});
       }).catch(() => {});
     }
   }, []);
 
   return (
     <ThemeProvider>
+      {showBootSplash && <BootSplashScreen onComplete={() => setShowBootSplash(false)} />}
       <AuthProvider>
         <BrowserRouter>
           <MaintenanceManager>
