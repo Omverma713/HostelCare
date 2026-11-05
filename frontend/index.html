@@ -42,7 +42,19 @@
     <meta name="twitter:description" content="Real-time meal notifications, weekly menus, fast complaint resolution, and facility care." />
     <meta name="twitter:image" content="https://hostelcare.omverma-dev.workers.dev/og-image.png?v=3" />
   </head>
-  <body>
+  <body style="margin: 0; padding: 0; background-color: #141312; overflow: hidden;">
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme');
+          var isDark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var bg = isDark ? '#141312' : '#FAF7F2';
+          document.documentElement.style.backgroundColor = bg;
+          document.body.style.backgroundColor = bg;
+          if (isDark) document.documentElement.classList.add('dark-theme');
+        } catch(e) {}
+      })();
+    </script>
     <div id="root">
       <style>
         #hc-initial-boot-splash {

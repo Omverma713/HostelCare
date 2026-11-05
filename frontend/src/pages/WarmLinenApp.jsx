@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { DEFAULT_MESS_SCHEDULE, DAYS_ORDER } from '../constants/messMenuData';
 import { prioritizeMealDishes } from '../services/messNotificationService';
 import { triggerToast } from '../components/Toast';
+import { appUpdateService } from '../services/appUpdateService';
 import { normalizeStatus, sortByDateDesc, isEmptyDataError } from '../utils/status';
 
 const DEPT_ICONS = {
@@ -24,6 +25,34 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [loginRegNum, setLoginRegNum] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
+  const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
+
+  useEffect(() => {
+    const unsub = appUpdateService.addListener((state) => {
+      setUpdateAvailable(Boolean(state.updateAvailable));
+      if (state.latestVersion) setLatestVersion(state.latestVersion);
+    });
+    return unsub;
+  }, []);
+
+  const handleCheckUpdate = async () => {
+    setCheckingUpdate(true);
+    triggerToast('info', 'Checking for latest HostelCare updates...');
+    try {
+      const res = await appUpdateService.checkForUpdates({ manual: true });
+      if (res && res.updateAvailable) {
+        triggerToast('success', `New update v${res.latestVersion} found! Tap to install.`);
+      } else {
+        triggerToast('success', 'You are on the latest version of HostelCare (v1.2.2.14)!');
+      }
+    } catch (e) {
+      triggerToast('info', 'HostelCare is up to date.');
+    } finally {
+      setTimeout(() => setCheckingUpdate(false), 800);
+    }
+  };
 
   const displayName = user?.name || (isAuthenticated ? 'Resident' : 'Student Resident');
   const displayRoom = user?.roomNumber ? `Room ${user.roomNumber}${user.hostelBlock ? ` (Block ${user.hostelBlock})` : (user.hostel ? ` (${user.hostel})` : '')}` : 'Room 205 (BH-8)';
@@ -498,9 +527,31 @@ const handleSendMessage = (e) => {
                   </div>
                 </div>
 
-                <div className="tactile-status-badge">
-                  <span className="tactile-pulse-dot" />
-                  <span>In Campus</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div className="tactile-status-badge">
+                    <span className="tactile-pulse-dot" />
+                    <span>In Campus</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCheckUpdate}
+                    title="Click to check for app updates"
+                    style={{
+                      background: updateAvailable ? '#FEF3C7' : 'rgba(88, 115, 96, 0.12)',
+                      color: updateAvailable ? '#B45309' : '#587360',
+                      border: '1px solid ' + (updateAvailable ? '#FDE68A' : 'rgba(88, 115, 96, 0.25)'),
+                      padding: '4px 10px',
+                      borderRadius: 9999,
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                  >
+                    <span>{updateAvailable ? '⚡ v' + latestVersion : 'v1.2.2.14'}</span>
+                  </button>
                 </div>
               </div>
 
@@ -1048,6 +1099,29 @@ const handleSendMessage = (e) => {
                     style={{ background: '#728D7A', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 20 }}
                   >
                     View Security QR Pass →
+                  </button>
+                </div>
+
+                {/* App System & Updates Card */}
+                <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: 9999, fontWeight: 700, letterSpacing: '0.04em' }}>SYSTEM &amp; UPDATES</span>
+                    <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px 0', color: 'var(--text-primary)' }}>HostelCare Mobile</h3>
+                    <p style={{ margin: '0 0 14px 0', fontSize: 13.5, color: 'var(--text-secondary)' }}>
+                      Installed Version: <strong>v1.2.2.14 (Build 22)</strong>
+                    </p>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 9999, background: updateAvailable ? '#FEF3C7' : '#EEF3EE', color: updateAvailable ? '#B45309' : '#587360', fontSize: 12, fontWeight: 600 }}>
+                      <span>{updateAvailable ? '⚡ New Update Available (v' + latestVersion + ')' : '✓ App is Up to Date'}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCheckUpdate}
+                    disabled={checkingUpdate}
+                    style={{ background: '#587360', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: checkingUpdate ? 'not-allowed' : 'pointer', marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
+                    <span>{checkingUpdate ? '↻ Checking...' : '🔄 Check for Updates'}</span>
                   </button>
                 </div>
               </div>

@@ -1616,13 +1616,11 @@ body.login-dark-theme button[style*="background: #FAF8F5"] {
 html.dark-theme .top-navbar,
 body.login-dark-theme .top-navbar {
   background: linear-gradient(135deg, rgba(88, 70, 58, 0.44) 0%, rgba(35, 27, 22, 0.36) 100%) !important;
-  backdrop-filter: blur(45px) saturate(240%) brightness(118%) !important;
-  -webkit-backdrop-filter: blur(45px) saturate(240%) brightness(118%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 
-    0 24px 54px rgba(0, 0, 0, 0.52), 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.32), 
-    inset 0 0 24px rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  transform: translateZ(0);
 }
 
 @media (min-width: 1441px) {
@@ -1634,38 +1632,46 @@ body.login-dark-theme .top-navbar {
 
 @media (max-width: 768px) {
   .top-navbar {
-    width: calc(100% - 20px) !important;
-    margin: 8px auto 14px auto !important;
-    padding: 0 12px !important;
-    height: 56px !important;
-    border-radius: 16px !important;
-    gap: 8px !important;
+    width: calc(100% - 16px) !important;
+    max-width: calc(100% - 16px) !important;
+    margin: 8px auto 12px auto !important;
+    padding: 0 8px 0 10px !important;
+    height: 52px !important;
+    border-radius: 9999px !important;
+    box-sizing: border-box !important;
+    gap: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+    transform: translateZ(0);
   }
 
   .brand-title {
     flex-shrink: 0 !important;
-    gap: 0 !important;
+    gap: 6px !important;
   }
 
   .brand-name {
-    font-size: 20px !important;
+    font-size: 17.5px !important;
     white-space: nowrap !important;
     letter-spacing: -0.02em !important;
   }
 
   .navbar-right-group {
-    gap: 6px !important;
+    gap: 4px !important;
     flex-shrink: 0 !important;
     display: flex !important;
     align-items: center !important;
+    margin-right: 0 !important;
   }
 
   .navbar-user-pill {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 6px !important;
-    padding: 4px 10px 4px 5px !important;
-    height: 34px !important;
+    gap: 4px !important;
+    padding: 3px 7px 3px 4px !important;
+    height: 30px !important;
     white-space: nowrap !important;
     flex-shrink: 0 !important;
     border-radius: 9999px !important;
@@ -1673,8 +1679,8 @@ body.login-dark-theme .top-navbar {
   }
 
   .navbar-avatar-img {
-    width: 22px !important;
-    height: 22px !important;
+    width: 20px !important;
+    height: 20px !important;
     margin: 0 !important;
     flex-shrink: 0 !important;
   }
@@ -1686,7 +1692,7 @@ body.login-dark-theme .top-navbar {
   .user-text-mobile {
     display: inline-block !important;
     white-space: nowrap !important;
-    font-size: 11.5px !important;
+    font-size: 11px !important;
     font-weight: 600 !important;
     line-height: 1 !important;
     letter-spacing: 0.01em !important;
@@ -1694,12 +1700,22 @@ body.login-dark-theme .top-navbar {
 
   .theme-toggle-warm-btn,
   .header-logout-btn {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
     padding: 0 !important;
     border-radius: 9999px !important;
     flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .theme-toggle-warm-btn svg,
+  .header-logout-btn svg {
+    width: 15px !important;
+    height: 15px !important;
   }
 }
 
@@ -3321,4 +3337,34 @@ body.login-dark-theme .tactile-section-label {
     font-size: 18px !important;
     white-space: nowrap !important;
   }
+}
+
+/* GPU Hardware Acceleration & Smooth 60/120 FPS Rendering */
+.top-navbar,
+.icon-sidebar,
+.concept1-card,
+.tactile-spotlight-card,
+.tactile-quick-card,
+.tactile-resident-suite-card {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Ensure smooth touch scrolling with invisible scrollbars */
+.main-viewport,
+.detailed-view-container,
+.workspace-layout {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.main-viewport::-webkit-scrollbar,
+.detailed-view-container::-webkit-scrollbar,
+.workspace-layout::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }

@@ -32,16 +32,33 @@ export default function BootSplashScreen({ onComplete }) {
   });
 
   useEffect(() => {
-    // 1. Immediately dismiss native splash so the animated view is 100% visible
+    // 1. Lock scrolling completely during boot animation so NO scrollbar is ever visible
+    try {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } catch (e) {}
+
+    // 2. Crossfade dismiss native splash after first React DOM paint (seamless transition)
     if (Capacitor.isNativePlatform()) {
-      try {
-        SplashScreen.hide({ fadeOutDuration: 0 }).catch(() => {});
-      } catch (e) {
-        // ignore
-      }
+      requestAnimationFrame(() => {
+        try {
+          SplashScreen.hide({ fadeOutDuration: 150 }).catch(() => {});
+        } catch (e) {
+          // ignore
+        }
+      });
     }
 
-    // 2. Listen to system dark mode changes
+    return () => {
+      try {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+      } catch (e) {}
+    };
+  }, []);
+
+  useEffect(() => {
+    // 3. Listen to system dark mode changes
     if (typeof window !== 'undefined' && window.matchMedia) {
       const mq = window.matchMedia('(prefers-color-scheme: dark)');
       const listener = (e) => {
@@ -66,13 +83,17 @@ export default function BootSplashScreen({ onComplete }) {
   }, []);
 
   useEffect(() => {
-    // 3. Timeline sequence
+    // 4. Timeline sequence
     const t1 = setTimeout(() => setAnimStage('merging'), 100);
     const t2 = setTimeout(() => setAnimStage('sparkle'), 1050);
     const t3 = setTimeout(() => setAnimStage('reveal'), 1450);
     const t4 = setTimeout(() => setAnimStage('fading'), 2500);
     const t5 = setTimeout(() => {
       setVisible(false);
+      try {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+      } catch (e) {}
       if (onComplete) onComplete();
     }, 2950);
 
