@@ -881,7 +881,7 @@ export default function DevChatPage() {
                   {socketConnected ? '● Socket Live' : '○ Connecting...'}
                 </span>
                 <span style={{ opacity: 0.5 }}>•</span>
-                <span style={{ color: '#587360', fontSize: '0.72rem', background: '#EEF3EE', padding: '2px 8px', borderRadius: 9999, border: '1px solid #D5E2D7', fontWeight: 600 }}>v1.2.2.14 Pre-Release</span>
+                <span style={{ color: '#587360', fontSize: '0.72rem', background: '#EEF3EE', padding: '2px 8px', borderRadius: 9999, border: '1px solid #D5E2D7', fontWeight: 600 }}>v1.2.2.15 Pre-Release</span>
               </p>
             </div>
           </div>

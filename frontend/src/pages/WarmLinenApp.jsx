@@ -45,7 +45,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
       if (res && res.updateAvailable) {
         triggerToast('success', `New update v${res.latestVersion} found! Tap to install.`);
       } else {
-        triggerToast('success', 'You are on the latest version of HostelCare (v1.2.2.14)!');
+        triggerToast('success', 'You are on the latest version of HostelCare (v1.2.2.15)!');
       }
     } catch (e) {
       triggerToast('info', 'HostelCare is up to date.');
@@ -566,7 +566,7 @@ const handleSendMessage = (e) => {
                       gap: 4
                     }}
                   >
-                    <span>{updateAvailable ? '⚡ v' + latestVersion : 'v1.2.2.14'}</span>
+                    <span>{updateAvailable ? '⚡ v' + latestVersion : 'v1.2.2.15'}</span>
                   </button>
                 </div>
               </div>
@@ -1082,7 +1082,7 @@ const handleSendMessage = (e) => {
                     <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: 9999, fontWeight: 700, letterSpacing: '0.04em' }}>SYSTEM &amp; UPDATES</span>
                     <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px 0', color: 'var(--text-primary)' }}>HostelCare Mobile</h3>
                     <p style={{ margin: '0 0 14px 0', fontSize: 13.5, color: 'var(--text-secondary)' }}>
-                      Installed Version: <strong>v1.2.2.14 (Build 22)</strong>
+                      Installed Version: <strong>v1.2.2.15 (Build 22)</strong>
                     </p>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 9999, background: updateAvailable ? '#FEF3C7' : '#EEF3EE', color: updateAvailable ? '#B45309' : '#587360', fontSize: 12, fontWeight: 600 }}>
                       <span>{updateAvailable ? '⚡ New Update Available (v' + latestVersion + ')' : '✓ App is Up to Date'}</span>

@@ -40,7 +40,7 @@ export async function initPushNotifications() {
         localStorage.setItem('hc_fcm_registered', 'true');
         localStorage.setItem('hostelcare_push_registered', 'true');
 
-        let appVersion = '1.2.2.14';
+        let appVersion = '1.2.2.15';
         try {
           const info = await App.getInfo();
           if (info && info.version) {
