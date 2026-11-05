@@ -3257,7 +3257,7 @@ async function getDeviceRegistryDirectory(req, res) {
     const { search = "", platform, isMuted, isActive, versionFilter = "all", page = 1, limit = 20 } = req.query;
 
     const config = await SystemConfig.getEffectiveConfig();
-    const latestVersion = config?.appVersion?.latestVersion || "1.2.2.13";
+    const latestVersion = config?.appVersion?.latestVersion || "1.2.2.14";
     const minVersion = config?.appVersion?.minimumSupportedVersion || "1.0.0";
 
     // Auto-heal legacy uninitialized devices:
@@ -3553,7 +3553,7 @@ async function nudgeOutdatedDevices(req, res) {
     const { sendPushToSessions } = require("../services/pushService");
 
     const config = await SystemConfig.getEffectiveConfig();
-    const latestVersion = config?.appVersion?.latestVersion || "1.2.2.13";
+    const latestVersion = config?.appVersion?.latestVersion || "1.2.2.14";
     const updateUrl = config?.appVersion?.updateUrl || "https://github.com/Omverma713/HostelCare/releases";
 
     const outdatedDevices = await DeviceRegistry.find({

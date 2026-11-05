@@ -187,7 +187,7 @@ export default function SuperAdminPortal() {
     formEnabled: false,
     formTitle: 'HostelCare Beta — Apply Now',
     formDescription: 'Join our exclusive Closed Beta Testing program.',
-    betaVersion: '1.2.2.13',
+    betaVersion: '1.2.2.14',
     betaApkUrl: '',
     formDeadline: '',
     maxApplicants: 0,
@@ -341,7 +341,7 @@ export default function SuperAdminPortal() {
   const [pruningDeadDevices, setPruningDeadDevices] = useState(false);
   const [deviceVersionFilter, setDeviceVersionFilter] = useState('all');
   const [versionStats, setVersionStats] = useState({
-    latestVersion: '1.2.2.13',
+    latestVersion: '1.2.2.14',
     totalAndroid: 0,
     latestCount: 0,
     outdatedCount: 0,
@@ -386,10 +386,10 @@ export default function SuperAdminPortal() {
 
   // App Version State
   const [appVersionConfig, setAppVersionConfig] = useState({
-    latestVersion: '1.2.2.13',
+    latestVersion: '1.2.2.14',
     minimumSupportedVersion: '1.0.0',
     updateMessage: '',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.13/hostelcare-v1.2.2.13.apk',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.14/hostelcare-v1.2.2.14.apk',
     forceUpdate: false,
     isSuspended: false,
     suspendedReason: '',
@@ -417,8 +417,8 @@ export default function SuperAdminPortal() {
     enabled: true,
     isSuspended: false,
     suspendedReason: '',
-    version: '1.2.2.13',
-    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.13/hostelcare-v1.2.2.13.apk',
+    version: '1.2.2.14',
+    updateUrl: 'https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.14/hostelcare-v1.2.2.14.apk',
     updateMessage: 'You have been selected for the HostelCare Pilot Beta Program! Please update to test the newest features.',
     releaseNotes: '',
     releaseMedia: [],
@@ -871,7 +871,7 @@ export default function SuperAdminPortal() {
             releaseMedia: res.pilotTesting.releaseMedia || [],
             enabled: Boolean(res.pilotTesting.enabled),
             isSuspended: Boolean(res.pilotTesting.isSuspended),
-            version: res.pilotTesting.version || '1.2.2.13',
+            version: res.pilotTesting.version || '1.2.2.14',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
           }));
         }
@@ -1098,7 +1098,7 @@ export default function SuperAdminPortal() {
           'success',
           isTargeted
             ? `Removed ${u.name || reg} from targeted pilot release`
-            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.13'})`,
+            : `Added ${u.name || reg} to targeted pilot release (v${appVersionConfig.latestVersion || '1.2.2.14'})`,
           'Pilot Rollout'
         );
       }
@@ -8241,7 +8241,7 @@ export default function SuperAdminPortal() {
                     type="text"
                     value={cbtConfig.betaVersion}
                     onChange={(e) => setCbtConfig((prev) => ({ ...prev, betaVersion: e.target.value }))}
-                    placeholder="1.2.2.13"
+                    placeholder="1.2.2.14"
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -8307,7 +8307,7 @@ export default function SuperAdminPortal() {
                   type="text"
                   value={cbtConfig.betaApkUrl}
                   onChange={(e) => setCbtConfig((prev) => ({ ...prev, betaApkUrl: e.target.value }))}
-                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.13/hostelcare-v1.2.2.13.apk"
+                  placeholder="https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.14/hostelcare-v1.2.2.14.apk"
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -11012,7 +11012,7 @@ export default function SuperAdminPortal() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.2rem' }}>🟢</span>
                 <div>
-                  <div style={{ fontSize: '0.68rem', color: '#00ff66', textTransform: 'uppercase', fontWeight: 700 }}>On Latest (v{versionStats.latestVersion || '1.2.2.13'})</div>
+                  <div style={{ fontSize: '0.68rem', color: '#00ff66', textTransform: 'uppercase', fontWeight: 700 }}>On Latest (v{versionStats.latestVersion || '1.2.2.14'})</div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#00ff66' }}>
                     {versionStats.latestCount || 0} ({versionStats.latestPercent || 0}%)
                   </div>
@@ -11068,7 +11068,7 @@ export default function SuperAdminPortal() {
                 style={{ minWidth: '160px', background: 'rgba(5, 19, 41, 0.8)', color: '#ffffff', borderColor: 'rgba(0, 243, 255, 0.3)' }}
               >
                 <option value="all">📱 All App Versions</option>
-                <option value="latest">🟢 Latest Only (v{versionStats.latestVersion || '1.2.2.13'})</option>
+                <option value="latest">🟢 Latest Only (v{versionStats.latestVersion || '1.2.2.14'})</option>
                 <option value="outdated">⚠️ Outdated Only</option>
               </select>
 
@@ -11316,12 +11316,12 @@ export default function SuperAdminPortal() {
                                     border: dev.isLatest ? '1px solid rgba(0, 255, 102, 0.3)' : '1px solid rgba(255, 170, 0, 0.3)',
                                   }}
                                 >
-                                  v{dev.appVersion || versionStats.latestVersion || '1.2.2.13'}
+                                  v{dev.appVersion || versionStats.latestVersion || '1.2.2.14'}
                                 </span>
                                 {dev.isLatest ? (
                                   <span style={{ fontSize: '0.65rem', color: '#00ff66', fontWeight: 700 }}>🟢 LATEST</span>
                                 ) : (
-                                  <span style={{ fontSize: '0.65rem', color: '#ffaa00', fontWeight: 700 }} title={`Target is v${versionStats.latestVersion || '1.2.2.13'}`}>⚠️ OLD</span>
+                                  <span style={{ fontSize: '0.65rem', color: '#ffaa00', fontWeight: 700 }} title={`Target is v${versionStats.latestVersion || '1.2.2.14'}`}>⚠️ OLD</span>
                                 )}
                               </div>
                             )}

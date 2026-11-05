@@ -199,7 +199,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       version: {
         type: String,
-        default: "1.2.2.13",
+        default: "1.2.2.14",
         trim: true,
       },
       updateMessage: {
@@ -210,7 +210,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       updateUrl: {
         type: String,
-        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.13/hostelcare-v1.2.2.13.apk",
+        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.14/hostelcare-v1.2.2.14.apk",
         trim: true,
       },
       forceUpdate: {
@@ -374,7 +374,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       formTitle: {
         type: String,
-        default: "HostelCare Beta v1.2.2.13 — Apply Now",
+        default: "HostelCare Beta v1.2.2.14 — Apply Now",
         trim: true,
       },
       formDescription: {
@@ -384,12 +384,12 @@ const systemConfigSchema = new mongoose.Schema(
       },
       betaVersion: {
         type: String,
-        default: "1.2.2.13",
+        default: "1.2.2.14",
         trim: true,
       },
       betaApkUrl: {
         type: String,
-        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.13/hostelcare-v1.2.2.13.apk",
+        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.14/hostelcare-v1.2.2.14.apk",
         trim: true,
       },
       formDeadline: {

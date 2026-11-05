@@ -88,7 +88,7 @@ const deviceRegistrySchema = new mongoose.Schema(
     },
     appVersion: {
       type: String,
-      default: "1.2.2.13",
+      default: "1.2.2.14",
     },
     hardwareModel: {
       type: String,
