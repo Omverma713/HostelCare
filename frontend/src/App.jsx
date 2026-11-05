@@ -205,11 +205,26 @@ function DashboardLayout() {
               }
             }}
           >
-            <img 
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80" 
-              alt="Avatar" 
-              className="navbar-avatar-img" 
-            />
+            <span 
+              className="navbar-avatar-monogram"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: '50%',
+                background: '#587360',
+                color: '#FAF7F2',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10.5,
+                fontWeight: 700,
+                fontFamily: "var(--font-serif, 'Playfair Display', Georgia, serif)",
+                letterSpacing: '0.02em',
+                flexShrink: 0
+              }}
+            >
+              {user?.name ? user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'OV'}
+            </span>
             <span className="user-text-full">
               {isSuperAdmin 
                 ? `${user?.name || 'Master Super Admin'} • RBAC SuperAdmin`

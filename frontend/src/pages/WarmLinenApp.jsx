@@ -511,11 +511,27 @@ const handleSendMessage = (e) => {
               <div className="tactile-resident-suite-card">
                 <div className="tactile-suite-left">
                   <div className="tactile-suite-avatar">
-                    <img 
-                      src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80" 
-                      alt="Avatar" 
-                      className="tactile-avatar-img" 
-                    />
+                    <div 
+                      className="tactile-avatar-monogram" 
+                      style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 18,
+                        background: '#587360',
+                        color: '#FAF7F2',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: "var(--font-serif, 'Playfair Display', Georgia, serif)",
+                        fontSize: 21,
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        boxShadow: '0 4px 14px rgba(88, 115, 96, 0.35)',
+                        flexShrink: 0
+                      }}
+                    >
+                      {displayName ? displayName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'OV'}
+                    </div>
                   </div>
                   <div className="tactile-suite-details">
                     <h2 className="tactile-suite-title">Resident Dashboard</h2>
@@ -904,49 +920,7 @@ const handleSendMessage = (e) => {
                         </div>
                       )}
 
-                      <div className="tactile-rating-widget">
-                        <div className="tactile-rating-score">
-                          <span className="tactile-rating-star">★</span>
-                          <span>4.8 Community Score (142 reviews)</span>
-                        </div>
 
-                        <div className="tactile-emoji-group">
-                          <span style={{ fontSize: 12, color: '#7D7F7A', marginRight: 4 }}>Your Rating:</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMealRating('loved');
-                              localStorage.setItem('hc_meal_rating_today', 'loved');
-                              triggerToast('success', 'Thank you! Rated 😋 Loved it!');
-                            }}
-                            className={`tactile-emoji-btn ${mealRating === 'loved' ? 'active' : ''}`}
-                          >
-                            😋 Loved it
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMealRating('average');
-                              localStorage.setItem('hc_meal_rating_today', 'average');
-                              triggerToast('info', 'Feedback recorded: 😐 Average');
-                            }}
-                            className={`tactile-emoji-btn ${mealRating === 'average' ? 'active' : ''}`}
-                          >
-                            😐 OK
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMealRating('bad');
-                              localStorage.setItem('hc_meal_rating_today', 'bad');
-                              triggerToast('warning', 'Feedback logged: 👎 Needs improvement');
-                            }}
-                            className={`tactile-emoji-btn ${mealRating === 'bad' ? 'active' : ''}`}
-                          >
-                            👎 Needs work
-                          </button>
-                        </div>
-                      </div>
                     </div>
                   );
                 })()}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/ThemeContext';
 import { appUpdateService } from '../services/appUpdateService';
 import {
   Sparkles,
@@ -440,6 +441,59 @@ export default function AppUpdateModal() {
   const isInstalling = state?.downloadStatus === 'installing';
   const isDownloadError = state?.downloadStatus === 'error';
 
+  // Warm Linen (Light) & Espresso Luxury (Dark) Theme Styling
+  let isDark = false;
+  try {
+    const themeCtx = useTheme();
+    isDark = themeCtx?.theme === 'dark';
+  } catch (e) {
+    isDark = false;
+  }
+  if (!isDark && typeof document !== 'undefined') {
+    isDark = document.documentElement.classList.contains('dark-theme') ||
+      document.body.classList.contains('login-dark-theme') ||
+      (typeof localStorage !== 'undefined' && localStorage.getItem('theme') === 'dark');
+  }
+
+  const modalStyle = {
+    overlayBg: isDark ? 'rgba(10, 8, 7, 0.78)' : 'rgba(38, 32, 28, 0.45)',
+    dialogBg: isDark ? '#231E1A' : '#FFFFFF',
+    border: state.forceUpdate
+      ? '1px solid rgba(239, 68, 68, 0.45)'
+      : (isDark ? '1px solid #383028' : '1px solid #E6E0D5'),
+    boxShadow: state.forceUpdate
+      ? '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(239, 68, 68, 0.2)'
+      : (isDark 
+          ? '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 25px rgba(0, 0, 0, 0.5)' 
+          : '0 20px 50px rgba(105, 93, 76, 0.18), 0 4px 16px rgba(0, 0, 0, 0.04)'),
+    color: isDark ? '#FAF7F2' : '#272824',
+    fontTitle: "var(--font-serif, 'Playfair Display', Georgia, serif)",
+    fontBody: "var(--font-sans, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif)",
+    accentBar: state.forceUpdate || isDownloadError || state.manualCheckStatus === 'error'
+      ? 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)'
+      : (isDark ? 'linear-gradient(90deg, #C9826D 0%, #8CA993 100%)' : 'linear-gradient(90deg, #728D7A 0%, #C9826D 100%)'),
+    subText: isDark ? '#C9BFAF' : '#575854',
+    mutedText: isDark ? '#8E867C' : '#8E8F8A',
+    headerBtnBg: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F4EFE6',
+    headerBtnColor: isDark ? '#C9BFAF' : '#575854',
+    headerBtnBorder: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #E6E0D5',
+    badgeUpToDateBg: isDark ? 'rgba(88, 115, 96, 0.22)' : '#EEF3EE',
+    badgeUpToDateBorder: isDark ? '1px solid rgba(140, 169, 147, 0.35)' : '1px solid #D5E2D7',
+    badgeUpToDateColor: isDark ? '#A3D4AE' : '#587360',
+    primaryBtnBg: isDark ? '#587360' : '#587360',
+    primaryBtnColor: '#FFFFFF',
+    primaryBtnShadow: isDark ? '0 4px 14px rgba(88, 115, 96, 0.35)' : '0 4px 14px rgba(88, 115, 96, 0.25)',
+    actionBtnUpdateBg: 'linear-gradient(135deg, #C9826D 0%, #B8735F 100%)',
+    actionBtnUpdateShadow: '0 4px 14px rgba(201, 130, 109, 0.35)',
+    secondaryBtnBg: isDark ? 'rgba(255, 255, 255, 0.06)' : '#F4EFE6',
+    secondaryBtnBorder: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #DCD4C5',
+    secondaryBtnColor: isDark ? '#FAF7F2' : '#272824',
+    stickyFooterBg: isDark ? 'linear-gradient(to top, #231E1A 92%, rgba(35, 30, 26, 0.95) 100%)' : 'linear-gradient(to top, #FFFFFF 92%, rgba(255, 255, 255, 0.95) 100%)',
+    stickyFooterBorder: isDark ? '1px solid #383028' : '1px solid #EFEAE0',
+    cardBoxBg: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FAF8F5',
+    cardBoxBorder: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #E6E0D5',
+  };
+
   return (
     <div
       style={{
@@ -449,7 +503,7 @@ export default function AppUpdateModal() {
         right: 0,
         bottom: 0,
         zIndex: 999999,
-        background: 'rgba(8, 12, 26, 0.82)',
+        background: modalStyle.overlayBg,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         display: 'flex',
@@ -472,28 +526,21 @@ export default function AppUpdateModal() {
           maxHeight: 'min(92vh, 700px)',
           display: 'flex',
           flexDirection: 'column',
-          background: 'linear-gradient(150deg, #131d3b 0%, #0c1328 100%)',
-          borderRadius: '20px',
-          border: state.forceUpdate
-            ? '1px solid rgba(239, 68, 68, 0.45)'
-            : '1px solid rgba(99, 102, 241, 0.35)',
-          boxShadow: state.forceUpdate
-            ? '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(239, 68, 68, 0.2)'
-            : '0 25px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.2)',
+          background: modalStyle.dialogBg,
+          borderRadius: '24px',
+          border: modalStyle.border,
+          boxShadow: modalStyle.boxShadow,
           overflow: 'hidden',
           position: 'relative',
-          color: '#ffffff',
-          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+          color: modalStyle.color,
+          fontFamily: modalStyle.fontBody,
         }}
       >
         {/* Accent Bar */}
         <div
           style={{
             height: '4px',
-            background:
-              state.forceUpdate || isDownloadError || state.manualCheckStatus === 'error'
-                ? 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)'
-                : 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #38bdf8 100%)',
+            background: modalStyle.accentBar,
           }}
         />
 
@@ -517,15 +564,15 @@ export default function AppUpdateModal() {
               aria-label="Refresh update status"
               title="Check server again for latest release"
               style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: 'none',
+                background: modalStyle.headerBtnBg,
+                border: modalStyle.headerBtnBorder,
                 borderRadius: '50%',
                 width: '32px',
                 height: '32px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'rgba(255, 255, 255, 0.8)',
+                color: modalStyle.headerBtnColor,
                 cursor: rechecking ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s',
               }}
@@ -539,15 +586,15 @@ export default function AppUpdateModal() {
                 onClick={handleDismiss}
                 aria-label="Close dialog"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: 'none',
+                  background: modalStyle.headerBtnBg,
+                  border: modalStyle.headerBtnBorder,
                   borderRadius: '50%',
                   width: '32px',
                   height: '32px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'rgba(255, 255, 255, 0.8)',
+                  color: modalStyle.headerBtnColor,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -569,26 +616,40 @@ export default function AppUpdateModal() {
             <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
               <div
                 style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '16px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '20px',
+                  background: modalStyle.badgeUpToDateBg,
+                  border: modalStyle.badgeUpToDateBorder,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 1rem',
-                  color: '#10b981',
+                  margin: '0 auto 1.25rem',
+                  color: modalStyle.badgeUpToDateColor,
+                  boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 14px rgba(88, 115, 96, 0.15)',
                 }}
               >
-                <CheckCircle2 size={30} />
+                <CheckCircle2 size={32} />
               </div>
 
-              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 800 }}>
+              <h3 style={{ 
+                margin: '0 0 0.6rem', 
+                fontSize: '1.4rem', 
+                fontWeight: 700, 
+                fontFamily: modalStyle.fontTitle, 
+                color: modalStyle.color,
+                letterSpacing: '-0.01em'
+              }}>
                 You're up to date!
               </h3>
-              <p style={{ margin: '0 0 1.25rem', fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', lineHeight: 1.5 }}>
-                HostelCare <strong>v{state.currentVersion}</strong> is currently the latest released version. No updates are required.
+              <p style={{ 
+                margin: '0 0 1.5rem', 
+                fontSize: '0.92rem', 
+                color: modalStyle.subText, 
+                lineHeight: 1.55,
+                fontFamily: modalStyle.fontBody
+              }}>
+                HostelCare <strong style={{ color: modalStyle.color }}>v{state.currentVersion}</strong> is currently the latest released version. No updates are required.
               </p>
 
               <button
@@ -596,15 +657,17 @@ export default function AppUpdateModal() {
                 onClick={handleDismiss}
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '10px',
+                  padding: '0.85rem',
+                  borderRadius: '14px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: '#ffffff',
+                  background: modalStyle.primaryBtnBg,
+                  color: modalStyle.primaryBtnColor,
                   fontWeight: 700,
-                  fontSize: '0.9rem',
+                  fontSize: '0.94rem',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+                  boxShadow: modalStyle.primaryBtnShadow,
+                  fontFamily: modalStyle.fontBody,
+                  transition: 'transform 0.15s ease, opacity 0.15s ease',
                 }}
               >
                 Done
@@ -1202,13 +1265,13 @@ export default function AppUpdateModal() {
                   right: 0,
                   margin: '0.5rem -1.5rem -1.25rem -1.5rem',
                   padding: '0.85rem 1.5rem 1.15rem',
-                  background: 'linear-gradient(to top, #0c1328 92%, rgba(12, 19, 40, 0.95) 100%)',
+                  background: modalStyle.stickyFooterBg,
                   display: 'flex',
                   gap: '8px',
                   flexWrap: 'wrap',
                   zIndex: 20,
-                  borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                  boxShadow: '0 -10px 25px rgba(0, 0, 0, 0.6)',
+                  borderTop: modalStyle.stickyFooterBorder,
+                  boxShadow: isDark ? '0 -10px 25px rgba(0, 0, 0, 0.4)' : '0 -10px 25px rgba(105, 93, 76, 0.08)',
                 }}
               >
                 {!state.forceUpdate && (
@@ -1219,9 +1282,9 @@ export default function AppUpdateModal() {
                       flex: '1 1 70px',
                       padding: '0.75rem',
                       borderRadius: '10px',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      background: 'rgba(255, 255, 255, 0.06)',
-                      color: 'rgba(255, 255, 255, 0.85)',
+                      border: modalStyle.secondaryBtnBorder,
+                      background: modalStyle.secondaryBtnBg,
+                      color: modalStyle.secondaryBtnColor,
                       fontWeight: 600,
                       fontSize: '0.85rem',
                       cursor: 'pointer',
