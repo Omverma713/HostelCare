@@ -472,12 +472,12 @@ const handleSendMessage = (e) => {
         )}
 
         {/* MAIN VIEWPORT */}
-        <main className="main-viewport" style={embedded ? { padding: '8px 16px 140px', flex: 1, maxWidth: 1060, margin: '0 auto', width: '100%', boxSizing: 'border-box' } : {}}>
+        <main className="main-viewport" style={embedded ? { padding: '8px 16px 85px', flex: 1, maxWidth: 1060, margin: '0 auto', width: '100%', boxSizing: 'border-box' } : {}}>
           {/* =========================================================================
               VIEW 1: CONCEPT 1 ESPRESSO LUXURY WORKSPACE DASHBOARD (EXACT MATCH)
              ========================================================================= */}
           {activeTab === 'home' && (
-            <div className="concept1-dashboard-container" style={{ paddingBottom: '40px' }}>
+            <div className="concept1-dashboard-container">
               {/* 1. STUDENT SUITE & RESIDENT HEADER CARD (MATCHING IMAGE 1) */}
               <div className="tactile-resident-suite-card">
                 <div className="tactile-suite-left">
@@ -504,62 +504,7 @@ const handleSendMessage = (e) => {
                 </div>
               </div>
 
-              {/* 2. TACTILE QUICK ACTION CARDS (4-CARD GRID - EXACT IMAGE 1) */}
-              <div className="tactile-quick-grid">
-                <div 
-                  className="tactile-quick-card"
-                  onClick={() => setShowQrModal(true)}
-                  title="Request digital Outing Pass & Gate QR code"
-                >
-                  <div className="tactile-quick-icon">🎫</div>
-                  <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Request Outing Pass</h4>
-                    <p className="tactile-quick-sub">Digital QR &amp; Gate Pass</p>
-                  </div>
-                </div>
-
-                <div 
-                  className="tactile-quick-card"
-                  onClick={() => setShowComplaintModal(true)}
-                  title="Report a maintenance or facility issue"
-                >
-                  <div className="tactile-quick-icon">⚠️</div>
-                  <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Report Issue</h4>
-                    <p className="tactile-quick-sub">Plumbing, Electrical...</p>
-                  </div>
-                </div>
-
-                <div 
-                  className="tactile-quick-card"
-                  onClick={() => {
-                    const next = !laundryBooked;
-                    setLaundryBooked(next);
-                    triggerToast('info', next ? '🧺 Washer #2 reserved for 30 minutes!' : 'Laundry reservation released.');
-                  }}
-                  title="Live laundry room status and washer reservation"
-                >
-                  <div className="tactile-quick-icon">🧺</div>
-                  <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Laundry Queue</h4>
-                    <p className="tactile-quick-sub">{laundryBooked ? '🟢 Washer #2: Booked' : 'Washer #2: Available'}</p>
-                  </div>
-                </div>
-
-                <div 
-                  className="tactile-quick-card"
-                  onClick={() => setActiveTab('mess')}
-                  title="View full weekly dining timetable"
-                >
-                  <div className="tactile-quick-icon">🍲</div>
-                  <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Dining Timetable</h4>
-                    <p className="tactile-quick-sub">View menu &amp; dish ratings</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. TODAY'S ACTIVE MEAL SPOTLIGHT CARD (EXACT IMAGE 1 LEFT PHONE) */}
+              {/* 2. TODAY'S ACTIVE MEAL / SNACKS SPOTLIGHT CARD (FIRST SECTION - CLEAN NO-RATING) */}
               {(() => {
                 const now = new Date();
                 const currentMins = now.getHours() * 60 + now.getMinutes();
@@ -628,59 +573,70 @@ const handleSendMessage = (e) => {
                       </>
                     )}
 
-                    <div className="tactile-rating-widget" onClick={(e) => e.stopPropagation()}>
-                      <div className="tactile-rating-score">
-                        <span className="tactile-rating-star">★</span>
-                        <span>4.8 Community Rating (from 142 students)</span>
-                      </div>
-
-                      <div className="tactile-emoji-group">
-                        <span style={{ fontSize: 12, color: '#7D7F7A', marginRight: 4 }}>Your Rating:</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMealRating('loved');
-                            localStorage.setItem('hc_meal_rating_today', 'loved');
-                            triggerToast('success', 'Thank you! Rated 😋 Loved it!');
-                          }}
-                          className={`tactile-emoji-btn ${mealRating === 'loved' ? 'active' : ''}`}
-                        >
-                          😋 Loved it
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMealRating('average');
-                            localStorage.setItem('hc_meal_rating_today', 'average');
-                            triggerToast('info', 'Feedback recorded: 😐 OK');
-                          }}
-                          className={`tactile-emoji-btn ${mealRating === 'average' ? 'active' : ''}`}
-                        >
-                          😐 OK
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMealRating('bad');
-                            localStorage.setItem('hc_meal_rating_today', 'bad');
-                            triggerToast('warning', 'Feedback logged: 👎 Needs improvement');
-                          }}
-                          className={`tactile-emoji-btn ${mealRating === 'bad' ? 'active' : ''}`}
-                        >
-                          👎 Needs work
-                        </button>
-                      </div>
                     </div>
-                  </div>
                 );
               })()}
 
-              {/* 4. MAINTENANCE PIPELINE STEPPER (WITH AMPLE BOTTOM CLEARANCE) */}
+{/* 3. TACTILE QUICK ACTION CARDS (4-CARD GRID - EXACT IMAGE 1) */}
+              <div className="tactile-quick-grid">
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => setShowQrModal(true)}
+                  title="Request digital Outing Pass & Gate QR code"
+                >
+                  <div className="tactile-quick-icon">🎫</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Request Outing Pass</h4>
+                    <p className="tactile-quick-sub">Digital QR &amp; Gate Pass</p>
+                  </div>
+                </div>
+
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => setShowComplaintModal(true)}
+                  title="Report a maintenance or facility issue"
+                >
+                  <div className="tactile-quick-icon">⚠️</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Report Issue</h4>
+                    <p className="tactile-quick-sub">Plumbing, Electrical...</p>
+                  </div>
+                </div>
+
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => {
+                    const next = !laundryBooked;
+                    setLaundryBooked(next);
+                    triggerToast('info', next ? '🧺 Washer #2 reserved for 30 minutes!' : 'Laundry reservation released.');
+                  }}
+                  title="Live laundry room status and washer reservation"
+                >
+                  <div className="tactile-quick-icon">🧺</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Laundry Queue</h4>
+                    <p className="tactile-quick-sub">{laundryBooked ? '🟢 Washer #2: Booked' : 'Washer #2: Available'}</p>
+                  </div>
+                </div>
+
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => setActiveTab('mess')}
+                  title="View full weekly dining timetable"
+                >
+                  <div className="tactile-quick-icon">🍲</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Dining Timetable</h4>
+                    <p className="tactile-quick-sub">View menu &amp; dish ratings</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. MAINTENANCE PIPELINE STEPPER (COMPACT POLISHED LAYOUT) */}
               <div 
                 className="concept1-card concept1-pipeline-card"
                 onClick={() => setActiveTab('complaints')}
                 title="Click to track maintenance requests"
-                style={{ marginBottom: '32px' }}
               >
                 <div className="concept1-card-top">
                   <h2 className="concept1-card-title">Maintenance Pipeline</h2>

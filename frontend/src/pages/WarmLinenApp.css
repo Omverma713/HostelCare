@@ -3261,30 +3261,64 @@ body.login-dark-theme .tactile-section-label {
   color: #A8A59E;
 }
 
-/* Ensure bottom floating capsule dock NEVER overlaps Maintenance Pipeline card */
+/* Clean Bottom Clearance: Exactly enough clearance (~85px) for floating dock without empty void */
 .concept1-dashboard-container {
-  padding-bottom: 150px !important;
+  padding-bottom: 85px !important;
 }
 
 .main-viewport {
-  padding-bottom: 150px !important;
+  padding-bottom: 0px !important;
 }
 
 .warm-linen-embedded {
-  padding-bottom: 150px !important;
+  padding-bottom: 85px !important;
+}
+
+/* Polished Maintenance Pipeline Card & Stepper CSS */
+.concept1-pipeline-card {
+  padding: 18px 20px !important;
+  border-radius: 24px !important;
+  margin-bottom: 0px !important;
+}
+
+.concept1-pipeline-card .concept1-card-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  flex-wrap: nowrap !important;
+  margin-bottom: 10px !important;
+}
+
+.concept1-pipeline-card .concept1-card-title {
+  white-space: nowrap !important;
+  font-size: 19px !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 !important;
+}
+
+.concept1-matcha-pill {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  padding: 4px 12px !important;
 }
 
 @media (max-width: 768px) {
   .concept1-dashboard-container {
-    padding-bottom: 170px !important;
+    padding-bottom: 88px !important;
   }
   .main-viewport {
-    padding-bottom: 170px !important;
+    padding-bottom: 0px !important;
   }
   .workspace-layout {
-    padding-bottom: 170px !important;
+    padding-bottom: 0px !important;
   }
   .concept1-pipeline-card {
-    margin-bottom: 40px !important;
+    padding: 16px 16px !important;
+    margin-bottom: 0px !important;
+  }
+  .concept1-pipeline-card .concept1-card-title {
+    font-size: 18px !important;
+    white-space: nowrap !important;
   }
 }

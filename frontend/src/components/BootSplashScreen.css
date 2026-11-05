@@ -15,9 +15,12 @@
   pointer-events: all;
 }
 
-html.dark-theme .hc-boot-overlay {
-  background: #141312;
-  color: #FAF7F2;
+/* Dark Mode Overlay styling */
+html.dark-theme .hc-boot-overlay,
+body.login-dark-theme .hc-boot-overlay,
+.hc-boot-overlay.hc-dark-mode {
+  background: #141312 !important;
+  color: #FAF7F2 !important;
 }
 
 .hc-boot-fading {
@@ -51,10 +54,12 @@ html.dark-theme .hc-boot-overlay {
   animation: hcCardFloat 2.6s ease-in-out infinite;
 }
 
-html.dark-theme .hc-emblem-card {
-  background: #201A17;
-  border-color: #BD7762;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.65);
+html.dark-theme .hc-emblem-card,
+body.login-dark-theme .hc-emblem-card,
+.hc-boot-overlay.hc-dark-mode .hc-emblem-card {
+  background: #201A17 !important;
+  border-color: #BD7762 !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.75) !important;
 }
 
 .hc-card-aura {
@@ -95,7 +100,9 @@ html.dark-theme .hc-emblem-card {
   transition: transform 0.95s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.75s ease;
 }
 
-html.dark-theme .hc-letter-h-anim {
+html.dark-theme .hc-letter-h-anim,
+body.login-dark-theme .hc-letter-h-anim,
+.hc-boot-overlay.hc-dark-mode .hc-letter-h-anim {
   fill: #FAF7F2 !important;
 }
 
@@ -116,6 +123,12 @@ html.dark-theme .hc-letter-h-anim {
   transition: transform 0.95s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.75s ease;
 }
 
+html.dark-theme .hc-letter-c-anim,
+body.login-dark-theme .hc-letter-c-anim,
+.hc-boot-overlay.hc-dark-mode .hc-letter-c-anim {
+  fill: #E28771 !important;
+}
+
 /* 3. 4-Point Sparkle Star: Pops in with flare when H and C dock */
 .hc-sparkle-star-anim {
   transform-origin: 156px 43px;
@@ -132,6 +145,13 @@ html.dark-theme .hc-letter-h-anim {
   opacity: 1;
   filter: drop-shadow(0 0 10px rgba(192, 118, 96, 0.9));
   transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+}
+
+html.dark-theme .hc-sparkle-star-anim,
+body.login-dark-theme .hc-sparkle-star-anim,
+.hc-boot-overlay.hc-dark-mode .hc-sparkle-star-anim {
+  fill: #F5B895 !important;
+  filter: drop-shadow(0 0 12px rgba(226, 135, 113, 0.95)) !important;
 }
 
 /* Typography transitions */
@@ -153,8 +173,10 @@ html.dark-theme .hc-letter-h-anim {
   transform: translateY(0);
 }
 
-html.dark-theme .hc-boot-brand-name {
-  color: #FAF7F2;
+html.dark-theme .hc-boot-brand-name,
+body.login-dark-theme .hc-boot-brand-name,
+.hc-boot-overlay.hc-dark-mode .hc-boot-brand-name {
+  color: #FAF7F2 !important;
 }
 
 .hc-boot-brand-tag {
@@ -175,8 +197,10 @@ html.dark-theme .hc-boot-brand-name {
   transform: translateY(0);
 }
 
-html.dark-theme .hc-boot-brand-tag {
-  color: #8CA993;
+html.dark-theme .hc-boot-brand-tag,
+body.login-dark-theme .hc-boot-brand-tag,
+.hc-boot-overlay.hc-dark-mode .hc-boot-brand-tag {
+  color: #8CA993 !important;
 }
 
 .hc-boot-track {
@@ -196,6 +220,12 @@ html.dark-theme .hc-boot-brand-tag {
   transform: translateY(0);
 }
 
+html.dark-theme .hc-boot-track,
+body.login-dark-theme .hc-boot-track,
+.hc-boot-overlay.hc-dark-mode .hc-boot-track {
+  background: rgba(226, 135, 113, 0.22) !important;
+}
+
 .hc-boot-bar {
   position: absolute;
   top: 0;
@@ -205,6 +235,12 @@ html.dark-theme .hc-boot-brand-tag {
   border-radius: 999px;
   background: linear-gradient(90deg, #BD7762 0%, #587360 100%);
   animation: hcProgressShimmer 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+html.dark-theme .hc-boot-bar,
+body.login-dark-theme .hc-boot-bar,
+.hc-boot-overlay.hc-dark-mode .hc-boot-bar {
+  background: linear-gradient(90deg, #E28771 0%, #8CA993 100%) !important;
 }
 
 @keyframes hcCardFloat {
