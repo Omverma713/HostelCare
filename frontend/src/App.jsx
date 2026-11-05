@@ -1,4 +1,5 @@
 import './pages/WarmLinenApp.css';
+import { Capacitor } from '@capacitor/core';
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -485,6 +486,14 @@ function MessMealAlarmScheduler() {
 }
 
 export default function App() {
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+        SplashScreen.hide({ fadeOutDuration: 350 }).catch(() => {});
+      }).catch(() => {});
+    }
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>

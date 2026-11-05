@@ -4,6 +4,7 @@ import './WarmLinenApp.css';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { DEFAULT_MESS_SCHEDULE, DAYS_ORDER } from '../constants/messMenuData';
+import { prioritizeMealDishes } from '../services/messNotificationService';
 import { triggerToast } from '../components/Toast';
 import { normalizeStatus, sortByDateDesc, isEmptyDataError } from '../utils/status';
 
@@ -65,6 +66,13 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [showQrModal, setShowQrModal] = useState(false);
   const [showComplaintModal, setShowComplaintModal] = useState(false);
   const [complaintSubmitted, setComplaintSubmitted] = useState(false);
+  const [parcelPickedUp, setParcelPickedUp] = useState(() => {
+    return localStorage.getItem('hc_parcel_picked_up') === 'true';
+  });
+  const [mealRating, setMealRating] = useState(() => {
+    return localStorage.getItem('hc_meal_rating_today') || null;
+  });
+  const [laundryBooked, setLaundryBooked] = useState(false);
   const [rating, setRating] = useState(5);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [broadcastSent, setBroadcastSent] = useState(false);
@@ -470,72 +478,232 @@ const handleSendMessage = (e) => {
              ========================================================================= */}
           {activeTab === 'home' && (
             <div className="concept1-dashboard-container">
-              {/* TOP ROW: 2 CARDS SIDE-BY-SIDE (MATCHING IMAGE 4/5) */}
-              <div className="concept1-top-grid">
-                {/* 1. Today's Meal Card */}
-                {(() => {
-                  const now = new Date();
-                  const currentMins = now.getHours() * 60 + now.getMinutes();
-                  const d = now.getDay();
-                  const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
-                  const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
-                  const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
-
-                  let mealCategory = "Breakfast";
-                  let mealItems = todayMeals.breakfast?.items?.join(', ') || "Crispy Masala Dosa, Piping Hot Sambar, Fresh Filter Coffee";
-
-                  if (currentMins >= 7 * 60 && currentMins < 12 * 60) {
-                    mealCategory = "Breakfast";
-                    mealItems = todayMeals.breakfast?.items?.join(', ') || "Crispy Masala Dosa, Piping Hot Sambar, Fresh Filter Coffee";
-                  } else if (currentMins >= 12 * 60 && currentMins < 17 * 60) {
-                    mealCategory = "Lunch";
-                    mealItems = todayMeals.lunch?.items?.join(', ') || "Steamed Rice, Dal Tadka, Seasonal Curry, Crispy Papad";
-                  } else if (currentMins >= 17 * 60 && currentMins < 20 * 60) {
-                    mealCategory = "Snacks";
-                    mealItems = todayMeals.snacks?.items?.join(', ') || "Hot Chai, Samosa / Veg Cutlet, Mint Chutney";
-                  } else {
-                    mealCategory = "Dinner";
-                    mealItems = todayMeals.dinner?.items?.join(', ') || "Paneer Butter Masala, Fresh Rotis, Dal Makhani, Jeera Rice";
-                  }
-
-                  return (
-                    <div 
-                      className="concept1-card concept1-card-half"
-                      onClick={() => setActiveTab('mess')}
-                      title="Click to view full weekly dining schedule"
-                    >
-                      <div className="concept1-card-top">
-                        <h2 className="concept1-card-title">Today's Meal</h2>
-                        <span className="concept1-matcha-pill">{mealCategory}</span>
-                      </div>
-                      <div className="concept1-card-body">
-                        <span className="concept1-label">Menu</span>
-                        <p className="concept1-hero-text">{mealItems}</p>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* 2. My Living Space Card */}
-                <div 
-                  className="concept1-card concept1-card-half"
-                  onClick={() => setActiveTab('room')}
-                  title="Click to view room details, roommate & outing gate pass"
-                >
-                  <div className="concept1-card-top">
-                    <h2 className="concept1-card-title">My Living Space</h2>
-                    <span className="concept1-matcha-pill">Everything in order</span>
+              {/* 1. STUDENT SUITE & RESIDENT HEADER CARD */}
+              <div className="tactile-resident-suite-card">
+                <div className="tactile-suite-left">
+                  <div className="tactile-suite-avatar">
+                    {user?.name 
+                      ? user.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase()
+                      : 'SR'}
                   </div>
-                  <div className="concept1-card-body">
-                    <span className="concept1-label">Room status</span>
-                    <p className="concept1-room-info-line">
-                      Room Status: <strong>{displayRoom}</strong> | Key: <strong>Active</strong> | Rating: <strong>5.0 ★</strong> | Caretaker: <strong>108 (BH-8)</strong>
+                  <div className="tactile-suite-details">
+                    <h2 className="tactile-suite-title">
+                      {user?.roomNumber ? `Suite ${user.roomNumber}` : 'Suite B-304'}
+                      {user?.hostelBlock ? ` • Block ${user.hostelBlock}` : (user?.hostel ? ` • ${user.hostel}` : ' • APJ Kalam Block')}
+                    </h2>
+                    <p className="tactile-suite-sub">
+                      <span>Resident: <strong>{displayName}</strong></span>
+                      <span>•</span>
+                      <span>ID: <strong>{displayReg}</strong></span>
                     </p>
+                  </div>
+                </div>
+
+                <div className="tactile-status-badge">
+                  <span className="tactile-pulse-dot" />
+                  <span>In Campus</span>
+                </div>
+              </div>
+
+              {/* 2. SECURITY GATE PARCEL / COURIER ALERT BANNER */}
+              <div className="tactile-parcel-banner">
+                <div className="tactile-parcel-left">
+                  <div className="tactile-parcel-icon-box">📦</div>
+                  <div>
+                    <h3 className="tactile-parcel-heading">
+                      {parcelPickedUp ? 'Package Collected from Guard Post' : 'Package Arrived at Main Gate'}
+                    </h3>
+                    <p className="tactile-parcel-desc">
+                      BlueDart Express • Security Desk #{user?.hostelBlock || 'BH-8'} Gate 
+                      {!parcelPickedUp && (
+                        <> • Pickup PIN: <span className="tactile-pin-badge">4821</span></>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !parcelPickedUp;
+                    setParcelPickedUp(next);
+                    localStorage.setItem('hc_parcel_picked_up', String(next));
+                    triggerToast('success', next ? 'Marked as collected from gate!' : 'Parcel reset to pending.');
+                  }}
+                  className={`tactile-parcel-btn ${parcelPickedUp ? 'collected' : ''}`}
+                >
+                  {parcelPickedUp ? '✓ Collected' : 'Mark as Picked Up'}
+                </button>
+              </div>
+
+              {/* 3. TACTILE QUICK ACTION CARDS (4-CARD GRID) */}
+              <div className="tactile-quick-grid">
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => setShowQrModal(true)}
+                  title="View your digital Outing Pass & Gate QR code"
+                >
+                  <div className="tactile-quick-icon">🎫</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Outing Pass</h4>
+                    <p className="tactile-quick-sub">Digital QR &amp; Return timer</p>
+                  </div>
+                </div>
+
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => setShowComplaintModal(true)}
+                  title="Report a maintenance or facility issue"
+                >
+                  <div className="tactile-quick-icon">🛠️</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Report Issue</h4>
+                    <p className="tactile-quick-sub">Plumbing, Electrical...</p>
+                  </div>
+                </div>
+
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => {
+                    const next = !laundryBooked;
+                    setLaundryBooked(next);
+                    triggerToast('info', next ? '🧺 Washer #2 reserved for 30 minutes!' : 'Laundry reservation released.');
+                  }}
+                  title="Live laundry room status and washer reservation"
+                >
+                  <div className="tactile-quick-icon">🧺</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Laundry Queue</h4>
+                    <p className="tactile-quick-sub">{laundryBooked ? '🟢 Washer #2: Booked (30m)' : 'Washer #2: Available'}</p>
+                  </div>
+                </div>
+
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => setActiveTab('mess')}
+                  title="View full weekly mess schedule"
+                >
+                  <div className="tactile-quick-icon">🍲</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Dining Timetable</h4>
+                    <p className="tactile-quick-sub">View menu &amp; dish ratings</p>
                   </div>
                 </div>
               </div>
 
-              {/* MIDDLE ROW: FULL-WIDTH MAINTENANCE PIPELINE WITH EXACT GLOWING STEPPER */}
+              {/* 4. TODAY'S ACTIVE MEAL SPOTLIGHT CARD */}
+              {(() => {
+                const now = new Date();
+                const currentMins = now.getHours() * 60 + now.getMinutes();
+                const d = now.getDay();
+                const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
+                const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
+                const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
+
+                let slotKey = 'dinner';
+                let slotName = 'Dinner';
+                let slotTiming = '08:30 PM – 10:00 PM';
+                let mealObj = todayMeals.dinner;
+
+                if (currentMins >= 7 * 60 && currentMins < 11 * 60 + 30) {
+                  slotKey = 'breakfast';
+                  slotName = 'Breakfast';
+                  slotTiming = '07:00 AM – 09:15 AM';
+                  mealObj = todayMeals.breakfast;
+                } else if (currentMins >= 11 * 60 + 30 && currentMins < 16 * 60) {
+                  slotKey = 'lunch';
+                  slotName = 'Lunch';
+                  slotTiming = '12:30 PM – 02:30 PM';
+                  mealObj = todayMeals.lunch;
+                } else if (currentMins >= 16 * 60 && currentMins < 20 * 60) {
+                  slotKey = 'snacks';
+                  slotName = 'Snacks';
+                  slotTiming = '05:45 PM – 07:30 PM';
+                  mealObj = todayMeals.snacks;
+                }
+
+                const dishes = prioritizeMealDishes(mealObj);
+                const headlineDish = dishes[0] || 'Special campus meal menu';
+                const accompaniments = dishes.slice(1);
+
+                return (
+                  <div 
+                    className="tactile-spotlight-card"
+                    onClick={() => setActiveTab('mess')}
+                    title="Click to view full dining timetable"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="tactile-spotlight-header">
+                      <span className="tactile-spotlight-meal-tag">
+                        <span>{slotKey === 'breakfast' ? '🍳' : slotKey === 'lunch' ? '🍛' : slotKey === 'snacks' ? '☕' : '🍲'}</span>
+                        <span>{slotName} Serving Today</span>
+                      </span>
+                      <span className="tactile-live-badge">
+                        <span className="tactile-pulse-dot" />
+                        <span>{slotTiming}</span>
+                      </span>
+                    </div>
+
+                    <h3 className="tactile-dish-headline">{headlineDish}</h3>
+
+                    {accompaniments.length > 0 && (
+                      <div className="tactile-pills-row">
+                        {accompaniments.map((item, idx) => (
+                          <span key={idx} className="tactile-dish-pill">
+                            <span>•</span> {item}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="tactile-rating-widget" onClick={(e) => e.stopPropagation()}>
+                      <div className="tactile-rating-score">
+                        <span className="tactile-rating-star">★</span>
+                        <span>4.8 Community Score (142 reviews)</span>
+                      </div>
+
+                      <div className="tactile-emoji-group">
+                        <span style={{ fontSize: 12, color: '#7D7F7A', marginRight: 4 }}>Your Rating:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMealRating('loved');
+                            localStorage.setItem('hc_meal_rating_today', 'loved');
+                            triggerToast('success', 'Thank you! Rated 😋 Loved it!');
+                          }}
+                          className={`tactile-emoji-btn ${mealRating === 'loved' ? 'active' : ''}`}
+                        >
+                          😋 Loved it
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMealRating('average');
+                            localStorage.setItem('hc_meal_rating_today', 'average');
+                            triggerToast('info', 'Feedback recorded: 😐 Average');
+                          }}
+                          className={`tactile-emoji-btn ${mealRating === 'average' ? 'active' : ''}`}
+                        >
+                          😐 OK
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMealRating('bad');
+                            localStorage.setItem('hc_meal_rating_today', 'bad');
+                            triggerToast('warning', 'Feedback logged: 👎 Needs improvement');
+                          }}
+                          className={`tactile-emoji-btn ${mealRating === 'bad' ? 'active' : ''}`}
+                        >
+                          👎 Needs work
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 5. MAINTENANCE PIPELINE STEPPER */}
               <div 
                 className="concept1-card concept1-pipeline-card"
                 onClick={() => setActiveTab('complaints')}
@@ -543,58 +711,41 @@ const handleSendMessage = (e) => {
               >
                 <div className="concept1-card-top">
                   <h2 className="concept1-card-title">Maintenance Pipeline</h2>
+                  <span className="concept1-matcha-pill">
+                    {activeComplaintsCount > 0 ? `${activeComplaintsCount} Active` : 'All Resolved'}
+                  </span>
                 </div>
                 <div className="concept1-pipeline-row">
                   <div className="concept1-pipeline-info">
-                    <span className="concept1-label">Progress stepper</span>
+                    <span className="concept1-label">Latest Request</span>
                     <p className="concept1-stepper-status-text">
                       {latestActiveComplaint 
-                        ? `1-Registered: ${latestActiveComplaint.title || latestActiveComplaint.description.slice(0, 36)}`
-                        : '3-Registered ready to progress'}
+                        ? `${latestActiveComplaint.department || 'Issue'}: ${latestActiveComplaint.title || latestActiveComplaint.description?.slice(0, 42)}`
+                        : 'No pending issues • Everything functioning smoothly'}
                     </p>
                   </div>
 
                   <div className="concept1-stepper-container">
-                    {/* Step 1: Registered */}
                     <div className="concept1-step-item active">
                       <div className="concept1-step-circle glow-circle" />
                       <span className="concept1-step-name">1. Registered</span>
                     </div>
 
-                    {/* Glowing Line */}
-                    <div className="concept1-step-line glowing-line" />
+                    <div className={`concept1-step-line ${normalizeStatus(latestActiveComplaint?.status) === 'inprogress' || normalizeStatus(latestActiveComplaint?.status) === 'resolved' ? 'glowing-line' : 'dormant-line'}`} />
 
-                    {/* Step 2: Assigned */}
-                    <div className="concept1-step-item">
-                      <div className="concept1-step-circle outline-circle" />
+                    <div className={`concept1-step-item ${normalizeStatus(latestActiveComplaint?.status) === 'inprogress' || normalizeStatus(latestActiveComplaint?.status) === 'resolved' ? 'active' : ''}`}>
+                      <div className={`concept1-step-circle ${normalizeStatus(latestActiveComplaint?.status) === 'inprogress' || normalizeStatus(latestActiveComplaint?.status) === 'resolved' ? 'glow-circle' : 'outline-circle'}`} />
                       <span className="concept1-step-name">2. Assigned</span>
                     </div>
 
-                    {/* Line */}
-                    <div className="concept1-step-line dormant-line" />
+                    <div className={`concept1-step-line ${normalizeStatus(latestActiveComplaint?.status) === 'resolved' ? 'glowing-line' : 'dormant-line'}`} />
 
-                    {/* Step 3: Resolved */}
-                    <div className="concept1-step-item">
-                      <div className="concept1-step-circle outline-circle" />
+                    <div className={`concept1-step-item ${normalizeStatus(latestActiveComplaint?.status) === 'resolved' ? 'active' : ''}`}>
+                      <div className={`concept1-step-circle ${normalizeStatus(latestActiveComplaint?.status) === 'resolved' ? 'glow-circle' : 'outline-circle'}`} />
                       <span className="concept1-step-name">3. Resolved</span>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* BOTTOM ROW: ROOM STATUS CARD */}
-              <div 
-                className="concept1-card concept1-room-banner"
-                onClick={() => setActiveTab('room')}
-                title="Click to view detailed room status"
-              >
-                <div className="concept1-card-top">
-                  <h2 className="concept1-card-title">Room Status</h2>
-                  <span className="concept1-link-hint">View Allocation Details →</span>
-                </div>
-                <p className="concept1-room-banner-sub">
-                  Digital Outing Pass, Warden verification &amp; Room inventory are synced for {displayRoom}.
-                </p>
               </div>
             </div>
           )}
@@ -734,6 +885,92 @@ const handleSendMessage = (e) => {
                   })}
                 </div>
 
+                {/* TACTILE FEATURED SPOTLIGHT CARD FOR SELECTED DAY (VARIATION 2: TACTILE LINEN) */}
+                {(() => {
+                  const currentSlotKey = currentMins < 11 * 60 + 30 ? 'breakfast' : (currentMins < 16 * 60 ? 'lunch' : (currentMins < 20 * 60 ? 'snacks' : 'dinner'));
+                  const spotlightMeal = isViewingToday 
+                    ? (meals[currentSlotKey] || meals.dinner)
+                    : (meals.dinner || meals.lunch || meals.breakfast);
+                  const spotlightSlotKey = isViewingToday ? currentSlotKey : 'dinner';
+                  const spotlightName = spotlightSlotKey.charAt(0).toUpperCase() + spotlightSlotKey.slice(1);
+                  const spotlightIcon = spotlightSlotKey === 'breakfast' ? '🍳' : (spotlightSlotKey === 'lunch' ? '🍛' : (spotlightSlotKey === 'snacks' ? '☕' : '🍲'));
+
+                  const prioritized = prioritizeMealDishes(spotlightMeal);
+                  const spotlightMain = prioritized[0] || 'Gourmet Campus Special';
+                  const spotlightAccompaniments = prioritized.slice(1);
+
+                  return (
+                    <div className="tactile-spotlight-card">
+                      <div className="tactile-spotlight-header">
+                        <span className="tactile-spotlight-meal-tag">
+                          <span>{spotlightIcon}</span>
+                          <span>{spotlightName} Spotlight • {dayData.label || selectedDay.toUpperCase()}</span>
+                        </span>
+                        <span className="tactile-live-badge">
+                          <span className="tactile-pulse-dot" />
+                          <span>{spotlightMeal?.timing || '08:30 PM – 10:00 PM'}</span>
+                        </span>
+                      </div>
+
+                      <h3 className="tactile-dish-headline">{spotlightMain}</h3>
+
+                      {spotlightAccompaniments.length > 0 && (
+                        <div className="tactile-pills-row">
+                          {spotlightAccompaniments.map((dish, dIdx) => (
+                            <span key={dIdx} className="tactile-dish-pill">
+                              <span>•</span> {dish}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="tactile-rating-widget">
+                        <div className="tactile-rating-score">
+                          <span className="tactile-rating-star">★</span>
+                          <span>4.8 Community Score (142 reviews)</span>
+                        </div>
+
+                        <div className="tactile-emoji-group">
+                          <span style={{ fontSize: 12, color: '#7D7F7A', marginRight: 4 }}>Your Rating:</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMealRating('loved');
+                              localStorage.setItem('hc_meal_rating_today', 'loved');
+                              triggerToast('success', 'Thank you! Rated 😋 Loved it!');
+                            }}
+                            className={`tactile-emoji-btn ${mealRating === 'loved' ? 'active' : ''}`}
+                          >
+                            😋 Loved it
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMealRating('average');
+                              localStorage.setItem('hc_meal_rating_today', 'average');
+                              triggerToast('info', 'Feedback recorded: 😐 Average');
+                            }}
+                            className={`tactile-emoji-btn ${mealRating === 'average' ? 'active' : ''}`}
+                          >
+                            😐 OK
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMealRating('bad');
+                              localStorage.setItem('hc_meal_rating_today', 'bad');
+                              triggerToast('warning', 'Feedback logged: 👎 Needs improvement');
+                            }}
+                            className={`tactile-emoji-btn ${mealRating === 'bad' ? 'active' : ''}`}
+                          >
+                            👎 Needs work
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* 4 Real Meal Cards for the Selected Day */}
                 <div className="dining-schedule-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 18 }}>
                   {mealsList.map(({ key, slot, icon, name, defaultTime }) => {
@@ -753,9 +990,9 @@ const handleSendMessage = (e) => {
                       statusBadge = <span className="dining-timing-chip scheduled">{slot?.timing || defaultTime}</span>;
                     }
 
-                    const items = slot?.items || [];
-                    const mainDish = items[0] || name;
-                    const otherItems = items.slice(1).join(', ');
+                    const dishes = prioritizeMealDishes(slot);
+                    const mainDish = dishes[0] || name;
+                    const otherItems = dishes.slice(1).join(', ');
 
                     return (
                       <div 

@@ -2641,3 +2641,579 @@ html.dark-theme .chat-msg-text,
 body.login-dark-theme .chat-msg-text {
   color: #F2EDE4 !important;
 }
+
+
+/* =========================================================================
+   VARIATION 2: TACTILE LINEN & DAILY LIVING DESIGN SYSTEM
+   Pixel-perfect mobile & desktop cards, spacing, elevation and dark mode
+   ========================================================================= */
+
+/* 1. Student Suite & Resident Header Card */
+.tactile-resident-suite-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1px solid #E6E0D5;
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgba(105, 93, 76, 0.05);
+  margin-bottom: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tactile-resident-suite-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(105, 93, 76, 0.09);
+}
+
+html.dark-theme .tactile-resident-suite-card,
+body.login-dark-theme .tactile-resident-suite-card {
+  background: rgba(35, 30, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.tactile-suite-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tactile-suite-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #587360 0%, #3E5646 100%);
+  color: #FAF7F2;
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(88, 115, 96, 0.25);
+  flex-shrink: 0;
+}
+
+.tactile-suite-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tactile-suite-title {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #242523;
+  margin: 0;
+  line-height: 1.25;
+}
+
+html.dark-theme .tactile-suite-title,
+body.login-dark-theme .tactile-suite-title {
+  color: #F6F3EC;
+}
+
+.tactile-suite-sub {
+  font-size: 13px;
+  font-weight: 500;
+  color: #7D7F7A;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+html.dark-theme .tactile-suite-sub,
+body.login-dark-theme .tactile-suite-sub {
+  color: #A8A59E;
+}
+
+.tactile-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: #EEF3EE;
+  border: 1px solid #D5E2D7;
+  color: #3E6649;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+html.dark-theme .tactile-status-badge,
+body.login-dark-theme .tactile-status-badge {
+  background: rgba(88, 115, 96, 0.2);
+  border-color: rgba(88, 115, 96, 0.35);
+  color: #9ECBA7;
+}
+
+.tactile-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: tactilePulse 2s infinite ease-in-out;
+}
+
+@keyframes tactilePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+/* 2. Courier & Security Gate Parcel Banner */
+.tactile-parcel-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #FDF9F2 0%, #F8F3EA 100%);
+  border: 1px solid #EADBCC;
+  box-shadow: 0 2px 10px rgba(105, 93, 76, 0.04);
+  margin-bottom: 18px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.tactile-parcel-banner:hover {
+  border-color: #D4B483;
+}
+
+html.dark-theme .tactile-parcel-banner,
+body.login-dark-theme .tactile-parcel-banner {
+  background: linear-gradient(90deg, rgba(46, 38, 30, 0.7) 0%, rgba(38, 32, 26, 0.7) 100%);
+  border-color: rgba(212, 180, 131, 0.22);
+}
+
+.tactile-parcel-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tactile-parcel-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  border: 1px solid #EADBCC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 2px 6px rgba(105, 93, 76, 0.05);
+  flex-shrink: 0;
+}
+
+html.dark-theme .tactile-parcel-icon-box,
+body.login-dark-theme .tactile-parcel-icon-box {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tactile-parcel-heading {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #242523;
+  margin: 0 0 2px 0;
+}
+
+html.dark-theme .tactile-parcel-heading,
+body.login-dark-theme .tactile-parcel-heading {
+  color: #FAF7F2;
+}
+
+.tactile-parcel-desc {
+  font-size: 13px;
+  color: #7D7F7A;
+  margin: 0;
+}
+
+html.dark-theme .tactile-parcel-desc,
+body.login-dark-theme .tactile-parcel-desc {
+  color: #A8A59E;
+}
+
+.tactile-pin-badge {
+  background: #FFFFFF;
+  border: 1px solid #D4B483;
+  color: #7C5A23;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+
+html.dark-theme .tactile-pin-badge,
+body.login-dark-theme .tactile-pin-badge {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: #D4B483;
+  color: #E2C799;
+}
+
+.tactile-parcel-btn {
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #728D7A;
+  background: #587360;
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.tactile-parcel-btn:hover {
+  background: #4A6351;
+  transform: translateY(-1px);
+}
+
+.tactile-parcel-btn.collected {
+  background: #EEF3EE;
+  color: #3E6649;
+  border-color: #D5E2D7;
+}
+
+html.dark-theme .tactile-parcel-btn.collected,
+body.login-dark-theme .tactile-parcel-btn.collected {
+  background: rgba(88, 115, 96, 0.2);
+  color: #9ECBA7;
+}
+
+/* 3. Tactile Quick Actions 4-Card Grid */
+.tactile-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+.tactile-quick-card {
+  background: #FFFFFF;
+  border: 1px solid #E6E0D5;
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 14px rgba(105, 93, 76, 0.04);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  user-select: none;
+}
+
+.tactile-quick-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(105, 93, 76, 0.09);
+  border-color: #D4B483;
+}
+
+.tactile-quick-card:active {
+  transform: scale(0.98);
+}
+
+html.dark-theme .tactile-quick-card,
+body.login-dark-theme .tactile-quick-card {
+  background: rgba(35, 30, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+html.dark-theme .tactile-quick-card:hover,
+body.login-dark-theme .tactile-quick-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tactile-quick-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #F7F4EE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  border: 1px solid #EADBCC;
+}
+
+html.dark-theme .tactile-quick-icon,
+body.login-dark-theme .tactile-quick-icon {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.tactile-quick-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tactile-quick-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #242523;
+  margin: 0;
+}
+
+html.dark-theme .tactile-quick-title,
+body.login-dark-theme .tactile-quick-title {
+  color: #FAF7F2;
+}
+
+.tactile-quick-sub {
+  font-size: 12px;
+  color: #7D7F7A;
+  margin: 0;
+}
+
+html.dark-theme .tactile-quick-sub,
+body.login-dark-theme .tactile-quick-sub {
+  color: #A8A59E;
+}
+
+/* 4. Interactive Mess Dining Spotlight Card (Featured Live Meal) */
+.tactile-spotlight-card {
+  background: #FFFFFF;
+  border: 1px solid #E6E0D5;
+  border-radius: 22px;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgba(105, 93, 76, 0.05);
+  margin-bottom: 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tactile-spotlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #587360 0%, #D4B483 50%, #587360 100%);
+}
+
+html.dark-theme .tactile-spotlight-card,
+body.login-dark-theme .tactile-spotlight-card {
+  background: rgba(35, 30, 26, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
+}
+
+.tactile-spotlight-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.tactile-spotlight-meal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: #242523;
+}
+
+html.dark-theme .tactile-spotlight-meal-tag,
+body.login-dark-theme .tactile-spotlight-meal-tag {
+  color: #FAF7F2;
+}
+
+.tactile-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  background: #EEF3EE;
+  border: 1px solid #728D7A;
+  color: #2D5037;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+html.dark-theme .tactile-live-badge,
+body.login-dark-theme .tactile-live-badge {
+  background: rgba(88, 115, 96, 0.25);
+  border-color: rgba(88, 115, 96, 0.4);
+  color: #A3D4AE;
+}
+
+.tactile-dish-headline {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #242523;
+  margin: 0 0 14px 0;
+  line-height: 1.3;
+}
+
+html.dark-theme .tactile-dish-headline,
+body.login-dark-theme .tactile-dish-headline {
+  color: #FAF7F2;
+}
+
+.tactile-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tactile-dish-pill {
+  background: #F7F4EE;
+  border: 1px solid #E6E0D5;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #575854;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+html.dark-theme .tactile-dish-pill,
+body.login-dark-theme .tactile-dish-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #C2BFB8;
+}
+
+.tactile-rating-widget {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px dashed #E6E0D5;
+}
+
+html.dark-theme .tactile-rating-widget,
+body.login-dark-theme .tactile-rating-widget {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.tactile-rating-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #575854;
+}
+
+html.dark-theme .tactile-rating-score,
+body.login-dark-theme .tactile-rating-score {
+  color: #A8A59E;
+}
+
+.tactile-rating-star {
+  color: #D4B483;
+  font-size: 16px;
+}
+
+.tactile-emoji-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tactile-emoji-btn {
+  background: #F7F4EE;
+  border: 1px solid #E6E0D5;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #575854;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.tactile-emoji-btn:hover {
+  background: #EEF3EE;
+  border-color: #728D7A;
+  color: #2D5037;
+  transform: translateY(-1px);
+}
+
+.tactile-emoji-btn.active {
+  background: #EEF3EE;
+  border-color: #587360;
+  color: #2D5037;
+  font-weight: 700;
+}
+
+html.dark-theme .tactile-emoji-btn,
+body.login-dark-theme .tactile-emoji-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #C2BFB8;
+}
+
+html.dark-theme .tactile-emoji-btn.active,
+body.login-dark-theme .tactile-emoji-btn.active {
+  background: rgba(88, 115, 96, 0.25);
+  border-color: #587360;
+  color: #A3D4AE;
+}
+
+/* Responsive Mobile Adjustments */
+@media (max-width: 640px) {
+  .tactile-resident-suite-card {
+    padding: 16px 18px !important;
+  }
+  .tactile-suite-title {
+    font-size: 18px !important;
+  }
+  .tactile-spotlight-card {
+    padding: 18px 20px !important;
+  }
+  .tactile-dish-headline {
+    font-size: 20px !important;
+  }
+  .tactile-quick-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .tactile-quick-card {
+    padding: 14px 14px !important;
+    gap: 10px !important;
+  }
+  .tactile-quick-icon {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+  }
+  .tactile-quick-title {
+    font-size: 13.5px !important;
+  }
+}
