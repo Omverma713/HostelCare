@@ -116,7 +116,14 @@ const getAppVersionStatus = async (req, res) => {
     const isPilotRolloutActive = Boolean(pilotConfig.enabled) && Boolean(pilotConfig.version) && Boolean(pilotConfig.updateUrl);
 
     // ── CHANNEL A: PILOT TESTING ROLLOUT (100% INDEPENDENT FROM PRODUCTION APP UPDATE) ──
-    if (isPilotTargetedUser && isPilotRolloutActive) {
+    // Pilot safety check: If production release is strictly newer than pilot release,
+    // the pilot version is stale and pilot users should automatically receive the newer production update!
+    const pilotVer = pilotConfig.version || "0.0.0";
+    const prodVer = appVersionConfig.latestVersion || "1.0.0";
+    const isPilotAheadOfProd = compareVersions(pilotVer, prodVer) > 0;
+
+    // ── CHANNEL A: PILOT TESTING ROLLOUT (100% INDEPENDENT FROM PRODUCTION APP UPDATE) ──
+    if (isPilotTargetedUser && isPilotRolloutActive && isPilotAheadOfProd) {
       // Check if Pilot Release specifically is suspended (independent of appVersionConfig.isSuspended)
       if (pilotConfig.isSuspended) {
         return res.status(200).json({
