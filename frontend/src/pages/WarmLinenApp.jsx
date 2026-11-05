@@ -1124,6 +1124,37 @@ const handleSendMessage = (e) => {
                     <span>{checkingUpdate ? '↻ Checking...' : '🔄 Check for Updates'}</span>
                   </button>
                 </div>
+                {/* Account & Session Management Card */}
+                <div className="room-account-card" style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <span style={{ fontSize: 11, background: '#FDE8E8', color: '#9B1C1C', padding: '3px 10px', borderRadius: 9999, fontWeight: 700, letterSpacing: '0.04em' }}>
+                      ACCOUNT &amp; SESSION
+                    </span>
+                    <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px 0', color: 'var(--text-primary)' }}>
+                      {displayName}
+                    </h3>
+                    <p style={{ margin: '0 0 14px 0', fontSize: 13.5, color: 'var(--text-secondary)' }}>
+                      Logged in as <strong>{displayRoom}</strong> • {displayReg}
+                    </p>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 9999, background: '#EEF3EE', color: '#587360', fontSize: 12, fontWeight: 600 }}>
+                      <span className="tactile-pulse-dot" />
+                      <span>Active HostelCare Session ({user?.role || 'student'})</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Sign out of HostelCare, ${displayName}?`)) {
+                        logout();
+                        navigate('/login');
+                      }
+                    }}
+                    style={{ background: '#C9826D', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 14px rgba(201, 130, 109, 0.3)' }}
+                  >
+                    <span>🚪 Sign Out of HostelCare</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

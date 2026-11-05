@@ -188,7 +188,23 @@ function DashboardLayout() {
         </div>
 
         <div className="navbar-right-group">
-          <div className="navbar-user-pill">
+          <div 
+            className="navbar-user-pill"
+            role="button"
+            tabIndex={0}
+            title={isSuperAdmin ? "Super Admin Profile" : "Resident Profile & Living Space (Tap to View / Sign Out)"}
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              if (isStudent) {
+                navigate('/student?tab=room');
+              } else {
+                if (window.confirm(`Logged in as ${user?.name || 'User'} (${user?.role || 'user'}). Sign out of HostelCare?`)) {
+                  logout();
+                  navigate('/login');
+                }
+              }
+            }}
+          >
             <img 
               src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80" 
               alt="Avatar" 
@@ -227,24 +243,6 @@ function DashboardLayout() {
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
             )}
-          </button>
-
-          <button 
-            className="terracotta-menu-btn header-logout-btn" 
-            title={`Log Out (${user?.name || 'Resident'})`}
-            aria-label="Log Out"
-            onClick={() => {
-              if (window.confirm(`Logged in as ${user?.name || 'Resident'} (${user?.role || 'student'}). Sign out?`)) {
-                logout();
-                navigate('/login');
-              }
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
           </button>
         </div>
       </header>
