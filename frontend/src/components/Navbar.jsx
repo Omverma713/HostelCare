@@ -128,7 +128,7 @@ export default function Navbar({ onToggleSidebar }) {
             boxShadow: '0 2px 8px rgba(201, 130, 109, 0.3)',
             cursor: 'default',
           }}
-          title={`${user.name || 'User'} • Block ${user.hostel || 'BH-8'}`}
+          title={`${user.name || 'User'} • ${user.hostel ? `Block ${user.hostel}` : 'Hostel'}`}
         >
           {(user.name || user.role || 'U').charAt(0).toUpperCase()}
         </div>

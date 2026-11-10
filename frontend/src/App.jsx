@@ -223,15 +223,15 @@ function DashboardLayout() {
                 flexShrink: 0
               }}
             >
-              {user?.name ? user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'OV'}
+              {user?.name ? user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'HC'}
             </span>
             <span className="user-text-full">
               {isSuperAdmin 
                 ? `${user?.name || 'Master Super Admin'} • RBAC SuperAdmin`
-                : `${user?.name || 'Om Verma'} • Room ${user?.roomNumber || '205'} (${user?.hostelBlock || 'BH-8'})`}
+                : `${user?.name || 'Resident'} • ${user?.roomNumber ? `Room ${user.roomNumber}` : 'Hostel Resident'}${user?.hostel ? ` (${user.hostel})` : (user?.hostelBlock ? ` (${user.hostelBlock})` : '')}`}
             </span>
             <span className="user-text-mobile">
-              {isSuperAdmin ? 'Admin' : (user?.roomNumber ? `Rm ${user.roomNumber}` : 'Rm 205')}
+              {isSuperAdmin ? 'Admin' : (user?.roomNumber ? `Rm ${user.roomNumber}` : (user?.hostel ? user.hostel : 'Resident'))}
             </span>
           </div>
 

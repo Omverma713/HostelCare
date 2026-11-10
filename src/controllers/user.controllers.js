@@ -885,6 +885,86 @@ const testMyDevice = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/v1/users/my-room
+ * Returns dynamic room allocation, roommates, and warden/caretaker contacts
+ */
+const getMyRoomInfo = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const currentUser = await User.findById(userId).select("name registrationNumber hostel roomNumber email role");
+    if (!currentUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const hostel = (currentUser.hostel || "").trim();
+    const roomNumber = (currentUser.roomNumber || "").trim();
+
+    let roommates = [];
+    let warden = null;
+    let caretaker = null;
+
+    if (hostel && roomNumber) {
+      roommates = await User.find(
+        {
+          hostel: { $regex: new RegExp(`^${hostel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+          roomNumber: { $regex: new RegExp(`^${roomNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+          _id: { $ne: currentUser._id },
+          accountStatus: "active",
+        },
+        "name registrationNumber email"
+      ).lean();
+    }
+
+    if (hostel) {
+      warden = await User.findOne(
+        {
+          hostel: { $regex: new RegExp(`^${hostel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+          role: "warden",
+          accountStatus: "active",
+        },
+        "name email"
+      ).lean();
+
+      caretaker = await User.findOne(
+        {
+          hostel: { $regex: new RegExp(`^${hostel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+          role: "caretaker",
+          accountStatus: "active",
+        },
+        "name email"
+      ).lean();
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        name: currentUser.name,
+        registrationNumber: currentUser.registrationNumber,
+        hostel: currentUser.hostel,
+        roomNumber: currentUser.roomNumber,
+      },
+      roommates: roommates.map((r) => ({
+        name: r.name,
+        registrationNumber: r.registrationNumber,
+        email: r.email,
+      })),
+      warden: warden ? { name: warden.name, contact: warden.email } : null,
+      caretaker: caretaker ? { name: caretaker.name, contact: caretaker.email } : null,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch room details",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   activateUser,
   loggedInUser,
@@ -894,4 +974,5 @@ module.exports = {
   registerPushToken,
   verifyUserPassword,
   testMyDevice,
+  getMyRoomInfo,
 };

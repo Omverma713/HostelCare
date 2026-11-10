@@ -187,7 +187,7 @@ export default function StudentDashboard() {
             Welcome, {user?.name || 'Resident'}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '0.95rem', color: 'var(--text-secondary, #575854)' }}>
-            Calm, un-cluttered living space management portal for room {user?.roomNumber || '205'} (Block {user?.hostelBlock || user?.hostel || 'BH-8'}).
+            Calm, un-cluttered living space management portal for {user?.roomNumber ? `room ${user.roomNumber}` : 'your hostel residence'}{user?.hostel ? ` (${user.hostel})` : ''}.
           </p>
         </div>
 
@@ -294,7 +294,7 @@ export default function StudentDashboard() {
               My Living Space
             </h2>
             <p style={{ margin: 0, fontSize: '1.05rem', color: '#575854' }}>
-              Room {user?.roomNumber || '205'}, Block {user?.hostelBlock || user?.hostel || 'BH-8'}
+              {user?.roomNumber ? `Room ${user.roomNumber}` : 'Hostel Living Space'}{user?.hostel ? `, ${user.hostel}` : ''}
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -513,7 +513,7 @@ export default function StudentDashboard() {
                 [QR VERIFIED]
               </div>
               <strong style={{ fontSize: '1.1rem', color: '#242523', display: 'block' }}>
-                {user?.name || 'Resident'} • Room {user?.roomNumber || '205'}
+                {user?.name || 'Resident'}{user?.roomNumber ? ` • Room ${user.roomNumber}` : ''}{user?.hostel ? ` (${user.hostel})` : ''}
               </strong>
               <span style={{ fontSize: '0.82rem', color: '#8E8F8A', marginTop: '4px', display: 'block' }}>
                 Reg: {user?.registrationNumber || '2021BCS001'} • Valid till 09:30 PM
@@ -543,7 +543,7 @@ export default function StudentDashboard() {
               File Living Space Request
             </h3>
             <p style={{ margin: '0 0 24px', fontSize: '0.9rem', color: '#575854' }}>
-              Room {user?.roomNumber || '205'} (Block {user?.hostelBlock || user?.hostel || 'BH-8'})
+              {user?.roomNumber ? `Room ${user.roomNumber}` : 'Living Space'}{user?.hostel ? ` (${user.hostel})` : ''}
             </p>
 
             <form onSubmit={handleCreateSubmit}>

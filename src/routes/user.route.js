@@ -9,6 +9,7 @@ const {
   registerPushToken,
   verifyUserPassword,
   testMyDevice,
+  getMyRoomInfo,
 } = require("../controllers/user.controllers");
 const authMiddleware = require("../middleware/auth.middleware");
 const {
@@ -47,6 +48,7 @@ router.delete("/my-sessions/:sessionId", authMiddleware, revokeMySession);
 router.post("/register-push-token", authMiddleware, registerPushToken);
 router.post("/test-my-device", authMiddleware, sensitiveActionLimiter, testMyDevice);
 router.post("/verify-password", authMiddleware, sensitiveActionLimiter, verifyUserPassword);
+router.get("/my-room", authMiddleware, getMyRoomInfo);
 
 router.post("/complaints", authMiddleware, savingComplaint);
 router.get("/hostel-complaints", authMiddleware, findingcomplaint);

@@ -391,5 +391,10 @@ export const api = {
   getMyCbtApplication() {
     return request('/cbt/my-application');
   },
+
+  // --- LIVING SPACE / ROOM DETAILS ---
+  getMyRoom() {
+    return request('/users/my-room');
+  },
 };
 

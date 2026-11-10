@@ -55,13 +55,42 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   };
 
   const displayName = user?.name || (isAuthenticated ? 'Resident' : 'Student Resident');
-  const displayRoom = user?.roomNumber ? `Room ${user.roomNumber}${user.hostelBlock ? ` (Block ${user.hostelBlock})` : (user.hostel ? ` (${user.hostel})` : '')}` : 'Room 205 (BH-8)';
-  const displayReg = user?.registrationNumber || '2021BCS001';
+  const displayHostel = user?.hostel || user?.hostelBlock || '';
+  const displayRoom = user?.roomNumber 
+    ? `Room ${user.roomNumber}${displayHostel ? ` (${displayHostel})` : ''}` 
+    : (displayHostel ? `${displayHostel} Resident` : 'Hostel Resident');
+  const displayReg = user?.registrationNumber || '';
+
+  const [roomInfo, setRoomInfo] = useState({
+    roommates: [],
+    warden: null,
+    caretaker: null,
+    loading: false,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    if (isAuthenticated) {
+      api.getMyRoom()
+        .then((res) => {
+          if (isMounted && res && res.success) {
+            setRoomInfo({
+              roommates: res.roommates || [],
+              warden: res.warden || null,
+              caretaker: res.caretaker || null,
+              loading: false,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+    return () => { isMounted = false; };
+  }, [isAuthenticated]);
 
   const [currentUserRole, setCurrentUserRole] = useState(user?.role === 'superadmin' ? 'admin' : 'student');
   const [adminSubTab, setAdminSubTab] = useState('overview');
   const [broadcastTitle, setBroadcastTitle] = useState('Important Campus Notice');
-  const [broadcastBody, setBroadcastBody] = useState('Water supply maintenance scheduled in Block BH-8 from 2:00 PM to 4:00 PM.');
+  const [broadcastBody, setBroadcastBody] = useState(`Water supply maintenance scheduled in ${user?.hostel || 'Hostel'} from 2:00 PM to 4:00 PM.`);
   const [broadcastTarget, setBroadcastTarget] = useState('all');
   const [sessionsData, setSessionsData] = useState([
     { id: 'sess_1', user: 'SA-2026-001', name: 'Master Super Admin', role: 'superadmin', device: 'Edge on Windows', ip: '172.18.0.1', status: 'active', time: 'Just now' },
@@ -107,30 +136,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [broadcastSent, setBroadcastSent] = useState(false);
 
   // Live Maintenance & Complaints State (Default sample complaints from recent activity)
-  const [realComplaints, setRealComplaints] = useState([
-    {
-      _id: '8858',
-      ticketNumber: '#HC-8858',
-      department: 'Security',
-      description: 'Living room light switch repair',
-      status: 'resolved',
-      createdAt: new Date().toISOString(),
-      hostelNo: 'BH-8',
-      roomNo: '205',
-      caretaker: 'Hostel Caretaker',
-    },
-    {
-      _id: 'CC8D',
-      ticketNumber: '#HC-CC8D',
-      department: 'Internet',
-      description: 'High-speed LAN port connection check',
-      status: 'inprogress',
-      createdAt: new Date().toISOString(),
-      hostelNo: 'BH-8',
-      roomNo: '205',
-      caretaker: 'Caretaker Ramesh',
-    }
-  ]);
+  const [realComplaints, setRealComplaints] = useState([]);
   const [complaintsLoading, setComplaintsLoading] = useState(false);
   const [newComplaintDept, setNewComplaintDept] = useState('Electrical');
   const [newComplaintDesc, setNewComplaintDesc] = useState('');
@@ -141,17 +147,9 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
     {
       id: 1,
       sender: 'superadmin',
-      senderName: 'Master Super Admin',
-      text: 'Hello Om! Caretaker Ramesh will visit Room 205 at 4:30 PM with the replacement tube-light. Please ensure someone is present.',
-      time: '02:15 PM',
-      read: true,
-    },
-    {
-      id: 2,
-      sender: 'student',
-      senderName: displayName,
-      text: 'Sure sir, my roommate Jagat is in the room. He will assist the caretaker. Thank you for the quick resolution!',
-      time: '02:18 PM',
+      senderName: 'Hostel Helpdesk',
+      text: `Hello ${user?.name || 'Resident'}! Welcome to ${user?.hostel || 'Hostel'} official support line. How can we assist you today?`,
+      time: 'Just now',
       read: true,
     },
   ]);
@@ -530,15 +528,15 @@ const handleSendMessage = (e) => {
                         flexShrink: 0
                       }}
                     >
-                      {displayName ? displayName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'OV'}
+                      {displayName ? displayName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'HC'}
                     </div>
                   </div>
                   <div className="tactile-suite-details">
                     <h2 className="tactile-suite-title">Resident Dashboard</h2>
                     <p className="tactile-suite-sub">
-                      <span>Suite {user?.roomNumber || '205'}</span>
-                      <span>•</span>
-                      <span>{user?.hostelBlock ? `Block ${user.hostelBlock}` : (user?.hostel ? user.hostel : 'APJ Kalam Block')}</span>
+                      <span>{user?.roomNumber ? `Suite ${user.roomNumber}` : (displayHostel || 'Resident')}</span>
+                      {displayHostel && user?.roomNumber && <span>•</span>}
+                      {displayHostel && user?.roomNumber && <span>{displayHostel}</span>}
                     </p>
                   </div>
                 </div>
@@ -1043,19 +1041,31 @@ const handleSendMessage = (e) => {
                   <div className="room-info-specs-list">
                     <div className="room-info-row">
                       <span className="room-info-lbl">Assigned Bed:</span>
-                      <strong className="room-info-val">Bed 205-A (Window side)</strong>
+                      <strong className="room-info-val">
+                        {user?.roomNumber ? `Bed ${user.roomNumber}-A` : 'Bed Allocation Pending'}
+                      </strong>
                     </div>
                     <div className="room-info-row">
                       <span className="room-info-lbl">Roommate:</span>
-                      <strong className="room-info-val">Jagat Singh (Bed 205-B)</strong>
+                      <strong className="room-info-val">
+                        {roomInfo.roommates.length > 0
+                          ? roomInfo.roommates.map((r, idx) => `${r.name} (${r.registrationNumber || `Bed ${user?.roomNumber || ''}-${String.fromCharCode(66 + idx)}`})`).join(', ')
+                          : 'Single Occupancy / None Assigned'}
+                      </strong>
                     </div>
                     <div className="room-info-row">
                       <span className="room-info-lbl">Hostel Warden:</span>
-                      <strong className="room-info-val">Prof. P. K. Rout (9437xxxxxx)</strong>
+                      <strong className="room-info-val">
+                        {roomInfo.warden?.name
+                          ? `${roomInfo.warden.name}${roomInfo.warden.contact ? ` (${roomInfo.warden.contact})` : ''}`
+                          : `${displayHostel || 'Hostel'} Warden Office`}
+                      </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Inventory Status:</span>
-                      <span style={{ color: '#587360', fontWeight: 600 }}>All 12 items verified</span>
+                      <span style={{ color: '#587360', fontWeight: 600 }}>
+                        {roomInfo.caretaker?.name ? `Managed by Caretaker ${roomInfo.caretaker.name}` : 'All 12 items verified'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1065,7 +1075,9 @@ const handleSendMessage = (e) => {
                   <div>
                     <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: 9999, fontWeight: 700, letterSpacing: '0.04em' }}>DIGITAL GATE PASS</span>
                     <h3 className="gate-pass-title">Evening Campus Outing</h3>
-                    <p style={{ margin: 0, fontSize: 13.5, color: 'var(--text-secondary)' }}>Valid for exit through ITER Main Gate 1 between 05:00 PM and 09:30 PM.</p>
+                    <p style={{ margin: 0, fontSize: 13.5, color: 'var(--text-secondary)' }}>
+                      Valid for exit through {displayHostel ? `${displayHostel} / Campus Gate 1` : 'Campus Main Gate 1'} between 05:00 PM and 09:30 PM.
+                    </p>
                   </div>
 
                   <button
@@ -1660,14 +1672,14 @@ const handleSendMessage = (e) => {
             <button className="modal-close-btn" onClick={() => setShowQrModal(false)}>×</button>
             <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>VERIFIED DIGITAL PASS</span>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '14px 0 6px', color: '#272824' }}>Campus Security Gate Pass</h3>
-            <p style={{ margin: '0 0 24px', fontSize: 13.5, color: 'var(--text-secondary)' }}>Show this screen to security officer at ITER Gate 1.</p>
+            <p style={{ margin: '0 0 24px', fontSize: 13.5, color: 'var(--text-secondary)' }}>Show this screen to security officer at {displayHostel ? `${displayHostel} Gate` : 'Campus Security Gate'}.</p>
 
             <div style={{ background: '#FAF8F5', borderRadius: 20, padding: 24, textAlign: 'center', border: '1px dashed #D5E2D7' }}>
               <div style={{ width: 140, height: 140, margin: '0 auto 16px', background: '#272824', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12 }}>
                 [QR CODE VERIFIED]
               </div>
               <strong style={{ fontSize: 16, color: '#272824', display: 'block' }}>{displayName} • {displayRoom}</strong>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Valid till 09:30 PM • 31 Oct 2026</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Valid till 09:30 PM • {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             </div>
           </div>
         </div>
