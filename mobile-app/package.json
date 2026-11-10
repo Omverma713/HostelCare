@@ -1,6 +1,6 @@
 {
   "name": "hostelcare-mobile",
-  "version": "1.2.2.15",
+  "version": "1.2.2.16",
   "description": "HostelCare Android Mobile App Wrapper using Capacitor",
   "private": true,
   "scripts": {

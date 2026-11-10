@@ -258,12 +258,12 @@ const getAppVersionStatus = async (req, res) => {
     // ── Live Over-The-Air (OTA) Bundle Evaluation ──────────────────────────────
     const otaConfig = config.otaUpdates || {
       enabled: true,
-      currentBundleVersion: "1.2.2.15",
+      currentBundleVersion: "1.2.2.16",
       bundleUrl: "/api/v1/app-version/ota-bundle",
-      bundleChecksum: "",
+      bundleChecksum: "743affe6fdeba6e74d02305caa7ae47c8105fe63ad78d6afc17214d718d61004",
       minNativeBuild: 22,
       requiresNativeApk: false,
-      notes: "Live OTA Update",
+      notes: "HostelCare v1.2.2.16 Live OTA Update",
     };
 
     const clientBuildNum = parseInt(buildNumber, 10) || 0;

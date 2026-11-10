@@ -38,8 +38,8 @@ class AppUpdateService {
       forceUpdate: false,
       updateType: 'none',
       isSuspended: false,
-      currentVersion: '1.2.2.15',
-      latestVersion: '1.2.2.15',
+      currentVersion: '1.2.2.16',
+      latestVersion: '1.2.2.16',
       minimumSupportedVersion: '1.0.0',
       updateMessage: '',
       updateUrl: '',
@@ -108,14 +108,14 @@ class AppUpdateService {
       try {
         const info = await App.getInfo();
         return {
-          version: info.version || '1.2.2.15',
-          build: info.build || '4',
+          version: info.version || '1.2.2.16',
+          build: info.build || '28',
         };
       } catch (err) {
         console.warn('[AppUpdateService] Could not retrieve native App.getInfo():', err);
       }
     }
-    return { version: '1.2.2.15', build: '4' };
+    return { version: '1.2.2.16', build: '28' };
   }
 
   async checkForUpdates({ manual = false } = {}) {
