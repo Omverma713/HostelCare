@@ -3391,3 +3391,147 @@ body.login-dark-theme .tactile-section-label {
   width: 0 !important;
   height: 0 !important;
 }
+
+
+/* =========================================================================
+   THEME-AWARE LIVING SPACE, PILLS & BADGES (LIGHT & DARK HARMONY)
+   ========================================================================= */
+
+.living-card {
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 32px;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+html.dark-theme .living-card,
+body.login-dark-theme .living-card,
+[data-theme="dark"] .living-card {
+  background: #1C1917 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.tactile-pill-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(88, 115, 96, 0.12);
+  color: #4A6552;
+  border: 1px solid rgba(88, 115, 96, 0.2);
+  transition: all 0.25s ease;
+}
+
+html.dark-theme .tactile-pill-badge,
+body.login-dark-theme .tactile-pill-badge,
+[data-theme="dark"] .tactile-pill-badge {
+  background: rgba(114, 141, 122, 0.22) !important;
+  color: #B6D6BE !important;
+  border: 1px solid rgba(114, 141, 122, 0.38) !important;
+}
+
+.tactile-pill-badge.tactile-pill-account {
+  background: rgba(201, 130, 109, 0.12);
+  color: #9B1C1C;
+  border: 1px solid rgba(201, 130, 109, 0.25);
+}
+
+html.dark-theme .tactile-pill-badge.tactile-pill-account,
+body.login-dark-theme .tactile-pill-badge.tactile-pill-account,
+[data-theme="dark"] .tactile-pill-badge.tactile-pill-account {
+  background: rgba(201, 130, 109, 0.2) !important;
+  color: #F8B4A6 !important;
+  border: 1px solid rgba(201, 130, 109, 0.38) !important;
+}
+
+.tactile-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(88, 115, 96, 0.12);
+  color: #4A6552;
+  border: 1px solid rgba(88, 115, 96, 0.2);
+  transition: all 0.25s ease;
+}
+
+html.dark-theme .tactile-status-pill,
+body.login-dark-theme .tactile-status-pill,
+[data-theme="dark"] .tactile-status-pill {
+  background: rgba(88, 115, 96, 0.22) !important;
+  color: #B6D6BE !important;
+  border: 1px solid rgba(114, 141, 122, 0.38) !important;
+}
+
+.tactile-status-pill.has-update {
+  background: #FEF3C7;
+  color: #B45309;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+html.dark-theme .tactile-status-pill.has-update,
+body.login-dark-theme .tactile-status-pill.has-update,
+[data-theme="dark"] .tactile-status-pill.has-update {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #FCD34D !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+
+.living-signout-btn {
+  background: #C9826D;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(201, 130, 109, 0.3);
+  transition: all 0.2s ease;
+}
+
+html.dark-theme .living-signout-btn,
+body.login-dark-theme .living-signout-btn,
+[data-theme="dark"] .living-signout-btn {
+  background: rgba(201, 130, 109, 0.85);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(201, 130, 109, 0.2);
+}
+
+.living-signout-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.tactile-icon-circle {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(88, 115, 96, 0.12);
+  color: #587360;
+  transition: all 0.25s ease;
+}
+
+html.dark-theme .tactile-icon-circle,
+body.login-dark-theme .tactile-icon-circle,
+[data-theme="dark"] .tactile-icon-circle {
+  background: rgba(114, 141, 122, 0.22) !important;
+  color: #B6D6BE !important;
+  border: 1px solid rgba(114, 141, 122, 0.35);
+}

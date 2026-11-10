@@ -1036,7 +1036,7 @@ const handleSendMessage = (e) => {
 
               <div className="room-living-grid">
                 {/* Room Info */}
-                <div className="room-info-card" style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)' }}>
+                <div className="room-info-card living-card">
                   <h3 className="room-info-title">{displayRoom}</h3>
                   <div className="room-info-specs-list">
                     <div className="room-info-row">
@@ -1071,9 +1071,9 @@ const handleSendMessage = (e) => {
                 </div>
 
                 {/* Gate Outing Pass Box */}
-                <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div className="living-card">
                   <div>
-                    <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: 9999, fontWeight: 700, letterSpacing: '0.04em' }}>DIGITAL GATE PASS</span>
+                    <span className="tactile-pill-badge">DIGITAL GATE PASS</span>
                     <h3 className="gate-pass-title">Evening Campus Outing</h3>
                     <p style={{ margin: 0, fontSize: 13.5, color: 'var(--text-secondary)' }}>
                       Valid for exit through {displayHostel ? `${displayHostel} / Campus Gate 1` : 'Campus Main Gate 1'} between 05:00 PM and 09:30 PM.
@@ -1089,14 +1089,14 @@ const handleSendMessage = (e) => {
                 </div>
 
                 {/* App System & Updates Card */}
-                <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div className="living-card">
                   <div>
-                    <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: 9999, fontWeight: 700, letterSpacing: '0.04em' }}>SYSTEM &amp; UPDATES</span>
+                    <span className="tactile-pill-badge">SYSTEM &amp; UPDATES</span>
                     <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px 0', color: 'var(--text-primary)' }}>HostelCare Mobile</h3>
                     <p style={{ margin: '0 0 14px 0', fontSize: 13.5, color: 'var(--text-secondary)' }}>
-                      Installed Version: <strong>v1.2.2.15 (Build 22)</strong>
+                      Installed Version: <strong>v1.2.2.15 (Build 27)</strong>
                     </p>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 9999, background: updateAvailable ? '#FEF3C7' : '#EEF3EE', color: updateAvailable ? '#B45309' : '#587360', fontSize: 12, fontWeight: 600 }}>
+                    <div className={`tactile-status-pill ${updateAvailable ? 'has-update' : 'up-to-date'}`}>
                       <span>{updateAvailable ? '⚡ New Update Available (v' + latestVersion + ')' : '✓ App is Up to Date'}</span>
                     </div>
                   </div>
@@ -1107,13 +1107,19 @@ const handleSendMessage = (e) => {
                     disabled={checkingUpdate}
                     style={{ background: '#587360', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: checkingUpdate ? 'not-allowed' : 'pointer', marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                   >
-                    <span>{checkingUpdate ? '↻ Checking...' : '🔄 Check for Updates'}</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: checkingUpdate ? 'spin 1s linear infinite' : 'none' }}>
+                      <polyline points="23 4 23 10 17 10"></polyline>
+                      <polyline points="1 20 1 14 7 14"></polyline>
+                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    <span>{checkingUpdate ? 'Checking...' : 'Check for Updates'}</span>
                   </button>
                 </div>
+
                 {/* Account & Session Management Card */}
-                <div className="room-account-card" style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div className="living-card room-account-card">
                   <div>
-                    <span style={{ fontSize: 11, background: '#FDE8E8', color: '#9B1C1C', padding: '3px 10px', borderRadius: 9999, fontWeight: 700, letterSpacing: '0.04em' }}>
+                    <span className="tactile-pill-badge tactile-pill-account">
                       ACCOUNT &amp; SESSION
                     </span>
                     <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px 0', color: 'var(--text-primary)' }}>
@@ -1122,7 +1128,7 @@ const handleSendMessage = (e) => {
                     <p style={{ margin: '0 0 14px 0', fontSize: 13.5, color: 'var(--text-secondary)' }}>
                       Logged in as <strong>{displayRoom}</strong> • {displayReg}
                     </p>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 9999, background: '#EEF3EE', color: '#587360', fontSize: 12, fontWeight: 600 }}>
+                    <div className="tactile-status-pill">
                       <span className="tactile-pulse-dot" />
                       <span>Active HostelCare Session ({user?.role || 'student'})</span>
                     </div>
@@ -1136,9 +1142,14 @@ const handleSendMessage = (e) => {
                         navigate('/login');
                       }
                     }}
-                    style={{ background: '#C9826D', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 14px rgba(201, 130, 109, 0.3)' }}
+                    className="living-signout-btn"
                   >
-                    <span>🚪 Sign Out of HostelCare</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Sign Out of HostelCare</span>
                   </button>
                 </div>
               </div>
@@ -1670,7 +1681,7 @@ const handleSendMessage = (e) => {
         <div className="modal-overlay" onClick={() => setShowQrModal(false)}>
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowQrModal(false)}>×</button>
-            <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>VERIFIED DIGITAL PASS</span>
+            <span className="tactile-pill-badge">VERIFIED DIGITAL PASS</span>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '14px 0 6px', color: '#272824' }}>Campus Security Gate Pass</h3>
             <p style={{ margin: '0 0 24px', fontSize: 13.5, color: 'var(--text-secondary)' }}>Show this screen to security officer at {displayHostel ? `${displayHostel} Gate` : 'Campus Security Gate'}.</p>
 
