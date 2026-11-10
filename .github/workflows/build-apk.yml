@@ -24,13 +24,15 @@ jobs:
             mobile-app/package-lock.json
 
       - name: Setup Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Accept Android SDK Licenses
-        run: yes | sdkmanager --licenses || true
+      - name: Accept Android SDK Licenses & Setup Platform 35
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-35" "platform-tools" || true
 
       - name: Install Frontend Dependencies
         working-directory: frontend
