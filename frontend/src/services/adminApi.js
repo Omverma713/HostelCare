@@ -229,6 +229,24 @@ export const adminApi = {
     return adminRequest(`/superadmin/notifications?${params.toString()}`);
   },
 
+  getScheduledNotifications({ status = '', page = 1, limit = 20 } = {}) {
+    const params = new URLSearchParams({ page, limit });
+    if (status && status !== 'all') params.append('status', status);
+    return adminRequest(`/superadmin/notifications/scheduled?${params.toString()}`);
+  },
+
+  cancelScheduledNotification(id) {
+    return adminRequest(`/superadmin/notifications/scheduled/${id}/cancel`, {
+      method: 'POST',
+    });
+  },
+
+  dispatchScheduledNotificationNow(id) {
+    return adminRequest(`/superadmin/notifications/scheduled/${id}/dispatch-now`, {
+      method: 'POST',
+    });
+  },
+
   // Audit Logs
   getAuditLogs({ page = 1, limit = 25, action = '', outcome = '', search = '', from = '', to = '' } = {}) {
     const params = new URLSearchParams({ page, limit });

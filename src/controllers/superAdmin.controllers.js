@@ -1438,6 +1438,8 @@ const sendAdminNotification = async (req, res) => {
       targetCriteria = {},
       route = "/",
       imageUrl = null,
+      scheduledFor = null,
+      isScheduled = false,
     } = req.body;
 
     if (!title || !body || !targetAudience) {
@@ -1447,91 +1449,74 @@ const sendAdminNotification = async (req, res) => {
       });
     }
 
+    const { resolveTargetSessions } = require("../services/notificationScheduler");
+
     // 1. Resolve Target Active Sessions
-    let targetSessions = [];
+    const targetSessions = await resolveTargetSessions(targetAudience, targetCriteria);
 
-    switch (targetAudience) {
-      case "SINGLE_DEVICE": {
-        if (!targetCriteria.sessionId) {
-          return res.status(400).json({
-            success: false,
-            message: "sessionId is required when targeting SINGLE_DEVICE",
-          });
-        }
-        targetSessions = await Session.find({
-          sessionId: targetCriteria.sessionId,
-          status: "active",
-        }).select("+pushToken +webPushSubscription");
-        break;
-      }
+    // 2. Check if this is a SCHEDULED notification
+    const shouldSchedule = Boolean(isScheduled && scheduledFor);
 
-      case "SINGLE_USER": {
-        let userFilter = null;
-        if (targetCriteria.userId) {
-          userFilter = { userId: targetCriteria.userId };
-        } else if (targetCriteria.registrationNumber) {
-          userFilter = { registrationNumber: targetCriteria.registrationNumber };
-        } else {
-          return res.status(400).json({
-            success: false,
-            message: "userId or registrationNumber is required when targeting SINGLE_USER",
-          });
-        }
-        targetSessions = await Session.find({
-          ...userFilter,
-          status: "active",
-        }).select("+pushToken +webPushSubscription");
-        break;
-      }
-
-      case "ROLE_GROUP": {
-        if (!targetCriteria.role) {
-          return res.status(400).json({
-            success: false,
-            message: "role is required when targeting ROLE_GROUP",
-          });
-        }
-        const matchingUsers = await User.find({ role: targetCriteria.role }).select("_id");
-        const userIds = matchingUsers.map((u) => u._id);
-        targetSessions = await Session.find({
-          userId: { $in: userIds },
-          status: "active",
-        }).select("+pushToken +webPushSubscription");
-        break;
-      }
-
-      case "HOSTEL_GROUP": {
-        if (!targetCriteria.hostel) {
-          return res.status(400).json({
-            success: false,
-            message: "hostel is required when targeting HOSTEL_GROUP",
-          });
-        }
-        const matchingUsers = await User.find({ hostel: targetCriteria.hostel }).select("_id");
-        const userIds = matchingUsers.map((u) => u._id);
-        targetSessions = await Session.find({
-          userId: { $in: userIds },
-          status: "active",
-        }).select("+pushToken +webPushSubscription");
-        break;
-      }
-
-      case "ALL_DEVICES": {
-        targetSessions = await Session.find({
-          status: "active",
-        }).select("+pushToken +webPushSubscription");
-        break;
-      }
-
-      default: {
+    if (shouldSchedule) {
+      const scheduledDate = new Date(scheduledFor);
+      if (isNaN(scheduledDate.getTime())) {
         return res.status(400).json({
           success: false,
-          message: `Unsupported targetAudience: ${targetAudience}`,
+          message: "Invalid scheduled date/time format.",
         });
       }
+      if (scheduledDate.getTime() <= Date.now() + 10000) {
+        return res.status(400).json({
+          success: false,
+          message: "Scheduled time must be in the future (at least 1 minute ahead).",
+        });
+      }
+
+      const campaign = await NotificationCampaign.create({
+        title,
+        body,
+        targetAudience,
+        targetCriteria,
+        route,
+        imageUrl: imageUrl && typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
+        sentBy: req.user.id,
+        sentByRegistrationNumber: req.user.registrationNumber,
+        targetCount: targetSessions.length,
+        deliveryType: "SCHEDULED",
+        scheduledFor: scheduledDate,
+        status: "scheduled",
+      });
+
+      await recordAudit({
+        req,
+        action: "NOTIFICATION_SCHEDULED",
+        targetType: "NOTIFICATION",
+        targetId: campaign._id,
+        summary: `Scheduled push notification '${title}' for ${scheduledDate.toISOString()} to ${targetAudience} (${targetSessions.length} target devices)`,
+        details: {
+          scheduledFor: scheduledDate,
+          targetAudience,
+          targetCriteria,
+          targetCount: targetSessions.length,
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: `Notification scheduled for ${scheduledDate.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST.`,
+        scheduled: true,
+        campaign: {
+          id: campaign._id,
+          title: campaign.title,
+          scheduledFor: campaign.scheduledFor,
+          targetAudience: campaign.targetAudience,
+          targetCount: campaign.targetCount,
+          status: campaign.status,
+        },
+      });
     }
 
-    // 2. Dispatch Multi-Channel Push (FCM / Web Push)
+    // 3. Immediate Dispatch Flow
     const report = await sendPushToSessions(targetSessions, {
       title,
       body,
@@ -1550,7 +1535,7 @@ const sendAdminNotification = async (req, res) => {
           ? "partially_failed"
           : "failed";
 
-    // 3. Persist Campaign Record
+    // 4. Persist Campaign Record
     const campaign = await NotificationCampaign.create({
       title,
       body,
@@ -1563,6 +1548,7 @@ const sendAdminNotification = async (req, res) => {
       targetCount: targetSessions.length,
       successCount: report.accepted,
       failureCount: report.failed,
+      deliveryType: "IMMEDIATE",
       status: campaignStatus,
       providerSummary: {
         fcm: report.fcm,
@@ -1606,6 +1592,167 @@ const sendAdminNotification = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to dispatch notification",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/v1/superadmin/notifications/scheduled
+const getScheduledNotifications = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    const query = { deliveryType: "SCHEDULED" };
+    if (status && status !== "all") {
+      query.status = status;
+    }
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [campaigns, totalCount, pendingCount] = await Promise.all([
+      NotificationCampaign.find(query)
+        .sort({ scheduledFor: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      NotificationCampaign.countDocuments(query),
+      NotificationCampaign.countDocuments({ deliveryType: "SCHEDULED", status: "scheduled" }),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      scheduled: campaigns.map((c) => ({
+        id: c._id,
+        title: c.title,
+        body: c.body,
+        targetAudience: c.targetAudience,
+        targetCriteria: c.targetCriteria,
+        route: c.route,
+        imageUrl: c.imageUrl,
+        sentByRegistrationNumber: c.sentByRegistrationNumber,
+        targetCount: c.targetCount,
+        successCount: c.successCount,
+        failureCount: c.failureCount,
+        deliveryType: c.deliveryType,
+        scheduledFor: c.scheduledFor,
+        status: c.status,
+        createdAt: c.createdAt,
+        cancelledAt: c.cancelledAt,
+        cancelledBy: c.cancelledBy,
+        providerSummary: c.providerSummary,
+      })),
+      pagination: {
+        total: totalCount,
+        pending: pendingCount,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(totalCount / limitNum),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve scheduled notifications",
+      error: error.message,
+    });
+  }
+};
+
+// POST /api/v1/superadmin/notifications/scheduled/:id/cancel
+const cancelScheduledNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const campaign = await NotificationCampaign.findOne({
+      _id: id,
+      deliveryType: "SCHEDULED",
+    });
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Scheduled notification not found",
+      });
+    }
+
+    if (campaign.status !== "scheduled") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot cancel notification with status '${campaign.status}'. Only pending scheduled alerts can be cancelled.`,
+      });
+    }
+
+    campaign.status = "cancelled";
+    campaign.cancelledAt = new Date();
+    campaign.cancelledBy = req.user.registrationNumber || "superadmin";
+    await campaign.save();
+
+    await recordAudit({
+      req,
+      action: "NOTIFICATION_SCHEDULE_CANCELLED",
+      targetType: "NOTIFICATION",
+      targetId: campaign._id,
+      summary: `Cancelled scheduled notification '${campaign.title}' by ${req.user.registrationNumber}`,
+      details: {
+        campaignId: campaign._id,
+        scheduledFor: campaign.scheduledFor,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Scheduled notification '${campaign.title}' cancelled successfully.`,
+      campaign,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to cancel scheduled notification",
+      error: error.message,
+    });
+  }
+};
+
+// POST /api/v1/superadmin/notifications/scheduled/:id/dispatch-now
+const dispatchScheduledNotificationNow = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { executeNotificationDispatch } = require("../services/notificationScheduler");
+
+    const campaign = await NotificationCampaign.findOne({
+      _id: id,
+      deliveryType: "SCHEDULED",
+    });
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Scheduled notification not found",
+      });
+    }
+
+    if (campaign.status !== "scheduled" && campaign.status !== "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot dispatch notification with status '${campaign.status}'.`,
+      });
+    }
+
+    campaign.status = "processing";
+    await campaign.save();
+
+    const report = await executeNotificationDispatch(campaign);
+
+    return res.status(200).json({
+      success: true,
+      message: `Scheduled notification '${campaign.title}' dispatched immediately!`,
+      report,
+      campaign,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to dispatch scheduled notification",
       error: error.message,
     });
   }
@@ -4172,6 +4319,9 @@ module.exports = {
   updateMaintenanceConfig,
   sendAdminNotification,
   getNotificationHistory,
+  getScheduledNotifications,
+  cancelScheduledNotification,
+  dispatchScheduledNotificationNow,
   getAuditLogs,
   impersonateUser,
   getSuperAdminAppVersionConfig,

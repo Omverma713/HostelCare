@@ -2,6 +2,7 @@ const http      = require("http");
 const app       = require("./app");
 const connectDB = require("./src/db/db");
 const { startMessReminderScheduler, stopMessReminderScheduler } = require("./src/services/messReminderScheduler");
+const { startNotificationScheduler, stopNotificationScheduler } = require("./src/services/notificationScheduler");
 const { initChatSocket } = require("./src/sockets/chatSocket");
 require("dotenv").config();
 
@@ -10,8 +11,9 @@ const PORT = process.env.PORT || 3000;
 async function start() {
     await connectDB();
 
-    // Start autonomous mess menu meal start notification daemon
+    // Start autonomous daemons: mess reminder and scheduled notifications
     startMessReminderScheduler();
+    startNotificationScheduler();
 
     const server = http.createServer(app);
 
@@ -30,6 +32,7 @@ async function start() {
     function gracefulShutdown(signal) {
         console.log(`Received ${signal}. Closing server…`);
         stopMessReminderScheduler();
+        stopNotificationScheduler();
         server.close(() => {
             console.log("HTTP server closed. Disconnecting from MongoDB…");
             const mongoose = require("mongoose");

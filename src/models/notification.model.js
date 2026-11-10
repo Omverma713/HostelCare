@@ -70,16 +70,43 @@ const notificationCampaignSchema = new mongoose.Schema(
       default: 0,
     },
 
+    deliveryType: {
+      type: String,
+      enum: ["IMMEDIATE", "SCHEDULED"],
+      default: "IMMEDIATE",
+      index: true,
+    },
+
+    scheduledFor: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
     status: {
       type: String,
       enum: [
+        "scheduled",
+        "processing",
         "queued",
         "attempted",
         "accepted_by_provider",
         "failed",
         "partially_failed",
+        "cancelled",
       ],
       default: "attempted",
+      index: true,
+    },
+
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
+
+    cancelledBy: {
+      type: String,
+      default: null,
     },
 
     providerSummary: {

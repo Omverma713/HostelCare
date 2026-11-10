@@ -269,8 +269,15 @@ export default function SuperAdminPortal() {
     targetAudience: 'ALL_DEVICES',
     targetCriteria: { sessionId: '', registrationNumber: '', role: 'student', hostel: 'BH-1' },
     route: '/',
+    isScheduled: false,
+    scheduledFor: '',
   });
   const [campaigns, setCampaigns] = useState([]);
+  const [scheduledNotifications, setScheduledNotifications] = useState([]);
+  const [loadingScheduled, setLoadingScheduled] = useState(false);
+  const [cancellingScheduledId, setCancellingScheduledId] = useState(null);
+  const [dispatchingScheduledId, setDispatchingScheduledId] = useState(null);
+  const [notificationViewMode, setNotificationViewMode] = useState('history'); // 'history' | 'scheduled'
   const [sendingNotify, setSendingNotify] = useState(false);
 
   // Mess Auto-Notification Schedule & Test State
@@ -550,6 +557,21 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to load campaigns', 'Notifications');
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // Load Scheduled Notifications
+  const loadScheduledNotifications = useCallback(async () => {
+    try {
+      setLoadingScheduled(true);
+      const res = await adminApi.getScheduledNotifications();
+      if (res.success) {
+        setScheduledNotifications(res.scheduled || []);
+      }
+    } catch (err) {
+      console.warn('Failed to load scheduled notifications:', err);
+    } finally {
+      setLoadingScheduled(false);
     }
   }, []);
 
@@ -2121,7 +2143,10 @@ export default function SuperAdminPortal() {
     else if (activeTab === 'limits') loadConfig();
     else if (activeTab === 'maintenance') loadMaintenance();
     else if (activeTab === 'appversion' || activeTab === 'pilottesting') loadAppVersion();
-    else if (activeTab === 'notifications') loadCampaigns();
+    else if (activeTab === 'notifications') {
+      loadCampaigns();
+      loadScheduledNotifications();
+    }
     else if (activeTab === 'notices') loadNotices();
     else if (activeTab === 'messalerts') {
       loadMessNotifications();
@@ -2133,7 +2158,7 @@ export default function SuperAdminPortal() {
       loadCbtConfig();
       loadCbtApplications(1);
     }
-  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadNotices, loadMessNotifications, loadDeviceRegistry, loadAuditLogs, loadDelegations, loadCbtConfig, loadCbtApplications]);
+  }, [activeTab, loadOverview, loadUsers, loadSessions, loadConfig, loadMaintenance, loadAppVersion, loadCampaigns, loadScheduledNotifications, loadNotices, loadMessNotifications, loadDeviceRegistry, loadAuditLogs, loadDelegations, loadCbtConfig, loadCbtApplications]);
 
   // Fetch full details for a selected user
   const handleSelectUser = async (user) => {
@@ -2615,7 +2640,48 @@ export default function SuperAdminPortal() {
     }
   };
 
-  // Send Notification
+  const getMinDateTimeLocal = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 2);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${mins}`;
+  };
+
+  const applySchedulePreset = (presetKey) => {
+    const d = new Date();
+    if (presetKey === '30m') {
+      d.setMinutes(d.getMinutes() + 30);
+    } else if (presetKey === '1h') {
+      d.setHours(d.getHours() + 1);
+    } else if (presetKey === 'tonight9') {
+      d.setHours(21, 0, 0, 0);
+      if (d.getTime() <= Date.now()) {
+        d.setDate(d.getDate() + 1);
+      }
+    } else if (presetKey === 'tomorrow8') {
+      d.setDate(d.getDate() + 1);
+      d.setHours(8, 0, 0, 0);
+    } else if (presetKey === 'tomorrow18') {
+      d.setDate(d.getDate() + 1);
+      d.setHours(18, 0, 0, 0);
+    }
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    setNotifyForm((prev) => ({
+      ...prev,
+      isScheduled: true,
+      scheduledFor: `${year}-${month}-${day}T${hours}:${mins}`,
+    }));
+  };
+
+  // Send or Schedule Notification
   const handleSendNotification = async (e) => {
     e.preventDefault();
     if (!notifyForm.title.trim() || !notifyForm.body.trim()) {
@@ -2623,11 +2689,27 @@ export default function SuperAdminPortal() {
       return;
     }
 
+    if (notifyForm.isScheduled) {
+      if (!notifyForm.scheduledFor) {
+        triggerToast('error', 'Please select a future date and time for the scheduled alert.', 'Schedule Time Missing');
+        return;
+      }
+      const sched = new Date(notifyForm.scheduledFor);
+      if (isNaN(sched.getTime()) || sched.getTime() <= Date.now() + 10000) {
+        triggerToast('error', 'Scheduled time must be at least 1 minute in the future.', 'Invalid Time');
+        return;
+      }
+    }
+
     try {
       setSendingNotify(true);
       const res = await adminApi.sendNotification(notifyForm);
       if (res.success) {
-        triggerToast('success', res.message, 'Push Campaign Dispatched');
+        triggerToast(
+          'success',
+          res.message,
+          notifyForm.isScheduled ? '⏰ Notification Scheduled' : '🚀 Push Campaign Dispatched'
+        );
         setNotifyForm({
           title: '',
           body: '',
@@ -2635,13 +2717,56 @@ export default function SuperAdminPortal() {
           targetAudience: 'ALL_DEVICES',
           targetCriteria: { sessionId: '', registrationNumber: '', role: 'student', hostel: 'BH-1' },
           route: '/',
+          isScheduled: false,
+          scheduledFor: '',
         });
         loadCampaigns();
+        loadScheduledNotifications();
+        if (notifyForm.isScheduled) {
+          setNotificationViewMode('scheduled');
+        }
       }
     } catch (err) {
       triggerToast('error', err.message, 'Dispatch Failed');
     } finally {
       setSendingNotify(false);
+    }
+  };
+
+  const handleCancelScheduled = async (id, title) => {
+    if (!window.confirm(`Are you sure you want to cancel the scheduled notification "${title}"?`)) {
+      return;
+    }
+    try {
+      setCancellingScheduledId(id);
+      const res = await adminApi.cancelScheduledNotification(id);
+      if (res.success) {
+        triggerToast('success', res.message || 'Notification schedule cancelled', 'Cancelled');
+        loadScheduledNotifications();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to cancel schedule', 'Error');
+    } finally {
+      setCancellingScheduledId(null);
+    }
+  };
+
+  const handleDispatchScheduledNow = async (id, title) => {
+    if (!window.confirm(`Dispatch "${title}" immediately right now without waiting for the scheduled time?`)) {
+      return;
+    }
+    try {
+      setDispatchingScheduledId(id);
+      const res = await adminApi.dispatchScheduledNotificationNow(id);
+      if (res.success) {
+        triggerToast('success', res.message || 'Alert dispatched immediately!', 'Dispatched');
+        loadScheduledNotifications();
+        loadCampaigns();
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to dispatch alert', 'Error');
+    } finally {
+      setDispatchingScheduledId(null);
     }
   };
 
@@ -9680,6 +9805,153 @@ export default function SuperAdminPortal() {
                 </span>
               </div>
 
+              {/* Delivery Timing Options (Immediate vs Scheduled) */}
+              <div
+                style={{
+                  padding: '0.85rem 1rem',
+                  borderRadius: '10px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <label style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    ⏱️ Dispatch Timing Mode
+                  </label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setNotifyForm((prev) => ({ ...prev, isScheduled: false }))}
+                      style={{
+                        padding: '0.35rem 0.8rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: !notifyForm.isScheduled ? 'var(--primary)' : 'var(--bg-card)',
+                        color: !notifyForm.isScheduled ? '#ffffff' : 'var(--text-secondary)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      ⚡ Immediate (Send Now)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNotifyForm((prev) => ({
+                          ...prev,
+                          isScheduled: true,
+                          scheduledFor: prev.scheduledFor || getMinDateTimeLocal(),
+                        }));
+                      }}
+                      style={{
+                        padding: '0.35rem 0.8rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: notifyForm.isScheduled ? '#f59e0b' : 'var(--bg-card)',
+                        color: notifyForm.isScheduled ? '#ffffff' : 'var(--text-secondary)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      ⏰ Schedule for Future Date/Time
+                    </button>
+                  </div>
+                </div>
+
+                {notifyForm.isScheduled && (
+                  <div
+                    style={{
+                      paddingTop: '0.75rem',
+                      borderTop: '1px solid var(--border-color)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.65rem',
+                    }}
+                  >
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                        📅 Target Dispatch Date & Time (IST):
+                      </label>
+                      <input
+                        type="datetime-local"
+                        min={getMinDateTimeLocal()}
+                        value={notifyForm.scheduledFor}
+                        onChange={(e) => setNotifyForm((prev) => ({ ...prev, scheduledFor: e.target.value }))}
+                        required={notifyForm.isScheduled}
+                        style={{
+                          width: '100%',
+                          padding: '0.55rem 0.75rem',
+                          borderRadius: '8px',
+                          border: '1.5px solid #f59e0b',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.85rem',
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        Quick Schedule Presets:
+                      </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {[
+                          { label: '+30 Mins', key: '30m' },
+                          { label: '+1 Hour', key: '1h' },
+                          { label: 'Tonight 9:00 PM', key: 'tonight9' },
+                          { label: 'Tomorrow 8:00 AM', key: 'tomorrow8' },
+                          { label: 'Tomorrow 6:00 PM', key: 'tomorrow18' },
+                        ].map((p) => (
+                          <button
+                            key={p.key}
+                            type="button"
+                            onClick={() => applySchedulePreset(p.key)}
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-card)',
+                              color: 'var(--text-secondary)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {notifyForm.scheduledFor && (
+                      <div
+                        style={{
+                          fontSize: '0.75rem',
+                          color: '#f59e0b',
+                          fontWeight: 600,
+                          background: 'rgba(245, 158, 11, 0.1)',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(245, 158, 11, 0.25)',
+                        }}
+                      >
+                        🔔 Scheduled To Fire Automatically: {new Date(notifyForm.scheduledFor).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Live Android Notification Shade Preview */}
               <div
                 style={{
@@ -9761,20 +10033,28 @@ export default function SuperAdminPortal() {
                   padding: '0.85rem',
                   borderRadius: '8px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, #4361ee 0%, #3451d1 100%)',
+                  background: notifyForm.isScheduled
+                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                    : 'linear-gradient(135deg, #4361ee 0%, #3451d1 100%)',
                   color: '#ffffff',
                   fontWeight: 700,
                   fontSize: '0.95rem',
                   cursor: sendingNotify ? 'not-allowed' : 'pointer',
                   boxShadow: 'var(--shadow-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
                 }}
               >
-                {sendingNotify ? 'Dispatching...' : '🚀 Dispatch Push Campaign'}
+                {sendingNotify
+                  ? (notifyForm.isScheduled ? 'Scheduling Notification...' : 'Dispatching...')
+                  : (notifyForm.isScheduled ? '⏰ Schedule Push Notification (Autonomous Dispatch)' : '🚀 Dispatch Push Campaign Now')}
               </button>
             </div>
           </form>
 
-          {/* Past Campaigns Log */}
+          {/* Past Campaigns Log & Scheduled Queue Dual Card */}
           <div
             className="sa-users-table-card"
             style={{
@@ -9787,73 +10067,342 @@ export default function SuperAdminPortal() {
               boxSizing: 'border-box'
             }}
           >
-            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Campaign Delivery History ({campaigns.length})
-            </h3>
-
-            {campaigns.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                No past notification campaigns found.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '550px', overflowY: 'auto' }}>
-                {campaigns.map((c) => (
-                  <div
-                    key={c._id}
+            {/* Tab switch header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '8px', background: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setNotificationViewMode('history')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '0.825rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: notificationViewMode === 'history' ? '#ffffff' : 'transparent',
+                    color: notificationViewMode === 'history' ? '#0f172a' : '#64748b',
+                    boxShadow: notificationViewMode === 'history' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  📜 Dispatched History ({campaigns.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNotificationViewMode('scheduled')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '0.825rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: notificationViewMode === 'scheduled' ? '#ffffff' : 'transparent',
+                    color: notificationViewMode === 'scheduled' ? '#047857' : '#64748b',
+                    boxShadow: notificationViewMode === 'scheduled' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span>⏰ Scheduled Queue</span>
+                  <span
                     style={{
-                      padding: '0.85rem',
-                      borderRadius: '8px',
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px',
-                      fontSize: '0.825rem',
+                      background: notificationViewMode === 'scheduled' ? '#10b981' : '#cbd5e1',
+                      color: notificationViewMode === 'scheduled' ? '#ffffff' : '#475569',
+                      fontSize: '0.7rem',
+                      padding: '1px 6px',
+                      borderRadius: '9999px',
+                      fontWeight: 800,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{c.title}</span>
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          background: c.status === 'accepted_by_provider' ? 'var(--success-bg)' : 'var(--status-pending-bg)',
-                          color: c.status === 'accepted_by_provider' ? 'var(--success-text)' : 'var(--status-pending-text)',
-                        }}
-                      >
-                        {c.status.replace(/_/g, ' ').toUpperCase()}
-                      </span>
-                    </div>
+                    {scheduledNotifications.filter((s) => s.status === 'scheduled').length}
+                  </span>
+                </button>
+              </div>
 
-                    <div style={{ color: 'var(--text-secondary)' }}>{c.body}</div>
+              <button
+                type="button"
+                onClick={() => {
+                  loadCampaigns();
+                  loadScheduledNotifications();
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  background: '#f8fafc',
+                  fontSize: '0.775rem',
+                  color: '#475569',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                🔄 Refresh
+              </button>
+            </div>
 
-                    {c.imageUrl && (
+            {/* VIEW 1: DISPATCHED HISTORY */}
+            {notificationViewMode === 'history' && (
+              <>
+                {campaigns.length === 0 ? (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                    No past notification campaigns found.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '550px', overflowY: 'auto' }}>
+                    {campaigns.map((c) => (
                       <div
+                        key={c._id}
                         style={{
-                          borderRadius: '6px',
-                          overflow: 'hidden',
+                          padding: '0.85rem',
+                          borderRadius: '8px',
+                          background: 'var(--bg-secondary)',
                           border: '1px solid var(--border-color)',
-                          maxHeight: '120px',
-                          marginTop: '2px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          fontSize: '0.825rem',
                         }}
                       >
-                        <img
-                          src={c.imageUrl}
-                          alt="Campaign Banner"
-                          style={{ width: '100%', maxHeight: '120px', objectFit: 'cover', display: 'block' }}
-                        />
-                      </div>
-                    )}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{c.title}</span>
+                          <span
+                            style={{
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              background: c.status === 'accepted_by_provider' ? 'var(--success-bg)' : 'var(--status-pending-bg)',
+                              color: c.status === 'accepted_by_provider' ? 'var(--success-text)' : 'var(--status-pending-text)',
+                            }}
+                          >
+                            {c.status.replace(/_/g, ' ').toUpperCase()}
+                          </span>
+                        </div>
 
-                    <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      Target: {c.targetAudience} ({c.targetCount} targets) • Accepted: {c.successCount} • Failed: {c.failureCount} • Sent:{' '}
-                      {new Date(c.sentAt).toLocaleString()}
+                        <div style={{ color: 'var(--text-secondary)' }}>{c.body}</div>
+
+                        {c.imageUrl && (
+                          <div
+                            style={{
+                              borderRadius: '6px',
+                              overflow: 'hidden',
+                              border: '1px solid var(--border-color)',
+                              maxHeight: '120px',
+                              marginTop: '2px',
+                            }}
+                          >
+                            <img
+                              src={c.imageUrl}
+                              alt="Campaign Banner"
+                              style={{ width: '100%', maxHeight: '120px', objectFit: 'cover', display: 'block' }}
+                            />
+                          </div>
+                        )}
+
+                        <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          Target: {c.targetAudience} ({c.targetCount} targets) • Accepted: {c.successCount} • Failed: {c.failureCount} • Sent:{' '}
+                          {c.sentAt ? new Date(c.sentAt).toLocaleString() : 'N/A'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* VIEW 2: SCHEDULED NOTIFICATIONS QUEUE */}
+            {notificationViewMode === 'scheduled' && (
+              <>
+                {loadingScheduled ? (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                    Loading scheduled notifications...
+                  </div>
+                ) : scheduledNotifications.length === 0 ? (
+                  <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏰</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1e293b', marginBottom: '4px' }}>
+                      No Pending Scheduled Notifications
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                      Toggle "⏰ Schedule for Future Date/Time" above to queue notifications that dispatch autonomously.
                     </div>
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', maxHeight: '550px', overflowY: 'auto' }}>
+                    {scheduledNotifications.map((s) => {
+                      const schedDate = new Date(s.scheduledFor);
+                      const isPast = schedDate.getTime() <= Date.now();
+                      const diffMs = schedDate.getTime() - Date.now();
+                      const diffMins = Math.max(0, Math.round(diffMs / 60000));
+                      const diffHours = Math.floor(diffMins / 60);
+                      const remMins = diffMins % 60;
+
+                      let countdownLabel = '';
+                      if (diffMs <= 0) {
+                        countdownLabel = 'Due now (processing soon)';
+                      } else if (diffHours > 24) {
+                        const days = Math.floor(diffHours / 24);
+                        countdownLabel = `In ${days} day${days > 1 ? 's' : ''} ${diffHours % 24}h`;
+                      } else if (diffHours > 0) {
+                        countdownLabel = `In ${diffHours}h ${remMins}m`;
+                      } else {
+                        countdownLabel = `In ${diffMins} min${diffMins !== 1 ? 's' : ''}`;
+                      }
+
+                      return (
+                        <div
+                          key={s._id}
+                          style={{
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            background: s.status === 'scheduled' ? '#f0fdf4' : s.status === 'cancelled' ? '#fef2f2' : '#f8fafc',
+                            border: `1px solid ${s.status === 'scheduled' ? '#bbf7d0' : s.status === 'cancelled' ? '#fecaca' : '#e2e8f0'}`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            fontSize: '0.825rem',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a' }}>{s.title}</span>
+                              <span
+                                style={{
+                                  fontSize: '0.675rem',
+                                  fontWeight: 800,
+                                  padding: '2px 8px',
+                                  borderRadius: '9999px',
+                                  background: s.status === 'scheduled' ? '#dcfce7' : s.status === 'cancelled' ? '#fee2e2' : '#e0e7ff',
+                                  color: s.status === 'scheduled' ? '#15803d' : s.status === 'cancelled' ? '#991b1b' : '#3730a3',
+                                  letterSpacing: '0.03em',
+                                }}
+                              >
+                                {s.status.toUpperCase()}
+                              </span>
+                            </div>
+
+                            <span
+                              style={{
+                                fontSize: '0.725rem',
+                                fontWeight: 700,
+                                color: s.status === 'scheduled' ? '#047857' : '#64748b',
+                                background: '#ffffff',
+                                padding: '3px 10px',
+                                borderRadius: '6px',
+                                border: '1px solid rgba(0,0,0,0.06)',
+                              }}
+                            >
+                              ⏱️ {countdownLabel}
+                            </span>
+                          </div>
+
+                          <div style={{ color: '#334155', lineHeight: 1.45 }}>{s.body}</div>
+
+                          {s.imageUrl && (
+                            <div
+                              style={{
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                border: '1px solid #e2e8f0',
+                                maxHeight: '110px',
+                                marginTop: '2px',
+                                maxWidth: '320px',
+                              }}
+                            >
+                              <img
+                                src={s.imageUrl}
+                                alt="Scheduled Banner"
+                                style={{ width: '100%', maxHeight: '110px', objectFit: 'cover', display: 'block' }}
+                              />
+                            </div>
+                          )}
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              fontSize: '0.75rem',
+                              color: '#64748b',
+                              marginTop: '4px',
+                              paddingTop: '6px',
+                              borderTop: '1px dashed rgba(0,0,0,0.08)',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                            }}
+                          >
+                            <div>
+                              <span>📅 Dispatches At: </span>
+                              <strong style={{ color: '#0f172a' }}>
+                                {schedDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })} IST
+                              </strong>
+                              <span style={{ marginLeft: '10px' }}>
+                                🎯 Target: <strong style={{ color: '#0f172a' }}>{s.targetAudience}</strong>
+                              </span>
+                            </div>
+
+                            {s.status === 'scheduled' && (
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDispatchScheduledNow(s._id, s.title)}
+                                  disabled={dispatchingScheduledId === s._id || cancellingScheduledId === s._id}
+                                  style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #10b981',
+                                    background: '#ecfdf5',
+                                    color: '#047857',
+                                    fontSize: '0.725rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                  title="Dispatch immediately right now without waiting"
+                                >
+                                  {dispatchingScheduledId === s._id ? 'Firing...' : '⚡ Fire Now'}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleCancelScheduled(s._id, s.title)}
+                                  disabled={cancellingScheduledId === s._id || dispatchingScheduledId === s._id}
+                                  style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #f87171',
+                                    background: '#fef2f2',
+                                    color: '#b91c1c',
+                                    fontSize: '0.725rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                  title="Cancel this scheduled dispatch"
+                                >
+                                  {cancellingScheduledId === s._id ? 'Cancelling...' : '❌ Cancel Schedule'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

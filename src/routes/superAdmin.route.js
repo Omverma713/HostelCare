@@ -24,6 +24,9 @@ const {
   updateMaintenanceConfig,
   sendAdminNotification,
   getNotificationHistory,
+  getScheduledNotifications,
+  cancelScheduledNotification,
+  dispatchScheduledNotificationNow,
   getAuditLogs,
   impersonateUser,
   getSuperAdminAppVersionConfig,
@@ -149,9 +152,12 @@ router.delete("/pilot-testing/release", sensitiveActionLimiter, deleteSuperAdmin
 router.post("/pilot-testing/test-user", testPilotUserEligibility);
 router.post("/app-version/ota/rollback", sensitiveActionLimiter, rollbackSuperAdminOta);
 
-// Notification Center
+// Notification Center & Autonomous Scheduler
 router.post("/notifications/send", sensitiveActionLimiter, sendAdminNotification);
 router.get("/notifications", getNotificationHistory);
+router.get("/notifications/scheduled", getScheduledNotifications);
+router.post("/notifications/scheduled/:id/cancel", sensitiveActionLimiter, cancelScheduledNotification);
+router.post("/notifications/scheduled/:id/dispatch-now", sensitiveActionLimiter, dispatchScheduledNotificationNow);
 
 // System Audit Logs
 router.get("/audit-logs", getAuditLogs);

@@ -101,3 +101,4 @@ console.log(`2. Enter Bundle Version: ${version}`);
 console.log(`3. Bundle URL: /api/v1/app-version/ota-bundle`);
 console.log(`4. Checksum: ${sha256}`);
 console.log('5. Click "Deploy Live OTA Update". Devices will update instantly without installing an APK!\n');
+
