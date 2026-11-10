@@ -255,6 +255,40 @@ const getAppVersionStatus = async (req, res) => {
       });
     }
 
+    // ── Live Over-The-Air (OTA) Bundle Evaluation ──────────────────────────────
+    const otaConfig = config.otaUpdates || {
+      enabled: true,
+      currentBundleVersion: "1.2.2.15",
+      bundleUrl: "/api/v1/app-version/ota-bundle",
+      bundleChecksum: "",
+      minNativeBuild: 22,
+      requiresNativeApk: false,
+      notes: "Live OTA Update",
+    };
+
+    const clientBuildNum = parseInt(buildNumber, 10) || 0;
+    const isOldNativeApk = Boolean(
+      otaConfig.requiresNativeApk ||
+      (clientBuildNum > 0 && clientBuildNum < (otaConfig.minNativeBuild || 22))
+    );
+
+    const otaEligible = Boolean(otaConfig.enabled && otaConfig.bundleUrl && !isOldNativeApk);
+    const otaHasNewer = Boolean(
+      otaEligible &&
+      currentVersion &&
+      compareVersions(otaConfig.currentBundleVersion, currentVersion) > 0
+    );
+
+    const otaPayload = {
+      enabled: Boolean(otaConfig.enabled),
+      available: otaHasNewer,
+      bundleVersion: otaConfig.currentBundleVersion || appVersionConfig.latestVersion,
+      bundleUrl: otaConfig.bundleUrl || "/api/v1/app-version/ota-bundle",
+      bundleChecksum: otaConfig.bundleChecksum || "",
+      minNativeBuild: otaConfig.minNativeBuild || 22,
+      requiresNativeApk: isOldNativeApk,
+    };
+
     return res.status(200).json({
       success: true,
       clientVersion: currentVersion || null,
@@ -262,9 +296,13 @@ const getAppVersionStatus = async (req, res) => {
       buildNumber: buildNumber || null,
       latestVersion: appVersionConfig.latestVersion,
       minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
-      updateAvailable: evaluation.updateAvailable,
+      updateAvailable: evaluation.updateAvailable || otaHasNewer,
       forceUpdate: evaluation.forceUpdate,
-      updateType: evaluation.updateType,
+      updateType: isOldNativeApk
+        ? evaluation.updateType
+        : otaHasNewer
+        ? "ota_live"
+        : evaluation.updateType,
       isSuspended: false,
       isPilot: false,
       targetAudience: "all",
@@ -274,6 +312,7 @@ const getAppVersionStatus = async (req, res) => {
       releaseNotes: appVersionConfig.releaseNotes || "",
       releaseMedia: appVersionConfig.releaseMedia || [],
       apkSha256: appVersionConfig.apkSha256 || "",
+      ota: otaPayload,
       checkedAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -350,7 +389,52 @@ const downloadLatestApk = async (req, res) => {
   }
 };
 
+/**
+ * Direct OTA Web Bundle Download Endpoint
+ * GET /api/v1/app-version/ota-bundle
+ */
+const downloadLatestOtaBundle = async (req, res) => {
+  try {
+    const config = await SystemConfig.getEffectiveConfig();
+    const ota = config.otaUpdates || {};
+    const bundleVer = ota.currentBundleVersion || "1.2.2.15";
+
+    const candidatePaths = [
+      path.resolve(__dirname, `../../dist-ota/hostelcare-bundle-v${bundleVer}.zip`),
+      path.resolve(__dirname, `../../dist-ota/hostelcare-web-bundle.zip`),
+      path.resolve(__dirname, `../../public/ota-bundles/hostelcare-bundle-v${bundleVer}.zip`),
+      path.resolve(__dirname, `../../public/ota-bundles/hostelcare-web-bundle.zip`),
+    ];
+
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        const stat = fs.statSync(p);
+        res.setHeader("Content-Type", "application/zip");
+        res.setHeader("Content-Length", stat.size);
+        res.setHeader("Content-Disposition", `attachment; filename="hostelcare-bundle-v${bundleVer}.zip"`);
+        return fs.createReadStream(p).pipe(res);
+      }
+    }
+
+    if (ota.bundleUrl && ota.bundleUrl.startsWith("http")) {
+      return res.redirect(ota.bundleUrl);
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: "No OTA bundle file found on server. Please package an OTA bundle using `npm run build:ota`.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to serve OTA bundle download",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAppVersionStatus,
   downloadLatestApk,
+  downloadLatestOtaBundle,
 };

@@ -67,8 +67,46 @@ export async function initPushNotifications() {
       console.error('FCM registration error:', err);
     });
 
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    PushNotifications.addListener('pushNotificationReceived', async (notification) => {
       console.log('Push received in foreground:', notification);
+      const title = notification.title || notification.data?.title || 'HostelCare';
+      const body = notification.body || notification.data?.body || '';
+      const img = notification.data?.imageUrl || notification.data?.image || notification.data?.picture || notification.data?.bigPicture || notification.imageUrl || '';
+
+      // Dispatch in-app rich toast with image support
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('app-toast', {
+            detail: {
+              type: 'info',
+              message: body,
+              title: title,
+              imageUrl: img || undefined,
+            },
+          })
+        );
+      }
+
+      // Schedule local notification with attachments so Android system tray displays the image too!
+      try {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              id: Math.floor(Math.random() * 100000) + 1,
+              title,
+              body,
+              channelId: CHANNEL_ID,
+              smallIcon: 'ic_stat_hostelcare',
+              largeIcon: 'ic_launcher',
+              iconColor: '#587360',
+              attachments: img ? [{ id: 'push_img_' + Date.now(), url: img }] : undefined,
+              extra: notification.data || {},
+            },
+          ],
+        });
+      } catch (e) {
+        console.warn('Local notification schedule fallback notice:', e);
+      }
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
@@ -190,12 +228,13 @@ export async function requestNotificationPermission() {
  * @param {string} message - The text content to display in the notification body
  * @returns {Promise<{ success: boolean, id: number, platform: string, message: string }>}
  */
-export async function sendCustomNotification(message) {
+export async function sendCustomNotification(message, options = {}) {
   const trimmed = (message || '').trim();
   if (!trimmed) {
     throw new Error('Please enter notification text before sending.');
   }
 
+  const imageUrl = (options.imageUrl || options.image || '').trim();
   const isNative = Capacitor.isNativePlatform();
 
   // Generate safe 32-bit positive integer ID for Android system notification
@@ -219,16 +258,18 @@ export async function sendCustomNotification(message) {
       notifications: [
         {
           id: notificationId,
-          title: 'HostelCare',
+          title: options.title || 'HostelCare',
           body: trimmed,
           channelId: CHANNEL_ID,
           smallIcon: 'ic_stat_hostelcare',
           largeIcon: 'ic_launcher',
-          iconColor: '#4361EE',
+          iconColor: '#587360',
+          attachments: imageUrl ? [{ id: 'img_' + notificationId, url: imageUrl }] : undefined,
           schedule: { at: new Date(Date.now() + 100) },
           extra: {
             sentAt: new Date().toISOString(),
             source: 'custom_notification_screen',
+            imageUrl: imageUrl || undefined,
           },
         },
       ],
@@ -239,6 +280,7 @@ export async function sendCustomNotification(message) {
       id: notificationId,
       platform: 'native',
       message: trimmed,
+      imageUrl: imageUrl || undefined,
     };
   }
 
@@ -251,9 +293,10 @@ export async function sendCustomNotification(message) {
       }
     }
 
-    new window.Notification('HostelCare', {
+    new window.Notification(options.title || 'HostelCare', {
       body: trimmed,
-      icon: '/apple-touch-icon.png',
+      icon: '/hostelcare-logo.svg',
+      image: imageUrl || undefined,
       tag: `hostelcare-${notificationId}`,
     });
 
@@ -262,6 +305,7 @@ export async function sendCustomNotification(message) {
       id: notificationId,
       platform: 'web',
       message: trimmed,
+      imageUrl: imageUrl || undefined,
     };
   }
 

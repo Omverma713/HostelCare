@@ -439,6 +439,20 @@ export default function SuperAdminPortal() {
   const [deletingAppRelease, setDeletingAppRelease] = useState(false);
   const [deletingPilotRelease, setDeletingPilotRelease] = useState(false);
 
+  // Over-The-Air (OTA) Live Web Updates & Hotfix State
+  const [otaConfig, setOtaConfig] = useState({
+    enabled: true,
+    currentBundleVersion: '1.2.2.15',
+    bundleUrl: '/api/v1/app-version/ota-bundle',
+    bundleChecksum: '',
+    minNativeBuild: 22,
+    requiresNativeApk: false,
+    notes: 'Live OTA bundle update',
+    rollbackHistory: [],
+  });
+  const [savingOtaConfig, setSavingOtaConfig] = useState(false);
+  const [rollingBackOta, setRollingBackOta] = useState(false);
+
   // Load Overview Data
   const loadOverview = useCallback(async () => {
     try {
@@ -873,6 +887,20 @@ export default function SuperAdminPortal() {
             isSuspended: Boolean(res.pilotTesting.isSuspended),
             version: res.pilotTesting.version || '1.2.2.15',
             targetedRegistrationNumbers: res.pilotTesting.targetedRegistrationNumbers || [],
+          }));
+        }
+        if (res.otaUpdates) {
+          setOtaConfig((prev) => ({
+            ...prev,
+            ...res.otaUpdates,
+            enabled: Boolean(res.otaUpdates.enabled ?? true),
+            currentBundleVersion: res.otaUpdates.currentBundleVersion || '1.2.2.15',
+            bundleUrl: res.otaUpdates.bundleUrl || '/api/v1/app-version/ota-bundle',
+            bundleChecksum: res.otaUpdates.bundleChecksum || '',
+            minNativeBuild: res.otaUpdates.minNativeBuild || 22,
+            requiresNativeApk: Boolean(res.otaUpdates.requiresNativeApk),
+            notes: res.otaUpdates.notes || '',
+            rollbackHistory: res.otaUpdates.rollbackHistory || [],
           }));
         }
       }
@@ -1457,6 +1485,46 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Verification failed', 'Verification Error');
     } finally {
       setTestingPilotUser(false);
+    }
+  };
+
+  const handleSaveOtaConfig = async (e) => {
+    if (e) e.preventDefault();
+    setSavingOtaConfig(true);
+    try {
+      const res = await adminApi.updateAppVersionConfig({
+        otaUpdates: otaConfig,
+      });
+      if (res.success) {
+        triggerToast('success', `Live OTA update v${otaConfig.currentBundleVersion} deployed successfully!`, 'OTA Deployed');
+        if (res.otaUpdates) {
+          setOtaConfig(res.otaUpdates);
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to update OTA configuration', 'Error');
+    } finally {
+      setSavingOtaConfig(false);
+    }
+  };
+
+  const handleRollbackOta = async (targetVersion) => {
+    if (!window.confirm(`Are you sure you want to rollback the live update${targetVersion ? ` to v${targetVersion}` : ''}? Connected devices will instantly sync back to this build.`)) {
+      return;
+    }
+    setRollingBackOta(true);
+    try {
+      const res = await adminApi.rollbackOtaUpdate(targetVersion);
+      if (res.success) {
+        triggerToast('success', res.message || 'OTA live update rolled back successfully', 'Rollback Done');
+        if (res.otaUpdates) {
+          setOtaConfig(res.otaUpdates);
+        }
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to rollback OTA update', 'Error');
+    } finally {
+      setRollingBackOta(false);
     }
   };
 
@@ -6730,13 +6798,30 @@ export default function SuperAdminPortal() {
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                           <span style={{ fontSize: '1rem', flexShrink: 0 }}>
-                            {/\.(mp4|webm|mov)(\?.*)?$/i.test(url) ? '🎥' : '🖼️'}
+                            {/(youtube\.com|youtu\.be|drive\.google\.com|loom\.com|vimeo\.com|\.(mp4|webm|mov|ogg)(\?.*)?$)/i.test(url) ? '🎥' : '🖼️'}
                           </span>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)', direction: 'rtl', textAlign: 'left' }}>
                             {url}
                           </span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => window.open(url, '_blank')}
+                            title="Preview media in new window"
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-card)',
+                              color: 'var(--text-secondary)',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            👁️ View
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleInsertAppMediaToNotes(url)}
@@ -7579,13 +7664,30 @@ export default function SuperAdminPortal() {
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                           <span style={{ fontSize: '1rem', flexShrink: 0 }}>
-                            {/\.(mp4|webm|mov)(\?.*)?$/i.test(url) ? '🎥' : '🖼️'}
+                            {/(youtube\.com|youtu\.be|drive\.google\.com|loom\.com|vimeo\.com|\.(mp4|webm|mov|ogg)(\?.*)?$)/i.test(url) ? '🎥' : '🖼️'}
                           </span>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)', direction: 'rtl', textAlign: 'left' }}>
                             {url}
                           </span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => window.open(url, '_blank')}
+                            title="Preview media in new window"
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-card)',
+                              color: 'var(--text-secondary)',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            👁️ View
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleInsertPilotMediaToNotes(url)}
@@ -7982,6 +8084,400 @@ export default function SuperAdminPortal() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* SECTION 3: OVER-THE-AIR (OTA) LIVE UPDATES & HOTFIX ENGINE       */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--border-radius-lg)',
+              border: '1px solid var(--border-color)',
+              padding: '1.5rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            {/* Header Banner */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                marginBottom: '1.25rem',
+                paddingBottom: '1rem',
+                borderBottom: '1px solid var(--border-color)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.5rem' }}>⚡</span>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      Over-The-Air (OTA) Live Updates & Hotfix Engine
+                    </h3>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      Push UI/UX changes, bug fixes, styles, and logic directly into installed mobile apps without downloading or installing a new APK.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    background: otaConfig.enabled ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                    border: otaConfig.enabled ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                    color: otaConfig.enabled ? '#10b981' : '#ef4444',
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: otaConfig.enabled ? '#10b981' : '#ef4444',
+                    }}
+                  />
+                  {otaConfig.enabled ? `LIVE (v${otaConfig.currentBundleVersion})` : 'OTA PAUSED'}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setOtaConfig((prev) => ({ ...prev, enabled: !prev.enabled }))}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {otaConfig.enabled ? 'Pause Live Sync' : 'Resume Live Sync'}
+                </button>
+              </div>
+            </div>
+
+            {/* Form Grid */}
+            <form onSubmit={handleSaveOtaConfig}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                {/* Bundle Version */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Active Web Bundle Version
+                  </label>
+                  <input
+                    type="text"
+                    value={otaConfig.currentBundleVersion}
+                    onChange={(e) => setOtaConfig((prev) => ({ ...prev, currentBundleVersion: e.target.value }))}
+                    placeholder="1.2.2.15"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '3px' }}>
+                    Semantic version of the published web assets (e.g. 1.2.2.15).
+                  </span>
+                </div>
+
+                {/* Bundle URL */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Bundle ZIP Endpoint / Direct Link
+                  </label>
+                  <input
+                    type="text"
+                    value={otaConfig.bundleUrl}
+                    onChange={(e) => setOtaConfig((prev) => ({ ...prev, bundleUrl: e.target.value }))}
+                    placeholder="/api/v1/app-version/ota-bundle"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '3px' }}>
+                    Defaults to self-hosted <code>/api/v1/app-version/ota-bundle</code> or any direct HTTPS link.
+                  </span>
+                </div>
+
+                {/* Min Native Build (1% exception) */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Minimum Native Android Build (1% Exception Threshold)
+                  </label>
+                  <input
+                    type="number"
+                    value={otaConfig.minNativeBuild}
+                    onChange={(e) => setOtaConfig((prev) => ({ ...prev, minNativeBuild: parseInt(e.target.value, 10) || 1 }))}
+                    placeholder="22"
+                    min="1"
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '3px' }}>
+                    Devices with native build number lower than this will be instructed to install the APK (for new native plugins/permissions).
+                  </span>
+                </div>
+
+                {/* Bundle Checksum */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    SHA-256 Checksum (Integrity Verification • Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={otaConfig.bundleChecksum}
+                    onChange={(e) => setOtaConfig((prev) => ({ ...prev, bundleChecksum: e.target.value }))}
+                    placeholder="fbe8aa32d1d3bbdd2385366566fff2093615dc1bd139d9b9403712dc48572a56"
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '3px' }}>
+                    Generated automatically when running <code>npm run build:ota</code>.
+                  </span>
+                </div>
+              </div>
+
+              {/* Force Native APK toggle */}
+              <div
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Force Native APK Install For All Devices (1% Native Exception Override)
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Enable this when introducing new Android permissions (e.g. Camera, Bluetooth, Biometrics) that cannot be hotfixed over the air.
+                  </div>
+                </div>
+
+                <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(otaConfig.requiresNativeApk)}
+                    onChange={(e) => setOtaConfig((prev) => ({ ...prev, requiresNativeApk: e.target.checked }))}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: otaConfig.requiresNativeApk ? '#ef4444' : 'var(--text-secondary)' }}>
+                    {otaConfig.requiresNativeApk ? '⚠️ Force APK Install Active' : 'Normal OTA Mode'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Notes */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  Deployment Notes / Change Summary
+                </label>
+                <input
+                  type="text"
+                  value={otaConfig.notes}
+                  onChange={(e) => setOtaConfig((prev) => ({ ...prev, notes: e.target.value }))}
+                  placeholder="e.g. Fixed push notification banners, updated dark mode colors, patched room allocation"
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <button
+                  type="submit"
+                  disabled={savingOtaConfig}
+                  style={{
+                    padding: '0.65rem 1.4rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: savingOtaConfig ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                  }}
+                >
+                  <span>{savingOtaConfig ? '⏳' : '🚀'}</span>
+                  <span>{savingOtaConfig ? 'Deploying...' : 'Deploy Live OTA Update'}</span>
+                </button>
+              </div>
+            </form>
+
+            {/* ── 1-Click Rollback / Downgrade Center ── */}
+            <div
+              style={{
+                marginTop: '1.75rem',
+                paddingTop: '1.25rem',
+                borderTop: '1px solid var(--border-color)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '8px' }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>⏪</span>
+                    <span>1-Click Rollback & Downgrade Center</span>
+                  </h4>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    If a live bundle update introduces an unexpected glitch, revert to any previous stable build instantly with zero downtime.
+                  </p>
+                </div>
+
+                {otaConfig.rollbackHistory && otaConfig.rollbackHistory.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRollbackOta()}
+                    disabled={rollingBackOta}
+                    style={{
+                      padding: '0.45rem 0.9rem',
+                      borderRadius: '6px',
+                      border: '1px solid #f59e0b',
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      color: '#f59e0b',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: rollingBackOta ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>{rollingBackOta ? '⏳' : '⏪'}</span>
+                    <span>Revert to Immediately Previous Build</span>
+                  </button>
+                )}
+              </div>
+
+              {(!otaConfig.rollbackHistory || otaConfig.rollbackHistory.length === 0) ? (
+                <div
+                  style={{
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    background: 'var(--bg-secondary)',
+                    border: '1px dashed var(--border-color)',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-muted)',
+                    textAlign: 'center',
+                  }}
+                >
+                  No previous versions recorded in rollback history yet. Whenever you deploy a new bundle version, the prior version is automatically archived here for instant 1-click restore.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {otaConfig.rollbackHistory.map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '8px',
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '1rem',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                            v{item.bundleVersion}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                            {new Date(item.deployedAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                          {item.notes || item.bundleUrl}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRollbackOta(item.bundleVersion)}
+                        disabled={rollingBackOta}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: rollingBackOta ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        Rollback to v{item.bundleVersion}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

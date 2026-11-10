@@ -2204,6 +2204,16 @@ const getSuperAdminAppVersionConfig = async (req, res) => {
         apkSha256: config?.pilotTesting?.apkSha256 || "",
         targetedRegistrationNumbers: config?.pilotTesting?.targetedRegistrationNumbers || [],
       },
+      otaUpdates: {
+        enabled: Boolean(config?.otaUpdates?.enabled ?? true),
+        currentBundleVersion: config?.otaUpdates?.currentBundleVersion || "1.2.2.15",
+        bundleUrl: config?.otaUpdates?.bundleUrl || "/api/v1/app-version/ota-bundle",
+        bundleChecksum: config?.otaUpdates?.bundleChecksum || "",
+        minNativeBuild: config?.otaUpdates?.minNativeBuild || 22,
+        requiresNativeApk: Boolean(config?.otaUpdates?.requiresNativeApk),
+        notes: config?.otaUpdates?.notes || "",
+        rollbackHistory: config?.otaUpdates?.rollbackHistory || [],
+      },
       updatedAt: config.updatedAt,
       updatedBy: config.updatedBy,
     });
@@ -2377,6 +2387,51 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       config.markModified("pilotTesting");
     }
 
+    if (req.body.otaUpdates && typeof req.body.otaUpdates === "object") {
+      const ota = req.body.otaUpdates;
+      if (!config.otaUpdates) {
+        config.otaUpdates = {
+          enabled: true,
+          currentBundleVersion: "1.2.2.15",
+          bundleUrl: "/api/v1/app-version/ota-bundle",
+          bundleChecksum: "",
+          minNativeBuild: 22,
+          requiresNativeApk: false,
+          notes: "",
+          rollbackHistory: [],
+        };
+      }
+
+      // If version is changing, archive current version to rollbackHistory
+      if (
+        ota.currentBundleVersion &&
+        typeof ota.currentBundleVersion === "string" &&
+        ota.currentBundleVersion.trim() !== config.otaUpdates.currentBundleVersion
+      ) {
+        const historyEntry = {
+          bundleVersion: config.otaUpdates.currentBundleVersion,
+          bundleUrl: config.otaUpdates.bundleUrl,
+          bundleChecksum: config.otaUpdates.bundleChecksum,
+          deployedAt: new Date(),
+          notes: config.otaUpdates.notes || `Replaced by v${ota.currentBundleVersion.trim()}`,
+        };
+        const currentHist = Array.isArray(config.otaUpdates.rollbackHistory)
+          ? config.otaUpdates.rollbackHistory
+          : [];
+        config.otaUpdates.rollbackHistory = [historyEntry, ...currentHist].slice(0, 20);
+        config.otaUpdates.currentBundleVersion = ota.currentBundleVersion.trim();
+      }
+
+      if (typeof ota.enabled === "boolean") config.otaUpdates.enabled = ota.enabled;
+      if (typeof ota.bundleUrl === "string") config.otaUpdates.bundleUrl = ota.bundleUrl.trim();
+      if (typeof ota.bundleChecksum === "string") config.otaUpdates.bundleChecksum = ota.bundleChecksum.trim();
+      if (typeof ota.minNativeBuild === "number") config.otaUpdates.minNativeBuild = ota.minNativeBuild;
+      if (typeof ota.requiresNativeApk === "boolean") config.otaUpdates.requiresNativeApk = ota.requiresNativeApk;
+      if (typeof ota.notes === "string") config.otaUpdates.notes = ota.notes.trim().slice(0, 1000);
+
+      config.markModified("otaUpdates");
+    }
+
     config.updatedBy = req.user.registrationNumber || "superadmin";
     config.markModified("appVersion");
     await config.save();
@@ -2388,11 +2443,12 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       targetId: config._id,
       targetIdentifier: "appVersion",
       outcome: "SUCCESS",
-      summary: `App version config updated: latest=${config.appVersion.latestVersion}, pilot=${config.pilotTesting?.version}, pilotSuspended=${config.pilotTesting?.isSuspended} by ${req.user.registrationNumber}`,
+      summary: `App version config updated: latest=${config.appVersion.latestVersion}, pilot=${config.pilotTesting?.version}, ota=${config.otaUpdates?.currentBundleVersion} by ${req.user.registrationNumber}`,
       details: {
         previous,
         updated: config.appVersion,
         pilotTesting: config.pilotTesting,
+        otaUpdates: config.otaUpdates,
       },
     });
 
@@ -2401,6 +2457,7 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       message: "App version configuration updated successfully",
       appVersion: config.appVersion,
       pilotTesting: config.pilotTesting,
+      otaUpdates: config.otaUpdates,
       updatedAt: config.updatedAt,
       updatedBy: config.updatedBy,
     });
@@ -2596,6 +2653,84 @@ const deleteSuperAdminPilotRelease = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to delete pilot release",
+      error: error.message,
+    });
+  }
+};
+
+// ─── ROLLBACK OTA LIVE UPDATE ──────────────────────────────────────────────
+// POST /api/v1/superadmin/app-version/ota/rollback
+const rollbackSuperAdminOta = async (req, res) => {
+  try {
+    const config = await SystemConfig.getEffectiveConfig();
+    const ota = config.otaUpdates;
+    if (!ota || !Array.isArray(ota.rollbackHistory) || ota.rollbackHistory.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No previous OTA versions found in rollback history.",
+      });
+    }
+
+    const { targetVersion } = req.body;
+    let targetIndex = -1;
+
+    if (targetVersion) {
+      targetIndex = ota.rollbackHistory.findIndex((h) => h.bundleVersion === targetVersion);
+    } else {
+      targetIndex = 0;
+    }
+
+    if (targetIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: `Version ${targetVersion} not found in rollback history.`,
+      });
+    }
+
+    const rollbackTarget = ota.rollbackHistory[targetIndex];
+
+    const currentToArchive = {
+      bundleVersion: ota.currentBundleVersion,
+      bundleUrl: ota.bundleUrl,
+      bundleChecksum: ota.bundleChecksum,
+      deployedAt: new Date(),
+      notes: `Archived during rollback to v${rollbackTarget.bundleVersion} by ${req.user.registrationNumber}`,
+    };
+
+    ota.rollbackHistory.splice(targetIndex, 1);
+    ota.rollbackHistory.unshift(currentToArchive);
+
+    ota.currentBundleVersion = rollbackTarget.bundleVersion;
+    ota.bundleUrl = rollbackTarget.bundleUrl;
+    ota.bundleChecksum = rollbackTarget.bundleChecksum;
+    ota.notes = `Rolled back to v${rollbackTarget.bundleVersion}`;
+
+    config.updatedBy = req.user.registrationNumber || "superadmin";
+    config.markModified("otaUpdates");
+    await config.save();
+
+    await recordAudit({
+      req,
+      action: "OTA_UPDATE_ROLLBACK",
+      targetType: "SYSTEM_CONFIG",
+      targetId: config._id,
+      targetIdentifier: "otaUpdates",
+      outcome: "SUCCESS",
+      summary: `Live OTA update rolled back to v${rollbackTarget.bundleVersion} by ${req.user.registrationNumber}`,
+      details: {
+        revertedTo: rollbackTarget,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `OTA live bundle rolled back successfully to v${rollbackTarget.bundleVersion}`,
+      otaUpdates: config.otaUpdates,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to rollback OTA bundle",
       error: error.message,
     });
   }
@@ -4044,6 +4179,7 @@ module.exports = {
   testPilotUserEligibility,
   deleteSuperAdminAppRelease,
   deleteSuperAdminPilotRelease,
+  rollbackSuperAdminOta,
   getMessNotificationSchedule,
   updateMessNotificationSchedule,
   testMessNotificationBroadcast,

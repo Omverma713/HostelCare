@@ -7,6 +7,7 @@
     "test": "node --test --test-concurrency=1 tests/appVersion.test.js tests/superAdmin.test.js tests/csvImport.test.js tests/superAdminProvision.test.js tests/superAdminActivation.test.js tests/userDeviceLimit.test.js tests/maintenanceMode.test.js",
     "import:users": "node scripts/import-users.js",
     "seed:superadmin": "node scripts/create-superadmin.js",
+    "build:ota": "node scripts/package-ota.js",
     "dev": "nodemon server.js",
     "start": "node server.js"
   },

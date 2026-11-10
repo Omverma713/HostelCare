@@ -238,6 +238,51 @@ const systemConfigSchema = new mongoose.Schema(
         default: [],
       },
     },
+
+    otaUpdates: {
+      enabled: {
+        type: Boolean,
+        default: true,
+      },
+      currentBundleVersion: {
+        type: String,
+        default: "1.2.2.15",
+        trim: true,
+      },
+      bundleUrl: {
+        type: String,
+        default: "/api/v1/app-version/ota-bundle",
+        trim: true,
+      },
+      bundleChecksum: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      minNativeBuild: {
+        type: Number,
+        default: 22,
+      },
+      requiresNativeApk: {
+        type: Boolean,
+        default: false,
+      },
+      notes: {
+        type: String,
+        default: "Live Over-The-Air web bundle update",
+        maxlength: 1000,
+        trim: true,
+      },
+      rollbackHistory: [
+        {
+          bundleVersion: { type: String, trim: true },
+          bundleUrl: { type: String, trim: true },
+          bundleChecksum: { type: String, trim: true },
+          deployedAt: { type: Date, default: Date.now },
+          notes: { type: String, default: "" },
+        },
+      ],
+    },
     messNotificationConfig: {
       enabled: {
         type: Boolean,

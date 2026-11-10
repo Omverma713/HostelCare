@@ -31,6 +31,7 @@ const {
   testPilotUserEligibility,
   deleteSuperAdminAppRelease,
   deleteSuperAdminPilotRelease,
+  rollbackSuperAdminOta,
   getMessNotificationSchedule,
   updateMessNotificationSchedule,
   testMessNotificationBroadcast,
@@ -146,6 +147,7 @@ router.put("/app-version", sensitiveActionLimiter, updateSuperAdminAppVersionCon
 router.delete("/app-version/release", sensitiveActionLimiter, deleteSuperAdminAppRelease);
 router.delete("/pilot-testing/release", sensitiveActionLimiter, deleteSuperAdminPilotRelease);
 router.post("/pilot-testing/test-user", testPilotUserEligibility);
+router.post("/app-version/ota/rollback", sensitiveActionLimiter, rollbackSuperAdminOta);
 
 // Notification Center
 router.post("/notifications/send", sensitiveActionLimiter, sendAdminNotification);

@@ -15,4 +15,6 @@ mobile-app/www/
 *firebase-adminsdk*.json
 **/google-services.json
 mobile-app/dist-apk/
+dist-ota/
+public/ota-bundles/*.zip
 pac backend/

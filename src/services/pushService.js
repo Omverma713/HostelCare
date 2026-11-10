@@ -155,16 +155,25 @@ async function sendPushToSessions(sessions, payload) {
     } else {
       const staleTokensToClean = [];
 
+      // Clean and resolve public HTTPS image URL for Android notification
+      const rawImg = (payload.imageUrl || payload.image || "").trim();
+      const validImg = rawImg.startsWith("http://") || rawImg.startsWith("https://") ? rawImg : undefined;
+
       // Construct High Priority Android FCM payload designed to penetrate Android Deep Doze Mode
       const baseFcmPayload = {
         notification: {
           title: payload.title || "HostelCare",
           body: payload.body || "",
-          ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
+          ...(validImg ? { imageUrl: validImg } : {}),
         },
         data: {
+          title: payload.title || "HostelCare",
+          body: payload.body || "",
           route: payload.route || "/",
-          imageUrl: payload.imageUrl || "",
+          imageUrl: validImg || "",
+          image: validImg || "",
+          picture: validImg || "",
+          bigPicture: validImg || "",
           sentAt: new Date().toISOString(),
           ...(payload.data || {}),
         },
@@ -175,13 +184,13 @@ async function sendPushToSessions(sessions, payload) {
             channelId: payload.channelId || "hostelcare_custom_channel",
             sound: "default",
             icon: "ic_stat_hostelcare",
-            color: "#00f3ff",
+            color: "#587360",
             defaultSound: true,
             defaultVibrateTimings: true,
             notificationPriority: "PRIORITY_MAX",
             visibility: "PUBLIC",
             tag: payload.tag || (payload.data?.slotKey ? "hostelcare_meal_" + payload.data.slotKey : undefined),
-            ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
+            ...(validImg ? { imageUrl: validImg } : {}),
           },
         },
       };
@@ -311,13 +320,18 @@ async function sendPushToSessions(sessions, payload) {
         error: "Web Push VAPID keys not configured on server",
       });
     } else {
+      const webImg = (payload.imageUrl || payload.image || "").trim();
+      const validWebImg = webImg.startsWith("http://") || webImg.startsWith("https://") ? webImg : undefined;
       const pushPayload = JSON.stringify({
         title: payload.title || "HostelCare",
         body: payload.body || "",
-        image: payload.imageUrl || undefined,
+        image: validWebImg,
+        icon: "/hostelcare-logo.svg",
+        badge: "/hostelcare-logo.svg",
         data: {
           route: payload.route || "/",
-          imageUrl: payload.imageUrl || "",
+          imageUrl: validWebImg || "",
+          image: validWebImg || "",
           sentAt: new Date().toISOString(),
         },
       });

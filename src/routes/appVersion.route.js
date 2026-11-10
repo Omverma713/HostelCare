@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const rateLimit = require("express-rate-limit");
-const { getAppVersionStatus, downloadLatestApk } = require("../controllers/appVersion.controller");
+const { getAppVersionStatus, downloadLatestApk, downloadLatestOtaBundle } = require("../controllers/appVersion.controller");
 
 // Public rate limiter for app version checks (120 checks per 15 minutes per IP)
 const versionCheckLimiter = rateLimit({
@@ -18,5 +18,6 @@ const versionCheckLimiter = rateLimit({
 router.get("/", versionCheckLimiter, getAppVersionStatus);
 router.get("/check", versionCheckLimiter, getAppVersionStatus);
 router.get("/download", downloadLatestApk);
+router.get("/ota-bundle", downloadLatestOtaBundle);
 
 module.exports = router;

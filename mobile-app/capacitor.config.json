@@ -33,6 +33,11 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_hostelcare",
       "iconColor": "#4361ee"
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "statsUrl": "",
+      "resetWhenUpdate": false
     }
   }
 }

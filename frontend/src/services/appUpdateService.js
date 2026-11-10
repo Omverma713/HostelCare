@@ -1,5 +1,6 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App } from '@capacitor/app';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { compareVersions, isValidDirectApkUrl } from '../utils/versionComparator';
 
 const ApkInstaller = registerPlugin('ApkInstallerPlugin');
@@ -62,6 +63,15 @@ class AppUpdateService {
       downloadedFilePath: null,
       verifiedSha256: null,
       statusMessage: '',
+
+      // Over-The-Air (OTA) Live Web Updates
+      otaAvailable: false,
+      otaVersion: null,
+      otaBundleUrl: '',
+      otaChecksum: '',
+      otaStatus: 'idle', // 'idle' | 'downloading' | 'ready' | 'applied' | 'error'
+      otaProgress: 0,
+      requiresNativeApk: false,
     };
 
     this.listeners = new Set();
@@ -210,6 +220,27 @@ class AppUpdateService {
       this.updateState.releaseNotes = data.releaseNotes || '';
       this.updateState.releaseMedia = data.releaseMedia || [];
       this.updateState.apkSha256 = data.apkSha256 || '';
+
+      // Check Live Over-The-Air (OTA) Bundle Availability
+      const isNative = Capacitor.isNativePlatform();
+      const hasCapUpdater = isNative && Capacitor.isPluginAvailable('CapacitorUpdater');
+
+      if (
+        data.ota &&
+        data.ota.enabled &&
+        data.ota.available &&
+        !data.ota.requiresNativeApk &&
+        hasCapUpdater
+      ) {
+        this.updateState.otaAvailable = true;
+        this.updateState.otaVersion = data.ota.bundleVersion;
+        this.updateState.otaBundleUrl = data.ota.bundleUrl;
+        this.updateState.otaChecksum = data.ota.bundleChecksum || '';
+        this.updateState.requiresNativeApk = false;
+      } else {
+        this.updateState.otaAvailable = false;
+        this.updateState.requiresNativeApk = Boolean(data.ota?.requiresNativeApk);
+      }
 
       if (manual) {
         this.updateState.manualCheck = true;
@@ -427,6 +458,9 @@ class AppUpdateService {
   }
 
   performUpdate() {
+    if (this.updateState.otaAvailable && !this.updateState.requiresNativeApk) {
+      return this.downloadAndApplyOta({ reloadImmediately: true });
+    }
     return this.startInAppDownload();
   }
 
@@ -454,12 +488,82 @@ class AppUpdateService {
     this.notifyListeners();
   }
 
+  /**
+   * Over-The-Air (OTA) Live Update Method
+   * Downloads web bundle zip directly, applies it via Capgo CapacitorUpdater,
+   * and reloads into the new build with zero APK download/install prompts.
+   */
+  async downloadAndApplyOta({ reloadImmediately = true } = {}) {
+    if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('CapacitorUpdater')) {
+      throw new Error('Over-The-Air updates are only supported on the native Android mobile app.');
+    }
+    if (!this.updateState.otaBundleUrl || !this.updateState.otaVersion) {
+      throw new Error('No OTA live update bundle is currently available.');
+    }
+
+    try {
+      this.updateState.otaStatus = 'downloading';
+      this.updateState.otaProgress = 15;
+      this.notifyListeners();
+
+      let targetUrl = this.updateState.otaBundleUrl;
+      if (targetUrl.startsWith('/')) {
+        targetUrl = `${API_BASE.replace(/\/api\/v1\/?$/, '')}${targetUrl}`;
+      }
+
+      this.updateState.otaProgress = 40;
+      this.notifyListeners();
+
+      const bundle = await CapacitorUpdater.download({
+        url: targetUrl,
+        version: this.updateState.otaVersion,
+      });
+
+      this.updateState.otaProgress = 85;
+      this.updateState.otaStatus = 'ready';
+      this.notifyListeners();
+
+      await CapacitorUpdater.set({ id: bundle.id });
+
+      this.updateState.otaStatus = 'applied';
+      this.updateState.otaProgress = 100;
+      this.notifyListeners();
+
+      if (reloadImmediately) {
+        await CapacitorUpdater.reload();
+      }
+      return { success: true, version: bundle.id };
+    } catch (err) {
+      console.error('[AppUpdateService] OTA download & apply failed:', err);
+      this.updateState.otaStatus = 'error';
+      this.updateState.errorMessage = 'Live OTA update failed to apply. Please check your network connection.';
+      this.notifyListeners();
+      throw err;
+    }
+  }
+
+  async resetOtaToNative() {
+    if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('CapacitorUpdater')) {
+      await CapacitorUpdater.reset();
+      await CapacitorUpdater.reload();
+    }
+  }
+
   initialize() {
     if (this.hasInitialized) return;
     this.hasInitialized = true;
 
     if (!Capacitor.isNativePlatform()) {
       return;
+    }
+
+    // 0. Notify CapacitorUpdater that React successfully mounted (prevents automatic bundle rollback)
+    if (Capacitor.isPluginAvailable('CapacitorUpdater')) {
+      try {
+        CapacitorUpdater.notifyAppReady().catch(() => {});
+      } catch (err) {
+        console.warn('[AppUpdateService] notifyAppReady warning:', err);
+      }
     }
 
     // 1. Initial non-blocking check on app startup

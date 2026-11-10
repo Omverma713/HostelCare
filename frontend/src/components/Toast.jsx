@@ -10,7 +10,7 @@ export default function ToastContainer() {
 
   useEffect(() => {
     const handleToastEvent = (e) => {
-      const { type = 'info', message, title, dismissOthers = false } = e.detail || {};
+      const { type = 'info', message, title, dismissOthers = false, imageUrl } = e.detail || {};
       if (!message) return;
 
       const id = Date.now() + Math.random().toString(36).substr(2, 9);
@@ -29,7 +29,7 @@ export default function ToastContainer() {
         }
         return [
           ...nextToasts,
-          { id, type, message, title: title || defaultTitle, isClosing: false }
+          { id, type, message, title: title || defaultTitle, imageUrl, isClosing: false }
         ];
       });
 
@@ -97,6 +97,13 @@ export default function ToastContainer() {
             <p className="toast-message">{toast.message}</p>
           </div>
 
+          {/* Optional Attached Media Preview */}
+          {toast.imageUrl && (
+            <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: 8, overflow: 'hidden', marginLeft: 8, border: '1px solid rgba(255, 255, 255, 0.2)' }}>
+              <img src={toast.imageUrl} alt="attachment" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            </div>
+          )}
+
           {/* Close Action Button */}
           <button
             className="toast-close-btn"
@@ -122,10 +129,10 @@ export default function ToastContainer() {
 /**
  * Helper utility to trigger a toast notification from anywhere in the application
  */
-export function triggerToast(type, message, title) {
+export function triggerToast(type, message, title, options = {}) {
   window.dispatchEvent(
     new CustomEvent('app-toast', {
-      detail: { type, message, title }
+      detail: { type, message, title, ...(typeof options === 'object' ? options : {}) }
     })
   );
 }

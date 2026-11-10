@@ -12,6 +12,7 @@ import { triggerToast } from '../components/Toast';
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [sending, setSending] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [permState, setPermState] = useState({ granted: false, status: 'loading', platform: 'checking' });
@@ -62,21 +63,26 @@ export default function NotificationsPage() {
 
     setSending(true);
     try {
-      const result = await sendCustomNotification(trimmed);
+      const trimmedImg = imageUrl.trim();
+      const result = await sendCustomNotification(trimmed, {
+        imageUrl: trimmedImg || undefined,
+      });
       const newEntry = {
         id: result.id,
         title: 'HostelCare',
         message: result.message,
+        imageUrl: trimmedImg || null,
         timestamp: new Date().toLocaleTimeString(),
         platform: result.platform,
       };
 
       setHistory((prev) => [newEntry, ...prev]);
       setMessage('');
+      setImageUrl('');
       triggerToast(
         'success',
         result.platform === 'native'
-          ? 'Notification posted to Android Notification Shade!'
+          ? 'Notification with image posted to Android Notification Shade!'
           : 'Notification dispatched!',
         'HostelCare'
       );
@@ -89,8 +95,9 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleUsePreset = (presetText) => {
+  const handleUsePreset = (presetText, presetImg = '') => {
     setMessage(presetText);
+    setImageUrl(presetImg);
     setErrorMsg('');
   };
 
@@ -314,6 +321,77 @@ export default function NotificationsPage() {
           )}
         </div>
 
+        {/* Optional Image / Banner URL */}
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <label
+              htmlFor="custom-notification-img"
+              style={{
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+              }}
+            >
+              🖼️ Attached Image URL (Optional BigPicture shade banner):
+            </label>
+            {imageUrl && (
+              <button
+                type="button"
+                onClick={() => setImageUrl('')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--danger-text)',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <input
+            id="custom-notification-img"
+            type="url"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="https://images.unsplash.com/... (Direct image URL)"
+            style={{
+              width: '100%',
+              padding: '0.65rem 0.9rem',
+              borderRadius: 'var(--border-radius-md)',
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              fontSize: '0.85rem',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          {imageUrl.trim() && (
+            <div
+              style={{
+                marginTop: '0.5rem',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                border: '1px solid var(--border-color)',
+                maxHeight: '120px',
+                background: '#000',
+              }}
+            >
+              <img
+                src={imageUrl.trim()}
+                alt="Notification Shade Banner Preview"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+                style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }}
+              />
+            </div>
+          )}
+        </div>
+
         {/* Quick Sample Chips */}
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
@@ -321,15 +399,31 @@ export default function NotificationsPage() {
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
             {[
-              '⚡ Power maintenance scheduled from 2 PM to 4 PM',
-              '🚰 Water supply in Block B is now restored',
-              '📦 Parcel arrived at Hostel Reception',
-              '🔔 General Hostel assembly tonight at 8 PM in common room',
-            ].map((chipText, idx) => (
+              {
+                text: '⚡ Power maintenance scheduled from 2 PM to 4 PM',
+                img: '',
+              },
+              {
+                text: '🚰 Water supply in Block B is now restored',
+                img: '',
+              },
+              {
+                text: '🍕 Special Sunday Feast tonight in Hostel Mess!',
+                img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop',
+              },
+              {
+                text: '📦 Parcel arrived at Hostel Reception',
+                img: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&auto=format&fit=crop',
+              },
+              {
+                text: '🔔 General Hostel assembly tonight at 8 PM in common room',
+                img: '',
+              },
+            ].map((chip, idx) => (
               <button
                 key={idx}
                 type="button"
-                onClick={() => handleUsePreset(chipText)}
+                onClick={() => handleUsePreset(chip.text, chip.img)}
                 style={{
                   padding: '0.35rem 0.65rem',
                   borderRadius: '16px',
@@ -350,7 +444,7 @@ export default function NotificationsPage() {
                   e.currentTarget.style.color = 'var(--text-secondary)';
                 }}
               >
-                {chipText}
+                {chip.text}
               </button>
             ))}
           </div>
@@ -479,6 +573,16 @@ export default function NotificationsPage() {
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px', wordBreak: 'break-word' }}>
                       {item.message}
                     </div>
+                    {item.imageUrl && (
+                      <div style={{ marginTop: '6px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border-color)', maxWidth: '180px' }}>
+                        <img
+                          src={item.imageUrl}
+                          alt="attached thumbnail"
+                          style={{ width: '100%', height: '80px', objectFit: 'cover', display: 'block' }}
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

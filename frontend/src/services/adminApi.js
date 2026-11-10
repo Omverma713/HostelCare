@@ -283,6 +283,13 @@ export const adminApi = {
     });
   },
 
+  rollbackOtaUpdate(targetVersion) {
+    return adminRequest('/superadmin/app-version/ota/rollback', {
+      method: 'POST',
+      body: JSON.stringify({ targetVersion }),
+    });
+  },
+
   // Mess Auto-Notification Schedule & Test Engine
   getMessNotificationSchedule() {
     return adminRequest('/superadmin/mess-notifications');

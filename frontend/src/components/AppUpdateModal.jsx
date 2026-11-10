@@ -15,6 +15,7 @@ import {
   ArrowDownCircle,
   PackageCheck,
   ExternalLink,
+  Zap,
 } from 'lucide-react';
 
 /**
@@ -32,8 +33,61 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
     const textLines = [];
     const mediaItems = [];
 
-    const isImageUrl = (url) => /\.(gif|png|jpe?g|webp|svg)(\?.*)?$/i.test(url) || (typeof url === 'string' && url.startsWith('data:image/'));
-    const isVideoUrl = (url) => /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url);
+    function getYouTubeEmbedUrl(url) {
+      if (!url) return null;
+      const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      return match ? `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1` : null;
+    }
+
+    function getGoogleDriveEmbedUrl(url) {
+      if (!url) return null;
+      const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+      return match ? `https://drive.google.com/file/d/${match[1]}/preview` : null;
+    }
+
+    function getLoomEmbedUrl(url) {
+      if (!url) return null;
+      const match = url.match(/loom\.com\/share\/([a-zA-Z0-9_-]+)/);
+      return match ? `https://www.loom.com/embed/${match[1]}` : null;
+    }
+
+    function getVimeoEmbedUrl(url) {
+      if (!url) return null;
+      const match = url.match(/vimeo\.com\/(\d+)/);
+      return match ? `https://player.vimeo.com/video/${match[1]}` : null;
+    }
+
+    function isDirectVideo(url) {
+      return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url);
+    }
+
+    function isImageUrl(url) {
+      return /\.(gif|png|jpe?g|webp|svg)(\?.*)?$/i.test(url) || (typeof url === 'string' && url.startsWith('data:image/'));
+    }
+
+    function classifyMedia(url, fallbackAlt = 'Release media') {
+      if (!url || typeof url !== 'string') return null;
+      const cleanUrl = url.trim();
+
+      const yt = getYouTubeEmbedUrl(cleanUrl);
+      if (yt) return { type: 'youtube', embedUrl: yt, url: cleanUrl, alt: 'YouTube video' };
+
+      const drive = getGoogleDriveEmbedUrl(cleanUrl);
+      if (drive) return { type: 'gdrive', embedUrl: drive, url: cleanUrl, alt: 'Google Drive preview' };
+
+      const loom = getLoomEmbedUrl(cleanUrl);
+      if (loom) return { type: 'loom', embedUrl: loom, url: cleanUrl, alt: 'Loom video' };
+
+      const vimeo = getVimeoEmbedUrl(cleanUrl);
+      if (vimeo) return { type: 'vimeo', embedUrl: vimeo, url: cleanUrl, alt: 'Vimeo video' };
+
+      if (isDirectVideo(cleanUrl)) return { type: 'video', url: cleanUrl, alt: fallbackAlt || 'Video clip' };
+
+      if (isImageUrl(cleanUrl)) return { type: 'image', url: cleanUrl, alt: fallbackAlt || 'Release screenshot' };
+
+      return { type: 'external_link', url: cleanUrl, alt: fallbackAlt || 'Media link' };
+    }
+
     const mdImageRegex = /!\[(.*?)\]\((https?:\/\/[^\s)]+|data:image\/[^\s)]+)\)/g;
 
     for (const rawLine of lines) {
@@ -41,15 +95,11 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
       if (!line) continue;
 
       // 1. Markdown image syntax ![alt](url)
-      let match;
       let hasMdMedia = false;
       const stripped = line.replace(mdImageRegex, (m, alt, url) => {
         hasMdMedia = true;
-        mediaItems.push({
-          type: isVideoUrl(url) ? 'video' : 'image',
-          url,
-          alt: alt || 'Release visual',
-        });
+        const classified = classifyMedia(url, alt || 'Release visual');
+        if (classified) mediaItems.push(classified);
         return '';
       }).trim();
 
@@ -58,13 +108,11 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
         continue;
       }
 
-      // 2. Direct media URL
+      // 2. Direct media URL on its own line
       if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('data:image/')) {
-        if (isImageUrl(line)) {
-          mediaItems.push({ type: 'image', url: line, alt: 'Release screenshot' });
-          continue;
-        } else if (isVideoUrl(line)) {
-          mediaItems.push({ type: 'video', url: line, alt: 'Release clip' });
+        const classified = classifyMedia(line, 'Release media');
+        if (classified && classified.type !== 'external_link') {
+          mediaItems.push(classified);
           continue;
         }
       }
@@ -78,11 +126,8 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
       for (const url of releaseMedia) {
         if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/'))) {
           if (!mediaItems.some((m) => m.url === url)) {
-            mediaItems.push({
-              type: isVideoUrl(url) ? 'video' : 'image',
-              url,
-              alt: 'Release media',
-            });
+            const classified = classifyMedia(url, 'Release attachment');
+            if (classified) mediaItems.push(classified);
           }
         }
       }
@@ -208,7 +253,17 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
                 boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35)',
               }}
             >
-              {item.type === 'video' ? (
+              {item.type === 'youtube' || item.type === 'gdrive' || item.type === 'loom' || item.type === 'vimeo' ? (
+                <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0, overflow: 'hidden', background: '#000' }}>
+                  <iframe
+                    src={item.embedUrl}
+                    title={item.alt || 'Release video clip'}
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              ) : item.type === 'video' ? (
                 <video
                   src={item.url}
                   controls
@@ -216,14 +271,14 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
                   preload="metadata"
                   style={{
                     width: '100%',
-                    maxHeight: '200px',
+                    maxHeight: '220px',
                     display: 'block',
                     background: '#000',
                     borderRadius: '10px',
                     objectFit: 'contain',
                   }}
                 />
-              ) : (
+              ) : item.type === 'image' ? (
                 <div
                   onClick={() => setActivePreview(item.url)}
                   style={{ cursor: 'pointer', position: 'relative' }}
@@ -235,7 +290,7 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
                     loading="lazy"
                     style={{
                       width: '100%',
-                      maxHeight: '190px',
+                      maxHeight: '200px',
                       objectFit: 'contain',
                       display: 'block',
                       background: 'rgba(0, 0, 0, 0.25)',
@@ -244,7 +299,7 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
                       e.currentTarget.style.display = 'none';
                     }}
                   />
-                  {item.alt && item.alt !== 'Release screenshot' && item.alt !== 'Release visual' && item.alt !== 'Release media' && (
+                  {item.alt && item.alt !== 'Release screenshot' && item.alt !== 'Release visual' && item.alt !== 'Release media' && item.alt !== 'Release attachment' && (
                     <div
                       style={{
                         padding: '4px 8px',
@@ -258,6 +313,25 @@ function ChangelogMediaRenderer({ releaseNotes, releaseMedia = [] }) {
                     </div>
                   )}
                 </div>
+              ) : (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 14px',
+                    color: '#93c5fd',
+                    textDecoration: 'none',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    background: 'rgba(255, 255, 255, 0.05)',
+                  }}
+                >
+                  <span>▶️ Open Video / Media Attachment</span>
+                </a>
               )}
             </div>
           ))}
@@ -440,6 +514,8 @@ export default function AppUpdateModal() {
   const isPermissionRequired = state?.downloadStatus === 'permission_required';
   const isInstalling = state?.downloadStatus === 'installing';
   const isDownloadError = state?.downloadStatus === 'error';
+  const isOtaMode = Boolean(state?.otaAvailable && !state?.requiresNativeApk);
+  const isOtaDownloading = state?.otaStatus === 'downloading';
 
   // Warm Linen (Light) & Espresso Luxury (Dark) Theme Styling
   let isDark = false;
@@ -1119,11 +1195,11 @@ export default function AppUpdateModal() {
                   {state.forceUpdate ? <AlertCircle size={26} /> : <Sparkles size={26} />}
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: state.forceUpdate ? '#f87171' : '#a5b4fc', letterSpacing: '0.04em' }}>
-                    {state.forceUpdate ? 'CRITICAL UPDATE REQUIRED' : 'HOSTELCARE IN-APP UPDATE'}
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: state.forceUpdate ? '#f87171' : isOtaMode ? '#34d399' : '#a5b4fc', letterSpacing: '0.04em' }}>
+                    {state.forceUpdate ? 'CRITICAL UPDATE REQUIRED' : isOtaMode ? '⚡ LIVE OTA WEB UPDATE' : 'HOSTELCARE IN-APP UPDATE'}
                   </div>
                   <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
-                    {state.forceUpdate ? 'Update Required to Continue' : 'New Version Available!'}
+                    {state.forceUpdate ? 'Update Required to Continue' : isOtaMode ? 'Instant Live Update Ready' : 'New Version Available!'}
                   </h3>
                 </div>
               </div>
@@ -1146,8 +1222,9 @@ export default function AppUpdateModal() {
                   Current: <strong>v{state.currentVersion}</strong>
                 </span>
                 <span style={{ color: '#818cf8', fontWeight: 700 }}>→</span>
-                <span style={{ color: '#38bdf8', fontWeight: 800 }}>
-                  Available: <strong>v{state.latestVersion}</strong>
+                <span style={{ color: isOtaMode ? '#34d399' : '#38bdf8', fontWeight: 800 }}>
+                  Available: <strong>v{isOtaMode ? (state.otaVersion || state.latestVersion) : state.latestVersion}</strong>
+                  {isOtaMode && <span style={{ marginLeft: '6px', fontSize: '0.7rem', padding: '1px 6px', borderRadius: '4px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399' }}>Live Bundle</span>}
                 </span>
               </div>
 
@@ -1320,6 +1397,7 @@ export default function AppUpdateModal() {
                 <button
                   type="button"
                   onClick={handleUpdate}
+                  disabled={isOtaDownloading}
                   style={{
                     flex: state.forceUpdate ? '2 1 180px' : '2 1 135px',
                     padding: '0.75rem',
@@ -1327,13 +1405,17 @@ export default function AppUpdateModal() {
                     border: 'none',
                     background: state.forceUpdate
                       ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                      : isOtaMode
+                      ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
                       : 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
                     color: '#ffffff',
                     fontWeight: 700,
                     fontSize: '0.875rem',
-                    cursor: 'pointer',
+                    cursor: isOtaDownloading ? 'not-allowed' : 'pointer',
                     boxShadow: state.forceUpdate
                       ? '0 4px 15px rgba(239, 68, 68, 0.4)'
+                      : isOtaMode
+                      ? '0 4px 15px rgba(16, 185, 129, 0.4)'
                       : '0 4px 15px rgba(99, 102, 241, 0.4)',
                     display: 'flex',
                     alignItems: 'center',
@@ -1341,8 +1423,14 @@ export default function AppUpdateModal() {
                     gap: '8px',
                   }}
                 >
-                  <Download size={16} />
-                  {state.forceUpdate ? 'Update Now (Required)' : 'Update Now'}
+                  {isOtaMode ? <Zap size={16} /> : <Download size={16} />}
+                  {isOtaDownloading
+                    ? `Applying Live Update (${state?.otaProgress || 0}%)...`
+                    : isOtaMode
+                    ? '⚡ Apply Live Update (Instant)'
+                    : state.forceUpdate
+                    ? 'Update Now (Required)'
+                    : 'Update Now'}
                 </button>
               </div>
             </div>
