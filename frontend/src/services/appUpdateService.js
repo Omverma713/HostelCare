@@ -237,6 +237,11 @@ class AppUpdateService {
         this.updateState.otaBundleUrl = data.ota.bundleUrl;
         this.updateState.otaChecksum = data.ota.bundleChecksum || '';
         this.updateState.requiresNativeApk = false;
+
+        // Auto-download OTA live update silently in the background!
+        if (!manual && !this.isDownloadingOta) {
+          this.autoDownloadOtaInBackground();
+        }
       } else {
         this.updateState.otaAvailable = false;
         this.updateState.requiresNativeApk = Boolean(data.ota?.requiresNativeApk);
@@ -539,6 +544,20 @@ class AppUpdateService {
       this.updateState.errorMessage = 'Live OTA update failed to apply. Please check your network connection.';
       this.notifyListeners();
       throw err;
+    }
+  }
+
+  async autoDownloadOtaInBackground() {
+    if (this.isDownloadingOta || !this.updateState.otaAvailable) return;
+    this.isDownloadingOta = true;
+    try {
+      console.log('[AppUpdateService] Starting background silent OTA download...');
+      await this.downloadAndApplyOta({ reloadImmediately: false });
+      console.log('[AppUpdateService] Silent OTA bundle downloaded & staged for next restart!');
+    } catch (err) {
+      console.warn('[AppUpdateService] Background silent OTA download notice:', err.message);
+    } finally {
+      this.isDownloadingOta = false;
     }
   }
 

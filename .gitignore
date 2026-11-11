@@ -17,5 +17,4 @@ mobile-app/www/
 mobile-app/dist-apk/
 dist-apk/
 dist-ota/
-public/ota-bundles/*.zip
 pac backend/

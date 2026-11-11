@@ -417,12 +417,32 @@ const downloadLatestOtaBundle = async (req, res) => {
     }
 
     if (ota.bundleUrl && ota.bundleUrl.startsWith("http")) {
-      return res.redirect(ota.bundleUrl);
+      return res.redirect(302, ota.bundleUrl);
+    }
+
+    // Fallback: If not on local container disk, stream directly from public repository assets
+    const fallbackUrls = [
+      `https://raw.githubusercontent.com/Omverma713/HostelCare/main/public/ota-bundles/hostelcare-bundle-v${bundleVer}.zip`,
+      `https://raw.githubusercontent.com/Omverma713/HostelCare/main/public/ota-bundles/hostelcare-web-bundle.zip`,
+    ];
+
+    for (const fbUrl of fallbackUrls) {
+      try {
+        const resp = await fetch(fbUrl);
+        if (resp.ok) {
+          res.setHeader("Content-Type", "application/zip");
+          const len = resp.headers.get("content-length");
+          if (len) res.setHeader("Content-Length", len);
+          res.setHeader("Content-Disposition", `attachment; filename="hostelcare-bundle-v${bundleVer}.zip"`);
+          const { Readable } = require("stream");
+          return Readable.fromWeb(resp.body).pipe(res);
+        }
+      } catch (_) {}
     }
 
     return res.status(404).json({
       success: false,
-      message: "No OTA bundle file found on server. Please package an OTA bundle using `npm run build:ota`.",
+      message: "No OTA bundle file found on server or repository. Please package an OTA bundle using `npm run build:ota`.",
     });
   } catch (error) {
     return res.status(500).json({

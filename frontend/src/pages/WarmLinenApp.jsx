@@ -43,12 +43,17 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
     try {
       const res = await appUpdateService.checkForUpdates({ manual: true });
       if (res && res.updateAvailable) {
-        triggerToast('success', `New update v${res.latestVersion} found! Tap to install.`);
+        if (res.otaAvailable && !res.requiresNativeApk) {
+          triggerToast('info', `Applying live update v${res.latestVersion}...`);
+          await appUpdateService.downloadAndApplyOta({ reloadImmediately: true });
+        } else {
+          triggerToast('success', `New update v${res.latestVersion} found! Tap to install.`);
+        }
       } else {
         triggerToast('success', 'You are on the latest version of HostelCare (v1.2.2.17)!');
       }
     } catch (e) {
-      triggerToast('info', 'HostelCare is up to date.');
+      triggerToast('error', e.message || 'Update check failed.');
     } finally {
       setTimeout(() => setCheckingUpdate(false), 800);
     }
