@@ -255,7 +255,7 @@ export default function NotificationsPage() {
               letterSpacing: '0.02em',
             }}
           >
-            🛡️ HostelCare
+            ✨ HostelCare
           </span>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Fixed)</span>
         </div>

@@ -3,8 +3,17 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Clean pure white silhouette for Android status bar and notification shade -->
+    <!-- Clean pure white silhouette of Official HostelCare "H • C" Brand Monogram with Luxury Sparkle Star -->
+    <!-- Letter H -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5L12,1z M11,7h2v5h-2V7z M11,14h2v2h-2V14z"/>
+        android:pathData="M 2.25,5.9 L 6.42,5.9 L 6.42,7.39 L 5.38,7.39 L 5.38,12.15 L 8.95,12.15 L 8.95,7.39 L 7.91,7.39 L 7.91,5.9 L 12.07,5.9 L 12.07,7.39 L 11.03,7.39 L 11.03,19.89 L 12.07,19.89 L 12.07,21.38 L 7.91,21.38 L 7.91,19.89 L 8.95,19.89 L 8.95,14.23 L 5.38,14.23 L 5.38,19.89 L 6.42,19.89 L 6.42,21.38 L 2.25,21.38 L 2.25,19.89 L 3.29,19.89 L 3.29,7.39 L 2.25,7.39 Z" />
+    <!-- Letter C -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 18.03,8.28 C 17.28,7.09 15.8,6.19 13.71,6.19 C 10.44,6.19 8.2,8.87 8.2,13.64 C 8.2,18.4 10.44,21.08 13.71,21.08 C 15.94,21.08 17.43,20.04 18.18,18.85 L 16.24,16.91 C 15.65,17.81 14.75,18.4 13.71,18.4 C 12.07,18.4 11.03,16.61 11.03,13.64 C 11.03,10.66 12.07,8.87 13.71,8.87 C 14.75,8.87 15.5,9.47 16.09,10.21 Z" />
+    <!-- Top-Right Luxury Sparkle Star -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 19.22,2.62 L 19.81,4.56 L 21.75,5.15 L 19.81,5.75 L 19.22,7.68 L 18.62,5.75 L 16.69,5.15 L 18.62,4.56 Z" />
 </vector>

@@ -32,7 +32,7 @@
     },
     "LocalNotifications": {
       "smallIcon": "ic_stat_hostelcare",
-      "iconColor": "#4361ee"
+      "iconColor": "#587360"
     },
     "CapacitorUpdater": {
       "autoUpdate": false,
