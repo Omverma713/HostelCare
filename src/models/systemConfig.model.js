@@ -199,7 +199,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       version: {
         type: String,
-        default: "1.2.2.16",
+        default: "1.2.2.17",
         trim: true,
       },
       updateMessage: {
@@ -210,7 +210,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       updateUrl: {
         type: String,
-        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.16/hostelcare-v1.2.2.16.apk",
+        default: "https://github.com/Omverma713/HostelCare/releases/download/v1.2.2.17/hostelcare-v1.2.2.17.apk",
         trim: true,
       },
       forceUpdate: {
@@ -246,7 +246,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       currentBundleVersion: {
         type: String,
-        default: "1.2.2.16",
+        default: "1.2.2.17",
         trim: true,
       },
       bundleUrl: {
@@ -256,7 +256,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       bundleChecksum: {
         type: String,
-        default: "743affe6fdeba6e74d02305caa7ae47c8105fe63ad78d6afc17214d718d61004",
+        default: "19c2c90ffd89e50607521baf6c48e83232263dbaeab6972c14dda0326ff7b69b",
         trim: true,
       },
       minNativeBuild: {
@@ -269,7 +269,7 @@ const systemConfigSchema = new mongoose.Schema(
       },
       notes: {
         type: String,
-        default: "HostelCare v1.2.2.16: Push Notification Scheduler, Dynamic Living Space, and Adaptive Dark Theme Badges",
+        default: "HostelCare v1.2.2.17: Push Notification Scheduler, Dynamic Living Space, and Adaptive Dark Theme Badges",
         maxlength: 1000,
         trim: true,
       },
