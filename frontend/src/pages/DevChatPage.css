@@ -25,9 +25,9 @@
   --wa-text-secondary: #9E958A;
   --wa-text-placeholder: #7D756B;
   
-  --wa-green-action: #8CA993;
-  --wa-green-accent: #8CA993;
-  --wa-blue-ticks: #8CA993;
+  --wa-green-action: #D88B74;
+  --wa-green-accent: #D88B74;
+  --wa-blue-ticks: #D88B74;
   
   --timeline-bg: #161311;
   --doodle-url: url('/whatsapp-doodle-dark.svg');
@@ -58,9 +58,9 @@ body.login-dark-theme .devchat-root {
   --wa-text-secondary: #9E958A;
   --wa-text-placeholder: #7D756B;
   
-  --wa-green-action: #8CA993;
-  --wa-green-accent: #8CA993;
-  --wa-blue-ticks: #8CA993;
+  --wa-green-action: #D88B74;
+  --wa-green-accent: #D88B74;
+  --wa-blue-ticks: #D88B74;
   
   --timeline-bg: #161311;
   --doodle-url: url('/whatsapp-doodle-dark.svg');
@@ -82,17 +82,17 @@ html:not(.dark-theme) .devchat-root:not(.dark-theme) {
   --wa-bubble-theirs-text: #242523;
   --wa-bubble-theirs-border: #E6E0D5;
   
-  --wa-bubble-mine: #EEF3EE;
+  --wa-bubble-mine: #F9EBE6;
   --wa-bubble-mine-text: #242523;
-  --wa-bubble-mine-border: #D5E2D7;
+  --wa-bubble-mine-border: #F4D3C9;
   
   --wa-text-primary: #242523;
   --wa-text-secondary: #575854;
   --wa-text-placeholder: #8E8F8A;
   
-  --wa-green-action: #728D7A;
-  --wa-green-accent: #587360;
-  --wa-blue-ticks: #587360;
+  --wa-green-action: #C07660;
+  --wa-green-accent: #9C5B49;
+  --wa-blue-ticks: #9C5B49;
   
   --timeline-bg: #F6F3EC;
   --doodle-url: url('/whatsapp-doodle-light.svg');
@@ -1683,9 +1683,9 @@ html.light-theme .chat-image-preview-bar {
     width: 48px !important;
     height: 48px !important;
     border-radius: 50% !important;
-    background: #728D7A !important;
+    background: #C07660 !important;
     flex-shrink: 0 !important;
-    box-shadow: 0 3px 10px rgba(114, 141, 122, 0.3) !important;
+    box-shadow: 0 3px 10px rgba(192, 118, 96, 0.3) !important;
   }
 
   .devchat-room-header {
@@ -1897,9 +1897,9 @@ html.light-theme .tickets-filter-tab.active,
   gap: 6px;
   padding: 0.45rem 0.85rem;
   border-radius: 8px;
-  background: #EEF3EE;
-  color: #587360;
-  border: 1px solid #D5E2D7;
+  background: #F9EBE6;
+  color: #9C5B49;
+  border: 1px solid #F4D3C9;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -1926,8 +1926,8 @@ body.login-dark-theme .devchat-root,
 html.dark-theme .btn-theme-toggle-chat,
 body.login-dark-theme .btn-theme-toggle-chat,
 .devchat-root.dark-theme .btn-theme-toggle-chat {
-  background: #27342B !important;
-  color: #8CA993 !important;
+  background: #34221B !important;
+  color: #D88B74 !important;
   border: 1px solid #3D5042 !important;
 }
 
@@ -1949,8 +1949,8 @@ body.login-dark-theme .devchat-header,
 html.dark-theme .devchat-icon-badge,
 body.login-dark-theme .devchat-icon-badge,
 .devchat-root.dark-theme .devchat-icon-badge {
-  background: #27342B !important;
-  color: #8CA993 !important;
+  background: #34221B !important;
+  color: #D88B74 !important;
   border: 1px solid #3D5042 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
@@ -1970,15 +1970,15 @@ body.login-dark-theme .devchat-header-subtitle,
 html.dark-theme .e2ee-shield-pill,
 body.login-dark-theme .e2ee-shield-pill,
 .devchat-root.dark-theme .e2ee-shield-pill {
-  background: #27342B !important;
+  background: #34221B !important;
   border: 1px solid #3D5042 !important;
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .btn-new-ticket,
 body.login-dark-theme .btn-new-ticket,
 .devchat-root.dark-theme .btn-new-ticket {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
   color: #141815 !important;
   font-weight: 700 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
@@ -2017,7 +2017,7 @@ body.login-dark-theme .devchat-search-input,
 html.dark-theme .devchat-search-input:focus,
 body.login-dark-theme .devchat-search-input:focus,
 .devchat-root.dark-theme .devchat-search-input:focus {
-  border-color: #8CA993 !important;
+  border-color: #D88B74 !important;
   box-shadow: 0 0 0 3px rgba(140, 169, 147, 0.2) !important;
 }
 
@@ -2043,7 +2043,7 @@ body.login-dark-theme .tickets-filter-tab,
 html.dark-theme .tickets-filter-tab.active,
 body.login-dark-theme .tickets-filter-tab.active,
 .devchat-root.dark-theme .tickets-filter-tab.active {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
   color: #141815 !important;
   font-weight: 700 !important;
 }
@@ -2067,14 +2067,14 @@ html.dark-theme .ticket-item-card.active,
 body.login-dark-theme .ticket-item-card.active,
 .devchat-root.dark-theme .ticket-item-card.active {
   background: #2C241E !important;
-  border-color: #8CA993 !important;
-  border-left: 3px solid #8CA993 !important;
+  border-color: #D88B74 !important;
+  border-left: 3px solid #D88B74 !important;
 }
 
 html.dark-theme .ticket-badge-id,
 body.login-dark-theme .ticket-badge-id,
 .devchat-root.dark-theme .ticket-badge-id {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .ticket-subject-text,
@@ -2101,8 +2101,8 @@ body.login-dark-theme .ticket-status-chip.open,
 html.dark-theme .ticket-status-chip.resolved,
 body.login-dark-theme .ticket-status-chip.resolved,
 .devchat-root.dark-theme .ticket-status-chip.resolved {
-  background: #27342B !important;
-  color: #8CA993 !important;
+  background: #34221B !important;
+  color: #D88B74 !important;
   border: 1px solid #3D5042 !important;
 }
 
@@ -2152,15 +2152,15 @@ body.login-dark-theme .room-participant-details p,
 html.dark-theme .btn-resolve-ticket,
 body.login-dark-theme .btn-resolve-ticket,
 .devchat-root.dark-theme .btn-resolve-ticket {
-  background: #27342B !important;
+  background: #34221B !important;
   border: 1px solid #3D5042 !important;
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .btn-resolve-ticket:hover,
 body.login-dark-theme .btn-resolve-ticket:hover,
 .devchat-root.dark-theme .btn-resolve-ticket:hover {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
   color: #141815 !important;
 }
 
@@ -2200,7 +2200,7 @@ body.login-dark-theme .chat-bubble.typing-bubble,
 html.dark-theme .typing-text,
 body.login-dark-theme .typing-text,
 .devchat-root.dark-theme .typing-text {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .typing-dots .dot,
@@ -2209,13 +2209,13 @@ html.dark-theme .typing-pulse-dot,
 body.login-dark-theme .typing-pulse-dot,
 .devchat-root.dark-theme .typing-dots .dot,
 .devchat-root.dark-theme .typing-pulse-dot {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
 }
 
 html.dark-theme .chat-sender-name,
 body.login-dark-theme .chat-sender-name,
 .devchat-root.dark-theme .chat-sender-name {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .chat-bubble-meta,
@@ -2227,7 +2227,7 @@ body.login-dark-theme .chat-bubble-meta,
 html.dark-theme .read-ticks.read,
 body.login-dark-theme .read-ticks.read,
 .devchat-root.dark-theme .read-ticks.read {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 /* Input Bar & Capsule */
@@ -2249,7 +2249,7 @@ body.login-dark-theme .whatsapp-input-capsule,
 html.dark-theme .whatsapp-input-capsule:focus-within,
 body.login-dark-theme .whatsapp-input-capsule:focus-within,
 .devchat-root.dark-theme .whatsapp-input-capsule:focus-within {
-  border-color: #8CA993 !important;
+  border-color: #D88B74 !important;
 }
 
 html.dark-theme .devchat-input-field,
@@ -2292,7 +2292,7 @@ body.login-dark-theme .btn-input-camera:hover,
 html.dark-theme .btn-send-message,
 body.login-dark-theme .btn-send-message,
 .devchat-root.dark-theme .btn-send-message {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
   color: #141815 !important;
 }
 
@@ -2342,9 +2342,9 @@ body.login-dark-theme .category-chip-btn:hover,
 html.dark-theme .category-chip-btn.selected,
 body.login-dark-theme .category-chip-btn.selected,
 .devchat-root.dark-theme .category-chip-btn.selected {
-  background: #27342B !important;
-  border-color: #8CA993 !important;
-  color: #8CA993 !important;
+  background: #34221B !important;
+  border-color: #D88B74 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .chat-action-item,
@@ -2357,7 +2357,7 @@ html.dark-theme .chat-action-item:hover,
 body.login-dark-theme .chat-action-item:hover,
 .devchat-root.dark-theme .chat-action-item:hover {
   background: #2D3A30 !important;
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .chat-edit-textarea,

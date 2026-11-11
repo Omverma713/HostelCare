@@ -98,7 +98,7 @@ export async function initPushNotifications() {
               channelId: CHANNEL_ID,
               smallIcon: 'ic_stat_hostelcare',
               largeIcon: 'ic_launcher',
-              iconColor: '#587360',
+              iconColor: '#C07660',
               attachments: img ? [{ id: 'push_img_' + Date.now(), url: img }] : undefined,
               extra: notification.data || {},
             },
@@ -263,7 +263,7 @@ export async function sendCustomNotification(message, options = {}) {
           channelId: CHANNEL_ID,
           smallIcon: 'ic_stat_hostelcare',
           largeIcon: 'ic_launcher',
-          iconColor: '#587360',
+          iconColor: '#9C5B49',
           attachments: imageUrl ? [{ id: 'img_' + notificationId, url: imageUrl }] : undefined,
           schedule: { at: new Date(Date.now() + 100) },
           extra: {

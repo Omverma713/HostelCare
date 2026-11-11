@@ -515,7 +515,7 @@ const handleSendMessage = (e) => {
                         width: 56,
                         height: 56,
                         borderRadius: 18,
-                        background: '#587360',
+                        background: '#9C5B49',
                         color: '#FAF7F2',
                         display: 'flex',
                         alignItems: 'center',
@@ -524,7 +524,7 @@ const handleSendMessage = (e) => {
                         fontSize: 21,
                         fontWeight: 700,
                         letterSpacing: '0.04em',
-                        boxShadow: '0 4px 14px rgba(88, 115, 96, 0.35)',
+                        boxShadow: '0 4px 14px rgba(156, 91, 73, 0.35)',
                         flexShrink: 0
                       }}
                     >
@@ -551,9 +551,9 @@ const handleSendMessage = (e) => {
                     onClick={handleCheckUpdate}
                     title="Click to check for app updates"
                     style={{
-                      background: updateAvailable ? '#FEF3C7' : 'rgba(88, 115, 96, 0.12)',
-                      color: updateAvailable ? '#B45309' : '#587360',
-                      border: '1px solid ' + (updateAvailable ? '#FDE68A' : 'rgba(88, 115, 96, 0.25)'),
+                      background: updateAvailable ? '#FEF3C7' : 'rgba(156, 91, 73, 0.12)',
+                      color: updateAvailable ? '#B45309' : '#9C5B49',
+                      border: '1px solid ' + (updateAvailable ? '#FDE68A' : 'rgba(156, 91, 73, 0.25)'),
                       padding: '4px 10px',
                       borderRadius: 9999,
                       fontSize: 11.5,
@@ -769,7 +769,7 @@ const handleSendMessage = (e) => {
                 <div className="section-head" style={{ marginBottom: 16 }}>
                   <button 
                     onClick={() => setActiveTab('home')} 
-                    style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    style={{ background: 'none', border: 'none', color: '#C07660', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   >
                     <span>←</span> Back to Sanctuary
                   </button>
@@ -806,8 +806,8 @@ const handleSendMessage = (e) => {
                         onClick={handleTestMyPhonePush}
                         disabled={testingPhonePush}
                         style={{
-                          background: '#EEF3EE',
-                          border: '1px solid #728D7A',
+                          background: '#F9EBE6',
+                          border: '1px solid #C07660',
                           borderRadius: 9999,
                           padding: '8px 15px',
                           fontSize: 12.5,
@@ -817,7 +817,7 @@ const handleSendMessage = (e) => {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: 5,
-                          boxShadow: '0 2px 6px rgba(114, 141, 122, 0.2)',
+                          boxShadow: '0 2px 6px rgba(192, 118, 96, 0.2)',
                         }}
                         title="Send immediate test snacks push notification directly to this mobile phone"
                       >
@@ -1026,7 +1026,7 @@ const handleSendMessage = (e) => {
               <div className="section-head">
                 <button 
                   onClick={() => setActiveTab('home')} 
-                  style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
+                  style={{ background: 'none', border: 'none', color: '#C07660', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
                 >
                   ← Back to Sanctuary
                 </button>
@@ -1063,7 +1063,7 @@ const handleSendMessage = (e) => {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Inventory Status:</span>
-                      <span style={{ color: '#587360', fontWeight: 600 }}>
+                      <span style={{ color: '#9C5B49', fontWeight: 600 }}>
                         {roomInfo.caretaker?.name ? `Managed by Caretaker ${roomInfo.caretaker.name}` : 'All 12 items verified'}
                       </span>
                     </div>
@@ -1082,7 +1082,7 @@ const handleSendMessage = (e) => {
 
                   <button
                     onClick={() => setShowQrModal(true)}
-                    style={{ background: '#728D7A', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 20 }}
+                    style={{ background: '#C07660', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 20 }}
                   >
                     View Security QR Pass →
                   </button>
@@ -1105,7 +1105,7 @@ const handleSendMessage = (e) => {
                     type="button"
                     onClick={handleCheckUpdate}
                     disabled={checkingUpdate}
-                    style={{ background: '#587360', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: checkingUpdate ? 'not-allowed' : 'pointer', marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                    style={{ background: '#9C5B49', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: checkingUpdate ? 'not-allowed' : 'pointer', marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: checkingUpdate ? 'spin 1s linear infinite' : 'none' }}>
                       <polyline points="23 4 23 10 17 10"></polyline>
@@ -1164,7 +1164,7 @@ const handleSendMessage = (e) => {
               <div className="section-head">
                 <button 
                   onClick={() => setActiveTab('home')} 
-                  style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
+                  style={{ background: 'none', border: 'none', color: '#C07660', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
                 >
                   ← Back to Sanctuary
                 </button>
@@ -1178,13 +1178,13 @@ const handleSendMessage = (e) => {
                       onClick={fetchComplaints}
                       disabled={complaintsLoading}
                       title="Refresh complaints"
-                      style={{ background: '#FAF8F5', color: '#587360', border: '1px solid #E6E0D5', padding: '10px 16px', borderRadius: 9999, fontSize: 13, fontWeight: 600, cursor: complaintsLoading ? 'not-allowed' : 'pointer' }}
+                      style={{ background: '#FAF8F5', color: '#9C5B49', border: '1px solid #E6E0D5', padding: '10px 16px', borderRadius: 9999, fontSize: 13, fontWeight: 600, cursor: complaintsLoading ? 'not-allowed' : 'pointer' }}
                     >
                       {complaintsLoading ? '↻ Refreshing...' : '↻ Refresh'}
                     </button>
                     <button
                       onClick={() => { setComplaintSubmitted(false); setShowComplaintModal(true); }}
-                      style={{ background: '#728D7A', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 9999, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(114, 141, 122, 0.25)' }}
+                      style={{ background: '#C07660', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 9999, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(192, 118, 96, 0.25)' }}
                     >
                       + File New Request
                     </button>
@@ -1195,12 +1195,12 @@ const handleSendMessage = (e) => {
               {/* Complaints List or Empty State */}
               {complaintsLoading && realComplaints.length === 0 ? (
                 <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '48px 32px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-                  <div style={{ width: 36, height: 36, border: '3px solid #E6E0D5', borderTopColor: '#728D7A', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+                  <div style={{ width: 36, height: 36, border: '3px solid #E6E0D5', borderTopColor: '#C07660', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
                   <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>Syncing live living space tickets from server...</p>
                 </div>
               ) : realComplaints.length === 0 ? (
                 <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '48px 32px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-                  <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#EEF3EE', color: '#587360', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>
+                  <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#F9EBE6', color: '#9C5B49', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>
                     ✓
                   </div>
                   <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: '#272824', margin: '0 0 8px' }}>
@@ -1211,7 +1211,7 @@ const handleSendMessage = (e) => {
                   </p>
                   <button
                     onClick={() => { setComplaintSubmitted(false); setShowComplaintModal(true); }}
-                    style={{ background: '#728D7A', color: 'white', border: 'none', padding: '12px 28px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(114, 141, 122, 0.2)' }}
+                    style={{ background: '#C07660', color: 'white', border: 'none', padding: '12px 28px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(192, 118, 96, 0.2)' }}
                   >
                     + Lodge First Request
                   </button>
@@ -1239,7 +1239,7 @@ const handleSendMessage = (e) => {
                               <span style={{ fontSize: 11, background: '#FAF8F5', border: '1px solid #E6E0D5', color: '#555', padding: '3px 10px', borderRadius: 9999, fontWeight: 700 }}>
                                 {ticketNum}
                               </span>
-                              <span style={{ fontSize: 12.5, fontWeight: 600, color: '#728D7A' }}>
+                              <span style={{ fontSize: 12.5, fontWeight: 600, color: '#C07660' }}>
                                 {deptIcon} {item.department || 'Maintenance'}
                               </span>
                             </div>
@@ -1307,7 +1307,7 @@ const handleSendMessage = (e) => {
               <div className="section-head">
                 <button 
                   onClick={() => setActiveTab('home')} 
-                  style={{ background: 'none', border: 'none', color: '#728D7A', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
+                  style={{ background: 'none', border: 'none', color: '#C07660', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
                 >
                   ← Back to Sanctuary
                 </button>
@@ -1320,7 +1320,7 @@ const handleSendMessage = (e) => {
                 <div style={{ background: '#FAF8F5', borderBottom: '1px solid #EFEAE0', padding: '14px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h4 className="chat-header-title">Hostel Caretaker & Admin Line</h4>
-                    <span style={{ fontSize: 12, color: '#587360' }}>● Online • AES-256-GCM Secured</span>
+                    <span style={{ fontSize: 12, color: '#9C5B49' }}>● Online • AES-256-GCM Secured</span>
                   </div>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ticket #HC-2051</span>
                 </div>
@@ -1333,13 +1333,13 @@ const handleSendMessage = (e) => {
                       style={{
                         alignSelf: msg.sender === 'student' ? 'flex-end' : 'flex-start',
                         maxWidth: '75%',
-                        background: msg.sender === 'student' ? '#EEF3EE' : '#F6F3EC',
+                        background: msg.sender === 'student' ? '#F9EBE6' : '#F6F3EC',
                         borderRadius: 18,
                         padding: '12px 18px',
                         border: '1px solid var(--border-subtle)',
                       }}
                     >
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#587360', marginBottom: 4 }}>{msg.senderName}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#9C5B49', marginBottom: 4 }}>{msg.senderName}</div>
                       <div className="chat-msg-text">{msg.text}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'right', marginTop: 4 }}>
                         {msg.time} {msg.sender === 'student' && '✓✓'}
@@ -1355,11 +1355,11 @@ const handleSendMessage = (e) => {
                     value={inputMsg}
                     onChange={(e) => setInputMsg(e.target.value)}
                     placeholder="Type message to Caretaker or Warden..."
-                    style={{ flex: 1, padding: '12px 18px', borderRadius: 9999, border: '1px solid #D5E2D7', outline: 'none', fontSize: 14 }}
+                    style={{ flex: 1, padding: '12px 18px', borderRadius: 9999, border: '1px solid #F4D3C9', outline: 'none', fontSize: 14 }}
                   />
                   <button
                     type="submit"
-                    style={{ background: '#728D7A', color: 'white', border: 'none', padding: '0 24px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                    style={{ background: '#C07660', color: 'white', border: 'none', padding: '0 24px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
                   >
                     Send
                   </button>
@@ -1382,7 +1382,7 @@ const handleSendMessage = (e) => {
                   </p>
                   <button 
                     onClick={() => setActiveTab('home')} 
-                    style={{ background: '#728D7A', color: 'white', border: 'none', padding: '10px 24px', borderRadius: 9999, fontWeight: 600, cursor: 'pointer', fontSize: 13.5 }}
+                    style={{ background: '#C07660', color: 'white', border: 'none', padding: '10px 24px', borderRadius: 9999, fontWeight: 600, cursor: 'pointer', fontSize: 13.5 }}
                   >
                     ← Return to Student Sanctuary
                   </button>
@@ -1398,7 +1398,7 @@ const handleSendMessage = (e) => {
                       <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>Real-time hardware registry, emergency FCM push broadcast, and campus operations.</p>
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <span style={{ background: '#EEF3EE', color: '#587360', padding: '6px 14px', borderRadius: 9999, fontSize: 12.5, fontWeight: 600, border: '1px solid #D5E2D7' }}>
+                      <span style={{ background: '#F9EBE6', color: '#9C5B49', padding: '6px 14px', borderRadius: 9999, fontSize: 12.5, fontWeight: 600, border: '1px solid #F4D3C9' }}>
                         ● RBAC SuperAdmin Active
                       </span>
                     </div>
@@ -1467,7 +1467,7 @@ const handleSendMessage = (e) => {
                       <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enrolled Residents</div>
                         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>1,280</div>
-                        <div style={{ fontSize: 12.5, color: '#587360', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ fontSize: 12.5, color: '#9C5B49', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>●</span> Active across 4 Hostel Blocks
                         </div>
                       </div>
@@ -1475,7 +1475,7 @@ const handleSendMessage = (e) => {
                       <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hardware Devices Paired</div>
                         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>1,420</div>
-                        <div style={{ fontSize: 12.5, color: '#587360', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ fontSize: 12.5, color: '#9C5B49', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>●</span> FCM Push Active & Subscribed
                         </div>
                       </div>
@@ -1489,7 +1489,7 @@ const handleSendMessage = (e) => {
                       <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cloud API Status</div>
                         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>99.98%</div>
-                        <div style={{ fontSize: 12.5, color: '#587360', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ fontSize: 12.5, color: '#9C5B49', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>●</span> EC2 Production Node Healthy
                         </div>
                       </div>
@@ -1503,7 +1503,7 @@ const handleSendMessage = (e) => {
                       </div>
                       <a 
                         href="/superadmin"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#728D7A', color: '#FFFFFF', textDecoration: 'none', padding: '10px 22px', borderRadius: 9999, fontWeight: 600, fontSize: 13.5 }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#C07660', color: '#FFFFFF', textDecoration: 'none', padding: '10px 22px', borderRadius: 9999, fontWeight: 600, fontSize: 13.5 }}
                       >
                         <span>Launch Advanced Console</span>
                         <span>→</span>
@@ -1516,7 +1516,7 @@ const handleSendMessage = (e) => {
                 {adminSubTab === 'broadcast' && (
                   <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid #E6E0D5', maxWidth: 720 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 12, background: '#EEF3EE', color: '#587360', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F9EBE6', color: '#9C5B49', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                       </div>
                       <div>
@@ -1570,7 +1570,7 @@ const handleSendMessage = (e) => {
                             }
                             setTimeout(() => setBroadcastSent(false), 3000);
                           }}
-                          style={{ background: broadcastSent ? '#587360' : '#728D7A', color: 'white', border: 'none', padding: '11px 26px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease' }}
+                          style={{ background: broadcastSent ? '#9C5B49' : '#C07660', color: 'white', border: 'none', padding: '11px 26px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease' }}
                         >
                           {broadcastSent ? '✓ Dispatched Successfully' : 'Send Instant Broadcast'}
                         </button>
@@ -1626,7 +1626,7 @@ const handleSendMessage = (e) => {
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                 <span style={{ fontWeight: 700, fontSize: 15, color: '#242523' }}>{sess.user}</span>
-                                <span style={{ fontSize: 11.5, background: sess.role === 'superadmin' ? '#FAF2EE' : '#EEF3EE', color: sess.role === 'superadmin' ? '#C9826D' : '#587360', padding: '2px 8px', borderRadius: 9999, fontWeight: 600, border: `1px solid ${sess.role === 'superadmin' ? '#F4D3C9' : '#D5E2D7'}` }}>
+                                <span style={{ fontSize: 11.5, background: sess.role === 'superadmin' ? '#FAF2EE' : '#F9EBE6', color: sess.role === 'superadmin' ? '#C9826D' : '#9C5B49', padding: '2px 8px', borderRadius: 9999, fontWeight: 600, border: `1px solid ${sess.role === 'superadmin' ? '#F4D3C9' : '#F4D3C9'}` }}>
                                   {sess.role.toUpperCase()}
                                 </span>
                               </div>
@@ -1638,8 +1638,8 @@ const handleSendMessage = (e) => {
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
                             <div style={{ textAlign: 'right' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#587360', fontWeight: 600 }}>
-                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#728D7A' }}></span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#9C5B49', fontWeight: 600 }}>
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C07660' }}></span>
                                 Active
                               </span>
                               <div style={{ fontSize: 11.5, color: '#8E8F8A', marginTop: 2 }}>{sess.time}</div>
@@ -1685,7 +1685,7 @@ const handleSendMessage = (e) => {
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '14px 0 6px', color: '#272824' }}>Campus Security Gate Pass</h3>
             <p style={{ margin: '0 0 24px', fontSize: 13.5, color: 'var(--text-secondary)' }}>Show this screen to security officer at {displayHostel ? `${displayHostel} Gate` : 'Campus Security Gate'}.</p>
 
-            <div style={{ background: '#FAF8F5', borderRadius: 20, padding: 24, textAlign: 'center', border: '1px dashed #D5E2D7' }}>
+            <div style={{ background: '#FAF8F5', borderRadius: 20, padding: 24, textAlign: 'center', border: '1px dashed #F4D3C9' }}>
               <div style={{ width: 140, height: 140, margin: '0 auto 16px', background: '#272824', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12 }}>
                 [QR CODE VERIFIED]
               </div>
@@ -1705,12 +1705,12 @@ const handleSendMessage = (e) => {
             
             {complaintSubmitted ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#EEF3EE', color: '#587360', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>✓</div>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#F9EBE6', color: '#9C5B49', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>✓</div>
                 <h4 style={{ margin: '0 0 6px', fontSize: 20, fontFamily: 'var(--font-serif)', color: '#272824' }}>Request Lodged!</h4>
                 <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px' }}>Caretaker has been notified and ticket is registered in the live pipeline.</p>
                 <button 
                   onClick={() => { setComplaintSubmitted(false); setShowComplaintModal(false); }}
-                  style={{ background: '#728D7A', color: 'white', border: 'none', padding: '12px 32px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(114, 141, 122, 0.2)' }}
+                  style={{ background: '#C07660', color: 'white', border: 'none', padding: '12px 32px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(192, 118, 96, 0.2)' }}
                 >
                   View in Pipeline →
                 </button>
@@ -1722,7 +1722,7 @@ const handleSendMessage = (e) => {
                   <select 
                     value={newComplaintDept} 
                     onChange={(e) => setNewComplaintDept(e.target.value)}
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #D5E2D7', background: '#FFFFFF', color: '#242523', fontSize: 14, outline: 'none', fontWeight: 500 }}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #F4D3C9', background: '#FFFFFF', color: '#242523', fontSize: 14, outline: 'none', fontWeight: 500 }}
                   >
                     <option value="Electrical">⚡ Electrical (Tube-light, Fan, Switchboard, AC)</option>
                     <option value="Plumbing">🚰 Plumbing (Tap, Flush, Leakage, Geyser)</option>
@@ -1739,7 +1739,7 @@ const handleSendMessage = (e) => {
                     value={newComplaintDesc}
                     onChange={(e) => setNewComplaintDesc(e.target.value)}
                     placeholder="Describe the issue in detail (e.g. Study table tube-light is flickering and needs replacement)..." 
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #D5E2D7', background: '#FFFFFF', color: '#242523', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} 
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #F4D3C9', background: '#FFFFFF', color: '#242523', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} 
                   />
                   <span style={{ fontSize: 11.5, color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
                     Logged for: <strong>{displayName}</strong> • <strong>{displayRoom}</strong>
@@ -1748,7 +1748,7 @@ const handleSendMessage = (e) => {
                 <button 
                   type="submit" 
                   disabled={isSubmittingComplaint}
-                  style={{ width: '100%', background: isSubmittingComplaint ? '#9AB1A1' : '#728D7A', color: 'white', border: 'none', padding: '13px', borderRadius: 14, fontWeight: 600, fontSize: 14, cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(114, 141, 122, 0.2)' }}
+                  style={{ width: '100%', background: isSubmittingComplaint ? '#DDA090' : '#C07660', color: 'white', border: 'none', padding: '13px', borderRadius: 14, fontWeight: 600, fontSize: 14, cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(192, 118, 96, 0.2)' }}
                 >
                   {isSubmittingComplaint ? 'Submitting to Caretaker...' : 'Submit Request →'}
                 </button>
@@ -1763,7 +1763,7 @@ const handleSendMessage = (e) => {
         <div className="modal-overlay" onClick={() => setShowBatteryGuide(false)}>
           <div className="modal-sheet" style={{ maxWidth: 540 }} onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowBatteryGuide(false)}>×</button>
-            <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>
+            <span style={{ fontSize: 11, background: '#F9EBE6', color: '#9C5B49', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>
               ANDROID DOZE & BATTERY GUIDE
             </span>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px', color: '#272824' }}>
@@ -1824,7 +1824,7 @@ const handleSendMessage = (e) => {
             <button
               type="button"
               onClick={() => setShowBatteryGuide(false)}
-              style={{ marginTop: 16, width: '100%', background: '#728D7A', color: 'white', border: 'none', padding: '10px', borderRadius: 9999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}
+              style={{ marginTop: 16, width: '100%', background: '#C07660', color: 'white', border: 'none', padding: '10px', borderRadius: 9999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}
             >
               Got it! My alerts are protected ✓
             </button>
@@ -1837,7 +1837,7 @@ const handleSendMessage = (e) => {
         <div className="modal-overlay" onClick={() => setShowLoginModal(false)}>
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowLoginModal(false)}>×</button>
-            <span style={{ fontSize: 11, background: '#EEF3EE', color: '#587360', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>RESIDENT AUTHENTICATION</span>
+            <span style={{ fontSize: 11, background: '#F9EBE6', color: '#9C5B49', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>RESIDENT AUTHENTICATION</span>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '14px 0 6px', color: '#272824' }}>Sign In to HostelCare</h3>
             <p style={{ margin: '0 0 20px', fontSize: 13.5, color: 'var(--text-secondary)' }}>Access your official room allocation and personal maintenance tickets.</p>
 
@@ -1865,7 +1865,7 @@ const handleSendMessage = (e) => {
               <button 
                 type="submit" 
                 disabled={loginLoading}
-                style={{ width: '100%', background: '#728D7A', color: 'white', border: 'none', padding: '12px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: loginLoading ? 'not-allowed' : 'pointer' }}
+                style={{ width: '100%', background: '#C07660', color: 'white', border: 'none', padding: '12px', borderRadius: 9999, fontSize: 14, fontWeight: 600, cursor: loginLoading ? 'not-allowed' : 'pointer' }}
               >
                 {loginLoading ? 'Signing In...' : 'Sign In →'}
               </button>

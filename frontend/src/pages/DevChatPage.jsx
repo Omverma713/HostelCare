@@ -877,11 +877,11 @@ export default function DevChatPage() {
               <p className="devchat-header-subtitle">
                 <span>Real-time direct chat between Students & Developers</span>
                 <span style={{ opacity: 0.5 }}>•</span>
-                <span style={{ color: socketConnected ? '#587360' : '#C9826D', fontWeight: 600 }}>
+                <span style={{ color: socketConnected ? '#9C5B49' : '#C9826D', fontWeight: 600 }}>
                   {socketConnected ? '● Socket Live' : '○ Connecting...'}
                 </span>
                 <span style={{ opacity: 0.5 }}>•</span>
-                <span style={{ color: '#587360', fontSize: '0.72rem', background: '#EEF3EE', padding: '2px 8px', borderRadius: 9999, border: '1px solid #D5E2D7', fontWeight: 600 }}>v1.2.2.15 Pre-Release</span>
+                <span style={{ color: '#9C5B49', fontSize: '0.72rem', background: '#F9EBE6', padding: '2px 8px', borderRadius: 9999, border: '1px solid #F4D3C9', fontWeight: 600 }}>v1.2.2.15 Pre-Release</span>
               </p>
             </div>
           </div>

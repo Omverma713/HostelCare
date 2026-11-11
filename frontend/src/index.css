@@ -19,16 +19,16 @@
   --text-muted: #8E8F8A;
 
   /* Primary Matcha Sage Green */
-  --primary: #728D7A;
-  --primary-hover: #587360;
-  --primary-light: #EEF3EE;
-  --primary-glow: rgba(114, 141, 122, 0.22);
+  --primary: #C07660;
+  --primary-hover: #9C5B49;
+  --primary-light: #F9EBE6;
+  --primary-glow: rgba(192, 118, 96, 0.22);
   --accent-terracotta: #C9826D;
   --accent-terracotta-dark: #B36E59;
 
   /* Student Accent */
-  --student-color: #728D7A;
-  --student-bg: #EEF3EE;
+  --student-color: #C07660;
+  --student-bg: #F9EBE6;
 
   /* Status Colors */
   --status-pending-bg: #fef3c7;
@@ -95,8 +95,8 @@ html.dark-theme {
   --shadow-primary: 0 4px 18px rgba(140, 169, 147, 0.4);
 
   /* Primary Overrides */
-  --primary: #8CA993;
-  --primary-light: #27342B;
+  --primary: #D88B74;
+  --primary-light: #34221B;
   --primary-glow: rgba(140, 169, 147, 0.25);
 
   /* Student Overrides */
@@ -109,12 +109,12 @@ html.dark-theme {
 
   /* Scoped Status Colors for Dark Mode */
   --status-inprogress-bg: rgba(140, 169, 147, 0.15);
-  --status-inprogress-text: #8CA993;
+  --status-inprogress-text: #D88B74;
   --status-inprogress-border: rgba(140, 169, 147, 0.35);
 
   /* Scoped Status Colors for Dark Mode */
   --status-resolved-bg: rgba(140, 169, 147, 0.2);
-  --status-resolved-text: #8CA993;
+  --status-resolved-text: #D88B74;
   --status-resolved-border: rgba(140, 169, 147, 0.4);
 
   --danger-bg: rgba(212, 137, 116, 0.18);
@@ -2310,14 +2310,14 @@ html.is-theme-switching .auth-top-controls {
 
 /* 3D Physical Object Submit Button */
 .auth-page-container.light-theme .btn-primary {
-  background: #728D7A !important;
+  background: #C07660 !important;
   border: none !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   font-size: 0.95rem !important;
   border-radius: 9999px !important;
   padding: 13px 20px !important;
-  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.32) !important;
+  box-shadow: 0 4px 16px rgba(192, 118, 96, 0.32) !important;
   text-shadow: none !important;
 }
 
@@ -10507,12 +10507,12 @@ body:not(.dark-theme) .navbar-update-pill-blink:hover,
 }
 
 .auth-page-container.light-theme .auth-role-btn-student.active {
-  background: #EEF3EE !important;
-  border: 1.5px solid #728D7A !important;
+  background: #F9EBE6 !important;
+  border: 1.5px solid #C07660 !important;
 }
 
 .auth-page-container.light-theme .auth-role-btn-student.active .auth-role-btn-title {
-  color: #587360 !important;
+  color: #9C5B49 !important;
 }
 
 .auth-page-container.light-theme .auth-role-btn-admin.active {
@@ -10532,22 +10532,22 @@ body:not(.dark-theme) .navbar-update-pill-blink:hover,
 }
 
 .auth-page-container.light-theme .form-input:focus {
-  border-color: #728D7A !important;
-  box-shadow: 0 0 0 3px rgba(114, 141, 122, 0.2) !important;
+  border-color: #C07660 !important;
+  box-shadow: 0 0 0 3px rgba(192, 118, 96, 0.2) !important;
 }
 
 .auth-page-container.light-theme .btn-primary {
-  background: #728D7A !important;
+  background: #C07660 !important;
   border: none !important;
   color: #FFFFFF !important;
   font-weight: 600 !important;
   border-radius: 9999px !important;
-  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.28) !important;
+  box-shadow: 0 4px 16px rgba(192, 118, 96, 0.28) !important;
 }
 
 .auth-page-container.light-theme .btn-primary:hover:not(:disabled) {
-  background: #587360 !important;
-  box-shadow: 0 6px 20px rgba(114, 141, 122, 0.38) !important;
+  background: #9C5B49 !important;
+  box-shadow: 0 6px 20px rgba(192, 118, 96, 0.38) !important;
 }
 
 
@@ -10564,9 +10564,9 @@ body:not(.dark-theme) .navbar-update-pill-blink:hover,
 }
 
 .auth-page-container.light-theme .auth-hero-tag {
-  background: #EEF3EE !important;
-  color: #587360 !important;
-  border: 1px solid #D5E2D7 !important;
+  background: #F9EBE6 !important;
+  color: #9C5B49 !important;
+  border: 1px solid #F4D3C9 !important;
 }
 
 
@@ -10594,9 +10594,9 @@ html:not(.dark-theme) .brand-title-text {
 }
 
 html:not(.dark-theme) .brand-quantum-badge {
-  background: #EEF3EE !important;
-  color: #587360 !important;
-  border: 1px solid #D5E2D7 !important;
+  background: #F9EBE6 !important;
+  color: #9C5B49 !important;
+  border: 1px solid #F4D3C9 !important;
 }
 
 html:not(.dark-theme) .nav-section-eyebrow {
@@ -10636,9 +10636,9 @@ html:not(.dark-theme) .sidebar-dock-link .dock-link-icon-wrap {
 
 /* Active Nav Link (Soothing Matcha Pill with Vertical Accent Bar) */
 html:not(.dark-theme) .sidebar-dock-link.active {
-  background: #EEF3EE !important;
-  border: 1.5px solid #728D7A !important;
-  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.18) !important;
+  background: #F9EBE6 !important;
+  border: 1.5px solid #C07660 !important;
+  box-shadow: 0 4px 16px rgba(192, 118, 96, 0.18) !important;
   transform: translateX(3px) !important;
 }
 
@@ -10648,17 +10648,17 @@ html:not(.dark-theme) .sidebar-dock-link.active .dock-link-title {
 }
 
 html:not(.dark-theme) .sidebar-dock-link.active .dock-link-subtitle {
-  color: #587360 !important;
+  color: #9C5B49 !important;
 }
 
 html:not(.dark-theme) .sidebar-dock-link.active .dock-link-icon-wrap {
-  background: #728D7A !important;
+  background: #C07660 !important;
   color: #FFFFFF !important;
-  border-color: #587360 !important;
+  border-color: #9C5B49 !important;
 }
 
 html:not(.dark-theme) .sidebar-dock-link.active .indicator-ray {
-  background: #587360 !important;
+  background: #9C5B49 !important;
   width: 4px !important;
   border-radius: 2px !important;
 }
@@ -10681,7 +10681,7 @@ html:not(.dark-theme) .resident-name-text {
 }
 
 html:not(.dark-theme) .resident-room-sub {
-  color: #728D7A !important;
+  color: #C07660 !important;
 }
 
 /* 4. Top Mobile Navbar */
@@ -10737,8 +10737,8 @@ html:not(.dark-theme) .spatial-ticket-card {
 }
 
 html:not(.dark-theme) .spatial-ticket-card:hover {
-  border-color: rgba(114, 141, 122, 0.5) !important;
-  box-shadow: 0 8px 28px rgba(114, 141, 122, 0.12) !important;
+  border-color: rgba(192, 118, 96, 0.5) !important;
+  box-shadow: 0 8px 28px rgba(192, 118, 96, 0.12) !important;
   transform: translateY(-2px) !important;
 }
 
@@ -10751,31 +10751,31 @@ html:not(.dark-theme) .filter-tab-pill {
 }
 
 html:not(.dark-theme) .filter-tab-pill.active {
-  background: #728D7A !important;
+  background: #C07660 !important;
   color: #FFFFFF !important;
-  border-color: #587360 !important;
-  box-shadow: 0 3px 10px rgba(114, 141, 122, 0.25) !important;
+  border-color: #9C5B49 !important;
+  box-shadow: 0 3px 10px rgba(192, 118, 96, 0.25) !important;
 }
 
 html:not(.dark-theme) .btn-spatial-primary-trigger {
-  background: #728D7A !important;
+  background: #C07660 !important;
   color: #FFFFFF !important;
   border-radius: 9999px !important;
   border: none !important;
-  box-shadow: 0 4px 18px rgba(114, 141, 122, 0.3) !important;
+  box-shadow: 0 4px 18px rgba(192, 118, 96, 0.3) !important;
 }
 
 html:not(.dark-theme) .btn-spatial-primary-trigger:hover {
-  background: #587360 !important;
+  background: #9C5B49 !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 24px rgba(114, 141, 122, 0.4) !important;
+  box-shadow: 0 6px 24px rgba(192, 118, 96, 0.4) !important;
 }
 
 
 /* Super Admin Portal Light Theme Refinements */
 html:not(.dark-theme) .sa-header-icon {
-  background: #728D7A !important;
-  box-shadow: 0 4px 16px rgba(114, 141, 122, 0.28) !important;
+  background: #C07660 !important;
+  box-shadow: 0 4px 16px rgba(192, 118, 96, 0.28) !important;
 }
 
 html:not(.dark-theme) .sa-header-banner {
@@ -10786,7 +10786,7 @@ html:not(.dark-theme) .sa-header-banner {
 }
 
 html:not(.dark-theme) .sa-tab-btn.active {
-  background: #728D7A !important;
+  background: #C07660 !important;
   color: #FFFFFF !important;
-  border-color: #587360 !important;
+  border-color: #9C5B49 !important;
 }

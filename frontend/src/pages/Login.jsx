@@ -337,7 +337,7 @@ export default function Login() {
                   Passcode
                 </label>
                 <span
-                  style={{ fontSize: 11.5, color: '#728D7A', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ fontSize: 11.5, color: '#C07660', fontWeight: 600, cursor: 'pointer' }}
                   onClick={() => triggerToast('info', 'Contact your Hostel Warden or Superintendent to reset password.')}
                 >
                   Forgot PIN?
@@ -437,9 +437,9 @@ export default function Login() {
                     width: '100%',
                     padding: '10px 16px',
                     borderRadius: 9999,
-                    background: '#EEF3EE',
-                    border: '1px solid #D5E2D7',
-                    color: '#587360',
+                    background: '#F9EBE6',
+                    border: '1px solid #F4D3C9',
+                    color: '#9C5B49',
                     fontSize: 12.5,
                     fontWeight: 600,
                     cursor: 'pointer',

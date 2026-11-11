@@ -184,7 +184,7 @@ async function sendPushToSessions(sessions, payload) {
             channelId: payload.channelId || "hostelcare_custom_channel",
             sound: "default",
             icon: "ic_stat_hostelcare",
-            color: "#587360",
+            color: "#C07660",
             defaultSound: true,
             defaultVibrateTimings: true,
             notificationPriority: "PRIORITY_MAX",

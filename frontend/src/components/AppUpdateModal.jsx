@@ -547,18 +547,18 @@ export default function AppUpdateModal() {
     fontBody: "var(--font-sans, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif)",
     accentBar: state.forceUpdate || isDownloadError || state.manualCheckStatus === 'error'
       ? 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)'
-      : (isDark ? 'linear-gradient(90deg, #C9826D 0%, #8CA993 100%)' : 'linear-gradient(90deg, #728D7A 0%, #C9826D 100%)'),
+      : (isDark ? 'linear-gradient(90deg, #C9826D 0%, #D88B74 100%)' : 'linear-gradient(90deg, #C07660 0%, #C9826D 100%)'),
     subText: isDark ? '#C9BFAF' : '#575854',
     mutedText: isDark ? '#8E867C' : '#8E8F8A',
     headerBtnBg: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F4EFE6',
     headerBtnColor: isDark ? '#C9BFAF' : '#575854',
     headerBtnBorder: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #E6E0D5',
-    badgeUpToDateBg: isDark ? 'rgba(88, 115, 96, 0.22)' : '#EEF3EE',
-    badgeUpToDateBorder: isDark ? '1px solid rgba(140, 169, 147, 0.35)' : '1px solid #D5E2D7',
-    badgeUpToDateColor: isDark ? '#A3D4AE' : '#587360',
-    primaryBtnBg: isDark ? '#587360' : '#587360',
+    badgeUpToDateBg: isDark ? 'rgba(156, 91, 73, 0.22)' : '#F9EBE6',
+    badgeUpToDateBorder: isDark ? '1px solid rgba(140, 169, 147, 0.35)' : '1px solid #F4D3C9',
+    badgeUpToDateColor: isDark ? '#F8B4A6' : '#9C5B49',
+    primaryBtnBg: isDark ? '#9C5B49' : '#9C5B49',
     primaryBtnColor: '#FFFFFF',
-    primaryBtnShadow: isDark ? '0 4px 14px rgba(88, 115, 96, 0.35)' : '0 4px 14px rgba(88, 115, 96, 0.25)',
+    primaryBtnShadow: isDark ? '0 4px 14px rgba(156, 91, 73, 0.35)' : '0 4px 14px rgba(156, 91, 73, 0.25)',
     actionBtnUpdateBg: 'linear-gradient(135deg, #C9826D 0%, #B8735F 100%)',
     actionBtnUpdateShadow: '0 4px 14px rgba(201, 130, 109, 0.35)',
     secondaryBtnBg: isDark ? 'rgba(255, 255, 255, 0.06)' : '#F4EFE6',
@@ -702,7 +702,7 @@ export default function AppUpdateModal() {
                   justifyContent: 'center',
                   margin: '0 auto 1.25rem',
                   color: modalStyle.badgeUpToDateColor,
-                  boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 14px rgba(88, 115, 96, 0.15)',
+                  boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 14px rgba(156, 91, 73, 0.15)',
                 }}
               >
                 <CheckCircle2 size={32} />

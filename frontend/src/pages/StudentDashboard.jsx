@@ -178,8 +178,8 @@ export default function StudentDashboard() {
             <span style={{ fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted, #8E8F8A)' }}>
               Resident Sanctuary • Living Overview
             </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '9999px', background: '#EEF3EE', color: '#587360', fontSize: '0.75rem', fontWeight: 600 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#728D7A' }} />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '9999px', background: '#F9EBE6', color: '#9C5B49', fontSize: '0.75rem', fontWeight: 600 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C07660' }} />
               Active
             </span>
           </div>
@@ -218,7 +218,7 @@ export default function StudentDashboard() {
               setDepartment('');
               setIsCreateOpen(true);
             }}
-            style={{ background: 'var(--primary, #728D7A)', color: '#FFFFFF', border: 'none', padding: '9px 20px', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(114, 141, 122, 0.28)' }}
+            style={{ background: 'var(--primary, #C07660)', color: '#FFFFFF', border: 'none', padding: '9px 20px', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(192, 118, 96, 0.28)' }}
           >
             + File New Request
           </button>
@@ -242,7 +242,7 @@ export default function StudentDashboard() {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.borderColor = 'rgba(114, 141, 122, 0.5)';
+            e.currentTarget.style.borderColor = 'rgba(192, 118, 96, 0.5)';
             e.currentTarget.style.boxShadow = '0 10px 30px rgba(105, 93, 76, 0.08)';
           }}
           onMouseLeave={(e) => {
@@ -255,7 +255,7 @@ export default function StudentDashboard() {
             <h2 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '2rem', fontWeight: 500, color: '#242523', margin: 0 }}>
               Today's Meal
             </h2>
-            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: '#728D7A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', boxShadow: '0 4px 14px rgba(114, 141, 122, 0.32)' }}>
+            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: '#C07660', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', boxShadow: '0 4px 14px rgba(192, 118, 96, 0.32)' }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
                 <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
@@ -307,13 +307,13 @@ export default function StudentDashboard() {
             </button>
             <span 
               style={{ 
-                background: counts.inprogress > 0 ? '#FEF3C7' : '#728D7A',
+                background: counts.inprogress > 0 ? '#FEF3C7' : '#C07660',
                 color: counts.inprogress > 0 ? '#B45309' : '#FFFFFF',
                 padding: '10px 24px', 
                 borderRadius: '9999px', 
                 fontSize: '0.9rem', 
                 fontWeight: 600,
-                boxShadow: counts.inprogress > 0 ? 'none' : '0 3px 12px rgba(114, 141, 122, 0.25)'
+                boxShadow: counts.inprogress > 0 ? 'none' : '0 3px 12px rgba(192, 118, 96, 0.25)'
               }}
             >
               {counts.inprogress > 0 ? `${counts.inprogress} in progress` : 'Everything in order'}
@@ -327,17 +327,17 @@ export default function StudentDashboard() {
         <div 
           onClick={() => navigate('/chat')}
           style={{ background: '#FFFFFF', borderRadius: '22px', padding: '24px 28px', border: '1px solid #E6E0D5', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.02)', transition: 'all 0.2s ease' }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(114, 141, 122, 0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(192, 118, 96, 0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E6E0D5'; e.currentTarget.style.transform = 'translateY(0)'; }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <h3 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.25rem', margin: 0, color: '#242523' }}>Support Chat (E2EE)</h3>
-            <span style={{ fontSize: '0.72rem', background: '#EEF3EE', color: '#587360', padding: '3px 9px', borderRadius: '9999px', fontWeight: 600 }}>Secured</span>
+            <span style={{ fontSize: '0.72rem', background: '#F9EBE6', color: '#9C5B49', padding: '3px 9px', borderRadius: '9999px', fontWeight: 600 }}>Secured</span>
           </div>
           <p style={{ margin: '0 0 16px', fontSize: '0.875rem', color: '#8E8F8A' }}>
             Direct encrypted messaging line with Caretakers, Wardens & Administration.
           </p>
-          <span style={{ fontSize: '0.875rem', color: '#728D7A', fontWeight: 600 }}>Open Messages →</span>
+          <span style={{ fontSize: '0.875rem', color: '#C07660', fontWeight: 600 }}>Open Messages →</span>
         </div>
 
         <div 
@@ -346,7 +346,7 @@ export default function StudentDashboard() {
             setIsCreateOpen(true);
           }}
           style={{ background: '#FFFFFF', borderRadius: '22px', padding: '24px 28px', border: '1px solid #E6E0D5', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.02)', transition: 'all 0.2s ease' }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(114, 141, 122, 0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(192, 118, 96, 0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E6E0D5'; e.currentTarget.style.transform = 'translateY(0)'; }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -356,7 +356,7 @@ export default function StudentDashboard() {
           <p style={{ margin: '0 0 16px', fontSize: '0.875rem', color: '#8E8F8A' }}>
             Report electrical, plumbing, carpentry, or clean repairs with automatic technician assignment.
           </p>
-          <span style={{ fontSize: '0.875rem', color: '#728D7A', fontWeight: 600 }}>+ Lodge Request →</span>
+          <span style={{ fontSize: '0.875rem', color: '#C07660', fontWeight: 600 }}>+ Lodge Request →</span>
         </div>
       </div>
 
@@ -380,7 +380,7 @@ export default function StudentDashboard() {
                 type="button"
                 onClick={() => setStatusFilter(filterKey)}
                 style={{
-                  background: statusFilter === filterKey ? '#728D7A' : '#FAF8F5',
+                  background: statusFilter === filterKey ? '#C07660' : '#FAF8F5',
                   color: statusFilter === filterKey ? '#FFFFFF' : '#575854',
                   border: statusFilter === filterKey ? 'none' : '1px solid #E6E0D5',
                   padding: '6px 16px',
@@ -389,7 +389,7 @@ export default function StudentDashboard() {
                   fontWeight: 600,
                   cursor: 'pointer',
                   textTransform: 'capitalize',
-                  boxShadow: statusFilter === filterKey ? '0 2px 8px rgba(114, 141, 122, 0.28)' : 'none',
+                  boxShadow: statusFilter === filterKey ? '0 2px 8px rgba(192, 118, 96, 0.28)' : 'none',
                 }}
               >
                 {filterKey === 'inprogress' ? 'In Progress' : filterKey} ({counts[filterKey]})
@@ -446,8 +446,8 @@ export default function StudentDashboard() {
                         fontSize: '0.78rem',
                         fontWeight: 700,
                         textTransform: 'uppercase',
-                        background: normStatus === 'resolved' ? '#EEF3EE' : normStatus === 'inprogress' ? '#E0F2FE' : '#FEF3C7',
-                        color: normStatus === 'resolved' ? '#587360' : normStatus === 'inprogress' ? '#0369A1' : '#B45309',
+                        background: normStatus === 'resolved' ? '#F9EBE6' : normStatus === 'inprogress' ? '#E0F2FE' : '#FEF3C7',
+                        color: normStatus === 'resolved' ? '#9C5B49' : normStatus === 'inprogress' ? '#0369A1' : '#B45309',
                       }}
                     >
                       {normStatus}
@@ -456,20 +456,20 @@ export default function StudentDashboard() {
 
                   {/* 3-Stage Visual Stepper */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFFFFF', padding: '12px 18px', borderRadius: '14px', border: '1px solid #EAE5DB' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: '#587360' }}>
-                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#587360', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>✓</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: '#9C5B49' }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#9C5B49', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>✓</span>
                       1. Registered
                     </div>
-                    <div style={{ flex: 1, height: 2, background: normStatus !== 'pending' ? '#728D7A' : '#E6E0D5' }} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: normStatus !== 'pending' ? '#587360' : '#8E8F8A' }}>
-                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: normStatus !== 'pending' ? '#587360' : '#E6E0D5', color: normStatus !== 'pending' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>
+                    <div style={{ flex: 1, height: 2, background: normStatus !== 'pending' ? '#C07660' : '#E6E0D5' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: normStatus !== 'pending' ? '#9C5B49' : '#8E8F8A' }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: normStatus !== 'pending' ? '#9C5B49' : '#E6E0D5', color: normStatus !== 'pending' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>
                         {normStatus === 'resolved' ? '✓' : '2'}
                       </span>
                       2. Caretaker Assigned
                     </div>
-                    <div style={{ flex: 1, height: 2, background: normStatus === 'resolved' ? '#728D7A' : '#E6E0D5' }} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: normStatus === 'resolved' ? '#587360' : '#8E8F8A' }}>
-                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: normStatus === 'resolved' ? '#587360' : '#E6E0D5', color: normStatus === 'resolved' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>
+                    <div style={{ flex: 1, height: 2, background: normStatus === 'resolved' ? '#C07660' : '#E6E0D5' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: normStatus === 'resolved' ? '#9C5B49' : '#8E8F8A' }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: normStatus === 'resolved' ? '#9C5B49' : '#E6E0D5', color: normStatus === 'resolved' ? 'white' : '#777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>
                         {normStatus === 'resolved' ? '✓' : '3'}
                       </span>
                       3. Resolved
@@ -498,7 +498,7 @@ export default function StudentDashboard() {
             >
               ×
             </button>
-            <span style={{ fontSize: '0.72rem', background: '#EEF3EE', color: '#587360', padding: '3px 10px', borderRadius: '9999px', fontWeight: 700, letterSpacing: '0.04em' }}>
+            <span style={{ fontSize: '0.72rem', background: '#F9EBE6', color: '#9C5B49', padding: '3px 10px', borderRadius: '9999px', fontWeight: 700, letterSpacing: '0.04em' }}>
               CAMPUS SECURITY GATE PASS
             </span>
             <h3 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: '1.65rem', margin: '12px 0 6px', color: '#242523' }}>
@@ -508,7 +508,7 @@ export default function StudentDashboard() {
               Present this pass at Main Security Gate 1 for evening exit & re-entry.
             </p>
 
-            <div style={{ background: '#FAF8F5', borderRadius: '20px', padding: '24px', textAlign: 'center', border: '1px dashed #D5E2D7' }}>
+            <div style={{ background: '#FAF8F5', borderRadius: '20px', padding: '24px', textAlign: 'center', border: '1px dashed #F4D3C9' }}>
               <div style={{ width: 140, height: 140, margin: '0 auto 16px', background: '#242523', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '0.85rem' }}>
                 [QR VERIFIED]
               </div>
@@ -579,7 +579,7 @@ export default function StudentDashboard() {
               <button
                 type="submit"
                 disabled={submitLoading}
-                style={{ width: '100%', background: '#728D7A', color: '#FFFFFF', border: 'none', padding: '12px', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: submitLoading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(114, 141, 122, 0.3)' }}
+                style={{ width: '100%', background: '#C07660', color: '#FFFFFF', border: 'none', padding: '12px', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: submitLoading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(192, 118, 96, 0.3)' }}
               >
                 {submitLoading ? 'Registering Request...' : 'Submit Request'}
               </button>

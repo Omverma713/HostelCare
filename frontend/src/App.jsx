@@ -211,7 +211,7 @@ function DashboardLayout() {
                 width: 26,
                 height: 26,
                 borderRadius: '50%',
-                background: '#587360',
+                background: '#9C5B49',
                 color: '#FAF7F2',
                 display: 'inline-flex',
                 alignItems: 'center',

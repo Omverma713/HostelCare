@@ -5,9 +5,9 @@
   --border-subtle: #E6E0D5;
   --border-focus: rgba(126, 152, 133, 0.4);
 
-  --primary-matcha: #728D7A;
-  --primary-matcha-dark: #587360;
-  --primary-matcha-soft: #EEF3EE;
+  --primary-matcha: #C07660;
+  --primary-matcha-dark: #9C5B49;
+  --primary-matcha-soft: #F9EBE6;
   --accent-terracotta: #C9826D;
   --accent-terracotta-dark: #B36E59;
 
@@ -69,7 +69,7 @@ body {
   font-size: 11px;
   font-weight: 500;
   color: var(--primary-matcha-dark);
-  background: rgba(114, 141, 122, 0.14);
+  background: rgba(192, 118, 96, 0.14);
   padding: 3px 10px;
   border-radius: 9999px;
   letter-spacing: 0.02em;
@@ -122,7 +122,7 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #728D7A;
+  background: #C07660;
   flex-shrink: 0;
 }
 
@@ -360,7 +360,7 @@ body {
 .mockup-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 36px -4px rgba(105, 93, 76, 0.09);
-  border-color: rgba(114, 141, 122, 0.45);
+  border-color: rgba(192, 118, 96, 0.45);
 }
 
 .mockup-card-header {
@@ -402,7 +402,7 @@ body {
   align-items: center;
   justify-content: center;
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(114, 141, 122, 0.32);
+  box-shadow: 0 4px 14px rgba(192, 118, 96, 0.32);
   flex-shrink: 0;
 }
 
@@ -424,7 +424,7 @@ body {
   font-weight: 500;
   letter-spacing: 0.01em;
   white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(114, 141, 122, 0.25);
+  box-shadow: 0 3px 10px rgba(192, 118, 96, 0.25);
 }
 
 /* Secondary Cards for Complete Features */
@@ -451,7 +451,7 @@ body {
 
 .secondary-mini-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(114, 141, 122, 0.45);
+  border-color: rgba(192, 118, 96, 0.45);
 }
 
 .mini-card-head {
@@ -526,7 +526,7 @@ body {
 
 .meal-slot-card.active-meal {
   border: 2px solid var(--primary-matcha-dark);
-  box-shadow: 0 8px 28px rgba(114, 141, 122, 0.18);
+  box-shadow: 0 8px 28px rgba(192, 118, 96, 0.18);
 }
 
 .meal-slot-tag {
@@ -932,9 +932,9 @@ body {
 }
 
 .stepper-dots-bar .stepper-circle.active {
-  background: #587360 !important;
+  background: #9C5B49 !important;
   color: #FFFFFF !important;
-  box-shadow: 0 2px 8px rgba(88, 115, 96, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(156, 91, 73, 0.35) !important;
 }
 
 .stepper-dots-bar .stepper-connector-line {
@@ -946,7 +946,7 @@ body {
 }
 
 .stepper-dots-bar .stepper-connector-line.active {
-  background: #728D7A !important;
+  background: #C07660 !important;
 }
 
 .stepper-labels-bar {
@@ -974,7 +974,7 @@ body {
 }
 
 .stepper-labels-bar .step-lbl.active {
-  color: #587360 !important;
+  color: #9C5B49 !important;
   font-weight: 700 !important;
 }
 
@@ -987,7 +987,7 @@ body {
 }
 
 .stepper-connector-line.active {
-  background: #728D7A;
+  background: #C07660;
 }
 
 .stepper-caretaker-badge {
@@ -1000,7 +1000,7 @@ body {
   background: #FFFFFF;
   border: 1px solid #E6E0D5;
   font-size: 12px;
-  color: #587360;
+  color: #9C5B49;
 }
 
 /* ─── Bigger & Tactile Dock (Desktop & Mobile) ─── */
@@ -1095,7 +1095,7 @@ body {
 .modal-sheet textarea {
   color: #242523 !important;
   background-color: #FFFFFF !important;
-  border-color: #D5E2D7 !important;
+  border-color: #F4D3C9 !important;
 }
 
 .modal-sheet input::placeholder,
@@ -1162,16 +1162,16 @@ body.login-dark-theme {
   --border-subtle: #383028;
   --border-focus: rgba(140, 169, 147, 0.5);
 
-  --primary-matcha: #8CA993;
-  --primary-matcha-dark: #728D7A;
-  --primary-matcha-soft: #27342B;
+  --primary-matcha: #D88B74;
+  --primary-matcha-dark: #C07660;
+  --primary-matcha-soft: #34221B;
   --accent-terracotta: #D48974;
   --accent-terracotta-dark: #B36E59;
 
   --text-primary: #F2EDE4;
   --text-secondary: #DED7CB;
   --text-muted: #9E958A;
-  --color-primary: #8CA993;
+  --color-primary: #D88B74;
 }
 
 html.dark-theme,
@@ -1220,7 +1220,7 @@ body.login-dark-theme .navbar-user-pill {
 
 html.dark-theme .navbar-user-dot,
 body.login-dark-theme .navbar-user-dot {
-  background-color: #8CA993 !important;
+  background-color: #D88B74 !important;
   box-shadow: 0 0 10px rgba(140, 169, 147, 0.7) !important;
 }
 
@@ -1288,7 +1288,7 @@ body.login-dark-theme .sidebar-icon-btn:hover {
 
 html.dark-theme .sidebar-icon-btn.active,
 body.login-dark-theme .sidebar-icon-btn.active {
-  background-color: #8CA993 !important;
+  background-color: #D88B74 !important;
   color: #141815 !important;
   box-shadow: 0 4px 16px rgba(140, 169, 147, 0.4) !important;
 }
@@ -1332,15 +1332,15 @@ body.login-dark-theme .mockup-card-menu-hint,
 /* Leaf Badge and Matcha Pill Badge */
 html.dark-theme .matcha-circle-badge,
 body.login-dark-theme .matcha-circle-badge {
-  background-color: #27342B !important;
+  background-color: #34221B !important;
   border: 1px solid #3D5042 !important;
-  color: #8CA993 !important;
+  color: #D88B74 !important;
   box-shadow: 0 4px 16px rgba(140, 169, 147, 0.22) !important;
 }
 
 html.dark-theme .matcha-pill-badge,
 body.login-dark-theme .matcha-pill-badge {
-  background-color: #8CA993 !important;
+  background-color: #D88B74 !important;
   color: #141815 !important;
   font-weight: 600 !important;
   box-shadow: 0 3px 12px rgba(140, 169, 147, 0.32) !important;
@@ -1395,9 +1395,9 @@ body.login-dark-theme .stepper-dots-bar .stepper-circle {
 
 html.dark-theme .stepper-dots-bar .stepper-circle.active,
 body.login-dark-theme .stepper-dots-bar .stepper-circle.active {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
   color: #141815 !important;
-  border-color: #8CA993 !important;
+  border-color: #D88B74 !important;
   box-shadow: 0 2px 10px rgba(140, 169, 147, 0.45) !important;
 }
 
@@ -1408,7 +1408,7 @@ body.login-dark-theme .stepper-dots-bar .stepper-connector-line {
 
 html.dark-theme .stepper-dots-bar .stepper-connector-line.active,
 body.login-dark-theme .stepper-dots-bar .stepper-connector-line.active {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
 }
 
 html.dark-theme .stepper-labels-bar .step-lbl,
@@ -1418,7 +1418,7 @@ body.login-dark-theme .stepper-labels-bar .step-lbl {
 
 html.dark-theme .stepper-labels-bar .step-lbl.active,
 body.login-dark-theme .stepper-labels-bar .step-lbl.active {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
   font-weight: 700 !important;
 }
 
@@ -1488,7 +1488,7 @@ html.dark-theme .modal-sheet textarea:focus,
 body.login-dark-theme .modal-sheet input:focus,
 body.login-dark-theme .modal-sheet select:focus,
 body.login-dark-theme .modal-sheet textarea:focus {
-  border-color: #8CA993 !important;
+  border-color: #D88B74 !important;
   box-shadow: 0 0 0 2px rgba(140, 169, 147, 0.25) !important;
 }
 
@@ -1509,7 +1509,7 @@ html.dark-theme .detailed-view-container button[style*="background: #FAF8F4"] {
 html.dark-theme .detailed-view-container button[style*="background: rgb(255, 255, 255)"],
 html.dark-theme .detailed-view-container button[style*="background: #FFFFFF"] {
   background: #2C241E !important;
-  border-color: #8CA993 !important;
+  border-color: #D88B74 !important;
   color: #F2EDE4 !important;
 }
 
@@ -1916,15 +1916,15 @@ body.login-dark-theme .brand-name {
 }
 
 .maintenance-status-badge.resolved {
-  background: #EEF3EE !important;
-  color: #587360 !important;
-  border: 1px solid #D5E2D7 !important;
+  background: #F9EBE6 !important;
+  color: #9C5B49 !important;
+  border: 1px solid #F4D3C9 !important;
 }
 
 html.dark-theme .maintenance-status-badge.resolved,
 body.login-dark-theme .maintenance-status-badge.resolved {
-  background: #27342B !important;
-  color: #8CA993 !important;
+  background: #34221B !important;
+  color: #D88B74 !important;
   border: 1px solid #3D5042 !important;
 }
 
@@ -1991,7 +1991,7 @@ body.login-dark-theme .maintenance-status-badge.pending {
   font-weight: 600 !important;
   background: #FFFFFF !important;
   border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  color: #587360 !important;
+  color: #9C5B49 !important;
 }
 
 html.dark-theme .dining-choice-row.choice-veg,
@@ -2002,7 +2002,7 @@ body.login-dark-theme .dining-choice-row.choice-veg {
 
 html.dark-theme .dining-choice-row.choice-veg .choice-name,
 body.login-dark-theme .dining-choice-row.choice-veg .choice-name {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .dining-choice-row.choice-nonveg,
@@ -2018,8 +2018,8 @@ body.login-dark-theme .dining-choice-row.choice-nonveg .choice-name {
 
 html.dark-theme .choice-portion-pill,
 body.login-dark-theme .choice-portion-pill {
-  background: #27342B !important;
-  color: #8CA993 !important;
+  background: #34221B !important;
+  color: #D88B74 !important;
   border: 1px solid #3D5042 !important;
 }
 
@@ -2032,7 +2032,7 @@ body.login-dark-theme .choice-portion-pill {
 }
 
 .dining-timing-chip.live {
-  background: #728D7A !important;
+  background: #C07660 !important;
   color: #ffffff !important;
 }
 
@@ -2042,8 +2042,8 @@ body.login-dark-theme .choice-portion-pill {
 }
 
 .dining-timing-chip.upcoming {
-  background: #EEF3EE !important;
-  color: #587360 !important;
+  background: #F9EBE6 !important;
+  color: #9C5B49 !important;
 }
 
 .dining-timing-chip.scheduled {
@@ -2061,7 +2061,7 @@ body.login-dark-theme .dining-timing-chip.finished {
 html.dark-theme .dining-timing-chip.upcoming,
 body.login-dark-theme .dining-timing-chip.upcoming {
   background: #222B24 !important;
-  color: #8CA993 !important;
+  color: #D88B74 !important;
   border: 1px solid #354739 !important;
 }
 
@@ -2077,14 +2077,14 @@ html.dark-theme .stepper-caretaker-badge,
 body.login-dark-theme .stepper-caretaker-badge {
   background: #231E1A !important;
   border: 1px solid #383028 !important;
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .stepper-caretaker-badge span,
 html.dark-theme .stepper-caretaker-badge strong,
 body.login-dark-theme .stepper-caretaker-badge span,
 body.login-dark-theme .stepper-caretaker-badge strong {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 /* 6. Front Page Cards: Exact Match to Concept 1 Images 4 & 5 */
@@ -2157,7 +2157,7 @@ body.login-dark-theme .concept1-card-title {
 }
 
 .concept1-matcha-pill {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
   color: #141815 !important;
   font-size: 12px !important;
   font-weight: 700 !important;
@@ -2308,12 +2308,12 @@ body.login-dark-theme .concept1-step-line.dormant-line {
 .concept1-link-hint {
   font-size: 13px !important;
   font-weight: 600 !important;
-  color: #728D7A !important;
+  color: #C07660 !important;
 }
 
 html.dark-theme .concept1-link-hint,
 body.login-dark-theme .concept1-link-hint {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 .concept1-room-banner-sub {
@@ -2349,7 +2349,7 @@ body.login-dark-theme .concept1-room-banner-sub {
 }
 
 .dining-day-pill.active {
-  border: 1px solid #728D7A !important;
+  border: 1px solid #C07660 !important;
   background: #FFFFFF !important;
   color: #242523 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
@@ -2359,12 +2359,12 @@ body.login-dark-theme .concept1-room-banner-sub {
   width: 6px !important;
   height: 6px !important;
   border-radius: 50% !important;
-  background: #728D7A !important;
+  background: #C07660 !important;
 }
 
 .dining-day-today-tag {
   font-size: 10.5px !important;
-  color: #587360 !important;
+  color: #9C5B49 !important;
   font-weight: 700 !important;
 }
 
@@ -2383,20 +2383,20 @@ body.login-dark-theme .dining-day-pill:hover {
 
 html.dark-theme .dining-day-pill.active,
 body.login-dark-theme .dining-day-pill.active {
-  border: 1px solid #8CA993 !important;
-  background: #27342B !important;
+  border: 1px solid #D88B74 !important;
+  background: #34221B !important;
   color: #F2EDE4 !important;
   box-shadow: 0 2px 10px rgba(140, 169, 147, 0.3) !important;
 }
 
 html.dark-theme .dining-day-dot,
 body.login-dark-theme .dining-day-dot {
-  background: #8CA993 !important;
+  background: #D88B74 !important;
 }
 
 html.dark-theme .dining-day-today-tag,
 body.login-dark-theme .dining-day-today-tag {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 /* 2. Meal Slot Card & Content */
@@ -2413,7 +2413,7 @@ body.login-dark-theme .dining-day-today-tag {
 }
 
 .meal-slot-card.live-slot {
-  border: 2px solid #728D7A !important;
+  border: 2px solid #C07660 !important;
 }
 
 html.dark-theme .meal-slot-card,
@@ -2425,7 +2425,7 @@ body.login-dark-theme .meal-slot-card {
 
 html.dark-theme .meal-slot-card.live-slot,
 body.login-dark-theme .meal-slot-card.live-slot {
-  border: 2px solid #8CA993 !important;
+  border: 2px solid #D88B74 !important;
   box-shadow: 0 8px 30px rgba(140, 169, 147, 0.25) !important;
 }
 
@@ -2538,7 +2538,7 @@ body.login-dark-theme .meal-card-footer {
 }
 
 .meal-dietary-badge.veg {
-  color: #587360 !important;
+  color: #9C5B49 !important;
 }
 
 .meal-dietary-badge.nonveg {
@@ -2547,7 +2547,7 @@ body.login-dark-theme .meal-card-footer {
 
 html.dark-theme .meal-dietary-badge.veg,
 body.login-dark-theme .meal-dietary-badge.veg {
-  color: #8CA993 !important;
+  color: #D88B74 !important;
 }
 
 html.dark-theme .meal-dietary-badge.nonveg,
@@ -2722,7 +2722,7 @@ body.login-dark-theme .tactile-resident-suite-card {
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #587360 0%, #3E5646 100%);
+  background: linear-gradient(135deg, #9C5B49 0%, #6E3F32 100%);
   color: #FAF7F2;
   font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
   font-size: 20px;
@@ -2730,7 +2730,7 @@ body.login-dark-theme .tactile-resident-suite-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(88, 115, 96, 0.25);
+  box-shadow: 0 4px 12px rgba(156, 91, 73, 0.25);
   flex-shrink: 0;
 }
 
@@ -2776,8 +2776,8 @@ body.login-dark-theme .tactile-suite-sub {
   gap: 6px;
   padding: 6px 14px;
   border-radius: 9999px;
-  background: #EEF3EE;
-  border: 1px solid #D5E2D7;
+  background: #F9EBE6;
+  border: 1px solid #F4D3C9;
   color: #3E6649;
   font-size: 12.5px;
   font-weight: 600;
@@ -2785,8 +2785,8 @@ body.login-dark-theme .tactile-suite-sub {
 
 html.dark-theme .tactile-status-badge,
 body.login-dark-theme .tactile-status-badge {
-  background: rgba(88, 115, 96, 0.2);
-  border-color: rgba(88, 115, 96, 0.35);
+  background: rgba(156, 91, 73, 0.2);
+  border-color: rgba(156, 91, 73, 0.35);
   color: #9ECBA7;
 }
 
@@ -2904,8 +2904,8 @@ body.login-dark-theme .tactile-pin-badge {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid #728D7A;
-  background: #587360;
+  border: 1px solid #C07660;
+  background: #9C5B49;
   color: #FFFFFF;
   display: inline-flex;
   align-items: center;
@@ -2919,14 +2919,14 @@ body.login-dark-theme .tactile-pin-badge {
 }
 
 .tactile-parcel-btn.collected {
-  background: #EEF3EE;
+  background: #F9EBE6;
   color: #3E6649;
-  border-color: #D5E2D7;
+  border-color: #F4D3C9;
 }
 
 html.dark-theme .tactile-parcel-btn.collected,
 body.login-dark-theme .tactile-parcel-btn.collected {
-  background: rgba(88, 115, 96, 0.2);
+  background: rgba(156, 91, 73, 0.2);
   color: #9ECBA7;
 }
 
@@ -3043,7 +3043,7 @@ body.login-dark-theme .tactile-quick-sub {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #587360 0%, #D4B483 50%, #587360 100%);
+  background: linear-gradient(90deg, #9C5B49 0%, #D4B483 50%, #9C5B49 100%);
 }
 
 html.dark-theme .tactile-spotlight-card,
@@ -3083,8 +3083,8 @@ body.login-dark-theme .tactile-spotlight-meal-tag {
   gap: 6px;
   padding: 5px 14px;
   border-radius: 9999px;
-  background: #EEF3EE;
-  border: 1px solid #728D7A;
+  background: #F9EBE6;
+  border: 1px solid #C07660;
   color: #2D5037;
   font-size: 12px;
   font-weight: 700;
@@ -3093,9 +3093,9 @@ body.login-dark-theme .tactile-spotlight-meal-tag {
 
 html.dark-theme .tactile-live-badge,
 body.login-dark-theme .tactile-live-badge {
-  background: rgba(88, 115, 96, 0.25);
-  border-color: rgba(88, 115, 96, 0.4);
-  color: #A3D4AE;
+  background: rgba(156, 91, 73, 0.25);
+  border-color: rgba(156, 91, 73, 0.4);
+  color: #F8B4A6;
 }
 
 .tactile-dish-headline {
@@ -3195,15 +3195,15 @@ body.login-dark-theme .tactile-rating-score {
 }
 
 .tactile-emoji-btn:hover {
-  background: #EEF3EE;
-  border-color: #728D7A;
+  background: #F9EBE6;
+  border-color: #C07660;
   color: #2D5037;
   transform: translateY(-1px);
 }
 
 .tactile-emoji-btn.active {
-  background: #EEF3EE;
-  border-color: #587360;
+  background: #F9EBE6;
+  border-color: #9C5B49;
   color: #2D5037;
   font-weight: 700;
 }
@@ -3217,9 +3217,9 @@ body.login-dark-theme .tactile-emoji-btn {
 
 html.dark-theme .tactile-emoji-btn.active,
 body.login-dark-theme .tactile-emoji-btn.active {
-  background: rgba(88, 115, 96, 0.25);
-  border-color: #587360;
-  color: #A3D4AE;
+  background: rgba(156, 91, 73, 0.25);
+  border-color: #9C5B49;
+  color: #F8B4A6;
 }
 
 /* Responsive Mobile Adjustments */
@@ -3260,7 +3260,7 @@ body.login-dark-theme .tactile-emoji-btn.active {
    ========================================================================= */
 
 .tactile-dish-pill-solid {
-  background: #587360;
+  background: #9C5B49;
   color: #FFFFFF;
   border-radius: 9999px;
   padding: 7px 16px;
@@ -3268,7 +3268,7 @@ body.login-dark-theme .tactile-emoji-btn.active {
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  box-shadow: 0 2px 6px rgba(88, 115, 96, 0.22);
+  box-shadow: 0 2px 6px rgba(156, 91, 73, 0.22);
   transition: transform 0.15s ease;
 }
 
@@ -3278,7 +3278,7 @@ body.login-dark-theme .tactile-emoji-btn.active {
 
 html.dark-theme .tactile-dish-pill-solid,
 body.login-dark-theme .tactile-dish-pill-solid {
-  background: #587360;
+  background: #9C5B49;
   color: #FFFFFF;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
@@ -3423,18 +3423,18 @@ body.login-dark-theme .living-card,
   border-radius: 9999px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  background: rgba(88, 115, 96, 0.12);
+  background: rgba(156, 91, 73, 0.12);
   color: #4A6552;
-  border: 1px solid rgba(88, 115, 96, 0.2);
+  border: 1px solid rgba(156, 91, 73, 0.2);
   transition: all 0.25s ease;
 }
 
 html.dark-theme .tactile-pill-badge,
 body.login-dark-theme .tactile-pill-badge,
 [data-theme="dark"] .tactile-pill-badge {
-  background: rgba(114, 141, 122, 0.22) !important;
-  color: #B6D6BE !important;
-  border: 1px solid rgba(114, 141, 122, 0.38) !important;
+  background: rgba(192, 118, 96, 0.22) !important;
+  color: #F8B4A6 !important;
+  border: 1px solid rgba(192, 118, 96, 0.38) !important;
 }
 
 .tactile-pill-badge.tactile-pill-account {
@@ -3459,18 +3459,18 @@ body.login-dark-theme .tactile-pill-badge.tactile-pill-account,
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(88, 115, 96, 0.12);
+  background: rgba(156, 91, 73, 0.12);
   color: #4A6552;
-  border: 1px solid rgba(88, 115, 96, 0.2);
+  border: 1px solid rgba(156, 91, 73, 0.2);
   transition: all 0.25s ease;
 }
 
 html.dark-theme .tactile-status-pill,
 body.login-dark-theme .tactile-status-pill,
 [data-theme="dark"] .tactile-status-pill {
-  background: rgba(88, 115, 96, 0.22) !important;
-  color: #B6D6BE !important;
-  border: 1px solid rgba(114, 141, 122, 0.38) !important;
+  background: rgba(156, 91, 73, 0.22) !important;
+  color: #F8B4A6 !important;
+  border: 1px solid rgba(192, 118, 96, 0.38) !important;
 }
 
 .tactile-status-pill.has-update {
@@ -3523,17 +3523,17 @@ body.login-dark-theme .living-signout-btn,
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(88, 115, 96, 0.12);
-  color: #587360;
+  background: rgba(156, 91, 73, 0.12);
+  color: #9C5B49;
   transition: all 0.25s ease;
 }
 
 html.dark-theme .tactile-icon-circle,
 body.login-dark-theme .tactile-icon-circle,
 [data-theme="dark"] .tactile-icon-circle {
-  background: rgba(114, 141, 122, 0.22) !important;
-  color: #B6D6BE !important;
-  border: 1px solid rgba(114, 141, 122, 0.35);
+  background: rgba(192, 118, 96, 0.22) !important;
+  color: #F8B4A6 !important;
+  border: 1px solid rgba(192, 118, 96, 0.35);
 }
 
 /* =========================================================================
@@ -3699,9 +3699,9 @@ body.login-dark-theme .living-card:active {
 /* High-Visibility Status Pills for Mobile Screens */
 html.dark-theme .tactile-pill-badge,
 body.login-dark-theme .tactile-pill-badge {
-  background: rgba(114, 141, 122, 0.25) !important;
-  color: #BBE0C4 !important;
-  border: 1px solid rgba(114, 141, 122, 0.45) !important;
+  background: rgba(192, 118, 96, 0.25) !important;
+  color: #F8B4A6 !important;
+  border: 1px solid rgba(192, 118, 96, 0.45) !important;
   letter-spacing: 0.05em !important;
   font-weight: 750 !important;
 }
@@ -3717,8 +3717,8 @@ body.login-dark-theme .tactile-pill-badge.tactile-pill-account {
 html.dark-theme .tactile-status-pill,
 body.login-dark-theme .tactile-status-pill {
   background: rgba(30, 27, 24, 0.95) !important;
-  color: #D3EAD8 !important;
-  border: 1px solid rgba(114, 141, 122, 0.35) !important;
+  color: #F4C7BC !important;
+  border: 1px solid rgba(192, 118, 96, 0.35) !important;
 }
 
 /* Primary Mobile Action Buttons */
