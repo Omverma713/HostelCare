@@ -278,14 +278,21 @@ const getAppVersionStatus = async (req, res) => {
     const otaEligible = Boolean(otaConfig.enabled && otaConfig.bundleUrl && !isOldNativeApk);
 
     // Check if version is newer, checksum is different, or forceUpdate is toggled by SuperAdmin
+    const isChecksumAlreadyInstalled = Boolean(
+      serverChecksum && clientChecksum && serverChecksum === clientChecksum
+    );
     const hasNewerVersion = Boolean(
       currentVersion && compareVersions(otaConfig.currentBundleVersion, currentVersion) > 0
     );
     const hasDifferentChecksum = Boolean(
       serverChecksum && clientChecksum && serverChecksum !== clientChecksum
     );
+    // If client already has this exact checksum installed, do not re-force update loop
     const isSameVersionForced = Boolean(
-      otaConfig.forceUpdate && currentVersion && compareVersions(otaConfig.currentBundleVersion, currentVersion) >= 0
+      otaConfig.forceUpdate &&
+      !isChecksumAlreadyInstalled &&
+      currentVersion &&
+      compareVersions(otaConfig.currentBundleVersion, currentVersion) >= 0
     );
 
     const otaHasNewer = Boolean(

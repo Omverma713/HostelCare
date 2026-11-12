@@ -1508,3 +1508,161 @@ body.login-dark-theme .quick-strip-card:hover,
 [data-theme="dark"] .quick-strip-card:hover {
   border-color: #D88B74 !important;
 }
+
+/* =========================================================================
+   MOBILE RESPONSIVE FULL-SCREEN ADAPTIVE TUNING
+   ========================================================================= */
+@media (max-width: 680px) {
+  .academics-hub-container {
+    padding: 6px 10px 140px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .acad-header-card {
+    padding: 14px 14px !important;
+    border-radius: 14px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .acad-title {
+    font-size: 20px !important;
+    line-height: 1.25 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .acad-subtitle {
+    font-size: 12px !important;
+    margin-bottom: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  .acad-badge-row {
+    gap: 6px !important;
+  }
+
+  .acad-pill {
+    font-size: 10px !important;
+    padding: 3px 8px !important;
+  }
+
+  .acad-nav-tabs {
+    gap: 6px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .acad-nav-tab {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .live-lecture-bar {
+    padding: 12px 14px !important;
+    margin: 10px 0 !important;
+    border-radius: 14px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .live-lecture-subject {
+    font-size: 14px !important;
+  }
+
+  .timetable-engine-box {
+    padding: 12px 14px !important;
+    border-radius: 14px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .engine-title {
+    font-size: 15px !important;
+  }
+
+  .engine-desc {
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+  }
+
+  .timetable-controls-bar {
+    margin: 10px 0 8px !important;
+  }
+
+  .day-selector-bar {
+    gap: 6px !important;
+    margin: 10px 0 14px !important;
+  }
+
+  .day-btn {
+    min-width: 68px !important;
+    padding: 8px 6px !important;
+    border-radius: 10px !important;
+  }
+
+  .day-btn span:first-child {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+  }
+
+  .day-btn .day-slot-count {
+    font-size: 9.5px !important;
+  }
+
+  .timetable-timeline {
+    gap: 10px !important;
+  }
+
+  .timetable-slot-card {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .slot-time-col {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    border-bottom: 1px dashed rgba(156, 91, 73, 0.2) !important;
+    padding-bottom: 6px !important;
+  }
+
+  .slot-time-range {
+    font-size: 12.5px !important;
+  }
+
+  .slot-duration {
+    font-size: 10.5px !important;
+  }
+
+  .slot-title {
+    font-size: 14.5px !important;
+    line-height: 1.3 !important;
+  }
+
+  .slot-sub-info {
+    font-size: 11.5px !important;
+    gap: 8px !important;
+  }
+
+  .timetable-quick-strip {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+  }
+
+  .quick-strip-card {
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .curriculum-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .calendar-milestones-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

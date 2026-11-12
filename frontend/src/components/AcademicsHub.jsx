@@ -1078,13 +1078,13 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                     <div className="milestone-item-date">🗓️ {m.date}</div>
                   </div>
                 )) || (
-                  <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                    • Odd Sem Commencement: 27th August 2026<br />
-                    • Mid Semester Examination: 26th October to 4th November 2026<br />
-                    • End Semester Lab Exam: 17th December to 24th December 2026<br />
-                    • End Semester Theory Exam: 6th January to 16th January 2027
-                  </div>
-                )}
+                    <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                      • Odd Sem Commencement: 27th August 2026<br />
+                      • Mid Semester Examination: 26th October to 4th November 2026<br />
+                      • End Semester Lab Exam: 17th December to 24th December 2026<br />
+                      • End Semester Theory Exam: 6th January to 16th January 2027
+                    </div>
+                  )}
 
                 <h4 className="calendar-section-heading" style={{ fontSize: 16, margin: "14px 0 6px" }}>
                   Even Semester Milestones (2027)

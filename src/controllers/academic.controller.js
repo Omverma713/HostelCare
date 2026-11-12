@@ -240,81 +240,139 @@ function parseScheduleTextInternal(text, defaultSection, defaultRoom) {
     Saturday: [],
   };
 
+  const dayAliases = {
+    mon: "Monday", monday: "Monday",
+    tue: "Tuesday", tues: "Tuesday", tuesday: "Tuesday",
+    wed: "Wednesday", wednesday: "Wednesday",
+    thu: "Thursday", thur: "Thursday", thurs: "Thursday", thursday: "Thursday",
+    fri: "Friday", friday: "Friday",
+    sat: "Saturday", saturday: "Saturday",
+  };
+
   const subjectKnown = [
-    { code: "CSE 3544", name: "Practical Programming with C", keywords: ["CSE 3544", "PPC", "C PROG", "PRACTICAL PROGRAMMING"] },
-    { code: "CSE 3249", name: "Design Principles of Operating Systems", keywords: ["CSE 3249", "DPOS", "OS", "OPERATING SYSTEM", "UNIX"] },
-    { code: "CSE 3751", name: "Computer Networking : Concepts", keywords: ["CSE 3751", "CN", "NETWORKING", "COMPUTER NETWORKS"] },
-    { code: "CSE 3967", name: "Machine Learning Concepts 1", keywords: ["CSE 3967", "ML", "ML-LAB", "MACHINE LEARNING"] },
-    { code: "CSE 3731", name: "Introduction to the Theory of Computation", keywords: ["CSE 3731", "TOC", "THEORY OF COMPUTATION", "AUTOMATA"] },
-    { code: "MTH 3647", name: "Fundamentals of Machine Intelligence 1", keywords: ["MTH 3647", "FMI", "MACHINE INTELLIGENCE"] },
-    { code: "GET 2024", name: "Intermediate Problem Solving — 1", keywords: ["GET 2024", "PROBLEM SOLVING", "DSA", "CODING PRACTICE"] },
+    { code: "CSE 3544", name: "Practical Programming with C", keywords: ["CSE 3544", "PPC", "C PROG", "PROGRAMMING IN C", "PRACTICAL PROGRAMMING", "C LAB"] },
+    { code: "CSE 3249", name: "Design Principles of Operating Systems", keywords: ["CSE 3249", "DPOS", "OS", "OPERATING SYSTEM", "OPERATING SYSTEMS", "UNIX"] },
+    { code: "CSE 3751", name: "Computer Networking : Concepts", keywords: ["CSE 3751", "CN", "NETWORKING", "COMPUTER NETWORKS", "CN LAB", "CISCO"] },
+    { code: "CSE 3967", name: "Machine Learning Concepts 1", keywords: ["CSE 3967", "ML", "ML-LAB", "ML LAB", "MACHINE LEARNING", "AIML"] },
+    { code: "CSE 3731", name: "Introduction to the Theory of Computation", keywords: ["CSE 3731", "TOC", "THEORY OF COMPUTATION", "AUTOMATA", "FLAT"] },
+    { code: "MTH 3647", name: "Fundamentals of Machine Intelligence 1", keywords: ["MTH 3647", "FMI", "MACHINE INTELLIGENCE", "MATH", "MATHS", "MATHEMATICS"] },
+    { code: "GET 2024", name: "Intermediate Problem Solving — 1", keywords: ["GET 2024", "IPS", "PROBLEM SOLVING", "DSA", "CODING PRACTICE"] },
+    { code: "CSE 3101", name: "Database Management Systems", keywords: ["DBMS", "DATABASE", "SQL"] },
+    { code: "CSE 3102", name: "Software Engineering", keywords: ["SE", "SOFTWARE ENGINEERING"] },
   ];
+
+  function normalizeTimeSlot(tRaw, defaultMeridiem = "AM") {
+    let str = String(tRaw || "").trim().toUpperCase();
+    const m = str.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+    if (!m) return str;
+    let h = parseInt(m[1], 10);
+    let min = m[2] || "00";
+    let meridiem = m[3] ? m[3].toUpperCase() : null;
+    if (!meridiem) {
+      if (h >= 8 && h <= 11) meridiem = "AM";
+      else if (h === 12) meridiem = "PM";
+      else if (h >= 1 && h <= 7) meridiem = "PM";
+      else meridiem = defaultMeridiem;
+    }
+    const hPad = h < 10 ? "0" + h : "" + h;
+    return `${hPad}:${min} ${meridiem}`;
+  }
 
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   let currentDay = "Monday";
 
-  const timeRegex = /(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*(?:-|to|–)\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))/i;
-  const roomRegex = /(?:room|rm|hall|lh|lab|lt)\s*[-:]?\s*([A-Za-z0-9\-]+)/i;
+  const timeRegex = /(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*(?:-|to|–)\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)/i;
+  const roomRegex = /(?:room|rm|hall|lh|lab|lt|sl|unix)\s*[-:]?\s*([A-Za-z0-9\-]+)/i;
   const facultyRegex = /(?:prof\.|dr\.|mr\.|ms\.|mrs\.)\s*([A-Za-z\s.]+)/i;
 
-  for (const line of lines) {
-    const upper = line.toUpperCase();
-    const foundDay = daysOrder.find((d) => upper.startsWith(d.toUpperCase()) || upper === d.toUpperCase());
-    if (foundDay) {
-      currentDay = foundDay;
-      continue;
-    }
+  let totalParsedSlots = 0;
 
-    const timeMatch = line.match(timeRegex);
-    let startTime = "08:00 AM";
-    let endTime = "09:00 AM";
-    if (timeMatch) {
-      startTime = timeMatch[1].trim();
-      endTime = timeMatch[2].trim();
-      if (!/am|pm/i.test(startTime) && /pm/i.test(endTime)) startTime += " PM";
-      else if (!/am|pm/i.test(startTime) && /am/i.test(endTime)) startTime += " AM";
-    }
+  for (const rawLine of lines) {
+    let line = rawLine;
 
-    let matchedSubject = null;
-    for (const subj of subjectKnown) {
-      for (const kw of subj.keywords) {
-        if (upper.includes(kw)) {
-          matchedSubject = subj;
-          break;
-        }
+    // Check if line declares or starts with a day name (e.g. "Mon:", "Monday -", "[Tuesday]")
+    const dayPrefixMatch = line.match(/^\[?(mon|tue|wed|thu|fri|sat)[a-z]*\]?[:\s\-—]*/i);
+    if (dayPrefixMatch) {
+      const dayKey = dayPrefixMatch[1].toLowerCase();
+      if (dayAliases[dayKey]) {
+        currentDay = dayAliases[dayKey];
+        line = line.slice(dayPrefixMatch[0].length).trim();
       }
-      if (matchedSubject) break;
     }
 
-    let room = defaultRoom || "Room 304";
-    const roomMatch = line.match(roomRegex);
-    if (roomMatch) room = roomMatch[0].trim();
+    if (!line) continue;
 
-    let faculty = "Faculty Member";
-    const facMatch = line.match(facultyRegex);
-    if (facMatch) faculty = facMatch[0].trim();
+    // Split line into multiple classes if separated by commas or semicolons
+    const subParts = line.includes(";") ? line.split(";") : (line.match(new RegExp(timeRegex.source, "gi"))?.length > 1 ? line.split(",") : [line]);
 
-    const isLab = upper.includes("LAB") || (matchedSubject && matchedSubject.code === "CSE 3967");
-    const type = isLab ? "lab" : "theory";
+    for (const part of subParts) {
+      const trimmedPart = part.trim();
+      if (!trimmedPart) continue;
 
-    const subjectCode = matchedSubject ? matchedSubject.code : (line.match(/[A-Z]{3}\s*\d{4}/)?.[0] || "ACAD 501");
-    const subjectName = matchedSubject ? matchedSubject.name : line.replace(timeRegex, "").replace(roomRegex, "").replace(facultyRegex, "").trim().slice(0, 45) || "Academic Lecture";
+      const timeMatch = trimmedPart.match(timeRegex);
+      let startTime = "08:00 AM";
+      let endTime = "09:00 AM";
 
-    parsedDaysMap[currentDay].push({
-      id: `${currentDay.toLowerCase().slice(0, 3)}-${parsedDaysMap[currentDay].length + 1}`,
-      startTime,
-      endTime,
-      subjectCode,
-      subjectName,
-      type,
-      room,
-      faculty,
-    });
+      if (timeMatch) {
+        startTime = normalizeTimeSlot(timeMatch[1], "AM");
+        endTime = normalizeTimeSlot(timeMatch[2], startTime.includes("PM") ? "PM" : "AM");
+      }
+
+      const upper = trimmedPart.toUpperCase();
+      let matchedSubject = null;
+      for (const subj of subjectKnown) {
+        for (const kw of subj.keywords) {
+          const kwRegex = new RegExp(`\\b${kw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, "i");
+          if (kwRegex.test(upper)) {
+            matchedSubject = subj;
+            break;
+          }
+        }
+        if (matchedSubject) break;
+      }
+
+      let room = defaultRoom || "Room 304";
+      const roomMatch = trimmedPart.match(roomRegex);
+      if (roomMatch) room = roomMatch[0].trim();
+
+      let faculty = "Faculty Member";
+      const facMatch = trimmedPart.match(facultyRegex);
+      if (facMatch) faculty = facMatch[0].trim();
+
+      const isLab = upper.includes("LAB") || (matchedSubject && (matchedSubject.code === "CSE 3967" || matchedSubject.code === "CSE 3544"));
+      const type = isLab ? "lab" : "theory";
+
+      const subjectCode = matchedSubject ? matchedSubject.code : (trimmedPart.match(/[A-Z]{3}\s*\d{4}/i)?.[0]?.toUpperCase() || "ACAD 501");
+      const cleanedName = trimmedPart
+        .replace(timeRegex, "")
+        .replace(roomRegex, "")
+        .replace(facultyRegex, "")
+        .replace(/[()[\]{}]/g, "")
+        .replace(/^[,\s\-:|]+|[,\s\-:|]+$/g, "")
+        .trim();
+
+      const subjectName = matchedSubject ? matchedSubject.name : (cleanedName.slice(0, 45) || "Academic Lecture");
+
+      parsedDaysMap[currentDay].push({
+        id: `${currentDay.toLowerCase().slice(0, 3)}-${parsedDaysMap[currentDay].length + 1}`,
+        startTime,
+        endTime,
+        subjectCode,
+        subjectName,
+        type,
+        room,
+        faculty,
+      });
+
+      totalParsedSlots++;
+    }
   }
 
+  // If user provided valid text that was parsed, use their exact parsed days!
+  // Only fallback if total parsed slots is 0 (completely empty input)
   const structuredDays = daysOrder.map((day) => ({
     day,
-    slots: parsedDaysMap[day].length > 0 ? parsedDaysMap[day] : defaultWeeklyTimetable.find((d) => d.day === day)?.slots || [],
+    slots: totalParsedSlots > 0 ? parsedDaysMap[day] : (defaultWeeklyTimetable.find((d) => d.day === day)?.slots || []),
   }));
 
   return {
