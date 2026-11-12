@@ -105,6 +105,23 @@ class AppUpdateService {
 
   async getInstalledVersion() {
     if (Capacitor.isNativePlatform()) {
+      // 1. Check if an Over-The-Air (OTA) live bundle is currently active
+      if (Capacitor.isPluginAvailable('CapacitorUpdater')) {
+        try {
+          const current = await CapacitorUpdater.current();
+          const bundleVer = current?.bundle?.version;
+          if (bundleVer && bundleVer !== 'builtin' && bundleVer !== 'default') {
+            return {
+              version: bundleVer,
+              build: '30',
+            };
+          }
+        } catch (e) {
+          console.warn('[AppUpdateService] Could not retrieve CapacitorUpdater.current():', e);
+        }
+      }
+
+      // 2. Fall back to native App.getInfo()
       try {
         const info = await App.getInfo();
         return {
@@ -550,6 +567,22 @@ class AppUpdateService {
 
   async autoDownloadOtaInBackground() {
     if (this.isDownloadingOta || !this.updateState.otaAvailable) return;
+
+    // Safety guard 1: Don't download or reload if app is ALREADY running the target OTA version
+    const { version } = await this.getInstalledVersion();
+    if (this.updateState.otaVersion && compareVersions(version, this.updateState.otaVersion) >= 0) {
+      console.log(`[AppUpdateService] Already running version v${version}. Skipping auto-download.`);
+      return;
+    }
+
+    // Safety guard 2: Session lock prevents infinite reload loop
+    const sessionKey = `hostelcare_ota_applied_${this.updateState.otaVersion}`;
+    if (sessionStorage.getItem(sessionKey)) {
+      console.log(`[AppUpdateService] OTA v${this.updateState.otaVersion} was already applied in this session.`);
+      return;
+    }
+    sessionStorage.setItem(sessionKey, 'true');
+
     this.isDownloadingOta = true;
     try {
       console.log('[AppUpdateService] Starting background silent OTA download...');
