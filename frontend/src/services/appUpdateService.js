@@ -522,6 +522,7 @@ class AppUpdateService {
       const bundle = await CapacitorUpdater.download({
         url: targetUrl,
         version: this.updateState.otaVersion,
+        checksum: this.updateState.otaChecksum || '',
       });
 
       this.updateState.otaProgress = 85;
