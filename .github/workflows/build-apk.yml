@@ -28,6 +28,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Accept Android SDK Licenses & Setup Platform 35
         run: |
@@ -52,7 +53,7 @@ jobs:
 
       - name: Build Debug APK with Gradle
         working-directory: mobile-app/android
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
