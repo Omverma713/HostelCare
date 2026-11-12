@@ -3125,6 +3125,43 @@ export default function SuperAdminPortal() {
           </label>
         </div>
 
+        {/* Force Live OTA Update toggle */}
+        <div
+          style={{
+            padding: '0.75rem 1rem',
+            borderRadius: '10px',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              ⚡ Force Live OTA Update (Even If Version String Is Same)
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Forces all client mobile apps to immediately download and apply the latest OTA bundle via SHA-256 checksum comparison, bypassing semantic version restrictions.
+            </div>
+          </div>
+
+          <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+            <input
+              type="checkbox"
+              checked={Boolean(otaConfig.forceUpdate)}
+              onChange={(e) => setOtaConfig((prev) => ({ ...prev, forceUpdate: e.target.checked }))}
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: otaConfig.forceUpdate ? '#10b981' : 'var(--text-secondary)' }}>
+              {otaConfig.forceUpdate ? '⚡ Force Live OTA Active' : 'Normal Version Check'}
+            </span>
+          </label>
+        </div>
+
         {/* Notes */}
         <div style={{ marginBottom: '1.25rem' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>

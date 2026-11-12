@@ -153,10 +153,13 @@ class AppUpdateService {
       const { version, build } = await this.getInstalledVersion();
       this.updateState.currentVersion = version;
 
+      const activeChecksum = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_checksum')) || '';
+
       const params = new URLSearchParams({
         currentVersion: version,
         platform,
         buildNumber: build,
+        bundleChecksum: activeChecksum,
       });
 
       const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
@@ -548,6 +551,14 @@ class AppUpdateService {
 
       await CapacitorUpdater.set({ id: bundle.id });
 
+      if (this.updateState.otaChecksum) {
+        try {
+          localStorage.setItem('hostelcare_active_ota_checksum', this.updateState.otaChecksum);
+        } catch (storageErr) {
+          console.warn('[AppUpdateService] Storage error saving active checksum:', storageErr);
+        }
+      }
+
       this.updateState.otaStatus = 'applied';
       this.updateState.otaProgress = 100;
       this.notifyListeners();
@@ -568,17 +579,21 @@ class AppUpdateService {
   async autoDownloadOtaInBackground() {
     if (this.isDownloadingOta || !this.updateState.otaAvailable) return;
 
-    // Safety guard 1: Don't download or reload if app is ALREADY running the target OTA version
+    // Safety guard 1: Don't download or reload if app is ALREADY running the target OTA version AND target checksum
     const { version } = await this.getInstalledVersion();
-    if (this.updateState.otaVersion && compareVersions(version, this.updateState.otaVersion) >= 0) {
-      console.log(`[AppUpdateService] Already running version v${version}. Skipping auto-download.`);
+    const activeChecksum = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_checksum')) || '';
+    const isNewChecksum = Boolean(this.updateState.otaChecksum && this.updateState.otaChecksum !== activeChecksum);
+    const isSameOrHigherVersion = this.updateState.otaVersion && compareVersions(version, this.updateState.otaVersion) >= 0;
+
+    if (isSameOrHigherVersion && !isNewChecksum && !this.updateState.forceUpdate) {
+      console.log(`[AppUpdateService] Already running version v${version} with latest checksum. Skipping auto-download.`);
       return;
     }
 
     // Safety guard 2: Session lock prevents infinite reload loop
-    const sessionKey = `hostelcare_ota_applied_${this.updateState.otaVersion}`;
+    const sessionKey = `hostelcare_ota_applied_${this.updateState.otaVersion}_${this.updateState.otaChecksum || 'v1'}`;
     if (sessionStorage.getItem(sessionKey)) {
-      console.log(`[AppUpdateService] OTA v${this.updateState.otaVersion} was already applied in this session.`);
+      console.log(`[AppUpdateService] OTA bundle ${this.updateState.otaVersion} (${this.updateState.otaChecksum}) was already applied in this session.`);
       return;
     }
     sessionStorage.setItem(sessionKey, 'true');

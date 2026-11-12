@@ -267,6 +267,10 @@ const systemConfigSchema = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
+      forceUpdate: {
+        type: Boolean,
+        default: false,
+      },
       notes: {
         type: String,
         default: "HostelCare v1.2.2.17: Push Notification Scheduler, Dynamic Living Space, and Adaptive Dark Theme Badges",
