@@ -8,6 +8,7 @@ import { prioritizeMealDishes } from '../services/messNotificationService';
 import { triggerToast } from '../components/Toast';
 import { appUpdateService } from '../services/appUpdateService';
 import { normalizeStatus, sortByDateDesc, isEmptyDataError } from '../utils/status';
+import AcademicsHub from '../components/AcademicsHub';
 
 const DEPT_ICONS = {
   Electrical: '⚡',
@@ -442,6 +443,23 @@ const handleSendMessage = (e) => {
             {activeTab === 'mess' && <div className="active-indicator-bar" />}
           </div>
 
+          {/* Academics, Timetable & Exam Radar Icon */}
+          <div className="sidebar-icon-wrap">
+            <button
+              className={`sidebar-icon-btn ${activeTab === 'academics' ? 'active' : ''}`}
+              onClick={() => setActiveTab('academics')}
+              title="Academics, Class Timetable & Exam Radar"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                <line x1="9" y1="7" x2="15" y2="7"></line>
+                <line x1="9" y1="11" x2="15" y2="11"></line>
+              </svg>
+            </button>
+            {activeTab === 'academics' && <div className="active-indicator-bar" />}
+          </div>
+
           {/* Living Space / Room Icon */}
           <div className="sidebar-icon-wrap">
             <button
@@ -698,6 +716,18 @@ const handleSendMessage = (e) => {
                   <div className="tactile-quick-text">
                     <h4 className="tactile-quick-title">Dining Timetable</h4>
                     <p className="tactile-quick-sub">View menu &amp; dish ratings</p>
+                  </div>
+                </div>
+
+                <div 
+                  className="tactile-quick-card"
+                  onClick={() => setActiveTab('academics')}
+                  title="View ITER Class Timetable, Syllabus & Exam Radar"
+                >
+                  <div className="tactile-quick-icon">🎓</div>
+                  <div className="tactile-quick-text">
+                    <h4 className="tactile-quick-title">Academics & Schedule</h4>
+                    <p className="tactile-quick-sub">Room, Teacher &amp; Exams</p>
                   </div>
                 </div>
               </div>
@@ -1022,6 +1052,16 @@ const handleSendMessage = (e) => {
               </div>
             );
           })()}
+
+          {/* =========================================================================
+              VIEW 2.5: ACADEMICS & TIMETABLE HUB
+             ========================================================================= */}
+          {activeTab === 'academics' && (
+            <AcademicsHub
+              userRole={currentUserRole}
+              onBackToHome={() => setActiveTab('home')}
+            />
+          )}
 
           {/* =========================================================================
               VIEW 3: LIVING SPACE & OUTING PASS

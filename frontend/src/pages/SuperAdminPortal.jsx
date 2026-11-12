@@ -7,10 +7,12 @@ import { appUpdateService } from '../services/appUpdateService';
 import { triggerToast } from '../components/Toast';
 import { scheduleWeeklyMealReminders } from '../services/messNotificationService';
 import { DEFAULT_MESS_DATA, DAYS_ORDER, MEAL_SLOTS } from '../constants/messMenuData';
+import AcademicsHub from '../components/AcademicsHub';
 import './SuperAdminPortal.css';
 
 export const DELEGATION_FEATURE_MODULES = [
   { id: 'messalerts', label: '🍱 Mess Auto-Alerts & Timetable', desc: 'Meal timings, lead-times, vacation freeze & auto-cron dispatcher' },
+  { id: 'academics', label: '🎓 Academics & Exam Radar', desc: 'Manage 2026-27 calendar, 5th sem syllabus, datesheet & exam radar' },
   { id: 'notifications', label: '🔔 Push Broadcasts & Flash Alerts', desc: 'Custom push broadcasts, flash messages & emergency banners' },
   { id: 'users', label: '👥 User Directory & Accounts', desc: 'User management, profile edits, password resets, locks & account flush' },
   { id: 'sessions', label: '📱 Sessions & Device Registry', desc: 'Hardware radar, active devices, 1-click ping, mute & unregister' },
@@ -37,6 +39,7 @@ export const ALL_PORTAL_TABS = [
   { id: 'cbt', label: '🔬 Closed Beta', scope: 'cbt' },
   { id: 'notifications', label: '🔔 Push Broadcast', scope: 'notifications' },
   { id: 'messalerts', label: '🍱 Mess Auto-Alerts', scope: 'messalerts' },
+  { id: 'academics', label: '🎓 Academics & Exams', scope: 'academics' },
   { id: 'audit', label: '📜 Audit Logs', scope: 'audit' },
 ];
 
@@ -12683,6 +12686,13 @@ export default function SuperAdminPortal() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 7.5. TAB: ACADEMICS & EXAM RADAR */}
+      {activeTab === 'academics' && (
+        <div style={{ width: '100%' }}>
+          <AcademicsHub userRole="superadmin" />
         </div>
       )}
 

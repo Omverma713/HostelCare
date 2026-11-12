@@ -13,6 +13,7 @@ const superAdminRouter  = require("./src/routes/superAdmin.route");
 const appVersionRouter  = require("./src/routes/appVersion.route");
 const chatTicketRouter  = require("./src/routes/chatTicket.route");
 const cbtRouter         = require("./src/routes/cbt.route");
+const academicRouter    = require("./src/routes/academic.route");
 
 const app = express();
 
@@ -215,6 +216,7 @@ app.use("/api/v1/superadmin", superAdminRouter);
 app.use("/api/v1/app-version", appVersionRouter);
 app.use("/api/v1/chat", chatTicketRouter);
 app.use("/api/v1/cbt", cbtRouter);
+app.use("/api/v1/academics", academicRouter);
 
 // ─── 7. Centralized Error Handler ────────────────────────────────────────────
 // Express 5 propagates async errors automatically — this handler catches them
