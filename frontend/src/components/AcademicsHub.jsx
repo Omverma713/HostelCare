@@ -1070,3 +1070,4 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
     </div>
   );
 }
+
