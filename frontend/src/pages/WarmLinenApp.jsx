@@ -465,7 +465,7 @@ const handleSendMessage = (e) => {
             <button
               className={`sidebar-icon-btn ${activeTab === 'room' ? 'active' : ''}`}
               onClick={() => setActiveTab('room')}
-              title="My Living Space & Outing Pass"
+              title="My Living Space & Room Details"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -665,45 +665,17 @@ const handleSendMessage = (e) => {
                 );
               })()}
 
-{/* 3. TACTILE QUICK ACTION CARDS (4-CARD GRID - EXACT IMAGE 1) */}
+{/* 3. TACTILE QUICK ACTION CARDS (FOCUSED 3-CARD COMMAND GRID) */}
               <div className="tactile-quick-grid">
                 <div 
                   className="tactile-quick-card"
-                  onClick={() => setShowQrModal(true)}
-                  title="Request digital Outing Pass & Gate QR code"
+                  onClick={() => setActiveTab('academics')}
+                  title="View ITER Class Timetable, Syllabus & Exam Radar"
                 >
-                  <div className="tactile-quick-icon">🎫</div>
+                  <div className="tactile-quick-icon">🎓</div>
                   <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Request Outing Pass</h4>
-                    <p className="tactile-quick-sub">Digital QR &amp; Gate Pass</p>
-                  </div>
-                </div>
-
-                <div 
-                  className="tactile-quick-card"
-                  onClick={() => setShowComplaintModal(true)}
-                  title="Report a maintenance or facility issue"
-                >
-                  <div className="tactile-quick-icon">⚠️</div>
-                  <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Report Issue</h4>
-                    <p className="tactile-quick-sub">Plumbing, Electrical...</p>
-                  </div>
-                </div>
-
-                <div 
-                  className="tactile-quick-card"
-                  onClick={() => {
-                    const next = !laundryBooked;
-                    setLaundryBooked(next);
-                    triggerToast('info', next ? '🧺 Washer #2 reserved for 30 minutes!' : 'Laundry reservation released.');
-                  }}
-                  title="Live laundry room status and washer reservation"
-                >
-                  <div className="tactile-quick-icon">🧺</div>
-                  <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Laundry Queue</h4>
-                    <p className="tactile-quick-sub">{laundryBooked ? '🟢 Washer #2: Booked' : 'Washer #2: Available'}</p>
+                    <h4 className="tactile-quick-title">Academics & Schedule</h4>
+                    <p className="tactile-quick-sub">Room, Teacher &amp; Exams</p>
                   </div>
                 </div>
 
@@ -721,13 +693,13 @@ const handleSendMessage = (e) => {
 
                 <div 
                   className="tactile-quick-card"
-                  onClick={() => setActiveTab('academics')}
-                  title="View ITER Class Timetable, Syllabus & Exam Radar"
+                  onClick={() => setShowComplaintModal(true)}
+                  title="Report a maintenance or facility issue"
                 >
-                  <div className="tactile-quick-icon">🎓</div>
+                  <div className="tactile-quick-icon">⚠️</div>
                   <div className="tactile-quick-text">
-                    <h4 className="tactile-quick-title">Academics & Schedule</h4>
-                    <p className="tactile-quick-sub">Room, Teacher &amp; Exams</p>
+                    <h4 className="tactile-quick-title">Report Issue</h4>
+                    <p className="tactile-quick-sub">Plumbing, Electrical...</p>
                   </div>
                 </div>
               </div>
@@ -1064,7 +1036,7 @@ const handleSendMessage = (e) => {
           )}
 
           {/* =========================================================================
-              VIEW 3: LIVING SPACE & OUTING PASS
+              VIEW 3: LIVING SPACE & ROOM DETAILS
              ========================================================================= */}
           {activeTab === 'room' && (
             <div className="detailed-view-container">
@@ -1076,7 +1048,7 @@ const handleSendMessage = (e) => {
                   ← Back to Sanctuary
                 </button>
                 <h2>My Living Space</h2>
-                <p>Room allocation, roommate registry and digital security gate clearance pass.</p>
+                <p>Room allocation, roommate registry and hostel digital clearance pass.</p>
               </div>
 
               <div className="room-living-grid">
@@ -1115,13 +1087,13 @@ const handleSendMessage = (e) => {
                   </div>
                 </div>
 
-                {/* Gate Outing Pass Box */}
+                {/* Digital Resident Pass Box */}
                 <div className="living-card">
                   <div>
-                    <span className="tactile-pill-badge">DIGITAL GATE PASS</span>
-                    <h3 className="gate-pass-title">Evening Campus Outing</h3>
+                    <span className="tactile-pill-badge">RESIDENT PASS</span>
+                    <h3 className="gate-pass-title">Digital Resident Pass</h3>
                     <p style={{ margin: 0, fontSize: 13.5, color: 'var(--text-secondary)' }}>
-                      Valid for exit through {displayHostel ? `${displayHostel} / Campus Gate 1` : 'Campus Main Gate 1'} between 05:00 PM and 09:30 PM.
+                      Verified identity pass for {displayHostel ? `${displayHostel}` : 'Hostel'} residence, campus gate entry, and security checkpoints.
                     </p>
                   </div>
 
@@ -1129,7 +1101,7 @@ const handleSendMessage = (e) => {
                     onClick={() => setShowQrModal(true)}
                     style={{ background: '#C07660', color: 'white', border: 'none', padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 20 }}
                   >
-                    View Security QR Pass →
+                    View Resident QR Pass →
                   </button>
                 </div>
 

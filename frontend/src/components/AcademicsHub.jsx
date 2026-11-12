@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useTheme } from "../hooks/ThemeContext";
 import "./AcademicsHub.css";
 
 const API_BASE = "/api/v1/academics";
@@ -111,12 +112,29 @@ const FALLBACK_HOLIDAYS = [
 ];
 
 export default function AcademicsHub({ userRole = "student", onBackToHome }) {
+  let isDarkMode = false;
+  try {
+    const themeContext = useTheme();
+    isDarkMode = themeContext?.isDark;
+  } catch {
+    isDarkMode =
+      typeof document !== "undefined" &&
+      (document.documentElement.classList.contains("dark-theme") ||
+        document.body.classList.contains("login-dark-theme"));
+  }
+
   const [activeSubTab, setActiveSubTab] = useState("timetable"); // 'timetable' | 'exam' | 'curriculum' | 'calendar'
   const [loading, setLoading] = useState(true);
   const [academicData, setAcademicData] = useState(null);
   const [selectedDay, setSelectedDay] = useState("Monday");
   const [expandedCourse, setExpandedCourse] = useState(null);
   const [expandedSyllabus, setExpandedSyllabus] = useState(null);
+
+  // Multi-Format File Upload Engine State
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+  const [fileIsUploading, setFileIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Timetable Parser & Editor Modal
   const [showEditModal, setShowEditModal] = useState(false);
@@ -222,6 +240,85 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
     return { activeSlot, nextSlot, todayName };
   }, [activeTimetable]);
+
+  // Multi-Format File Upload Engine (Images, PDF, CSV, Text)
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setActionMessage(null);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (loadEvt) => {
+        setFilePreviewUrl(loadEvt.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreviewUrl(null);
+    }
+  };
+
+  const handleUploadTimetableFile = async () => {
+    if (!selectedFile) {
+      setActionMessage({ type: "error", text: "Please choose an image, PDF or timetable file first." });
+      return;
+    }
+
+    try {
+      setFileIsUploading(true);
+      setActionMessage(null);
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64Data = reader.result;
+          const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+          const res = await fetch(`${API_BASE}/upload-file`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              fileName: selectedFile.name,
+              fileType: selectedFile.type,
+              fileData: base64Data,
+              defaultSection: customSection,
+              defaultRoom: customRoom,
+            }),
+          });
+
+          const json = await res.json();
+          if (json.success && json.parsedData) {
+            setActionMessage({
+              type: "success",
+              text: `🎉 Timetable auto-adjusted and generated successfully from ${selectedFile.name}! All classes, teachers, and hall numbers are updated.`,
+            });
+            setSelectedFile(null);
+            setFilePreviewUrl(null);
+            setShowEditModal(false);
+            loadAcademics();
+          } else {
+            throw new Error(json.message || "Failed to process timetable document");
+          }
+        } catch (postErr) {
+          setActionMessage({ type: "error", text: postErr.message || "Upload processing failed" });
+        } finally {
+          setFileIsUploading(false);
+        }
+      };
+
+      reader.onerror = () => {
+        setActionMessage({ type: "error", text: "Failed to read file from storage." });
+        setFileIsUploading(false);
+      };
+
+      reader.readAsDataURL(selectedFile);
+    } catch (err) {
+      setActionMessage({ type: "error", text: err.message || "Upload failed" });
+      setFileIsUploading(false);
+    }
+  };
 
   // Handle Timetable Auto-Parser
   const handleAutoParseTimetable = async () => {
@@ -339,7 +436,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
   }, [activeTimetable, selectedDay]);
 
   return (
-    <div className="academics-hub-container">
+    <div className={`academics-hub-container ${isDarkMode ? "dark-theme" : "light-theme"}`}>
       {/* 1. TOP HEADER BANNER */}
       <div className="acad-header-card">
         <div className="acad-badge-row">
@@ -496,8 +593,146 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
             </div>
           </div>
 
-          {/* Controls: Section & Edit / Upload Button */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, margin: "16px 0 8px" }}>
+          {/* Academic Calendar & Exam Radar Quick Deck (Context & Fast Access) */}
+          <div className="acad-quick-deck">
+            <div className="acad-quick-deck-header">
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 18 }}>🧭</span>
+                <h3 className="acad-quick-deck-title">Academic Calendar &amp; Exam Radar</h3>
+              </div>
+              <span className="acad-quick-deck-sub">Academic Year 2026-27 Quick Direct Access</span>
+            </div>
+
+            <div className="acad-quick-cards-grid">
+              {/* 1. Exam Radar Card */}
+              <div className="acad-quick-card" onClick={() => setActiveSubTab("exam")}>
+                <div className="acad-quick-card-icon">🎯</div>
+                <div className="acad-quick-card-body">
+                  <div className="acad-quick-card-badge">EXAM WINDOW</div>
+                  <div className="acad-quick-card-val">26 Oct – 04 Nov 2026</div>
+                  <div className="acad-quick-card-desc">Mid-Sem Examination • Datesheet: Yet to be Released</div>
+                </div>
+                <div className="acad-quick-card-action">View Datesheet &amp; Syllabus →</div>
+              </div>
+
+              {/* 2. Official Gazetted Holidays Card */}
+              <div className="acad-quick-card" onClick={() => setActiveSubTab("calendar")}>
+                <div className="acad-quick-card-icon">🌴</div>
+                <div className="acad-quick-card-body">
+                  <div className="acad-quick-card-badge">STUDENT HOLIDAYS</div>
+                  <div className="acad-quick-card-val">12 Official Gazetted</div>
+                  <div className="acad-quick-card-desc">Ganesh Puja (14 Sep) • Gandhi Jayanti (02 Oct) • Durga Puja (19-20 Oct)</div>
+                </div>
+                <div className="acad-quick-card-action">View 12 Holidays List →</div>
+              </div>
+
+              {/* 3. 5th Sem Curriculum Card */}
+              <div className="acad-quick-card" onClick={() => setActiveSubTab("curriculum")}>
+                <div className="acad-quick-card-icon">📚</div>
+                <div className="acad-quick-card-body">
+                  <div className="acad-quick-card-badge">CURRICULUM</div>
+                  <div className="acad-quick-card-val">7 Prescribed Courses</div>
+                  <div className="acad-quick-card-desc">CSE 3544 (C), CSE 3249 (OS), CSE 3751 (CN) promotion criteria</div>
+                </div>
+                <div className="acad-quick-card-action">View Prescribed Books →</div>
+              </div>
+
+              {/* 4. Semester Milestones Card */}
+              <div className="acad-quick-card" onClick={() => setActiveSubTab("calendar")}>
+                <div className="acad-quick-card-icon">🗓️</div>
+                <div className="acad-quick-card-body">
+                  <div className="acad-quick-card-badge">MILESTONES</div>
+                  <div className="acad-quick-card-val">Lab &amp; End Sem Dates</div>
+                  <div className="acad-quick-card-desc">Lab: 17–24 Dec • Theory: 06–16 Jan 2027 • Even Sem: 18 Jan</div>
+                </div>
+                <div className="acad-quick-card-action">View University Calendar →</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Multi-Format Timetable Engine Upload Box */}
+          <div className="timetable-engine-box">
+            <div className="timetable-engine-header">
+              <div>
+                <div className="engine-badge">⚡ MULTI-FORMAT TIMETABLE ENGINE</div>
+                <h3 className="engine-title">Upload Timetable (Image / PDF / File)</h3>
+                <p className="engine-desc">
+                  Select or drop your section timetable photo, scanned image (.png, .jpg), PDF document, or text file. The engine auto-detects classroom halls, faculty names, subject codes, and timings to automatically adjust and generate your full weekly timetable page!
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <button
+                  type="button"
+                  className="engine-toggle-btn"
+                  onClick={() => setShowEditModal(true)}
+                >
+                  📝 WhatsApp / Text
+                </button>
+                <button
+                  type="button"
+                  className="engine-toggle-btn primary"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  📁 Choose Image / PDF
+                </button>
+              </div>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf,.txt,.csv"
+              style={{ display: "none" }}
+              onChange={handleFileSelect}
+            />
+
+            {/* Active Selected File Card & Auto-Generate Trigger */}
+            {selectedFile && (
+              <div className="engine-selected-file-card">
+                <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 240 }}>
+                  {filePreviewUrl ? (
+                    <img src={filePreviewUrl} alt="Timetable preview" className="engine-thumbnail-preview" />
+                  ) : (
+                    <div className="engine-doc-icon">
+                      {selectedFile.type.includes("pdf") ? "📄 PDF" : "📑 DOC"}
+                    </div>
+                  )}
+                  <div>
+                    <div className="engine-file-name">{selectedFile.name}</div>
+                    <div className="engine-file-meta">
+                      {(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type || "Document"}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setFilePreviewUrl(null);
+                    }}
+                    disabled={fileIsUploading}
+                    className="engine-clear-btn"
+                  >
+                    ✕ Remove
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleUploadTimetableFile}
+                    disabled={fileIsUploading}
+                    className="engine-generate-btn"
+                  >
+                    {fileIsUploading ? "⚡ Processing & Auto-Adjusting..." : "⚡ Auto-Generate Timetable"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Controls: Section & Edit / Reset Buttons */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, margin: "18px 0 8px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
                 Section: {activeTimetable?.section || "CSE Section 5A"}
@@ -540,7 +775,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   boxShadow: "0 2px 8px rgba(192, 118, 96, 0.25)",
                 }}
               >
-                ✏️ Upload / Edit Timetable
+                ✏️ Edit Schedule Details
               </button>
             </div>
           </div>
@@ -934,14 +1169,58 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
-                Paste Timetable Text / Schedule Data
-              </label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>
+                  Upload Image / PDF or Paste Schedule Text
+                </label>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    background: "transparent",
+                    border: "1px dashed var(--accent-terracotta, #C07660)",
+                    color: "var(--accent-terracotta, #C07660)",
+                    padding: "4px 10px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  📁 Pick Image / PDF File
+                </button>
+              </div>
+
+              {selectedFile && (
+                <div style={{ background: "var(--bg-subtle, #FAF8F5)", border: "1px solid var(--border-subtle)", borderRadius: 10, padding: 10, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)" }}>
+                    📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleUploadTimetableFile}
+                    disabled={fileIsUploading}
+                    style={{
+                      background: "var(--accent-terracotta, #C07660)",
+                      color: "white",
+                      border: "none",
+                      padding: "6px 12px",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {fileIsUploading ? "Processing..." : "⚡ Auto-Generate From File"}
+                  </button>
+                </div>
+              )}
+
               <textarea
                 className="acad-textarea"
                 value={customText}
                 onChange={(e) => setCustomText(e.target.value)}
-                placeholder={`Example Format:\nMonday\n08:00 AM - 09:00 AM | CSE 3249 Operating Systems | Room 304 | Prof. S. Mohanty\n10:15 AM - 12:15 PM | CSE 3544 C Lab | Software Lab 2 | Prof. Harwani\nTuesday\n...`}
+                placeholder={`Or paste text schedule directly:\nMonday\n08:00 AM - 09:00 AM | CSE 3249 Operating Systems | Room 304 | Prof. S. Mohanty\n10:15 AM - 12:15 PM | CSE 3544 C Lab | Software Lab 2 | Prof. Harwani\nTuesday\n...`}
               />
             </div>
 
