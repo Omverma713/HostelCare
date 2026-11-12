@@ -25,3 +25,4 @@ router.post("/parse-timetable", authMiddleware, parseTimetableEngine);
 router.put("/exam-radar", authMiddleware, updateExamRadar);
 
 module.exports = router;
+

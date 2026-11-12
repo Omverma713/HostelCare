@@ -9,15 +9,15 @@ async function run() {
   
   config.otaUpdates = config.otaUpdates || {};
   config.otaUpdates.enabled = true;
-  config.otaUpdates.currentBundleVersion = '1.2.2.18';
-  config.otaUpdates.bundleChecksum = '435afa3c61a44d42ffc13ba07618acbb419c76c97c1e6eec25aac279ef1fd8ab';
-  config.otaUpdates.bundleUrl = 'https://raw.githubusercontent.com/Omverma713/HostelCare/main/public/ota-bundles/hostelcare-bundle-v1.2.2.18.zip';
+  config.otaUpdates.currentBundleVersion = '1.2.2.19';
+  config.otaUpdates.bundleChecksum = 'b7dad6783449f6d919a6c42d6fe53c634b9c1f2a49d1d3bd5295d4a385a4ef6a';
+  config.otaUpdates.bundleUrl = 'https://raw.githubusercontent.com/Omverma713/HostelCare/main/public/ota-bundles/hostelcare-bundle-v1.2.2.19.zip';
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
 
   config.appVersion = config.appVersion || {};
-  config.appVersion.latestVersion = '1.2.2.18';
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.18: ITER Academics Hub, Class Timetable Engine & Exam Radar';
+  config.appVersion.latestVersion = '1.2.2.19';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.19: ITER Academics Hub, Class Timetable Engine & Exam Radar';
 
   config.markModified('otaUpdates');
   config.markModified('appVersion');
