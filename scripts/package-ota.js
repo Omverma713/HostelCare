@@ -63,8 +63,11 @@ const isWindows = process.platform === 'win32';
 
 try {
   if (isWindows) {
-    const psCmd = `powershell -NoProfile -Command "Compress-Archive -Path '${distDir}/*' -DestinationPath '${versionedZipPath}' -Force"`;
-    execSync(psCmd, { stdio: 'inherit' });
+    // CRITICAL: Do NOT use PowerShell Compress-Archive!
+    // Compress-Archive uses Windows backslashes (\) in entry paths (e.g. assets\app.js),
+    // which breaks Android (Linux kernel) unzip and causes instant rollback.
+    // Built-in tar.exe creates standard zip with POSIX forward slashes (assets/app.js).
+    execSync(`cd "${distDir}" && tar.exe -a -c -f "${versionedZipPath}" *`, { stdio: 'inherit' });
   } else {
     execSync(`cd "${distDir}" && zip -r "${versionedZipPath}" .`, { stdio: 'inherit' });
   }
