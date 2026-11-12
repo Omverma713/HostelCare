@@ -313,7 +313,7 @@ const handleSendMessage = (e) => {
   };
 
   return (
-    <div className={embedded ? "warm-linen-embedded" : "app-shell"} style={embedded ? { width: '100%', maxWidth: 1080, margin: '0 auto', background: 'transparent' } : {}}>
+    <div className={embedded ? "warm-linen-embedded" : "app-shell"} style={embedded ? { width: '100%', margin: 0, background: 'transparent' } : {}}>
       {/* 1. TOP NAVBAR */}
       {!embedded && (
         <header className="top-navbar">
@@ -403,7 +403,7 @@ const handleSendMessage = (e) => {
 
       )}
       {/* 2. WORKSPACE LAYOUT (SIDEBAR + MAIN CONTENT) */}
-      <div className="workspace-layout">
+      <div className={embedded ? "embedded-content-layout" : "workspace-layout"}>
         {/* DOCK SPACER TO PRESERVE NATURAL FLEX FLOW ON DESKTOP */}
         {!embedded && <div className="sidebar-dock-spacer" />}
 
@@ -504,7 +504,7 @@ const handleSendMessage = (e) => {
         )}
 
         {/* MAIN VIEWPORT */}
-        <main className="main-viewport" style={embedded ? { padding: '8px 16px 85px', flex: 1, maxWidth: 1060, margin: '0 auto', width: '100%', boxSizing: 'border-box' } : {}}>
+        <main className={embedded ? "embedded-viewport" : "main-viewport"} style={embedded ? { padding: '4px 0 88px', flex: 1, width: '100%', margin: 0, boxSizing: 'border-box' } : {}}>
           {/* =========================================================================
               VIEW 1: CONCEPT 1 ESPRESSO LUXURY WORKSPACE DASHBOARD (EXACT MATCH)
              ========================================================================= */}
