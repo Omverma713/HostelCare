@@ -248,7 +248,6 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
       const json = await res.json();
       if (json.success && json.parsedData) {
-        // Save parsed timetable
         await handleSaveParsedSchedule(json.parsedData);
       } else {
         throw new Error(json.message || "Failed to parse timetable");
@@ -368,8 +367,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               onClick={onBackToHome}
               style={{
                 background: "transparent",
-                border: "1px solid #C07660",
-                color: "#C07660",
+                border: "1px solid var(--accent-terracotta, #C07660)",
+                color: "var(--accent-terracotta, #C07660)",
                 borderRadius: 9999,
                 padding: "8px 16px",
                 fontSize: 13,
@@ -456,17 +455,17 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                     <span className="meta-item">
                       ⏰ <strong>Timing:</strong> {currentLiveClass.activeSlot.startTime} – {currentLiveClass.activeSlot.endTime}
                     </span>
-                    <span className="meta-item" style={{ color: "#C07660", fontWeight: 700 }}>
+                    <span className="meta-item" style={{ color: "var(--accent-terracotta, #C07660)", fontWeight: 700 }}>
                       ⏳ {currentLiveClass.activeSlot.remainingMins} mins remaining
                     </span>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <h3 className="live-subject-name" style={{ fontSize: 18, color: "#6B685F" }}>
+                  <h3 className="live-subject-name" style={{ fontSize: 18, color: "var(--text-secondary)" }}>
                     No ongoing lecture right now
                   </h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#8C887B" }}>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-muted)" }}>
                     Enjoy your break! Check the schedule below for upcoming lecture slots and hall numbers.
                   </p>
                 </div>
@@ -475,22 +474,22 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
             {/* Next Up Card */}
             <div className="live-class-card">
-              <span className="live-pulse-badge" style={{ background: "#F4EFEA", color: "#575854" }}>
+              <span className="live-pulse-badge" style={{ background: "var(--bg-subtle, #F4EFEA)", color: "var(--text-secondary)" }}>
                 ⏭️ Next Up Today
               </span>
               {currentLiveClass?.nextSlot ? (
                 <div>
-                  <h4 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, color: "#242523" }}>
+                  <h4 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
                     {currentLiveClass.nextSlot.subjectName}
                   </h4>
-                  <div style={{ fontSize: 12.5, color: "#6B685F", display: "flex", flexDirection: "column", gap: 3 }}>
+                  <div style={{ fontSize: 12.5, color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: 3 }}>
                     <span>📍 Hall: <strong>{currentLiveClass.nextSlot.room || "Room 304"}</strong></span>
                     <span>👨‍🏫 Faculty: {currentLiveClass.nextSlot.faculty || "Faculty Member"}</span>
                     <span>⏰ Starts at {currentLiveClass.nextSlot.startTime}</span>
                   </div>
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: "#8C887B", marginTop: 6 }}>
+                <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>
                   No more lectures scheduled for the remainder of today.
                 </div>
               )}
@@ -500,10 +499,10 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
           {/* Controls: Section & Edit / Upload Button */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, margin: "16px 0 8px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#242523" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
                 Section: {activeTimetable?.section || "CSE Section 5A"}
               </span>
-              <span style={{ fontSize: 12, color: "#8C887B" }}>• Base Hall: {activeTimetable?.classroom || "Room 304"}</span>
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>• Base Hall: {activeTimetable?.classroom || "Room 304"}</span>
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
@@ -512,8 +511,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   onClick={handleResetTimetable}
                   style={{
                     background: "transparent",
-                    border: "1px solid #E6DCD0",
-                    color: "#6B685F",
+                    border: "1px solid var(--border-subtle, #E6DCD0)",
+                    color: "var(--text-secondary)",
                     borderRadius: 10,
                     padding: "6px 12px",
                     fontSize: 12.5,
@@ -527,7 +526,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               <button
                 onClick={() => setShowEditModal(true)}
                 style={{
-                  background: "#C07660",
+                  background: "var(--accent-terracotta, #C07660)",
                   color: "#FAF7F2",
                   border: "none",
                   borderRadius: 10,
@@ -567,7 +566,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
           {/* Schedule List */}
           <div className="timetable-timeline">
             {currentDaySlots.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 20px", color: "#8C887B" }}>
+              <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>
                 ☕ No classes scheduled for {selectedDay}.
               </div>
             ) : (
@@ -600,8 +599,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                           padding: "4px 10px",
                           borderRadius: 9999,
                           textTransform: "uppercase",
-                          background: isLab ? "#FEF3C7" : "#F4EFEA",
-                          color: isLab ? "#92400E" : "#575854",
+                          background: isLab ? "rgba(216, 139, 116, 0.2)" : "var(--bg-subtle, #F4EFEA)",
+                          color: isLab ? "var(--accent-terracotta, #D88B74)" : "var(--text-secondary)",
                         }}
                       >
                         {isLab ? "🔬 Lab Session" : "📖 Theory"}
@@ -626,12 +625,12 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                 <span className={`exam-status-tag ${examRadar.status}`}>
                   {examRadar.statusBadgeText || (examRadar.status === "yet_to_be_decided" ? "⏳ Yet to be Decided" : "📢 Datesheet Released")}
                 </span>
-                <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 24, margin: "10px 0 6px", color: "#242523" }}>
+                <h2 className="exam-hero-title">
                   {examRadar.title || "Mid Semester Examination 2026-27"}
                 </h2>
-                <div style={{ fontSize: 13.5, color: "#6B685F" }}>
+                <div style={{ fontSize: 13.5, color: "var(--text-secondary)" }}>
                   🗓️ <strong>Tentative Examination Window:</strong>{" "}
-                  <span style={{ color: "#C07660", fontWeight: 700 }}>
+                  <span style={{ color: "var(--accent-terracotta, #C07660)", fontWeight: 700 }}>
                     {examRadar.tentativeDateRange || "26th October to 4th November 2026 (Odd Sem)"}
                   </span>
                 </div>
@@ -642,7 +641,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                 <button
                   onClick={() => setShowAdminExamModal(true)}
                   style={{
-                    background: "#242523",
+                    background: "var(--accent-terracotta, #C07660)",
                     color: "#FAF7F2",
                     border: "none",
                     borderRadius: 10,
@@ -653,6 +652,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
+                    boxShadow: "0 2px 8px rgba(192, 118, 96, 0.3)",
                   }}
                 >
                   ⚙️ Admin: Update Datesheet & Syllabus
@@ -660,21 +660,21 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               )}
             </div>
 
-            <p style={{ margin: "12px 0 0", fontSize: 13.5, color: "#575854", lineHeight: 1.5, background: "#FAF7F2", padding: "12px 16px", borderRadius: 12, border: "1px solid #EAE3D6" }}>
+            <p className="exam-notice-box">
               📌 <strong>Examination Division Notice:</strong> {examRadar.notice}
             </p>
           </div>
 
           {/* Published Datesheet Table (When Announced) */}
           {examRadar.publishedDatesheet && examRadar.publishedDatesheet.length > 0 ? (
-            <div style={{ background: "#FAF7F2", border: "1px solid #EAE3D6", borderRadius: 18, padding: 20 }}>
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 18, margin: "0 0 14px", color: "#242523" }}>
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: 18, padding: 20 }}>
+              <h3 className="exam-section-heading" style={{ margin: "0 0 14px" }}>
                 Official Examination Datesheet
               </h3>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
                   <thead>
-                    <tr style={{ borderBottom: "2px solid #EAE3D6", textAlign: "left", color: "#8C887B" }}>
+                    <tr style={{ borderBottom: "2px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
                       <th style={{ padding: "10px 12px" }}>Date</th>
                       <th style={{ padding: "10px 12px" }}>Subject</th>
                       <th style={{ padding: "10px 12px" }}>Time</th>
@@ -683,11 +683,11 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   </thead>
                   <tbody>
                     {examRadar.publishedDatesheet.map((row, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #F4EFEA" }}>
-                        <td style={{ padding: "10px 12px", fontWeight: 700, color: "#C07660" }}>{row.examDate}</td>
-                        <td style={{ padding: "10px 12px", fontWeight: 600 }}>{row.subjectName} ({row.subjectCode})</td>
-                        <td style={{ padding: "10px 12px" }}>{row.examTime}</td>
-                        <td style={{ padding: "10px 12px" }}>{row.roomNumber || "Announced on Admit Card"}</td>
+                      <tr key={idx} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                        <td style={{ padding: "10px 12px", fontWeight: 700, color: "var(--accent-terracotta, #C07660)" }}>{row.examDate}</td>
+                        <td style={{ padding: "10px 12px", fontWeight: 600, color: "var(--text-primary)" }}>{row.subjectName} ({row.subjectCode})</td>
+                        <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{row.examTime}</td>
+                        <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{row.roomNumber || "Announced on Admit Card"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -695,10 +695,10 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               </div>
             </div>
           ) : (
-            <div style={{ background: "#FAF7F2", border: "1px dashed #D88B74", borderRadius: 16, padding: "20px 24px", textAlign: "center" }}>
+            <div className="datesheet-empty-box">
               <div style={{ fontSize: 24, marginBottom: 6 }}>📋</div>
-              <h4 style={{ margin: "0 0 4px", fontSize: 15, color: "#242523" }}>Official Datesheet Yet to be Released</h4>
-              <p style={{ margin: 0, fontSize: 13, color: "#6B685F" }}>
+              <h4 className="datesheet-empty-title">Official Datesheet Yet to be Released</h4>
+              <p className="datesheet-empty-sub">
                 The examination schedule is currently under finalization by the Dean of Examinations. When dates are declared, the subject timetable will reflect here.
               </p>
             </div>
@@ -706,7 +706,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
           {/* Per-Subject Exam Syllabus Coverage */}
           <div>
-            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 19, margin: "16px 0 12px", color: "#242523" }}>
+            <h3 className="exam-section-heading">
               Exam Syllabus Coverage (5th Semester)
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -722,23 +722,23 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   >
                     <div className="syllabus-item-header">
                       <div>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "#C07660", marginRight: 8 }}>{course.code}</span>
-                        <strong style={{ fontSize: 14, color: "#242523" }}>{course.name}</strong>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--accent-terracotta, #C07660)", marginRight: 8 }}>{course.code}</span>
+                        <strong className="syllabus-course-title">{course.name}</strong>
                       </div>
-                      <span style={{ fontSize: 12, color: "#8C887B" }}>{isExpanded ? "▲ Hide" : "▼ Syllabus"}</span>
+                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{isExpanded ? "▲ Hide" : "▼ Syllabus"}</span>
                     </div>
 
                     {isExpanded && (
-                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #EAE3D6", fontSize: 13, lineHeight: 1.6, color: "#575854" }}>
-                        <div style={{ marginBottom: 8, padding: "8px 12px", borderRadius: 8, background: "#FFF8F5", border: "1px solid #F4EBE6" }}>
-                          <strong style={{ color: "#9C5B49" }}>Mid-Sem Target Modules:</strong>{" "}
+                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border-subtle)", fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+                        <div className="syllabus-module-box">
+                          <strong style={{ color: "var(--accent-terracotta, #C07660)" }}>Mid-Sem Target Modules:</strong>{" "}
                           {radarSyllabus?.syllabusCoverage || "Modules 1 & 2 (Tentative). Official unit coverage will be updated once faculty releases question bank."}
                         </div>
-                        <div>
-                          <strong>Prescribed Textbook:</strong> {course.textbooks}
+                        <div style={{ color: "var(--text-secondary)" }}>
+                          <strong style={{ color: "var(--text-primary)" }}>Prescribed Textbook:</strong> {course.textbooks}
                         </div>
-                        <div style={{ marginTop: 6 }}>
-                          <strong>Full Syllabus Topics:</strong> {course.syllabus}
+                        <div style={{ marginTop: 6, color: "var(--text-secondary)" }}>
+                          <strong style={{ color: "var(--text-primary)" }}>Full Syllabus Topics:</strong> {course.syllabus}
                         </div>
                       </div>
                     )}
@@ -755,7 +755,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
          ========================================================================= */}
       {activeSubTab === "curriculum" && (
         <div>
-          <div style={{ margin: "14px 0 16px", padding: "12px 16px", borderRadius: 12, background: "#FAF7F2", border: "1px solid #EAE3D6", fontSize: 13, color: "#6B685F" }}>
+          <div className="curriculum-note-box">
             📌 <strong>Curriculum Handbook Note:</strong> B.Tech CSE Admission Batches 2024 + 2025. Subjects with Black Highlighting (CSE 3544, CSE 3249, CSE 3751) are strictly required for promotion to 4th year. <em>The prescribed textbooks are required and will be the only ones used.</em>
           </div>
 
@@ -785,13 +785,13 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                       <span className="meta-chip">📊 Pattern: GP-{course.gradingPattern}</span>
                     </div>
 
-                    <div style={{ fontSize: 12.5, color: "#6B685F", marginBottom: 10, lineHeight: 1.4 }}>
-                      📚 <strong>Prescribed Book:</strong> {course.textbooks}
+                    <div style={{ fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 10, lineHeight: 1.4 }}>
+                      📚 <strong style={{ color: "var(--text-primary)" }}>Prescribed Book:</strong> {course.textbooks}
                     </div>
 
                     {isExpanded && (
-                      <div style={{ fontSize: 12, color: "#575854", lineHeight: 1.6, background: "#FFFBF8", padding: 12, borderRadius: 10, border: "1px solid #F4EBE6", marginTop: 8 }}>
-                        <strong>Curriculum Modules:</strong>
+                      <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6, background: "var(--bg-subtle, #FFFBF8)", padding: 12, borderRadius: 10, border: "1px solid var(--border-subtle)", marginTop: 8 }}>
+                        <strong style={{ color: "var(--text-primary)" }}>Curriculum Modules:</strong>
                         <p style={{ margin: "4px 0 0", whiteSpace: "pre-line" }}>{course.syllabus}</p>
                       </div>
                     )}
@@ -804,9 +804,9 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                       width: "100%",
                       padding: "8px",
                       borderRadius: 10,
-                      background: isExpanded ? "#F4EFEA" : "transparent",
-                      border: "1px solid #E6DCD0",
-                      color: "#C07660",
+                      background: isExpanded ? "var(--bg-subtle)" : "transparent",
+                      border: "1px solid var(--border-subtle)",
+                      color: "var(--accent-terracotta, #C07660)",
                       fontSize: 12,
                       fontWeight: 700,
                       cursor: "pointer",
@@ -826,14 +826,14 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
          ========================================================================= */}
       {activeSubTab === "calendar" && (
         <div>
-          <div style={{ margin: "14px 0 16px", padding: "12px 16px", borderRadius: 12, background: "#FAF7F2", border: "1px solid #EAE3D6", fontSize: 13, color: "#575854" }}>
+          <div className="curriculum-note-box">
             ℹ️ <strong>Official Student Holiday Policy:</strong> Reflects exactly the 12 official Gazetted Holidays for calendar year 2026. The 10 optional holidays (for hospital and administrative staff only) have been excluded.
           </div>
 
           <div className="holidays-calendar-layout">
             {/* Gazetted Holidays */}
             <div className="calendar-section-card">
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 18, margin: "0 0 14px", color: "#242523" }}>
+              <h3 className="calendar-section-heading">
                 Official Gazetted Holidays (2026)
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -841,7 +841,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   <div key={i} className="holiday-row">
                     <div>
                       <div className="holiday-name">{h.name}</div>
-                      <div style={{ fontSize: 11.5, color: "#8C887B" }}>{h.dayOfWeek} • {h.description || "University Holiday"}</div>
+                      <div className="holiday-subtext">{h.dayOfWeek} • {h.description || "University Holiday"}</div>
                     </div>
                     <span className="holiday-date">{h.date}</span>
                   </div>
@@ -851,17 +851,17 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
             {/* Academic Milestones */}
             <div className="calendar-section-card">
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 18, margin: "0 0 14px", color: "#242523" }}>
+              <h3 className="calendar-section-heading">
                 Odd Semester Milestones (2026)
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {academicData?.calendar?.oddSemester?.map((m, i) => (
-                  <div key={i} style={{ padding: "10px 12px", background: "#FFFDF9", border: "1px solid #F4EBE6", borderRadius: 10 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: "#242523" }}>{m.title}</div>
-                    <div style={{ fontSize: 12, color: "#C07660", fontWeight: 700, marginTop: 2 }}>🗓️ {m.date}</div>
+                  <div key={i} className="milestone-item-box">
+                    <div className="milestone-item-title">{m.title}</div>
+                    <div className="milestone-item-date">🗓️ {m.date}</div>
                   </div>
                 )) || (
-                  <div style={{ fontSize: 13, color: "#8C887B" }}>
+                  <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
                     • Odd Sem Commencement: 27th August 2026<br />
                     • Mid Semester Examination: 26th October to 4th November 2026<br />
                     • End Semester Lab Exam: 17th December to 24th December 2026<br />
@@ -869,13 +869,13 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   </div>
                 )}
 
-                <h4 style={{ fontFamily: "var(--font-serif)", fontSize: 16, margin: "14px 0 6px", color: "#242523" }}>
+                <h4 className="calendar-section-heading" style={{ fontSize: 16, margin: "14px 0 6px" }}>
                   Even Semester Milestones (2027)
                 </h4>
                 {academicData?.calendar?.evenSemester?.map((m, i) => (
-                  <div key={i} style={{ padding: "10px 12px", background: "#FFFDF9", border: "1px solid #F4EBE6", borderRadius: 10 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: "#242523" }}>{m.title}</div>
-                    <div style={{ fontSize: 12, color: "#C07660", fontWeight: 700, marginTop: 2 }}>🗓️ {m.date}</div>
+                  <div key={i} className="milestone-item-box">
+                    <div className="milestone-item-title">{m.title}</div>
+                    <div className="milestone-item-date">🗓️ {m.date}</div>
                   </div>
                 ))}
               </div>
@@ -891,50 +891,50 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
         <div className="acad-modal-backdrop" onClick={() => setShowEditModal(false)}>
           <div className="acad-modal-window" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 20, margin: 0, color: "#242523" }}>
+              <h3 className="acad-modal-title">
                 Smart Timetable Parser Engine
               </h3>
               <button
                 onClick={() => setShowEditModal(false)}
-                style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#8C887B" }}
+                style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}
               >
                 ✕
               </button>
             </div>
 
-            <p style={{ fontSize: 13, color: "#6B685F", margin: "0 0 16px", lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 16px", lineHeight: 1.5 }}>
               Paste your branch/section timetable text, WhatsApp class schedule message, or copy-pasted table rows below. The engine will extract the <strong>Classroom Number</strong>, <strong>Teacher Name</strong>, <strong>Subject Code</strong>, and <strong>Time Slots</strong> automatically!
             </p>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#575854", marginBottom: 4 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
                   Section Name
                 </label>
                 <input
                   type="text"
+                  className="acad-input"
                   value={customSection}
                   onChange={(e) => setCustomSection(e.target.value)}
                   placeholder="e.g. CSE Section 5A"
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #E6DCD0", background: "#FFFDF9", fontSize: 13, boxSizing: "border-box" }}
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#575854", marginBottom: 4 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
                   Default Classroom / Hall
                 </label>
                 <input
                   type="text"
+                  className="acad-input"
                   value={customRoom}
                   onChange={(e) => setCustomRoom(e.target.value)}
                   placeholder="e.g. Room 304 (C-Block)"
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #E6DCD0", background: "#FFFDF9", fontSize: 13, boxSizing: "border-box" }}
                 />
               </div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#575854", marginBottom: 4 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
                 Paste Timetable Text / Schedule Data
               </label>
               <textarea
@@ -949,7 +949,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               <button
                 type="button"
                 onClick={() => setShowEditModal(false)}
-                style={{ background: "#F4EFEA", border: "1px solid #E6DCD0", color: "#575854", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
               >
                 Cancel
               </button>
@@ -958,7 +958,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                 onClick={handleAutoParseTimetable}
                 disabled={parsingEngineRunning}
                 style={{
-                  background: "#C07660",
+                  background: "var(--accent-terracotta, #C07660)",
                   color: "#FAF7F2",
                   border: "none",
                   borderRadius: 10,
@@ -985,25 +985,25 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
         <div className="acad-modal-backdrop" onClick={() => setShowAdminExamModal(false)}>
           <div className="acad-modal-window" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 20, margin: 0, color: "#242523" }}>
+              <h3 className="acad-modal-title">
                 SuperAdmin Exam Radar Setup
               </h3>
               <button
                 onClick={() => setShowAdminExamModal(false)}
-                style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#8C887B" }}
+                style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}
               >
                 ✕
               </button>
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#575854", marginBottom: 4 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
                 Exam Status
               </label>
               <select
+                className="acad-input"
                 value={adminExamStatus}
                 onChange={(e) => setAdminExamStatus(e.target.value)}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #E6DCD0", background: "#FFFDF9", fontSize: 13 }}
               >
                 <option value="yet_to_be_decided">⏳ Yet to be Decided (Tentative Countdown)</option>
                 <option value="announced">📢 Datesheet Announced (Show Datesheet Table)</option>
@@ -1013,38 +1013,39 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#575854", marginBottom: 4 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
                 Exam Title
               </label>
               <input
                 type="text"
+                className="acad-input"
                 value={adminExamTitle}
                 onChange={(e) => setAdminExamTitle(e.target.value)}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #E6DCD0", background: "#FFFDF9", fontSize: 13, boxSizing: "border-box" }}
               />
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#575854", marginBottom: 4 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
                 Tentative Date Range
               </label>
               <input
                 type="text"
+                className="acad-input"
                 value={adminExamRange}
                 onChange={(e) => setAdminExamRange(e.target.value)}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #E6DCD0", background: "#FFFDF9", fontSize: 13, boxSizing: "border-box" }}
               />
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#575854", marginBottom: 4 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
                 Official Examination Division Notice
               </label>
               <textarea
+                className="acad-textarea"
                 value={adminExamNotice}
                 onChange={(e) => setAdminExamNotice(e.target.value)}
                 placeholder="Notice message for students..."
-                style={{ width: "100%", minHeight: 80, padding: "10px 12px", borderRadius: 10, border: "1px solid #E6DCD0", background: "#FFFDF9", fontSize: 13, boxSizing: "border-box" }}
+                style={{ minHeight: 80 }}
               />
             </div>
 
@@ -1052,14 +1053,14 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               <button
                 type="button"
                 onClick={() => setShowAdminExamModal(false)}
-                style={{ background: "#F4EFEA", border: "1px solid #E6DCD0", color: "#575854", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveExamRadarAdmin}
-                style={{ background: "#242523", color: "#FAF7F2", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                style={{ background: "var(--accent-terracotta, #C07660)", color: "#FAF7F2", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
               >
                 Publish Exam Updates
               </button>
@@ -1070,4 +1071,3 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
     </div>
   );
 }
-

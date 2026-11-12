@@ -1606,6 +1606,40 @@ body.login-dark-theme button[style*="background: #FAF8F5"] {
   color: #9E958A !important;
 }
 
+/* Universal High-Contrast Typography & Surface Protection for Dark Theme */
+html.dark-theme .detailed-view-container h1,
+html.dark-theme .detailed-view-container h2,
+html.dark-theme .detailed-view-container h3,
+html.dark-theme .detailed-view-container h4,
+html.dark-theme .detailed-view-container strong,
+html.dark-theme .concept1-dashboard-container h1,
+html.dark-theme .concept1-dashboard-container h2,
+html.dark-theme .concept1-dashboard-container h3,
+html.dark-theme .concept1-dashboard-container h4,
+html.dark-theme .concept1-dashboard-container strong,
+body.login-dark-theme .detailed-view-container h1,
+body.login-dark-theme .detailed-view-container h2,
+body.login-dark-theme .detailed-view-container h3,
+body.login-dark-theme .detailed-view-container h4,
+body.login-dark-theme .detailed-view-container strong {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .detailed-view-container p,
+html.dark-theme .concept1-dashboard-container p,
+body.login-dark-theme .detailed-view-container p {
+  color: #DED7CB !important;
+}
+
+html.dark-theme div[style*="background: #FFFFFF"],
+html.dark-theme div[style*="background: rgb(255, 255, 255)"],
+body.login-dark-theme div[style*="background: #FFFFFF"],
+body.login-dark-theme div[style*="background: rgb(255, 255, 255)"] {
+  background: #231E1A !important;
+  border-color: #383028 !important;
+  color: #F2EDE4 !important;
+}
+
 
 
 /* ==========================================================================

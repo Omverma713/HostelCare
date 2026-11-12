@@ -1,5 +1,6 @@
 /* =========================================================================
    ACADEMICS HUB & TIMETABLE ENGINE - WARM LINEN & TERRACOTTA PALETTE
+   Full Dynamic Light & Dark Theme Contrast Support
    ========================================================================= */
 
 .academics-hub-container {
@@ -8,6 +9,7 @@
   padding: 12px 16px 80px;
   box-sizing: border-box;
   animation: acadFadeIn 0.3s ease-out;
+  color: var(--text-primary, #242523);
 }
 
 @keyframes acadFadeIn {
@@ -17,14 +19,15 @@
 
 /* --- Top Header Card --- */
 .acad-header-card {
-  background: #FAF7F2;
-  border: 1px solid #EAE3D6;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #EAE3D6);
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(105, 93, 76, 0.05);
   margin-bottom: 20px;
   position: relative;
   overflow: hidden;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .acad-header-card::before {
@@ -42,7 +45,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .acad-pill {
@@ -55,8 +58,8 @@
   letter-spacing: 0.06em;
   padding: 4px 10px;
   border-radius: 9999px;
-  background: #F4EBE6;
-  color: #9C5B49;
+  background: var(--primary-matcha-soft, #F4EBE6);
+  color: var(--primary-matcha-dark, #9C5B49);
   border: 1px solid rgba(156, 91, 73, 0.2);
 }
 
@@ -76,14 +79,14 @@
   font-family: var(--font-serif, "Playfair Display", Georgia, serif);
   font-size: 26px;
   font-weight: 700;
-  color: #242523;
+  color: var(--text-primary, #242523);
   margin: 0 0 6px;
   line-height: 1.25;
 }
 
 .acad-subtitle {
   font-size: 14px;
-  color: #6B685F;
+  color: var(--text-secondary, #6B685F);
   margin: 0 0 18px;
   line-height: 1.5;
 }
@@ -94,8 +97,8 @@
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
-  padding-bottom: 2px;
-  border-bottom: 1px solid #EAE3D6;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle, #EAE3D6);
 }
 
 .acad-nav-tabs::-webkit-scrollbar {
@@ -111,7 +114,7 @@
   font-size: 13.5px;
   font-weight: 600;
   background: transparent;
-  color: #6B685F;
+  color: var(--text-secondary, #6B685F);
   border: none;
   cursor: pointer;
   white-space: nowrap;
@@ -119,14 +122,14 @@
 }
 
 .acad-nav-tab:hover {
-  background: rgba(192, 118, 96, 0.08);
-  color: #C07660;
+  background: rgba(192, 118, 96, 0.1);
+  color: var(--accent-terracotta, #C07660);
 }
 
 .acad-nav-tab.active {
-  background: #C07660;
+  background: var(--accent-terracotta, #C07660);
   color: #FAF7F2;
-  box-shadow: 0 4px 12px rgba(192, 118, 96, 0.3);
+  box-shadow: 0 4px 12px rgba(192, 118, 96, 0.35);
 }
 
 /* =========================================================================
@@ -147,18 +150,18 @@
 }
 
 .live-class-card {
-  background: #FAF7F2;
-  border: 1px solid #E6DCD0;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #E6DCD0);
   border-radius: 18px;
   padding: 20px;
   position: relative;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(105, 93, 76, 0.06);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .live-class-card.active-pulse {
-  border-color: #C07660;
-  background: linear-gradient(135deg, #FAF7F2 0%, #FFF8F5 100%);
+  border-color: var(--accent-terracotta, #C07660);
 }
 
 .live-pulse-badge {
@@ -169,8 +172,8 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #C07660;
-  background: #F9EBE6;
+  color: var(--accent-terracotta, #C07660);
+  background: var(--primary-matcha-soft, #F9EBE6);
   padding: 4px 10px;
   border-radius: 9999px;
   margin-bottom: 12px;
@@ -180,7 +183,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #C07660;
+  background: var(--accent-terracotta, #C07660);
   box-shadow: 0 0 0 0 rgba(192, 118, 96, 0.7);
   animation: pulseDotAnim 1.8s infinite;
 }
@@ -195,7 +198,7 @@
   font-family: var(--font-serif, "Playfair Display", Georgia, serif);
   font-size: 20px;
   font-weight: 700;
-  color: #242523;
+  color: var(--text-primary, #242523);
   margin: 0 0 6px;
 }
 
@@ -204,7 +207,7 @@
   flex-wrap: wrap;
   gap: 12px;
   font-size: 13px;
-  color: #575854;
+  color: var(--text-secondary, #575854);
   margin-top: 10px;
 }
 
@@ -233,9 +236,9 @@
   min-width: 90px;
   padding: 10px 14px;
   border-radius: 12px;
-  border: 1px solid #E6DCD0;
-  background: #FAF7F2;
-  color: #575854;
+  border: 1px solid var(--border-subtle, #E6DCD0);
+  background: var(--bg-card, #FAF7F2);
+  color: var(--text-secondary, #575854);
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
@@ -248,13 +251,14 @@
 
 .day-btn .day-slot-count {
   font-size: 11px;
-  color: #8C887B;
+  color: var(--text-muted, #8C887B);
   font-weight: 500;
 }
 
 .day-btn:hover {
-  background: #F4EBE6;
-  border-color: #D88B74;
+  background: var(--bg-subtle, #F4EBE6);
+  border-color: var(--accent-terracotta, #D88B74);
+  color: var(--text-primary, #242523);
 }
 
 .day-btn.active {
@@ -281,26 +285,26 @@
   grid-template-columns: 160px 1fr auto;
   gap: 16px;
   align-items: center;
-  background: #FAF7F2;
-  border: 1px solid #EAE3D6;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #EAE3D6);
   border-radius: 16px;
   padding: 16px 20px;
   transition: all 0.2s ease;
 }
 
 .timetable-slot-card:hover {
-  border-color: #D88B74;
+  border-color: var(--accent-terracotta, #D88B74);
   box-shadow: 0 4px 16px rgba(105, 93, 76, 0.08);
 }
 
 .timetable-slot-card.is-lab {
-  border-left: 4px solid #D88B74;
-  background: #FFFBF8;
+  border-left: 4px solid var(--accent-terracotta, #D88B74);
+  background: var(--bg-card, #FFFBF8);
 }
 
 .timetable-slot-card.is-current {
-  border-left: 4px solid #C07660;
-  background: #FAF3EE;
+  border-left: 4px solid var(--primary-matcha-dark, #C07660);
+  background: var(--bg-subtle, #FAF3EE);
   box-shadow: 0 4px 18px rgba(192, 118, 96, 0.15);
 }
 
@@ -313,12 +317,12 @@
 .slot-time-range {
   font-weight: 700;
   font-size: 13.5px;
-  color: #242523;
+  color: var(--text-primary, #242523);
 }
 
 .slot-duration {
   font-size: 11px;
-  color: #8C887B;
+  color: var(--text-muted, #8C887B);
 }
 
 .slot-content-col {
@@ -330,7 +334,7 @@
 .slot-title {
   font-size: 15px;
   font-weight: 600;
-  color: #242523;
+  color: var(--text-primary, #242523);
 }
 
 .slot-sub-info {
@@ -338,7 +342,7 @@
   flex-wrap: wrap;
   gap: 12px;
   font-size: 12.5px;
-  color: #6B685F;
+  color: var(--text-secondary, #6B685F);
 }
 
 .slot-badge-col {
@@ -359,7 +363,7 @@
 }
 
 /* =========================================================================
-   TAB 2: EXAM RADAR
+   TAB 2: EXAM RADAR (HERO, NOTICE, TABLE & ACCORDIONS)
    ========================================================================= */
 
 .exam-radar-container {
@@ -370,11 +374,12 @@
 }
 
 .exam-hero-box {
-  background: linear-gradient(135deg, #FAF7F2 0%, #F5ECE5 100%);
-  border: 1px solid #E6DCD0;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #E6DCD0);
   border-radius: 18px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(105, 93, 76, 0.06);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .exam-hero-top {
@@ -384,6 +389,14 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.exam-hero-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary, #242523);
+  margin: 10px 0 6px;
 }
 
 .exam-status-tag {
@@ -407,18 +420,62 @@
   border: 1px solid #A7F3D0;
 }
 
-.syllabus-accordion-item {
-  background: #FAF7F2;
-  border: 1px solid #EAE3D6;
+.exam-notice-box {
+  margin: 14px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  background: var(--bg-subtle, #FBF8F3);
+  color: var(--text-secondary, #575854);
+  padding: 14px 18px;
   border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 10px;
+  border: 1px solid var(--border-subtle, #EAE3D6);
+  transition: all 0.2s ease;
+}
+
+.datesheet-empty-box {
+  background: var(--bg-card, #FAF7F2);
+  border: 1px dashed var(--accent-terracotta, #D88B74);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.datesheet-empty-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary, #242523);
+}
+
+.datesheet-empty-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, #6B685F);
+  line-height: 1.5;
+}
+
+.exam-section-heading {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary, #242523);
+  margin: 18px 0 14px;
+}
+
+/* Syllabus Accordions */
+.syllabus-accordion-item {
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #EAE3D6);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .syllabus-accordion-item:hover {
-  border-color: #D88B74;
+  border-color: var(--accent-terracotta, #D88B74);
 }
 
 .syllabus-item-header {
@@ -426,6 +483,21 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+.syllabus-course-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary, #242523);
+}
+
+.syllabus-module-box {
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--primary-matcha-soft, #FFF8F5);
+  border: 1px solid rgba(216, 139, 116, 0.3);
+  color: var(--text-secondary, #575854);
 }
 
 /* =========================================================================
@@ -445,9 +517,20 @@
   }
 }
 
+.curriculum-note-box {
+  margin: 14px 0 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #EAE3D6);
+  font-size: 13px;
+  color: var(--text-secondary, #6B685F);
+  line-height: 1.5;
+}
+
 .curriculum-card {
-  background: #FAF7F2;
-  border: 1px solid #EAE3D6;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #EAE3D6);
   border-radius: 18px;
   padding: 20px;
   display: flex;
@@ -459,7 +542,7 @@
 
 .curriculum-card:hover {
   transform: translateY(-2px);
-  border-color: #D88B74;
+  border-color: var(--accent-terracotta, #D88B74);
   box-shadow: 0 8px 24px rgba(192, 118, 96, 0.12);
 }
 
@@ -474,8 +557,8 @@
   font-family: monospace;
   font-weight: 700;
   font-size: 13px;
-  color: #C07660;
-  background: #F9EBE6;
+  color: var(--accent-terracotta, #C07660);
+  background: var(--primary-matcha-soft, #F9EBE6);
   padding: 4px 8px;
   border-radius: 8px;
 }
@@ -493,7 +576,7 @@
 .course-name {
   font-size: 16px;
   font-weight: 700;
-  color: #242523;
+  color: var(--text-primary, #242523);
   margin: 0 0 10px;
   line-height: 1.35;
 }
@@ -507,11 +590,11 @@
 
 .meta-chip {
   font-size: 11px;
-  background: #F4EFEA;
-  color: #575854;
+  background: var(--bg-subtle, #F4EFEA);
+  color: var(--text-secondary, #575854);
   padding: 3px 8px;
   border-radius: 6px;
-  border: 1px solid #E6DCD0;
+  border: 1px solid var(--border-subtle, #E6DCD0);
 }
 
 /* =========================================================================
@@ -532,11 +615,19 @@
 }
 
 .calendar-section-card {
-  background: #FAF7F2;
-  border: 1px solid #EAE3D6;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #EAE3D6);
   border-radius: 18px;
   padding: 20px;
   box-shadow: 0 4px 16px rgba(105, 93, 76, 0.04);
+}
+
+.calendar-section-heading {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #242523);
+  margin: 0 0 14px;
 }
 
 .holiday-row {
@@ -546,27 +637,53 @@
   padding: 10px 12px;
   border-radius: 10px;
   transition: background 0.15s ease;
-  border-bottom: 1px solid #F4EFEA;
+  border-bottom: 1px solid var(--border-subtle, #F4EFEA);
 }
 
 .holiday-row:hover {
-  background: #F9EBE6;
+  background: var(--primary-matcha-soft, #F9EBE6);
 }
 
 .holiday-name {
   font-weight: 600;
   font-size: 13.5px;
-  color: #242523;
+  color: var(--text-primary, #242523);
+}
+
+.holiday-subtext {
+  font-size: 11.5px;
+  color: var(--text-muted, #8C887B);
 }
 
 .holiday-date {
   font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-terracotta, #C07660);
+}
+
+.milestone-item-box {
+  padding: 10px 14px;
+  background: var(--bg-subtle, #FFFDF9);
+  border: 1px solid var(--border-subtle, #F4EBE6);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.milestone-item-title {
   font-weight: 600;
-  color: #C07660;
+  font-size: 13px;
+  color: var(--text-primary, #242523);
+}
+
+.milestone-item-date {
+  font-size: 12px;
+  color: var(--accent-terracotta, #C07660);
+  font-weight: 700;
+  margin-top: 3px;
 }
 
 /* =========================================================================
-   MODAL: TIMETABLE PARSER & EDITOR
+   MODALS: INPUTS & TEXTAREAS
    ========================================================================= */
 
 .acad-modal-backdrop {
@@ -584,8 +701,8 @@
 }
 
 .acad-modal-window {
-  background: #FAF7F2;
-  border: 1px solid #E6DCD0;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #E6DCD0);
   border-radius: 20px;
   width: 100%;
   max-width: 640px;
@@ -594,6 +711,32 @@
   padding: 24px;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
   position: relative;
+  color: var(--text-primary, #242523);
+}
+
+.acad-modal-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary, #242523);
+}
+
+.acad-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle, #E6DCD0);
+  background: var(--bg-subtle, #FFFDF9);
+  color: var(--text-primary, #242523);
+  font-size: 13px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.acad-input:focus {
+  border-color: var(--accent-terracotta, #C07660);
 }
 
 .acad-textarea {
@@ -602,23 +745,28 @@
   min-height: 140px;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid #E6DCD0;
-  background: #FFFDF9;
+  border: 1px solid var(--border-subtle, #E6DCD0);
+  background: var(--bg-subtle, #FFFDF9);
+  color: var(--text-primary, #242523);
   font-family: inherit;
   font-size: 13px;
-  color: #242523;
   resize: vertical;
   outline: none;
   transition: border-color 0.2s ease;
 }
 
 .acad-textarea:focus {
-  border-color: #C07660;
+  border-color: var(--accent-terracotta, #C07660);
 }
 
 /* =========================================================================
-   DARK THEME COMPATIBILITY
+   DARK THEME COMPREHENSIVE OVERRIDES (ESPRESSO LUXURY)
    ========================================================================= */
+
+html.dark-theme .academics-hub-container,
+body.login-dark-theme .academics-hub-container {
+  color: #F2EDE4 !important;
+}
 
 html.dark-theme .acad-header-card,
 body.login-dark-theme .acad-header-card,
@@ -630,15 +778,19 @@ html.dark-theme .timetable-slot-card,
 body.login-dark-theme .timetable-slot-card,
 html.dark-theme .exam-hero-box,
 body.login-dark-theme .exam-hero-box,
+html.dark-theme .datesheet-empty-box,
+body.login-dark-theme .datesheet-empty-box,
+html.dark-theme .syllabus-accordion-item,
+body.login-dark-theme .syllabus-accordion-item,
 html.dark-theme .curriculum-card,
 body.login-dark-theme .curriculum-card,
 html.dark-theme .calendar-section-card,
 body.login-dark-theme .calendar-section-card,
 html.dark-theme .acad-modal-window,
 body.login-dark-theme .acad-modal-window {
-  background: #1C1B19 !important;
-  border-color: #2E2D2A !important;
-  color: #EAE6DF !important;
+  background: #231E1A !important;
+  border-color: #383028 !important;
+  color: #F2EDE4 !important;
 }
 
 html.dark-theme .acad-title,
@@ -649,20 +801,100 @@ html.dark-theme .slot-title,
 body.login-dark-theme .slot-title,
 html.dark-theme .slot-time-range,
 body.login-dark-theme .slot-time-range,
+html.dark-theme .exam-hero-title,
+body.login-dark-theme .exam-hero-title,
+html.dark-theme .exam-section-heading,
+body.login-dark-theme .exam-section-heading,
+html.dark-theme .datesheet-empty-title,
+body.login-dark-theme .datesheet-empty-title,
+html.dark-theme .syllabus-course-title,
+body.login-dark-theme .syllabus-course-title,
 html.dark-theme .course-name,
 body.login-dark-theme .course-name,
+html.dark-theme .calendar-section-heading,
+body.login-dark-theme .calendar-section-heading,
 html.dark-theme .holiday-name,
-body.login-dark-theme .holiday-name {
-  color: #FAF7F2 !important;
+body.login-dark-theme .holiday-name,
+html.dark-theme .milestone-item-title,
+body.login-dark-theme .milestone-item-title,
+html.dark-theme .acad-modal-title,
+body.login-dark-theme .acad-modal-title {
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .acad-subtitle,
+body.login-dark-theme .acad-subtitle,
+html.dark-theme .datesheet-empty-sub,
+body.login-dark-theme .datesheet-empty-sub,
+html.dark-theme .slot-sub-info,
+body.login-dark-theme .slot-sub-info,
+html.dark-theme .live-subject-meta,
+body.login-dark-theme .live-subject-meta {
+  color: #C9BFAF !important;
+}
+
+html.dark-theme .exam-notice-box,
+body.login-dark-theme .exam-notice-box {
+  background: #2A2420 !important;
+  border-color: #4A3A2F !important;
+  color: #DED7CB !important;
+}
+
+html.dark-theme .curriculum-note-box,
+body.login-dark-theme .curriculum-note-box {
+  background: #231E1A !important;
+  border-color: #383028 !important;
+  color: #C9BFAF !important;
+}
+
+html.dark-theme .syllabus-module-box,
+body.login-dark-theme .syllabus-module-box {
+  background: #2C221C !important;
+  border-color: rgba(216, 139, 116, 0.3) !important;
+  color: #DED7CB !important;
+}
+
+html.dark-theme .milestone-item-box,
+body.login-dark-theme .milestone-item-box {
+  background: #1C1815 !important;
+  border-color: #383028 !important;
+}
+
+html.dark-theme .holiday-row:hover,
+body.login-dark-theme .holiday-row:hover {
+  background: #2C221C !important;
 }
 
 html.dark-theme .timetable-slot-card.is-lab,
 body.login-dark-theme .timetable-slot-card.is-lab {
-  background: #22201D !important;
+  background: #251F1B !important;
+  border-left-color: #D88B74 !important;
 }
 
 html.dark-theme .timetable-slot-card.is-current,
 body.login-dark-theme .timetable-slot-card.is-current {
-  background: #2A2420 !important;
+  background: #2D221C !important;
+  border-left-color: #D88B74 !important;
 }
 
+html.dark-theme .acad-input,
+body.login-dark-theme .acad-input,
+html.dark-theme .acad-textarea,
+body.login-dark-theme .acad-textarea {
+  background: #1C1815 !important;
+  border-color: #383028 !important;
+  color: #F2EDE4 !important;
+}
+
+html.dark-theme .meta-chip,
+body.login-dark-theme .meta-chip {
+  background: #1C1815 !important;
+  border-color: #383028 !important;
+  color: #C9BFAF !important;
+}
+
+html.dark-theme .promotion-badge,
+body.login-dark-theme .promotion-badge {
+  background: #383028 !important;
+  color: #FAF7F2 !important;
+}

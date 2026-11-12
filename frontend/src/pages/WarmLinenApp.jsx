@@ -330,8 +330,8 @@ const handleSendMessage = (e) => {
               onClick={() => { setCurrentUserRole('student'); if (activeTab === 'admin') setActiveTab('home'); }}
               style={{
                 border: 'none',
-                background: currentUserRole === 'student' ? '#FFFFFF' : 'transparent',
-                color: currentUserRole === 'student' ? '#242523' : '#73756F',
+                background: currentUserRole === 'student' ? 'var(--bg-card, #FFFFFF)' : 'transparent',
+                color: currentUserRole === 'student' ? 'var(--text-primary)' : 'var(--text-muted)',
                 padding: '6px 16px',
                 borderRadius: 9999,
                 fontSize: 12.5,
@@ -347,8 +347,8 @@ const handleSendMessage = (e) => {
               onClick={() => { setCurrentUserRole('admin'); setActiveTab('admin'); }}
               style={{
                 border: 'none',
-                background: currentUserRole === 'admin' ? '#FFFFFF' : 'transparent',
-                color: currentUserRole === 'admin' ? '#242523' : '#73756F',
+                background: currentUserRole === 'admin' ? 'var(--bg-card, #FFFFFF)' : 'transparent',
+                color: currentUserRole === 'admin' ? 'var(--text-primary)' : 'var(--text-muted)',
                 padding: '6px 16px',
                 borderRadius: 9999,
                 fontSize: 12.5,
@@ -810,7 +810,7 @@ const handleSendMessage = (e) => {
                   </button>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                     <div>
-                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: '#242523' }}>Weekly Dining Schedule</h2>
+                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: 'var(--text-primary)' }}>Weekly Dining Schedule</h2>
                       <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>Official ITER campus meal timetable with verified portion standards and dietary tags.</p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -1248,7 +1248,7 @@ const handleSendMessage = (e) => {
                   <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#F9EBE6', color: '#9C5B49', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>
                     ✓
                   </div>
-                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: '#272824', margin: '0 0 8px' }}>
+                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)', margin: '0 0 8px' }}>
                     All Clear in Living Space
                   </h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: 14, maxWidth: 460, margin: '0 auto 24px', lineHeight: 1.5 }}>
@@ -1439,7 +1439,7 @@ const handleSendMessage = (e) => {
                   
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                     <div>
-                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: '#242523' }}>Super Admin Command Suite</h2>
+                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: 'var(--text-primary)' }}>Super Admin Command Suite</h2>
                       <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>Real-time hardware registry, emergency FCM push broadcast, and campus operations.</p>
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
@@ -1451,13 +1451,13 @@ const handleSendMessage = (e) => {
                 </div>
 
                 {/* Sub-navigation tabs in Warm Linen Pill style */}
-                <div style={{ display: 'inline-flex', background: '#EBE6DC', padding: 5, borderRadius: 9999, border: '1px solid #DFD9CE', gap: 4, marginBottom: 28 }}>
+                <div style={{ display: 'inline-flex', background: 'var(--bg-subtle, #EBE6DC)', padding: 5, borderRadius: 9999, border: '1px solid var(--border-subtle, #DFD9CE)', gap: 4, marginBottom: 28 }}>
                   <button
                     onClick={() => setAdminSubTab('overview')}
                     style={{
                       border: 'none',
-                      background: adminSubTab === 'overview' ? '#FFFFFF' : 'transparent',
-                      color: adminSubTab === 'overview' ? '#242523' : '#73756F',
+                      background: adminSubTab === 'overview' ? 'var(--bg-card, #FFFFFF)' : 'transparent',
+                      color: adminSubTab === 'overview' ? 'var(--text-primary)' : 'var(--text-muted)',
                       padding: '7px 18px',
                       borderRadius: 9999,
                       fontSize: 13,
@@ -1473,8 +1473,8 @@ const handleSendMessage = (e) => {
                     onClick={() => setAdminSubTab('broadcast')}
                     style={{
                       border: 'none',
-                      background: adminSubTab === 'broadcast' ? '#FFFFFF' : 'transparent',
-                      color: adminSubTab === 'broadcast' ? '#242523' : '#73756F',
+                      background: adminSubTab === 'broadcast' ? 'var(--bg-card, #FFFFFF)' : 'transparent',
+                      color: adminSubTab === 'broadcast' ? 'var(--text-primary)' : 'var(--text-muted)',
                       padding: '7px 18px',
                       borderRadius: 9999,
                       fontSize: 13,
@@ -1490,8 +1490,8 @@ const handleSendMessage = (e) => {
                     onClick={() => setAdminSubTab('sessions')}
                     style={{
                       border: 'none',
-                      background: adminSubTab === 'sessions' ? '#FFFFFF' : 'transparent',
-                      color: adminSubTab === 'sessions' ? '#242523' : '#73756F',
+                      background: adminSubTab === 'sessions' ? 'var(--bg-card, #FFFFFF)' : 'transparent',
+                      color: adminSubTab === 'sessions' ? 'var(--text-primary)' : 'var(--text-muted)',
                       padding: '7px 18px',
                       borderRadius: 9999,
                       fontSize: 13,
@@ -1509,41 +1509,41 @@ const handleSendMessage = (e) => {
                 {adminSubTab === 'overview' && (
                   <div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 28 }}>
-                      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enrolled Residents</div>
-                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>1,280</div>
-                        <div style={{ fontSize: 12.5, color: '#9C5B49', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ background: 'var(--bg-card)', borderRadius: 24, padding: '24px 28px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enrolled Residents</div>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: 'var(--text-primary)', margin: '8px 0 4px' }}>1,280</div>
+                        <div style={{ fontSize: 12.5, color: 'var(--accent-terracotta, #9C5B49)', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>●</span> Active across 4 Hostel Blocks
                         </div>
                       </div>
 
-                      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hardware Devices Paired</div>
-                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>1,420</div>
-                        <div style={{ fontSize: 12.5, color: '#9C5B49', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ background: 'var(--bg-card)', borderRadius: 24, padding: '24px 28px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hardware Devices Paired</div>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: 'var(--text-primary)', margin: '8px 0 4px' }}>1,420</div>
+                        <div style={{ fontSize: 12.5, color: 'var(--accent-terracotta, #9C5B49)', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>●</span> FCM Push Active & Subscribed
                         </div>
                       </div>
 
-                      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maintenance Queue</div>
-                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>1 In Progress</div>
-                        <div style={{ fontSize: 12.5, color: '#7D7F7A' }}>Tube-light replacement • Caretaker Ramesh</div>
+                      <div style={{ background: 'var(--bg-card)', borderRadius: 24, padding: '24px 28px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maintenance Queue</div>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: 'var(--text-primary)', margin: '8px 0 4px' }}>1 In Progress</div>
+                        <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>Tube-light replacement • Caretaker Ramesh</div>
                       </div>
 
-                      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 28px', border: '1px solid #E6E0D5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#7D7F7A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cloud API Status</div>
-                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: '#242523', margin: '8px 0 4px' }}>99.98%</div>
-                        <div style={{ fontSize: 12.5, color: '#9C5B49', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ background: 'var(--bg-card)', borderRadius: 24, padding: '24px 28px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 12px rgba(0,0,0,0.02)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cloud API Status</div>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, color: 'var(--text-primary)', margin: '8px 0 4px' }}>99.98%</div>
+                        <div style={{ fontSize: 12.5, color: 'var(--accent-terracotta, #9C5B49)', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>●</span> EC2 Production Node Healthy
                         </div>
                       </div>
                     </div>
 
                     {/* Quick Access Card */}
-                    <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '28px 32px', border: '1px solid #E6E0D5', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+                    <div style={{ background: 'var(--bg-card)', borderRadius: 24, padding: '28px 32px', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
                       <div>
-                        <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, margin: '0 0 6px', color: '#242523' }}>Full Granular Super Admin Suite</h3>
+                        <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, margin: '0 0 6px', color: 'var(--text-primary)' }}>Full Granular Super Admin Suite</h3>
                         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 13.5 }}>Access pilot testing, user provisioning, closed beta management, and sub-admin delegation.</p>
                       </div>
                       <a 
@@ -1559,49 +1559,49 @@ const handleSendMessage = (e) => {
 
                 {/* TAB 2: INSTANT FCM BROADCAST */}
                 {adminSubTab === 'broadcast' && (
-                  <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid #E6E0D5', maxWidth: 720 }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 24, padding: 32, border: '1px solid var(--border-subtle)', maxWidth: 720 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F9EBE6', color: '#9C5B49', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--primary-matcha-soft, #F9EBE6)', color: 'var(--accent-terracotta, #9C5B49)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                       </div>
                       <div>
-                        <h3 style={{ margin: 0, fontSize: 18, color: '#242523' }}>Emergency Push Dispatcher</h3>
-                        <p style={{ margin: 0, fontSize: 13, color: '#7D7F7A' }}>High-priority lockscreen notifications delivered instantly via Firebase Cloud Messaging.</p>
+                        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Emergency Push Dispatcher</h3>
+                        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>High-priority lockscreen notifications delivered instantly via Firebase Cloud Messaging.</p>
                       </div>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#575854', marginBottom: 6 }}>Target Resident Audience</label>
+                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Target Resident Audience</label>
                         <select 
                           value={broadcastTarget}
                           onChange={(e) => setBroadcastTarget(e.target.value)}
-                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #E6E0D5', background: '#FAF8F4', fontSize: 14, color: '#242523', outline: 'none' }}
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-subtle)', fontSize: 14, color: 'var(--text-primary)', outline: 'none' }}
                         >
                           <option value="all">All Enrolled Residents (1,280 Devices)</option>
                           <option value="bh8">Block BH-8 Boys Hostel (320 Residents)</option>
                           <option value="gh1">Block GH-1 Girls Hostel (280 Residents)</option>
-                          <option value="staff">Hostel Caretakers & Wardens Only</option>
+                          <option value="staff">Hostel Caretakers &amp; Wardens Only</option>
                         </select>
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#575854', marginBottom: 6 }}>Notification Title</label>
+                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Notification Title</label>
                         <input 
                           type="text"
                           value={broadcastTitle}
                           onChange={(e) => setBroadcastTitle(e.target.value)}
-                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #E6E0D5', background: '#FAF8F4', fontSize: 14, color: '#242523', outline: 'none', boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-subtle)', fontSize: 14, color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
                         />
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#575854', marginBottom: 6 }}>Broadcast Message</label>
+                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Broadcast Message</label>
                         <textarea 
                           rows={3}
                           value={broadcastBody}
                           onChange={(e) => setBroadcastBody(e.target.value)}
-                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #E6E0D5', background: '#FAF8F4', fontSize: 14, color: '#242523', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-subtle)', fontSize: 14, color: 'var(--text-primary)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
                         />
                       </div>
 
@@ -1670,7 +1670,7 @@ const handleSendMessage = (e) => {
                             </div>
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <span style={{ fontWeight: 700, fontSize: 15, color: '#242523' }}>{sess.user}</span>
+                                <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>{sess.user}</span>
                                 <span style={{ fontSize: 11.5, background: sess.role === 'superadmin' ? '#FAF2EE' : '#F9EBE6', color: sess.role === 'superadmin' ? '#C9826D' : '#9C5B49', padding: '2px 8px', borderRadius: 9999, fontWeight: 600, border: `1px solid ${sess.role === 'superadmin' ? '#F4D3C9' : '#F4D3C9'}` }}>
                                   {sess.role.toUpperCase()}
                                 </span>
@@ -1727,14 +1727,14 @@ const handleSendMessage = (e) => {
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowQrModal(false)}>×</button>
             <span className="tactile-pill-badge">VERIFIED DIGITAL PASS</span>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '14px 0 6px', color: '#272824' }}>Campus Security Gate Pass</h3>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '14px 0 6px', color: 'var(--text-primary)' }}>Campus Security Gate Pass</h3>
             <p style={{ margin: '0 0 24px', fontSize: 13.5, color: 'var(--text-secondary)' }}>Show this screen to security officer at {displayHostel ? `${displayHostel} Gate` : 'Campus Security Gate'}.</p>
 
-            <div style={{ background: '#FAF8F5', borderRadius: 20, padding: 24, textAlign: 'center', border: '1px dashed #F4D3C9' }}>
-              <div style={{ width: 140, height: 140, margin: '0 auto 16px', background: '#272824', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12 }}>
+            <div style={{ background: 'var(--bg-subtle, #FAF8F5)', borderRadius: 20, padding: 24, textAlign: 'center', border: '1px dashed var(--border-subtle, #F4D3C9)' }}>
+              <div style={{ width: 140, height: 140, margin: '0 auto 16px', background: 'var(--accent-terracotta, #C07660)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FAF7F2', fontSize: 12, fontWeight: 700 }}>
                 [QR CODE VERIFIED]
               </div>
-              <strong style={{ fontSize: 16, color: '#272824', display: 'block' }}>{displayName} • {displayRoom}</strong>
+              <strong style={{ fontSize: 16, color: 'var(--text-primary)', display: 'block' }}>{displayName} • {displayRoom}</strong>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Valid till 09:30 PM • {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             </div>
           </div>
@@ -1746,12 +1746,12 @@ const handleSendMessage = (e) => {
         <div className="modal-overlay" onClick={() => setShowComplaintModal(false)}>
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowComplaintModal(false)}>×</button>
-            <h3 className="modal-title" style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px' }}>File Living Space Request</h3>
+            <h3 className="modal-title" style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '0 0 16px', color: 'var(--text-primary)' }}>File Living Space Request</h3>
             
             {complaintSubmitted ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#F9EBE6', color: '#9C5B49', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>✓</div>
-                <h4 style={{ margin: '0 0 6px', fontSize: 20, fontFamily: 'var(--font-serif)', color: '#272824' }}>Request Lodged!</h4>
+                <h4 style={{ margin: '0 0 6px', fontSize: 20, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>Request Lodged!</h4>
                 <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px' }}>Caretaker has been notified and ticket is registered in the live pipeline.</p>
                 <button 
                   onClick={() => { setComplaintSubmitted(false); setShowComplaintModal(false); }}
@@ -1763,11 +1763,11 @@ const handleSendMessage = (e) => {
             ) : (
               <form onSubmit={handleCreateComplaint}>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#272824' }}>Category / Department</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-secondary)' }}>Category / Department</label>
                   <select 
                     value={newComplaintDept} 
                     onChange={(e) => setNewComplaintDept(e.target.value)}
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #F4D3C9', background: '#FFFFFF', color: '#242523', fontSize: 14, outline: 'none', fontWeight: 500 }}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border-subtle, #F4D3C9)', background: 'var(--bg-card, #FFFFFF)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', fontWeight: 500 }}
                   >
                     <option value="Electrical">⚡ Electrical (Tube-light, Fan, Switchboard, AC)</option>
                     <option value="Plumbing">🚰 Plumbing (Tap, Flush, Leakage, Geyser)</option>
@@ -1778,13 +1778,13 @@ const handleSendMessage = (e) => {
                   </select>
                 </div>
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#272824' }}>Description</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-secondary)' }}>Description</label>
                   <textarea 
                     rows={4} 
                     value={newComplaintDesc}
                     onChange={(e) => setNewComplaintDesc(e.target.value)}
                     placeholder="Describe the issue in detail (e.g. Study table tube-light is flickering and needs replacement)..." 
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #F4D3C9', background: '#FFFFFF', color: '#242523', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} 
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border-subtle, #F4D3C9)', background: 'var(--bg-card, #FFFFFF)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} 
                   />
                   <span style={{ fontSize: 11.5, color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
                     Logged for: <strong>{displayName}</strong> • <strong>{displayRoom}</strong>
@@ -1811,20 +1811,20 @@ const handleSendMessage = (e) => {
             <span style={{ fontSize: 11, background: '#F9EBE6', color: '#9C5B49', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>
               ANDROID DOZE & BATTERY GUIDE
             </span>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px', color: '#272824' }}>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px', color: 'var(--text-primary)' }}>
               Ensure 100% On-Time Meal Notifications
             </h3>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              On Sundays & idle hours, brands like Xiaomi, Vivo, Oppo, Realme, and Samsung kill background sockets to save battery. Follow these 2 quick steps for your phone:
+              On Sundays &amp; idle hours, brands like Xiaomi, Vivo, Oppo, Realme, and Samsung kill background sockets to save battery. Follow these 2 quick steps for your phone:
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '60vh', overflowY: 'auto', paddingRight: 4 }}>
               {/* Xiaomi / POCO / Redmi */}
-              <div style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', borderRadius: 14, padding: '12px 16px' }}>
+              <div style={{ background: 'var(--bg-subtle, #FAF8F5)', border: '1px solid var(--border-subtle, #E6E0D5)', borderRadius: 14, padding: '12px 16px' }}>
                 <div style={{ fontWeight: 700, fontSize: 13.5, color: '#D97706', marginBottom: 4 }}>
                   📱 Xiaomi / POCO / Redmi (MIUI / HyperOS)
                 </div>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#575854', lineHeight: 1.5 }}>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   <li>Long press <strong>HostelCare</strong> icon ➔ tap <strong>App Info (ℹ️)</strong>.</li>
                   <li>Go to <strong>Battery Saver</strong> ➔ Select <strong>"No restrictions"</strong>.</li>
                   <li>Enable <strong>Autostart</strong> toggle ➔ tap OK.</li>
@@ -1832,11 +1832,11 @@ const handleSendMessage = (e) => {
               </div>
 
               {/* Vivo / iQOO */}
-              <div style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', borderRadius: 14, padding: '12px 16px' }}>
+              <div style={{ background: 'var(--bg-subtle, #FAF8F5)', border: '1px solid var(--border-subtle, #E6E0D5)', borderRadius: 14, padding: '12px 16px' }}>
                 <div style={{ fontWeight: 700, fontSize: 13.5, color: '#2563EB', marginBottom: 4 }}>
                   📱 Vivo / iQOO (Funtouch OS / OriginOS)
                 </div>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#575854', lineHeight: 1.5 }}>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   <li>Go to phone <strong>Settings</strong> ➔ <strong>Battery</strong>.</li>
                   <li>Tap <strong>Background power consumption</strong> ➔ select <strong>HostelCare</strong> ➔ choose <strong>"High background power usage"</strong>.</li>
                   <li>Go to <strong>Settings ➔ Applications ➔ Autostart</strong> ➔ turn <strong>HostelCare ON</strong>.</li>
@@ -1844,22 +1844,22 @@ const handleSendMessage = (e) => {
               </div>
 
               {/* Oppo / Realme / OnePlus */}
-              <div style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', borderRadius: 14, padding: '12px 16px' }}>
+              <div style={{ background: 'var(--bg-subtle, #FAF8F5)', border: '1px solid var(--border-subtle, #E6E0D5)', borderRadius: 14, padding: '12px 16px' }}>
                 <div style={{ fontWeight: 700, fontSize: 13.5, color: '#059669', marginBottom: 4 }}>
                   📱 Oppo / Realme / OnePlus (ColorOS / OxygenOS)
                 </div>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#575854', lineHeight: 1.5 }}>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   <li>Long press <strong>HostelCare</strong> icon ➔ <strong>App info</strong> ➔ <strong>Battery usage</strong>.</li>
                   <li>Enable <strong>"Allow background activity"</strong> and <strong>"Allow auto-launch"</strong>.</li>
                 </ul>
               </div>
 
               {/* Samsung */}
-              <div style={{ background: '#FAF8F5', border: '1px solid #E6E0D5', borderRadius: 14, padding: '12px 16px' }}>
+              <div style={{ background: 'var(--bg-subtle, #FAF8F5)', border: '1px solid var(--border-subtle, #E6E0D5)', borderRadius: 14, padding: '12px 16px' }}>
                 <div style={{ fontWeight: 700, fontSize: 13.5, color: '#7C3AED', marginBottom: 4 }}>
                   📱 Samsung (One UI)
                 </div>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#575854', lineHeight: 1.5 }}>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   <li>Phone <strong>Settings ➔ Apps ➔ HostelCare ➔ Battery</strong> ➔ select <strong>"Unrestricted"</strong>.</li>
                   <li>Under <strong>Device care ➔ Battery ➔ Background usage limits</strong>, ensure HostelCare is not in "Deep sleeping apps".</li>
                 </ul>
@@ -1883,28 +1883,28 @@ const handleSendMessage = (e) => {
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowLoginModal(false)}>×</button>
             <span style={{ fontSize: 11, background: '#F9EBE6', color: '#9C5B49', padding: '4px 10px', borderRadius: 9999, fontWeight: 700 }}>RESIDENT AUTHENTICATION</span>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '14px 0 6px', color: '#272824' }}>Sign In to HostelCare</h3>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, margin: '14px 0 6px', color: 'var(--text-primary)' }}>Sign In to HostelCare</h3>
             <p style={{ margin: '0 0 20px', fontSize: 13.5, color: 'var(--text-secondary)' }}>Access your official room allocation and personal maintenance tickets.</p>
 
             <form onSubmit={handleAuthSubmit}>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#242523' }}>Registration Number</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>Registration Number</label>
                 <input 
                   type="text" 
                   placeholder="e.g. 2021BCS001" 
                   value={loginRegNum} 
                   onChange={(e) => setLoginRegNum(e.target.value)}
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #E6E0D5', background: '#FAF8F5', fontSize: 14, outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border-subtle, #E6E0D5)', background: 'var(--bg-card, #FAF8F5)', color: 'var(--text-primary)', fontSize: 14, outline: 'none' }}
                 />
               </div>
               <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#242523' }}>Password</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>Password</label>
                 <input 
                   type="password" 
                   placeholder="••••••••" 
                   value={loginPassword} 
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid #E6E0D5', background: '#FAF8F5', fontSize: 14, outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border-subtle, #E6E0D5)', background: 'var(--bg-card, #FAF8F5)', color: 'var(--text-primary)', fontSize: 14, outline: 'none' }}
                 />
               </div>
               <button 
