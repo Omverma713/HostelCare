@@ -38,8 +38,8 @@ class AppUpdateService {
       forceUpdate: false,
       updateType: 'none',
       isSuspended: false,
-      currentVersion: '1.2.2.17',
-      latestVersion: '1.2.2.17',
+      currentVersion: '1.2.2.18',
+      latestVersion: '1.2.2.18',
       minimumSupportedVersion: '1.0.0',
       updateMessage: '',
       updateUrl: '',
@@ -108,14 +108,14 @@ class AppUpdateService {
       try {
         const info = await App.getInfo();
         return {
-          version: info.version || '1.2.2.17',
-          build: info.build || '29',
+          version: info.version || '1.2.2.18',
+          build: info.build || '30',
         };
       } catch (err) {
         console.warn('[AppUpdateService] Could not retrieve native App.getInfo():', err);
       }
     }
-    return { version: '1.2.2.17', build: '29' };
+    return { version: '1.2.2.18', build: '30' };
   }
 
   async checkForUpdates({ manual = false } = {}) {
@@ -553,8 +553,8 @@ class AppUpdateService {
     this.isDownloadingOta = true;
     try {
       console.log('[AppUpdateService] Starting background silent OTA download...');
-      await this.downloadAndApplyOta({ reloadImmediately: false });
-      console.log('[AppUpdateService] Silent OTA bundle downloaded & staged for next restart!');
+      await this.downloadAndApplyOta({ reloadImmediately: true });
+      console.log('[AppUpdateService] Silent OTA bundle downloaded & applied immediately!');
     } catch (err) {
       console.warn('[AppUpdateService] Background silent OTA download notice:', err.message);
     } finally {
