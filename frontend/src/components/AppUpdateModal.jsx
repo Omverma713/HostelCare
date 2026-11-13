@@ -439,10 +439,10 @@ export default function AppUpdateModal() {
     return null;
   }
 
-  // 4. Live OTA Web Update: Suppress modal on app launch for 100% silent background auto-updates
-  // Only display modal if user manually tapped "Check for Updates" in Settings or if a full native APK is required
-  const isSilentOta = state?.otaAvailable && !state?.requiresNativeApk;
-  if (isSilentOta && !state?.manualCheck) {
+  // 4. Live OTA Web Update: 100% silent background auto-updates
+  // NEVER show a blocking modal or forced update popup for web bundle OTA updates.
+  // Modals are strictly reserved for full native APK updates where Android package installation is required.
+  if (!state?.requiresNativeApk && !state?.manualCheck) {
     return null;
   }
 

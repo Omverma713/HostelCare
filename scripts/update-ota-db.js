@@ -8,7 +8,7 @@ async function run() {
   const config = await SystemConfig.getEffectiveConfig();
   
   const targetVer = '1.2.2.26';
-  const checksum = 'b7fe0aa1219ff6a79a91d8aa7ece93fb1acce9101d78568f4a011063dc9556f6';
+  const checksum = '0698f41c15f8e38605804427547596795a0836a74921de4f71a835179bf65193';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -21,11 +21,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = false;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.25: Silent OTA Live Update with Bottom Dock 160px Clearance';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.26: 100% Silent OTA Live Update (Zero Forced Popups)';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.25: Silent OTA Live Update';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.26: Silent OTA Live Update';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');

@@ -293,6 +293,7 @@ class AppUpdateService {
         this.updateState.otaChecksum = data.ota.bundleChecksum || '';
         this.updateState.deployId = data.ota.deployId || '';
         this.updateState.requiresNativeApk = false;
+        this.updateState.forceUpdate = false;
 
         // Auto-download OTA live update silently in the background!
         if (!manual && !this.isDownloadingOta) {
