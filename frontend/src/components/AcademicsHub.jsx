@@ -979,27 +979,9 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                         <span className="slot-time-icon">⏰</span>
                         <span className="slot-time-range">{slot.startTime} – {slot.endTime}</span>
                       </div>
-                      <div className="slot-header-actions">
-                        <span className={`slot-type-badge ${isLab ? "lab" : "theory"}`}>
-                          {isLab ? "🔬 Lab" : "📖 Theory"}
-                        </span>
-                        <button
-                          type="button"
-                          className="slot-action-btn"
-                          onClick={() => openEditSlotModal(selectedDay, slot)}
-                          title="Edit this class"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          type="button"
-                          className="slot-action-btn delete"
-                          onClick={() => handleDeleteSlot(selectedDay, slot.id)}
-                          title="Delete class"
-                        >
-                          🗑️
-                        </button>
-                      </div>
+                      <span className={`slot-type-badge ${isLab ? "lab" : "theory"}`}>
+                        {isLab ? "🔬 Lab" : "📚 Lecture"}
+                      </span>
                     </div>
 
                     {/* Subject Title */}

@@ -460,25 +460,26 @@
 .slot-type-badge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 3px 7px;
+  gap: 4px;
+  padding: 4px 10px;
   border-radius: 9999px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .slot-type-badge.lab {
-  background: rgba(192, 118, 96, 0.14);
+  background: rgba(192, 118, 96, 0.12);
   color: var(--accent-terracotta, #C07660);
-  border: 1px solid rgba(192, 118, 96, 0.25);
+  border: 1px solid rgba(192, 118, 96, 0.28);
 }
 
 .slot-type-badge.theory {
   background: rgba(130, 148, 96, 0.14);
-  color: #556B2F;
-  border: 1px solid rgba(130, 148, 96, 0.25);
+  color: #4A6328;
+  border: 1px solid rgba(130, 148, 96, 0.3);
 }
 
 .slot-title {
