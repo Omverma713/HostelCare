@@ -417,11 +417,13 @@ const downloadLatestOtaBundle = async (req, res) => {
 
     for (const p of candidatePaths) {
       if (fs.existsSync(p)) {
-        const stat = fs.statSync(p);
-        res.setHeader("Content-Type", "application/zip");
-        res.setHeader("Content-Length", stat.size);
-        res.setHeader("Content-Disposition", `attachment; filename="hostelcare-bundle-v${bundleVer}.zip"`);
-        return fs.createReadStream(p).pipe(res);
+        return res.sendFile(p, {
+          acceptRanges: true,
+          headers: {
+            "Content-Type": "application/zip",
+            "Content-Disposition": `attachment; filename="hostelcare-bundle-v${bundleVer}.zip"`,
+          },
+        });
       }
     }
 

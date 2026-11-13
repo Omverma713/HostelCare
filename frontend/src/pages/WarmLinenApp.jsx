@@ -44,7 +44,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
     setCheckingUpdate(true);
     triggerToast('info', 'Checking for latest HostelCare updates...');
     try {
-      const res = await appUpdateService.checkForUpdates({ manual: true });
+      const res = await appUpdateService.checkForUpdates({ manual: false });
       if (res && res.updateAvailable) {
         if (res.otaAvailable && !res.requiresNativeApk) {
           triggerToast('info', `Applying live update v${res.latestVersion}...`);
