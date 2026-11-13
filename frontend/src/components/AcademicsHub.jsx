@@ -501,7 +501,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
     try {
       setFileIsUploading(true);
       setActionMessage(null);
-      setOcrStatus(selectedFile.type.startsWith("image/") ? "⚡ Scanning timetable photo with Google Gemini Vision AI..." : "⚡ Reading timetable document with Gemini AI...");
+      setOcrStatus("Scanning with Google Gemini AI...");
 
       const reader = new FileReader();
       reader.onload = async () => {
@@ -901,9 +901,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   >
                     <span className="gemini-ai-btn-glow"></span>
                     <span className="gemini-ai-btn-content">
-                      <span className="gemini-sparkle-icon">✨</span>
                       <span>
-                        {fileIsUploading ? (ocrStatus || "Scanning with Google Gemini Vision AI...") : "Auto-Generate with Google Gemini Vision AI"}
+                        {fileIsUploading ? (ocrStatus || "Scanning with Google Gemini AI...") : "Auto-Generate with Google Gemini AI"}
                       </span>
                     </span>
                   </button>
@@ -1425,9 +1424,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   >
                     <span className="gemini-ai-btn-glow"></span>
                     <span className="gemini-ai-btn-content">
-                      <span className="gemini-sparkle-icon">✨</span>
                       <span>
-                        {fileIsUploading ? (ocrStatus || "Scanning with Google Gemini Vision AI...") : "Auto-Generate with Google Gemini Vision AI"}
+                        {fileIsUploading ? (ocrStatus || "Scanning with Google Gemini AI...") : "Auto-Generate with Google Gemini AI"}
                       </span>
                     </span>
                   </button>
