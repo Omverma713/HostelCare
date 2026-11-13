@@ -572,17 +572,8 @@ class AppUpdateService {
 
       if (typeof localStorage !== 'undefined') {
         try {
-          const deployKey = this.updateState.deployId || this.updateState.otaChecksum || 'v1';
-          const appliedKey = `${this.updateState.otaVersion}_${deployKey}`;
-          localStorage.setItem('hostelcare_active_ota_bundle_applied', appliedKey);
+          localStorage.setItem('hostelcare_active_ota_checksum', this.updateState.otaChecksum);
           localStorage.setItem('hostelcare_active_ota_version', this.updateState.otaVersion);
-          localStorage.setItem('hostelcare_active_ota_last_reload_time', String(Date.now()));
-          if (this.updateState.deployId) {
-            localStorage.setItem('hostelcare_active_ota_deploy_id', this.updateState.deployId);
-          }
-          if (this.updateState.otaChecksum) {
-            localStorage.setItem('hostelcare_active_ota_checksum', this.updateState.otaChecksum);
-          }
         } catch (storageErr) {
           console.warn('[AppUpdateService] Storage error saving active checksum:', storageErr);
         }
@@ -608,30 +599,22 @@ class AppUpdateService {
   async autoDownloadOtaInBackground() {
     if (this.isDownloadingOta || !this.updateState.otaAvailable) return;
 
-    const deployKey = this.updateState.deployId || this.updateState.otaChecksum || 'v1';
-    const targetKey = `${this.updateState.otaVersion}_${deployKey}`;
-    const appliedKey = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_bundle_applied')) || '';
-    if (appliedKey === targetKey) {
-      console.log(`[AppUpdateService] OTA bundle ${targetKey} was already applied. Skipping.`);
-      return;
-    }
+    const targetChecksum = (this.updateState.otaChecksum || '').trim();
+    const appliedChecksum = (typeof localStorage !== 'undefined' && (localStorage.getItem('hostelcare_active_ota_checksum') || '')).trim();
 
-    // Session lock prevents multiple concurrent downloads in same session
-    const sessionKey = `hostelcare_ota_applied_${targetKey}`;
-    if (sessionStorage.getItem(sessionKey)) {
-      console.log(`[AppUpdateService] OTA bundle ${targetKey} download already triggered in this session.`);
+    // If client ALREADY has this exact bundle checksum, do not re-download or reload!
+    if (appliedChecksum && targetChecksum && appliedChecksum === targetChecksum) {
+      console.log(`[AppUpdateService] Bundle checksum ${targetChecksum} already active. No reload.`);
       return;
     }
-    sessionStorage.setItem(sessionKey, 'true');
 
     this.isDownloadingOta = true;
     try {
-      console.log(`[AppUpdateService] Applying new deployment ${targetKey} with 1-time reload...`);
-      // Reload IMMEDIATELY ONCE so user sees the newly forced update take effect!
+      console.log(`[AppUpdateService] Downloading new bundle checksum ${targetChecksum} with one-time reload...`);
       await this.downloadAndApplyOta({ reloadImmediately: true });
-      console.log('[AppUpdateService] Live OTA bundle downloaded & applied successfully!');
+      console.log('[AppUpdateService] Live OTA bundle downloaded & reloaded successfully!');
     } catch (err) {
-      console.warn('[AppUpdateService] Background silent OTA download notice:', err.message);
+      console.warn('[AppUpdateService] Background OTA download notice:', err.message);
     } finally {
       this.isDownloadingOta = false;
     }

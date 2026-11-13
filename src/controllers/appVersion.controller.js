@@ -274,53 +274,46 @@ const getAppVersionStatus = async (req, res) => {
 
     const clientChecksum = (req.query.bundleChecksum || req.query.checksum || "").toString().trim().toLowerCase();
     const serverChecksum = (otaConfig.bundleChecksum || "").toString().trim().toLowerCase();
-    const clientDeployId = (req.query.deployId || "").toString().trim();
-    const serverDeployId = (otaConfig.deployId || (otaConfig.deployedAt ? String(new Date(otaConfig.deployedAt).getTime()) : "") || serverChecksum).toString().trim();
 
     const otaEligible = Boolean(otaConfig.enabled && otaConfig.bundleUrl && !isOldNativeApk);
 
-    // Check if version is newer, checksum is different, or fresh deployment/force from SuperAdmin
-    const isChecksumAlreadyInstalled = Boolean(
-      serverChecksum && clientChecksum && serverChecksum === clientChecksum
-    );
-    const isDeployAlreadyInstalled = Boolean(
-      serverDeployId && clientDeployId && serverDeployId === clientDeployId
-    );
-
-    const hasNewerVersion = Boolean(
-      currentVersion && compareVersions(otaConfig.currentBundleVersion, currentVersion) > 0
-    );
-    const hasDifferentChecksum = Boolean(
-      serverChecksum && clientChecksum && serverChecksum !== clientChecksum
-    );
-    const hasDifferentDeploy = Boolean(
-      serverDeployId && clientDeployId && serverDeployId !== clientDeployId
-    );
-
-    // Trigger update ONCE when forced or freshly deployed, then suppress once client matches
-    const isForceUpdateNeeded = Boolean(
-      otaConfig.forceUpdate && (!isChecksumAlreadyInstalled || (!isDeployAlreadyInstalled && clientDeployId))
-    );
-
-    const otaHasNewer = Boolean(
-      otaEligible && (hasNewerVersion || hasDifferentChecksum || hasDifferentDeploy || isForceUpdateNeeded)
-    );
+    // Single source of truth: If client does not have the server's active bundle checksum, update is required!
+    const checksumMatches = Boolean(serverChecksum && clientChecksum && serverChecksum === clientChecksum);
+    const otaHasNewer = Boolean(otaEligible && serverChecksum && !checksumMatches);
 
     const otaPayload = {
       enabled: Boolean(otaConfig.enabled),
       available: otaHasNewer,
       bundleVersion: otaConfig.currentBundleVersion || appVersionConfig.latestVersion,
       bundleUrl: otaConfig.bundleUrl || "/api/v1/app-version/ota-bundle",
-      bundleChecksum: otaConfig.bundleChecksum || "",
-      deployId: serverDeployId,
+      bundleChecksum: serverChecksum,
       minNativeBuild: otaConfig.minNativeBuild || 22,
       requiresNativeApk: isOldNativeApk,
-      forceUpdate: Boolean(otaConfig.forceUpdate || isForceUpdateNeeded),
+      forceUpdate: otaHasNewer,
     };
 
     return res.status(200).json({
       success: true,
       clientVersion: currentVersion || null,
+      platform: platform || "android",
+      buildNumber: buildNumber || null,
+      latestVersion: appVersionConfig.latestVersion,
+      minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+      updateAvailable: evaluation.updateAvailable || otaHasNewer,
+      forceUpdate: evaluation.forceUpdate || otaHasNewer,
+      updateType: otaHasNewer ? "ota_live" : (evaluation.forceUpdate ? "immediate" : (evaluation.updateAvailable ? "flexible" : "none")),
+      isSuspended: false,
+      isPilot: false,
+      targetAudience: "all",
+      isTargeted: true,
+      updateMessage: appVersionConfig.updateMessage,
+      updateUrl: appVersionConfig.updateUrl,
+      releaseNotes: appVersionConfig.releaseNotes,
+      releaseMedia: appVersionConfig.releaseMedia,
+      apkSha256: appVersionConfig.apkSha256,
+      ota: otaPayload,
+      checkedAt: new Date(),
+    });
       platform: platform || "android",
       buildNumber: buildNumber || null,
       latestVersion: appVersionConfig.latestVersion,
