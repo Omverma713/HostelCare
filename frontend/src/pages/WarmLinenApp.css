@@ -3358,7 +3358,7 @@ body.login-dark-theme .tactile-section-label {
 }
 
 .main-viewport {
-  padding-bottom: 0px !important;
+  padding-bottom: 120px !important;
 }
 
 .warm-linen-embedded {
@@ -3399,10 +3399,10 @@ body.login-dark-theme .tactile-section-label {
     padding-bottom: 88px !important;
   }
   .main-viewport {
-    padding-bottom: 0px !important;
+    padding-bottom: 120px !important;
   }
   .workspace-layout {
-    padding-bottom: 0px !important;
+    padding-bottom: 120px !important;
   }
   .concept1-pipeline-card {
     padding: 16px 16px !important;

@@ -1367,6 +1367,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
           </div>
         </div>
       )}
+      {/* Dedicated mobile bottom clearance spacer for floating bottom dock */}
+      <div className="mobile-dock-clearance-spacer" style={{ width: '100%', height: '160px', pointerEvents: 'none' }} />
     </div>
   );
 }
