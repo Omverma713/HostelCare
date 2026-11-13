@@ -1,4 +1,5 @@
 const express        = require("express");
+const path           = require("path");
 const cors           = require("cors");
 const compression    = require("compression");
 const rateLimit      = require("express-rate-limit");
@@ -184,6 +185,7 @@ const messMenuRouter   = require("./src/routes/messMenu.router");
 const { getPublicMessMenu } = require("./src/controllers/messMenu.controller");
 
 // ─── 7. Application Routes ───────────────────────────────────────────────────
+app.use("/ota-bundles", express.static(path.join(__dirname, "public/ota-bundles")));
 app.get("/api/v1/public/mess-menu", getPublicMessMenu);
 
 // Public mess auto-notification schedule query (for mobile and web background alarms)

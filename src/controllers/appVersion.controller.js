@@ -299,7 +299,7 @@ const getAppVersionStatus = async (req, res) => {
       bundleChecksum: serverChecksum,
       minNativeBuild: otaConfig.minNativeBuild || 22,
       requiresNativeApk: isOldNativeApk,
-      forceUpdate: otaHasNewer,
+      forceUpdate: Boolean(otaConfig.forceUpdate),
     };
 
     return res.status(200).json({
