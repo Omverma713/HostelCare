@@ -979,8 +979,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                         <span className="slot-time-icon">⏰</span>
                         <span className="slot-time-range">{slot.startTime} – {slot.endTime}</span>
                       </div>
-                      <span className={`slot-type-badge ${isLab ? "lab" : "theory"}`}>
-                        {isLab ? "🔬 Lab" : "📚 Lecture"}
+                      <span className={`slot-type-label ${isLab ? "lab" : "theory"}`}>
+                        {isLab ? "🧪 Lab Practical" : "📚 Lecture"}
                       </span>
                     </div>
 
