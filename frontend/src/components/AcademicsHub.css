@@ -387,39 +387,70 @@
   transform: translateY(-1px);
 }
 
-/* Slot Card - Modern Mobile-First Layout */
+/* Slot Card - Responsive Modern Layout (Grid on Desktop, Flex Column on Mobile) */
 .timetable-slot-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(290px, max-content) 1fr auto;
+  gap: 16px;
+  align-items: center;
   background: var(--bg-card, #FAF7F2);
   border: 1px solid var(--border-subtle, #EAE3D6);
   border-radius: 14px;
-  padding: 12px 14px;
+  padding: 13px 18px 13px 20px;
   margin-bottom: 10px;
   position: relative;
+  overflow: hidden;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  overflow: hidden; /* Prevent child overflow */
   width: 100%;
 }
 
+.timetable-slot-card:hover {
+  border-color: var(--accent-terracotta, #D88B74);
+  box-shadow: 0 4px 16px rgba(105, 93, 76, 0.08);
+}
+
+/* Left Accent Indicator Stripe (clean inner stripe, no distorted corner arcs) */
+.timetable-slot-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background: var(--primary-matcha-dark, #556B2F);
+  transition: background 0.2s ease;
+  z-index: 1;
+}
+
 .timetable-slot-card.is-lab {
-  border-left: 4px solid var(--accent-terracotta, #D88B74);
   background: var(--bg-card, #FFFBF8);
 }
 
-.timetable-slot-card.is-theory {
-  border-left: 4px solid var(--primary-matcha-dark, #9C5B49);
+.timetable-slot-card.is-lab::before {
+  background: var(--accent-terracotta, #D88B74);
+}
+
+.timetable-slot-card.is-theory::before {
+  background: #556B2F; /* Warm olive */
+}
+
+.timetable-slot-card.is-current {
+  background: var(--bg-subtle, #FAF3EE);
+  box-shadow: 0 4px 18px rgba(192, 118, 96, 0.15);
+}
+
+.timetable-slot-card.is-current::before {
+  background: var(--accent-terracotta, #C07660);
+  box-shadow: 0 0 10px rgba(192, 118, 96, 0.5);
 }
 
 .slot-header-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  width: 100%;
-  gap: 6px;
-  flex-wrap: nowrap;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .slot-header-actions {
@@ -432,23 +463,20 @@
 .slot-time-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   background: rgba(192, 118, 96, 0.1);
   color: var(--accent-terracotta, #C07660);
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 9999px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 1;
-  min-width: 0;
+  flex-shrink: 0;
 }
 
 .slot-time-icon {
-  font-size: 11px;
+  font-size: 11.5px;
   flex-shrink: 0;
 }
 
@@ -469,6 +497,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .slot-type-label.theory {
@@ -496,17 +525,18 @@ html.dark-theme .slot-type-label.lab,
   font-weight: 700;
   color: var(--text-primary, #242523);
   line-height: 1.35;
-  margin: 1px 0 0;
+  margin: 0;
   word-break: break-word;
+  min-width: 0;
 }
 
 .slot-chips-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  margin-top: 2px;
-  width: 100%;
+  flex-shrink: 0;
 }
 
 .slot-chip {
@@ -520,7 +550,7 @@ html.dark-theme .slot-type-label.lab,
   background: rgba(0, 0, 0, 0.04);
   color: var(--text-secondary, #6B685F);
   border: 1px solid var(--border-subtle, #EAE3D6);
-  max-width: 100%;
+  white-space: nowrap;
   box-sizing: border-box;
 }
 
@@ -725,88 +755,6 @@ html.dark-theme .slot-type-label.lab,
   flex-direction: column;
   gap: 12px;
   margin-top: 14px;
-}
-
-.timetable-slot-card {
-  display: grid;
-  grid-template-columns: 160px 1fr auto;
-  gap: 16px;
-  align-items: center;
-  background: var(--bg-card, #FAF7F2);
-  border: 1px solid var(--border-subtle, #EAE3D6);
-  border-radius: 16px;
-  padding: 16px 20px;
-  transition: all 0.2s ease;
-}
-
-.timetable-slot-card:hover {
-  border-color: var(--accent-terracotta, #D88B74);
-  box-shadow: 0 4px 16px rgba(105, 93, 76, 0.08);
-}
-
-.timetable-slot-card.is-lab {
-  border-left: 4px solid var(--accent-terracotta, #D88B74);
-  background: var(--bg-card, #FFFBF8);
-}
-
-.timetable-slot-card.is-current {
-  border-left: 4px solid var(--primary-matcha-dark, #C07660);
-  background: var(--bg-subtle, #FAF3EE);
-  box-shadow: 0 4px 18px rgba(192, 118, 96, 0.15);
-}
-
-.slot-time-col {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.slot-time-range {
-  font-weight: 700;
-  font-size: 13.5px;
-  color: var(--text-primary, #242523);
-}
-
-.slot-duration {
-  font-size: 11px;
-  color: var(--text-muted, #8C887B);
-}
-
-.slot-content-col {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.slot-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary, #242523);
-}
-
-.slot-sub-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 12.5px;
-  color: var(--text-secondary, #6B685F);
-}
-
-.slot-badge-col {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-@media (max-width: 680px) {
-  .timetable-slot-card {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .slot-badge-col {
-    align-items: flex-start;
-  }
 }
 
 /* =========================================================================
@@ -1338,13 +1286,26 @@ body.login-dark-theme .holiday-row:hover {
 html.dark-theme .timetable-slot-card.is-lab,
 body.login-dark-theme .timetable-slot-card.is-lab {
   background: #251F1B !important;
-  border-left-color: #D88B74 !important;
+}
+
+html.dark-theme .timetable-slot-card.is-lab::before,
+body.login-dark-theme .timetable-slot-card.is-lab::before {
+  background: #D88B74 !important;
+}
+
+html.dark-theme .timetable-slot-card.is-theory::before,
+body.login-dark-theme .timetable-slot-card.is-theory::before {
+  background: #9EC079 !important;
 }
 
 html.dark-theme .timetable-slot-card.is-current,
 body.login-dark-theme .timetable-slot-card.is-current {
   background: #2D221C !important;
-  border-left-color: #D88B74 !important;
+}
+
+html.dark-theme .timetable-slot-card.is-current::before,
+body.login-dark-theme .timetable-slot-card.is-current::before {
+  background: #D88B74 !important;
 }
 
 html.dark-theme .acad-input,
@@ -2155,7 +2116,10 @@ body.login-dark-theme .slot-chip.faculty-chip {
   }
 
   .timetable-slot-card {
-    padding: 14px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 12px 14px 12px 16px !important;
     border-radius: 14px !important;
     gap: 8px !important;
     width: 100% !important;
@@ -2163,25 +2127,14 @@ body.login-dark-theme .slot-chip.faculty-chip {
   }
 
   .slot-header-row {
+    width: 100% !important;
+    justify-content: space-between !important;
     margin-bottom: 2px !important;
   }
 
-  .slot-time-pill {
-    font-size: 11.5px !important;
-    padding: 3px 8px !important;
-  }
-
-  .slot-type-badge {
-    font-size: 10.5px !important;
-    padding: 3px 8px !important;
-  }
-
-  .slot-title {
-    font-size: 15px !important;
-    line-height: 1.35 !important;
-  }
-
   .slot-chips-row {
+    justify-content: flex-start !important;
+    width: 100% !important;
     gap: 6px !important;
     margin-top: 4px !important;
   }

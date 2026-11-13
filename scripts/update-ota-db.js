@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.40';
-  const checksum = '7c757a1f721cf6cf272ccad71a8059e04184aa48e5a1dd71e685eeb450d866b8';
+  const targetVer = '1.2.2.41';
+  const checksum = 'ea80154f62c577fc4f5450a1b3443bede6ade7331df23983403e36fde554bb80';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -21,11 +21,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.40: Timetable UI redesign, Google AI mode button, borderless slot labels';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.41: Desktop timetable responsive layout fix, unclipped time display, clean left indicator stripe';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.40: Timetable redesign & Google AI scanner';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.41: Desktop & mobile timetable UI fix';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');
