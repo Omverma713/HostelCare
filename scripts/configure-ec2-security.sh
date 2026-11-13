@@ -94,3 +94,4 @@ sudo systemctl restart fail2ban
 echo "=================================================="
 echo "🛡️  EC2 Security Configuration Completed Successfully!"
 echo "=================================================="
+
