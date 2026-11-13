@@ -274,17 +274,27 @@ const getAppVersionStatus = async (req, res) => {
 
     const clientChecksum = (req.query.bundleChecksum || req.query.checksum || "").toString().trim().toLowerCase();
     const serverChecksum = (otaConfig.bundleChecksum || "").toString().trim().toLowerCase();
+    const targetBundleVersion = otaConfig.currentBundleVersion || appVersionConfig.latestVersion || "1.2.2.22";
 
     const otaEligible = Boolean(otaConfig.enabled && otaConfig.bundleUrl && !isOldNativeApk);
 
-    // Single source of truth: If client does not have the server's active bundle checksum, update is required!
-    const checksumMatches = Boolean(serverChecksum && clientChecksum && serverChecksum === clientChecksum);
-    const otaHasNewer = Boolean(otaEligible && serverChecksum && !checksumMatches);
+    // Precise OTA evaluation:
+    // Rule 1: If client checksum matches server checksum -> strictly false (0% reload).
+    // Rule 2: If client checksum differs -> strictly true (exactly 1 update).
+    // Fallback: If no client checksum provided, compare semver so up-to-date clients never reload.
+    let otaHasNewer = false;
+    if (otaEligible && serverChecksum) {
+      if (clientChecksum) {
+        otaHasNewer = (clientChecksum !== serverChecksum);
+      } else if (currentVersion) {
+        otaHasNewer = compareVersions(targetBundleVersion, currentVersion) > 0;
+      }
+    }
 
     const otaPayload = {
       enabled: Boolean(otaConfig.enabled),
       available: otaHasNewer,
-      bundleVersion: otaConfig.currentBundleVersion || appVersionConfig.latestVersion,
+      bundleVersion: targetBundleVersion,
       bundleUrl: otaConfig.bundleUrl || "/api/v1/app-version/ota-bundle",
       bundleChecksum: serverChecksum,
       minNativeBuild: otaConfig.minNativeBuild || 22,

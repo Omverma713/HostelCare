@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.22';
-  const checksum = '13305922034442f8a11c2ac37beebe46b793c312e79e523da8b4c3da8261a0fc';
+  const targetVer = '1.2.2.23';
+  const checksum = 'a96815969a8609ceb470dad22c8d0fc0c892622133db5d525ed1796fd2268b3c';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -21,11 +21,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.21: 1-Time Force Reload on New Deployment, 0% Reload on Swipe/Reopen, Cloud Vision OCR';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.23: 1-Time Force Reload on New Deployment, 0% Reload on Swipe/Reopen, Cloud Vision OCR';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.21: 1-Time Force Reload on New Deployment, 0% Reload on Swipe/Reopen';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.23: 1-Time Force Reload on New Deployment, 0% Reload on Swipe/Reopen';
   config.appVersion.forceUpdate = true;
 
   config.markModified('otaUpdates');

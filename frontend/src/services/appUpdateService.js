@@ -169,7 +169,24 @@ class AppUpdateService {
       const { version, build } = await this.getInstalledVersion();
       this.updateState.currentVersion = version;
 
-      const activeChecksum = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_checksum')) || '';
+      // Single Source of Truth: Read active bundle checksum directly from native Capgo plugin first
+      let activeChecksum = '';
+      if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('CapacitorUpdater')) {
+        try {
+          const current = await CapacitorUpdater.current();
+          if (current?.bundle?.checksum) {
+            activeChecksum = current.bundle.checksum.trim();
+          } else if (current?.bundle?.id && current.bundle.id.length >= 32) {
+            activeChecksum = current.bundle.id.trim();
+          }
+        } catch (e) {
+          console.warn('[AppUpdateService] Error querying current bundle checksum:', e);
+        }
+      }
+      if (!activeChecksum && typeof localStorage !== 'undefined') {
+        activeChecksum = (localStorage.getItem('hostelcare_active_ota_checksum') || '').trim();
+      }
+
       const activeDeployId = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_deploy_id')) || '';
 
       const params = new URLSearchParams({
@@ -574,6 +591,7 @@ class AppUpdateService {
         try {
           localStorage.setItem('hostelcare_active_ota_checksum', this.updateState.otaChecksum);
           localStorage.setItem('hostelcare_active_ota_version', this.updateState.otaVersion);
+          localStorage.setItem('hostelcare_last_reloaded_checksum', this.updateState.otaChecksum);
         } catch (storageErr) {
           console.warn('[AppUpdateService] Storage error saving active checksum:', storageErr);
         }
@@ -582,6 +600,9 @@ class AppUpdateService {
       this.updateState.otaStatus = 'applied';
       this.updateState.otaProgress = 100;
       this.notifyListeners();
+
+      // Ensure WebView has enough time to sync WebStorage to disk before reloading process
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       if (reloadImmediately) {
         await CapacitorUpdater.reload();
@@ -600,12 +621,45 @@ class AppUpdateService {
     if (this.isDownloadingOta || !this.updateState.otaAvailable) return;
 
     const targetChecksum = (this.updateState.otaChecksum || '').trim();
-    const appliedChecksum = (typeof localStorage !== 'undefined' && (localStorage.getItem('hostelcare_active_ota_checksum') || '')).trim();
+    if (!targetChecksum) return;
 
-    // If client ALREADY has this exact bundle checksum, do not re-download or reload!
-    if (appliedChecksum && targetChecksum && appliedChecksum === targetChecksum) {
-      console.log(`[AppUpdateService] Bundle checksum ${targetChecksum} already active. No reload.`);
-      return;
+    // 1. Native Capgo Active Bundle Guard (Zero Reload on Swipe/Reopen)
+    if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('CapacitorUpdater')) {
+      try {
+        const current = await CapacitorUpdater.current();
+        const activeChecksum = (current?.bundle?.checksum || '').trim();
+        const activeId = (current?.bundle?.id || '').trim();
+        if (
+          (activeChecksum && activeChecksum === targetChecksum) ||
+          (activeId && (activeId === targetChecksum || activeId.includes(targetChecksum.slice(0, 16))))
+        ) {
+          console.log(`[AppUpdateService] Bundle checksum ${targetChecksum} already active natively. No reload.`);
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('hostelcare_active_ota_checksum', targetChecksum);
+            localStorage.setItem('hostelcare_last_reloaded_checksum', targetChecksum);
+          }
+          return;
+        }
+      } catch (e) {
+        console.warn('[AppUpdateService] Native bundle guard check error:', e);
+      }
+    }
+
+    // 2. Persistent Storage Guard (Rule 1: Only 1 reload per forced version/checksum)
+    if (typeof localStorage !== 'undefined') {
+      const appliedChecksum = (localStorage.getItem('hostelcare_active_ota_checksum') || '').trim();
+      const reloadedChecksum = (localStorage.getItem('hostelcare_last_reloaded_checksum') || '').trim();
+      if (appliedChecksum === targetChecksum || reloadedChecksum === targetChecksum) {
+        console.log(`[AppUpdateService] Bundle checksum ${targetChecksum} already reloaded. Zero reload on swipe/reopen.`);
+        return;
+      }
+    }
+
+    // 3. Mark lock BEFORE reloading so even concurrent triggers cannot cause a reload loop
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('hostelcare_last_reloaded_checksum', targetChecksum);
+      localStorage.setItem('hostelcare_active_ota_checksum', targetChecksum);
+      localStorage.setItem('hostelcare_active_ota_version', this.updateState.otaVersion);
     }
 
     this.isDownloadingOta = true;
@@ -615,6 +669,9 @@ class AppUpdateService {
       console.log('[AppUpdateService] Live OTA bundle downloaded & reloaded successfully!');
     } catch (err) {
       console.warn('[AppUpdateService] Background OTA download notice:', err.message);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('hostelcare_last_reloaded_checksum');
+      }
     } finally {
       this.isDownloadingOta = false;
     }
