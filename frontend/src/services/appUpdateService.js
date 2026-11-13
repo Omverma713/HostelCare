@@ -575,11 +575,27 @@ class AppUpdateService {
       this.updateState.otaProgress = 40;
       this.notifyListeners();
 
+      let progressHandle = null;
+      try {
+        progressHandle = await CapacitorUpdater.addListener('download', (info) => {
+          if (info && typeof info.percent === 'number') {
+            this.updateState.otaProgress = Math.max(15, Math.min(90, Math.round(info.percent)));
+            this.notifyListeners();
+          }
+        });
+      } catch (listenerErr) {
+        console.warn('[AppUpdateService] OTA download listener not supported:', listenerErr);
+      }
+
       const bundle = await CapacitorUpdater.download({
         url: targetUrl,
         version: this.updateState.otaVersion,
         checksum: this.updateState.otaChecksum || '',
       });
+
+      if (progressHandle) {
+        try { await progressHandle.remove(); } catch (e) {}
+      }
 
       this.updateState.otaProgress = 85;
       this.updateState.otaStatus = 'ready';
