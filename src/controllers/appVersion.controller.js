@@ -312,29 +312,6 @@ const getAppVersionStatus = async (req, res) => {
       releaseMedia: appVersionConfig.releaseMedia,
       apkSha256: appVersionConfig.apkSha256,
       ota: otaPayload,
-      checkedAt: new Date(),
-    });
-      platform: platform || "android",
-      buildNumber: buildNumber || null,
-      latestVersion: appVersionConfig.latestVersion,
-      minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
-      updateAvailable: evaluation.updateAvailable || otaHasNewer,
-      forceUpdate: evaluation.forceUpdate,
-      updateType: isOldNativeApk
-        ? evaluation.updateType
-        : otaHasNewer
-        ? "ota_live"
-        : evaluation.updateType,
-      isSuspended: false,
-      isPilot: false,
-      targetAudience: "all",
-      isTargeted: true,
-      updateMessage: appVersionConfig.updateMessage,
-      updateUrl: appVersionConfig.updateUrl,
-      releaseNotes: appVersionConfig.releaseNotes || "",
-      releaseMedia: appVersionConfig.releaseMedia || [],
-      apkSha256: appVersionConfig.apkSha256 || "",
-      ota: otaPayload,
       checkedAt: new Date().toISOString(),
     });
   } catch (error) {
