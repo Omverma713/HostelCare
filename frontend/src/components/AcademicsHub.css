@@ -387,28 +387,35 @@
   transform: translateY(-1px);
 }
 
-/* Slot Card - Modern Mobile-First Layout */
+/* Slot Card - Modern Luxury Mobile-First Layout */
 .timetable-slot-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: var(--bg-card, #FAF7F2);
-  border: 1px solid var(--border-subtle, #EAE3D6);
-  border-radius: 14px;
+  gap: 10px;
+  background: #FFFFFF;
+  border: 1px solid #EAE3D6;
+  border-radius: 16px;
   padding: 14px 16px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   position: relative;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.timetable-slot-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(192, 118, 96, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .timetable-slot-card.is-lab {
-  border-left: 4px solid var(--accent-terracotta, #D88B74);
-  background: var(--bg-card, #FFFBF8);
+  border-left: 5px solid #C07660;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFFBF8 100%);
 }
 
 .timetable-slot-card.is-theory {
-  border-left: 4px solid var(--primary-matcha-dark, #9C5B49);
+  border-left: 5px solid #829460;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAFAF7 100%);
 }
 
 .slot-header-row {
@@ -416,30 +423,77 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  gap: 8px;
 }
 
 .slot-time-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(192, 118, 96, 0.1);
-  color: var(--accent-terracotta, #C07660);
-  padding: 3px 10px;
+  background: #F8F3ED;
+  border: 1px solid rgba(192, 118, 96, 0.2);
+  color: #B2644F;
+  padding: 5px 12px;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .slot-time-icon {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.slot-time-start,
+.slot-time-end {
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.slot-time-sep {
+  color: #C07660;
+  opacity: 0.6;
   font-size: 11px;
 }
 
-.slot-title {
-  font-size: 15.5px;
+.slot-header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.slot-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: var(--text-primary, #242523);
-  line-height: 1.35;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.slot-type-badge.lab {
+  background: rgba(192, 118, 96, 0.12);
+  color: #B2644F;
+  border: 1px solid rgba(192, 118, 96, 0.25);
+}
+
+.slot-type-badge.theory {
+  background: rgba(130, 148, 96, 0.12);
+  color: #556B2F;
+  border: 1px solid rgba(130, 148, 96, 0.25);
+}
+
+.slot-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1F2024;
+  line-height: 1.4;
+  letter-spacing: -0.15px;
   margin: 2px 0 0;
 }
 
@@ -447,37 +501,49 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 2px;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 .slot-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   font-size: 11.5px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--text-secondary, #6B685F);
-  border: 1px solid var(--border-subtle, #EAE3D6);
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #F7F5F0;
+  color: #4A4843;
+  border: 1px solid #EBE4DA;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.15s ease;
+}
+
+.slot-chip:hover {
+  background: #F0EDE5;
 }
 
 .slot-chip.room-chip {
   background: rgba(192, 118, 96, 0.08);
-  color: var(--accent-terracotta, #C07660);
-  border-color: rgba(192, 118, 96, 0.2);
+  color: #B2644F;
+  border-color: rgba(192, 118, 96, 0.22);
   font-weight: 700;
 }
 
 .slot-chip.faculty-chip {
-  color: var(--text-primary, #242523);
+  background: #FAF7F2;
+  color: #2D2C28;
+  border-color: #E2D9CC;
 }
 
 .slot-chip.code-chip {
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
+  font-weight: 600;
+  background: #F5F3ED;
+  color: #635F57;
+  border-color: #E6DFD4;
 }
 
 .timetable-empty-day-card {
@@ -2153,30 +2219,35 @@ body.login-dark-theme .slot-chip.faculty-chip {
 
 /* --- In-App Slot Action Controls --- */
 .slot-action-btn {
-  background: var(--bg-subtle, #F4EBE6);
-  border: 1px solid var(--border-subtle, #EAE3D6);
-  color: var(--text-secondary, #6B685F);
+  background: #FFFFFF;
+  border: 1px solid #E5DCD1;
+  color: #635F57;
   border-radius: 8px;
-  padding: 3px 8px;
-  font-size: 12px;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
-  line-height: 1;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .slot-action-btn:hover {
-  background: var(--accent-terracotta, #C07660);
-  color: #fff;
-  border-color: var(--accent-terracotta, #C07660);
+  background: #FDF4F0;
+  color: #C07660;
+  border-color: #D88B74;
+  transform: translateY(-1px) scale(1.08);
+  box-shadow: 0 3px 8px rgba(192, 118, 96, 0.18);
 }
 
 .slot-action-btn.delete:hover {
-  background: #EF4444;
-  color: #fff;
-  border-color: #EF4444;
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: #F87171;
+  transform: translateY(-1px) scale(1.08);
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.18);
 }
 
 .day-add-slot-bar {
