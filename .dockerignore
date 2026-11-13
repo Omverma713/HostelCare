@@ -11,3 +11,5 @@ mobile-app
 scratch
 load-test*.js
 argon-test.js
+public/ota-bundles/*.zip
+dist-ota/*.zip
