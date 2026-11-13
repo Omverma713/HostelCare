@@ -8,7 +8,7 @@ async function run() {
   const config = await SystemConfig.getEffectiveConfig();
   
   const targetVer = '1.2.2.21';
-  const checksum = '15e77eaeda3ff425873a862b6cd6bdab15defde9fa55e3261f2ce7c98bd35169';
+  const checksum = '27ae0130db538c8686af2fcb91f5fc3de221c007e2632346a1065780ae287433';
 
   config.otaUpdates = config.otaUpdates || {};
   config.otaUpdates.enabled = true;

@@ -664,8 +664,10 @@ class AppUpdateService {
     this.isDownloadingOta = true;
     try {
       console.log('[AppUpdateService] Starting background silent OTA download...');
-      await this.downloadAndApplyOta({ reloadImmediately: true });
-      console.log('[AppUpdateService] Silent OTA bundle downloaded & applied immediately!');
+      // Silent background update: Download & set bundle without disrupting or reloading the active screen!
+      // The update seamlessly activates on the user's next clean app launch.
+      await this.downloadAndApplyOta({ reloadImmediately: false });
+      console.log('[AppUpdateService] Silent OTA bundle downloaded & activated for next launch!');
     } catch (err) {
       console.warn('[AppUpdateService] Background silent OTA download notice:', err.message);
     } finally {
