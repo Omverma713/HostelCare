@@ -408,14 +408,18 @@ const downloadLatestOtaBundle = async (req, res) => {
     const ota = config.otaUpdates || {};
     const bundleVer = ota.currentBundleVersion || "1.2.2.15";
 
-    const candidatePaths = [
+    // 1. If explicit absolute HTTP/HTTPS URL specified in config, redirect there first
+    if (ota.bundleUrl && ota.bundleUrl.startsWith("http")) {
+      return res.redirect(302, ota.bundleUrl);
+    }
+
+    // 2. Look for exact version zip on local disk (never fallback to an old web-bundle.zip)
+    const exactLocalPaths = [
       path.resolve(__dirname, `../../dist-ota/hostelcare-bundle-v${bundleVer}.zip`),
-      path.resolve(__dirname, `../../dist-ota/hostelcare-web-bundle.zip`),
       path.resolve(__dirname, `../../public/ota-bundles/hostelcare-bundle-v${bundleVer}.zip`),
-      path.resolve(__dirname, `../../public/ota-bundles/hostelcare-web-bundle.zip`),
     ];
 
-    for (const p of candidatePaths) {
+    for (const p of exactLocalPaths) {
       if (fs.existsSync(p)) {
         return res.sendFile(p, {
           acceptRanges: true,
@@ -427,14 +431,9 @@ const downloadLatestOtaBundle = async (req, res) => {
       }
     }
 
-    if (ota.bundleUrl && ota.bundleUrl.startsWith("http")) {
-      return res.redirect(302, ota.bundleUrl);
-    }
-
-    // Fallback: If not on local container disk, stream directly from public repository assets
+    // 3. Fallback: If exact version not on container disk yet, stream exact version from GitHub
     const fallbackUrls = [
       `https://raw.githubusercontent.com/Omverma713/HostelCare/main/public/ota-bundles/hostelcare-bundle-v${bundleVer}.zip`,
-      `https://raw.githubusercontent.com/Omverma713/HostelCare/main/public/ota-bundles/hostelcare-web-bundle.zip`,
     ];
 
     for (const fbUrl of fallbackUrls) {
@@ -449,6 +448,23 @@ const downloadLatestOtaBundle = async (req, res) => {
           return Readable.fromWeb(resp.body).pipe(res);
         }
       } catch (_) {}
+    }
+
+    // 4. Last resort: generic local web bundle
+    const genericLocalPaths = [
+      path.resolve(__dirname, `../../dist-ota/hostelcare-web-bundle.zip`),
+      path.resolve(__dirname, `../../public/ota-bundles/hostelcare-web-bundle.zip`),
+    ];
+    for (const p of genericLocalPaths) {
+      if (fs.existsSync(p)) {
+        return res.sendFile(p, {
+          acceptRanges: true,
+          headers: {
+            "Content-Type": "application/zip",
+            "Content-Disposition": `attachment; filename="hostelcare-bundle-v${bundleVer}.zip"`,
+          },
+        });
+      }
     }
 
     return res.status(404).json({
