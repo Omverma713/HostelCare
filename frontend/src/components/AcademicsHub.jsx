@@ -892,35 +892,22 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", width: "100%" }}>
                   <button
                     type="button"
                     onClick={handleUploadTimetableFile}
                     disabled={fileIsUploading}
-                    className="engine-generate-btn"
+                    className={`gemini-ai-scanner-btn ${fileIsUploading ? "gemini-ai-scanning" : ""}`}
                   >
-                    {fileIsUploading ? (ocrStatus || "⚡ Processing & Auto-Adjusting...") : "⚡ Auto-Generate Timetable"}
+                    <span className="gemini-ai-btn-glow"></span>
+                    <span className="gemini-ai-btn-content">
+                      <span className="gemini-sparkle-icon">✨</span>
+                      <span>
+                        {fileIsUploading ? (ocrStatus || "Scanning with Google Gemini Vision AI...") : "Auto-Generate with Google Gemini Vision AI"}
+                      </span>
+                    </span>
                   </button>
                 </div>
-                {ocrStatus && (
-                  <div style={{
-                    width: "100%",
-                    background: "rgba(192, 118, 96, 0.15)",
-                    border: "1px solid rgba(192, 118, 96, 0.4)",
-                    borderRadius: 8,
-                    padding: "8px 12px",
-                    color: "var(--accent-terracotta, #C07660)",
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    marginTop: 8,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}>
-                    <span style={{ animation: "spin 1.2s linear infinite", display: "inline-block" }}>⚡</span>
-                    {ocrStatus}
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -1416,26 +1403,33 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               </div>
 
               {selectedFile && (
-                <div style={{ background: "var(--bg-subtle, #FAF8F5)", border: "1px solid var(--border-subtle)", borderRadius: 10, padding: 10, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)" }}>
-                    📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
-                  </span>
+                <div style={{ background: "var(--bg-subtle, #FAF8F5)", border: "1px solid var(--border-subtle)", borderRadius: 10, padding: 12, marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)" }}>
+                      📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedFile(null); setFilePreviewUrl(null); }}
+                      style={{ background: "transparent", border: "none", color: "var(--text-tertiary)", cursor: "pointer", fontSize: 12 }}
+                    >
+                      ✕ Remove
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={handleUploadTimetableFile}
                     disabled={fileIsUploading}
-                    style={{
-                      background: "var(--accent-terracotta, #C07660)",
-                      color: "white",
-                      border: "none",
-                      padding: "6px 12px",
-                      borderRadius: 8,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
+                    className={`gemini-ai-scanner-btn ${fileIsUploading ? "gemini-ai-scanning" : ""}`}
+                    style={{ width: "100%" }}
                   >
-                    {fileIsUploading ? "Processing..." : "⚡ Auto-Generate From File"}
+                    <span className="gemini-ai-btn-glow"></span>
+                    <span className="gemini-ai-btn-content">
+                      <span className="gemini-sparkle-icon">✨</span>
+                      <span>
+                        {fileIsUploading ? (ocrStatus || "Scanning with Google Gemini Vision AI...") : "Auto-Generate with Google Gemini Vision AI"}
+                      </span>
+                    </span>
                   </button>
                 </div>
               )}

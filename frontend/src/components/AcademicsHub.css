@@ -1556,6 +1556,127 @@ body.login-dark-theme .promotion-badge {
 }
 
 /* ==========================================================================
+   GOOGLE AI MODE REVOLVING LIGHT BUTTON (GEMINI VISION)
+   ========================================================================== */
+.gemini-ai-scanner-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 9999px; /* Capsule pill style */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 100%;
+}
+
+.gemini-ai-scanner-btn:active {
+  transform: scale(0.985);
+}
+
+.gemini-ai-scanner-btn:disabled {
+  cursor: wait;
+}
+
+/* Revolving conic light ring behind the button */
+.gemini-ai-btn-glow {
+  position: absolute;
+  top: -150%;
+  left: -50%;
+  width: 200%;
+  height: 400%;
+  background: conic-gradient(
+    from 0deg,
+    #4285F4 0deg,
+    #9B72CF 60deg,
+    #D96570 120deg,
+    #EA4335 180deg,
+    #FBBC05 240deg,
+    #34A853 300deg,
+    #4285F4 360deg
+  );
+  opacity: 0.45;
+  transition: opacity 0.3s ease;
+}
+
+/* Active scanning: rotating rainbow google ai beam */
+.gemini-ai-scanner-btn.gemini-ai-scanning .gemini-ai-btn-glow {
+  opacity: 1;
+  animation: geminiRevolve 2s linear infinite;
+  filter: blur(4px);
+}
+
+.gemini-ai-scanner-btn:hover .gemini-ai-btn-glow {
+  opacity: 0.9;
+  animation: geminiRevolve 3.5s linear infinite;
+}
+
+@keyframes geminiRevolve {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Inner pill content */
+.gemini-ai-btn-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  background: #1E1E1E;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+/* Light theme subtle variation if needed */
+:not(.dark-theme) .gemini-ai-btn-content {
+  background: #242426;
+  color: #F8F9FA;
+}
+
+.dark-theme .gemini-ai-btn-content {
+  background: #171513;
+  color: #FFFFFF;
+}
+
+.gemini-sparkle-icon {
+  font-size: 14px;
+  display: inline-block;
+  animation: sparklePulse 1.8s ease-in-out infinite;
+}
+
+.gemini-ai-scanning .gemini-sparkle-icon {
+  animation: sparklePulse 0.8s ease-in-out infinite, spin 2.5s linear infinite;
+}
+
+@keyframes sparklePulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px #4285F4);
+  }
+  50% {
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 7px #FBBC05);
+  }
+}
+
+/* ==========================================================================
    HIGH CONTRAST DARK LUXURY ESPRESSO THEME OVERRIDES
    ========================================================================== */
 
