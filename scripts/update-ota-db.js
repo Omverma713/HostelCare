@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.23';
-  const checksum = '8fa38f5be1c078c323d9a2bfd78ba2de89e8764a54af784c90c5eec1134bc77d';
+  const targetVer = '1.2.2.24';
+  const checksum = 'af38168a7b5ce33b30ccf15d9b52bdd1368da50dd84e8e2b5b0f39ecedfd3507';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
