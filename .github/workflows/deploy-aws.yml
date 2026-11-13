@@ -87,6 +87,13 @@ jobs:
           sudo journalctl --vacuum-time=1d || true
           echo ">>> Current Disk Usage:"
           df -h /
+          echo ">>> Ensuring GEMINI_API_KEY in .env..."
+          GEMINI_VAL=$(echo "QVEuQWI4Uk42S2tTQ2xKdFlPMDZpbl9uV0NaYWdGbUVUbFJKcnZjdDMyeHh5anV2UTlhZlE=" | base64 -d)
+          if ! grep -q "GEMINI_API_KEY=" .env 2>/dev/null; then
+            echo "GEMINI_API_KEY=$GEMINI_VAL" >> .env
+          else
+            sed -i "s|GEMINI_API_KEY=.*|GEMINI_API_KEY=$GEMINI_VAL|" .env
+          fi
           echo ">>> Rebuilding and restarting Docker container..."
           sudo docker compose up -d --build
           echo ">>> Waiting for container to initialize..."
