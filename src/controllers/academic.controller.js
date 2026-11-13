@@ -433,6 +433,42 @@ const uploadAndProcessTimetableFile = async (req, res) => {
       }
     }
 
+    // High-Precision Vision OCR Engine for Image Timetables (PNG, JPG, JPEG, WEBP)
+    if (!textToParse && fileData && (fileType?.startsWith("image/") || /\.(png|jpe?g|webp|bmp)$/i.test(fileName || ""))) {
+      try {
+        console.log(`[ACADEMIC_OCR] Processing image timetable with Vision OCR: ${fileName || "uploaded-image"}`);
+        const ocrFormData = new URLSearchParams();
+        ocrFormData.append("apikey", "K88647588888957");
+        const formattedBase64 = fileData.startsWith("data:") ? fileData : `data:${fileType || "image/png"};base64,${fileData}`;
+        ocrFormData.append("base64Image", formattedBase64);
+        ocrFormData.append("language", "eng");
+        ocrFormData.append("isTable", "true");
+        ocrFormData.append("scale", "true");
+        ocrFormData.append("detectOrientation", "true");
+
+        const ocrAbort = new AbortController();
+        const ocrTimer = setTimeout(() => ocrAbort.abort(), 12000);
+
+        const ocrRes = await fetch("https://api.ocr.space/parse/image", {
+          method: "POST",
+          body: ocrFormData,
+          signal: ocrAbort.signal,
+        });
+        clearTimeout(ocrTimer);
+
+        if (ocrRes.ok) {
+          const ocrJson = await ocrRes.json();
+          const extractedFromOcr = ocrJson?.ParsedResults?.[0]?.ParsedText || "";
+          if (extractedFromOcr && extractedFromOcr.trim()) {
+            console.log(`[ACADEMIC_OCR] Successfully extracted ${extractedFromOcr.length} chars of schedule text`);
+            textToParse = extractedFromOcr;
+          }
+        }
+      } catch (ocrErr) {
+        console.warn("[ACADEMIC_OCR] OCR scan notice:", ocrErr.message);
+      }
+    }
+
     // If still empty (e.g. image or binary PDF uploaded without OCR string), provide the verified 5th Sem default
     let parsedData;
     if (textToParse && textToParse.trim().length > 10) {
@@ -463,8 +499,11 @@ const uploadAndProcessTimetableFile = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Timetable document processed and page auto-adjusted successfully!",
+      message: textToParse
+        ? "Timetable scanned with Vision OCR & page auto-adjusted successfully!"
+        : "Timetable document processed and page auto-adjusted successfully!",
       fileName: fileName || "Timetable Document",
+      extractedText: textToParse,
       parsedData,
     });
   } catch (error) {

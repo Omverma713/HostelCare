@@ -333,32 +333,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
     try {
       setFileIsUploading(true);
       setActionMessage(null);
-
-      let extractedOcrText = "";
-      // If it's an image, run client-side OCR first to accurately read the schedule
-      if (selectedFile.type.startsWith("image/")) {
-        try {
-          setOcrStatus("🔍 Initializing OCR Vision Engine...");
-          const Tesseract = await import("tesseract.js");
-          setOcrStatus("📖 Scanning timetable photo (0%)...");
-          const result = await Tesseract.recognize(selectedFile, "eng", {
-            logger: (m) => {
-              if (m.status === "recognizing text") {
-                const pct = Math.round((m.progress || 0) * 100);
-                setOcrStatus(`📖 Scanning timetable photo with OCR (${pct}%)...`);
-              }
-            },
-          });
-          extractedOcrText = result?.data?.text || "";
-          if (extractedOcrText) {
-            setCustomText(extractedOcrText);
-          }
-        } catch (ocrErr) {
-          console.warn("[OCR_CLIENT_WARNING]:", ocrErr);
-        } finally {
-          setOcrStatus(null);
-        }
-      }
+      setOcrStatus(selectedFile.type.startsWith("image/") ? "⚡ Scanning timetable photo with Vision OCR..." : "⚡ Reading timetable document...");
 
       const reader = new FileReader();
       reader.onload = async () => {
@@ -367,6 +342,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
           const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
           let parsed = null;
+          let returnedExtractedText = "";
           try {
             const res = await fetch(`${API_BASE}/upload-file`, {
               method: "POST",
@@ -378,7 +354,6 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                 fileName: selectedFile.name,
                 fileType: selectedFile.type,
                 fileData: base64Data,
-                extractedText: extractedOcrText,
                 defaultSection: customSection,
                 defaultRoom: customRoom,
               }),
@@ -388,10 +363,15 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               const json = await res.json();
               if (json.success && json.parsedData) {
                 parsed = json.parsedData;
+                returnedExtractedText = json.extractedText || "";
               }
             }
           } catch (netErr) {
             console.warn("[TIMETABLE_UPLOAD] Network notice:", netErr.message);
+          }
+
+          if (returnedExtractedText) {
+            setCustomText(returnedExtractedText);
           }
 
           // Fallback to verified 5th Sem schedule if server response was empty
@@ -412,8 +392,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
           setActionMessage({
             type: "success",
-            text: extractedOcrText
-              ? `🎉 Scanned with OCR Vision & auto-generated schedule from ${selectedFile.name}!`
+            text: returnedExtractedText
+              ? `🎉 Scanned with Vision OCR & auto-generated schedule from ${selectedFile.name}!`
               : `🎉 Timetable auto-adjusted and generated successfully from ${selectedFile.name}!`,
           });
           setSelectedFile(null);
@@ -424,18 +404,21 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
           setActionMessage({ type: "error", text: postErr.message || "Upload processing failed" });
         } finally {
           setFileIsUploading(false);
+          setOcrStatus(null);
         }
       };
 
       reader.onerror = () => {
         setActionMessage({ type: "error", text: "Failed to read file from storage." });
         setFileIsUploading(false);
+        setOcrStatus(null);
       };
 
       reader.readAsDataURL(selectedFile);
     } catch (err) {
       setActionMessage({ type: "error", text: err.message || "Upload failed" });
       setFileIsUploading(false);
+      setOcrStatus(null);
     }
   };
 
