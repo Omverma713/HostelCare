@@ -1563,7 +1563,7 @@ body.login-dark-theme .promotion-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5px; /* Thin, elegant glowing rim */
+  padding: 2px; /* Crisp glowing boundary */
   border-radius: 9999px; /* Capsule pill style */
   background: transparent;
   border: none;
@@ -1572,7 +1572,7 @@ body.login-dark-theme .promotion-badge {
   transition: transform 0.2s ease, box-shadow 0.3s ease;
   width: 100%;
   max-width: 100%;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px rgba(66, 133, 244, 0.12), 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .gemini-ai-scanner-btn:active {
@@ -1583,7 +1583,7 @@ body.login-dark-theme .promotion-badge {
   cursor: wait;
 }
 
-/* Revolving Google AI light beam behind the translucent glass pill */
+/* Revolving Google AI light beam */
 .gemini-ai-btn-glow {
   position: absolute;
   top: -150%;
@@ -1592,15 +1592,15 @@ body.login-dark-theme .promotion-badge {
   height: 400%;
   background: conic-gradient(
     from 0deg,
-    rgba(66, 133, 244, 0.95) 0deg,      /* Google Blue */
-    rgba(155, 114, 207, 0.9) 55deg,     /* Gemini Purple */
-    rgba(234, 67, 53, 0.95) 120deg,     /* Google Red */
-    rgba(251, 188, 5, 0.95) 190deg,     /* Google Yellow */
-    rgba(52, 168, 83, 0.95) 260deg,     /* Google Green */
-    rgba(66, 133, 244, 0.4) 310deg,     /* Soft shade tail */
-    rgba(66, 133, 244, 0.95) 360deg
+    #4285F4 0deg,      /* Google Blue */
+    #9B72CF 55deg,     /* Gemini Purple */
+    #EA4335 120deg,    /* Google Red */
+    #FBBC05 190deg,    /* Google Yellow */
+    #34A853 260deg,    /* Google Green */
+    rgba(66, 133, 244, 0.35) 310deg, /* Soft tail shade */
+    #4285F4 360deg
   );
-  opacity: 0.55;
+  opacity: 0.75;
   transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
@@ -1608,13 +1608,13 @@ body.login-dark-theme .promotion-badge {
 .gemini-ai-scanner-btn.gemini-ai-scanning .gemini-ai-btn-glow {
   opacity: 1;
   animation: geminiRevolve 2s linear infinite;
-  filter: blur(5px);
+  filter: blur(4px);
 }
 
 .gemini-ai-scanner-btn:hover .gemini-ai-btn-glow {
-  opacity: 0.85;
+  opacity: 1;
   animation: geminiRevolve 3s linear infinite;
-  filter: blur(4px);
+  filter: blur(3px);
 }
 
 @keyframes geminiRevolve {
@@ -1636,28 +1636,51 @@ body.login-dark-theme .promotion-badge {
   justify-content: center;
   padding: 10px 20px;
   border-radius: 9999px;
-  background: rgba(30, 30, 32, 0.78); /* Semi-transparent frosted look */
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  color: #FFFFFF;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.25px;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.16);
   text-align: center;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Light mode frosted transparency */
+/* LIGHT THEME (Warm Linen / Clean Glass):
+   Translucent porcelain white with crisp dark text and glowing Google border */
 :not(.dark-theme) .gemini-ai-btn-content {
-  background: rgba(36, 36, 40, 0.82);
-  color: #F8F9FA;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.88);
+  color: #1F2024;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.dark-theme .gemini-ai-btn-content {
-  background: rgba(22, 20, 19, 0.8);
+:not(.dark-theme) .gemini-ai-scanner-btn {
+  box-shadow: 0 4px 16px rgba(66, 133, 244, 0.16), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+:not(.dark-theme) .gemini-ai-scanner-btn.gemini-ai-scanning .gemini-ai-btn-content {
+  background: rgba(255, 255, 255, 0.92);
+  color: #1A73E8; /* Google signature blue while scanning */
+  font-weight: 700;
+}
+
+/* DARK THEME:
+   Translucent dark smoked glass with white text */
+.dark-theme .gemini-ai-btn-content,
+html.dark-theme .gemini-ai-btn-content,
+body.login-dark-theme .gemini-ai-btn-content,
+[data-theme="dark"] .gemini-ai-btn-content {
+  background: rgba(24, 22, 20, 0.84);
   color: #FFFFFF;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.dark-theme .gemini-ai-scanner-btn.gemini-ai-scanning .gemini-ai-btn-content,
+html.dark-theme .gemini-ai-scanner-btn.gemini-ai-scanning .gemini-ai-btn-content,
+body.login-dark-theme .gemini-ai-scanner-btn.gemini-ai-scanning .gemini-ai-btn-content,
+[data-theme="dark"] .gemini-ai-scanner-btn.gemini-ai-scanning .gemini-ai-btn-content {
+  background: rgba(18, 16, 15, 0.88);
+  color: #8AB4F8; /* Soft Google Blue for Dark Mode */
+  font-weight: 700;
 }
 
 /* ==========================================================================
