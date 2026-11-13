@@ -175,6 +175,20 @@ const FALLBACK_WEEKLY_TIMETABLE = {
   ],
 };
 
+function formatHolidayDate(dateStr) {
+  if (!dateStr) return "";
+  try {
+    const parts = String(dateStr).split("-");
+    if (parts.length === 3) {
+      const [y, m, d] = parts;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const mon = months[parseInt(m, 10) - 1] || m;
+      return `${parseInt(d, 10)} ${mon} ${y}`;
+    }
+  } catch (e) {}
+  return dateStr;
+}
+
 export default function AcademicsHub({ userRole = "student", onBackToHome }) {
   let isDarkMode = false;
   try {
@@ -1099,14 +1113,14 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               <h3 className="calendar-section-heading">
                 Official Gazetted Holidays (2026)
               </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {holidaysList.map((h, i) => (
                   <div key={i} className="holiday-row">
-                    <div>
+                    <div className="holiday-info-col">
                       <div className="holiday-name">{h.name}</div>
                       <div className="holiday-subtext">{h.dayOfWeek} • {h.description || "University Holiday"}</div>
                     </div>
-                    <span className="holiday-date">{h.date}</span>
+                    <span className="holiday-date">{formatHolidayDate(h.date)}</span>
                   </div>
                 ))}
               </div>
@@ -1319,6 +1333,57 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
               </select>
             </div>
 
+            {/* Quick 1-Click Exam Phase Switcher */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 6 }}>
+                ⚡ Quick Switch Exam Phase:
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminExamTitle("Mid Semester Examination 2026-27");
+                    setAdminExamRange("26th October to 4th November 2026 (Odd Sem) / 2nd April to 10th April 2027 (Even Sem)");
+                    setAdminExamNotice("Official Mid Semester datesheet has not been issued by the examination division yet. Examination datesheet and finalized syllabus modules will be published here as soon as approved.");
+                  }}
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    border: adminExamTitle.toLowerCase().includes("mid") ? "2px solid #C07660" : "1px solid var(--border-subtle)",
+                    background: adminExamTitle.toLowerCase().includes("mid") ? "rgba(192, 118, 96, 0.15)" : "var(--bg-subtle)",
+                    color: adminExamTitle.toLowerCase().includes("mid") ? "var(--accent-terracotta, #C07660)" : "var(--text-primary)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  🎯 Mid Semester
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminExamTitle("End Semester Examination 2026-27");
+                    setAdminExamRange("14th May to 31st May 2027 (Even Sem) / 28th December to 10th January (Odd Sem)");
+                    setAdminExamNotice("Official End Semester Examination schedule and datesheet will be published here upon release by Dean of Examinations.");
+                  }}
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    border: adminExamTitle.toLowerCase().includes("end") ? "2px solid #C07660" : "1px solid var(--border-subtle)",
+                    background: adminExamTitle.toLowerCase().includes("end") ? "rgba(192, 118, 96, 0.15)" : "var(--bg-subtle)",
+                    color: adminExamTitle.toLowerCase().includes("end") ? "var(--accent-terracotta, #C07660)" : "var(--text-primary)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  🏁 End Semester
+                </button>
+              </div>
+            </div>
+
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 4 }}>
                 Exam Title
@@ -1376,7 +1441,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
         </div>
       )}
       {/* Dedicated mobile bottom clearance spacer for floating bottom dock */}
-      <div className="mobile-dock-clearance-spacer" style={{ width: '100%', height: '160px', pointerEvents: 'none' }} />
+      <div className="mobile-dock-clearance-spacer" style={{ width: '100%', height: '72px', pointerEvents: 'none' }} />
     </div>
   );
 }

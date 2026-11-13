@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.26';
-  const checksum = '0698f41c15f8e38605804427547596795a0836a74921de4f71a835179bf65193';
+  const targetVer = '1.2.2.27';
+  const checksum = '9336415c3bd56fcddac694bd68436e559a853da1f526ebb66a86aed627e54b9c';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -21,18 +21,18 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = false;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.26: 100% Silent OTA Live Update (Zero Forced Popups)';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.27: Dynamic Bottom Clearance, Spacious Holiday Dates, 1-Click Mid/End Semester Switcher';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.26: Silent OTA Live Update';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.27: Silent Live Update';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');
   config.markModified('appVersion');
   await config.save();
 
-  console.log('MongoDB SystemConfig updated with final v1.2.2.18 bundle checksum!');
+  console.log(`MongoDB SystemConfig updated with target v${targetVer} bundle checksum: ${checksum}`);
   await mongoose.disconnect();
 }
 
