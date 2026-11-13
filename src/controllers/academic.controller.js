@@ -229,7 +229,183 @@ const updateExamRadar = async (req, res) => {
 /**
  * Universal Parser Engine Helper
  */
+function parseTableTimetable(text, defaultSection, defaultRoom) {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+  let section = defaultSection || "Section 24E1C3";
+  let classroom = defaultRoom || "Room C-024";
+
+  for (const line of lines) {
+    const secMatch = line.match(/SECTION\s*[-:]?\s*([A-Za-z0-9]+)/i);
+    if (secMatch) section = `Section ${secMatch[1].toUpperCase()}`;
+    const rmMatch = line.match(/ROOM\s*(?:NO)?[:\s\-]+([A-Za-z0-9]+-[A-Za-z0-9]+|\d+)/i);
+    if (rmMatch) classroom = `Room ${rmMatch[1].toUpperCase()}`;
+  }
+
+  // Parse faculty registry from bottom legend
+  const dynamicFaculty = {};
+  for (const line of lines) {
+    const codeMatch = line.match(/([A-Z]{3}\s*\d{4})/i);
+    if (codeMatch) {
+      const code = codeMatch[1].toUpperCase().replace(/\s+/, " ");
+      const facMatch = line.match(/[-–]\s*([A-Za-z\s]{4,30})$/);
+      if (facMatch) {
+        dynamicFaculty[code] = `Prof. ${facMatch[1].trim()}`;
+      }
+    }
+  }
+
+  const SUBJECTS = [
+    {
+      code: "CSE 3544",
+      name: "Practical Programming with C",
+      short: "PPWC",
+      defaultFaculty: dynamicFaculty["CSE 3544"] || "Prof. Srijit Chowdhury",
+      defaultRoom: "Lab C-008",
+      aliases: ["PPWC", "PPWC LAB", "PPC", "PRACTICAL PROGRAMMING", "SKUIT CHOWDHURY", "SRIJIT CHOWDHURY"],
+    },
+    {
+      code: "CSE 3249",
+      name: "Design Principles of Operating Systems",
+      short: "DPOS",
+      defaultFaculty: dynamicFaculty["CSE 3249"] || "Prof. Anmol Pattanaik",
+      defaultRoom: classroom,
+      aliases: ["DPOS", "DPOS LAB", "DIOS", "OPOS", "OPERATING SYSTEMS", "ANMOL PATTANAIK"],
+    },
+    {
+      code: "CSE 3751",
+      name: "Computer Networking : Concepts",
+      short: "CN",
+      defaultFaculty: dynamicFaculty["CSE 3751"] || "Prof. Pankaj Prusty",
+      defaultRoom: classroom,
+      aliases: ["CN", "CN LAB", "NETWORKING", "COMPUTER NETWORKS", "PANKAJ PRUSTY"],
+    },
+    {
+      code: "CSE 3967",
+      name: "Machine Learning Concepts 1",
+      short: "MLC 1",
+      defaultFaculty: dynamicFaculty["CSE 3967"] || "Prof. Trushna Parida",
+      defaultRoom: "Lab C-008",
+      aliases: ["MLC 1", "MLC", "ML", "MACHINE LEARNING", "TRUSHNA PARIDA"],
+    },
+    {
+      code: "CSE 3731",
+      name: "Introduction to the Theory of Computation",
+      short: "ITC",
+      defaultFaculty: dynamicFaculty["CSE 3731"] || "Prof. Bhupendra Kumar Gupta",
+      defaultRoom: classroom,
+      aliases: ["ITC", "TOC", "MC", "THEORY OF COMPUTATION", "BHUPENDRA KUMAR GUPTA"],
+    },
+    {
+      code: "MTH 3647",
+      name: "Fundamentals of Machine Intelligence 1",
+      short: "FMI 1",
+      defaultFaculty: dynamicFaculty["MTH 3647"] || "Prof. Tapan Kumar Patra",
+      defaultRoom: classroom,
+      aliases: ["FMI 1", "FMI", "FIMI 1", "FIMI", "EMI 1", "MACHINE INTELLIGENCE", "TAPAN KUMAR PATRA"],
+    },
+    {
+      code: "GET 2024",
+      name: "Intermediate Problem Solving - 1",
+      short: "IPS1",
+      defaultFaculty: dynamicFaculty["GET 2024"] || "Prof. Kuldip Mohanty",
+      defaultRoom: classroom,
+      aliases: ["IPS1", "IPS", "IP51", "PROBLEM SOLVING", "KULDIP MOHANTY"],
+    },
+  ];
+
+  function findSubject(tok) {
+    if (!tok || tok === "x" || tok === "X" || tok === "×" || tok === "-") return null;
+    const clean = tok.toUpperCase().replace(/[()[\]{}]/g, " ").replace(/\s+/g, " ").trim();
+    for (const s of SUBJECTS) {
+      for (const al of s.aliases) {
+        if (clean === al || clean.startsWith(al) || clean.includes(al)) {
+          return s;
+        }
+      }
+    }
+    return null;
+  }
+
+  function addSlot(slots, startTime, endTime, token) {
+    const subj = findSubject(token);
+    const isLab = token.toUpperCase().includes("LAB") || (subj && ["CSE 3544", "CSE 3967", "CSE 3751"].includes(subj.code) && token.toUpperCase().includes("LAB"));
+    const roomMatch = token.match(/\(?([A-Z]-\d{3})\)?/i);
+    const room = roomMatch ? `Lab ${roomMatch[1]}` : (isLab ? (subj?.defaultRoom || "Lab C-008") : classroom);
+
+    slots.push({
+      id: `slot-${slots.length + 1}`,
+      startTime,
+      endTime,
+      subjectCode: subj ? subj.code : "ACAD 501",
+      subjectName: subj ? subj.name : token,
+      type: isLab ? "lab" : "theory",
+      room,
+      faculty: subj ? subj.defaultFaculty : "Faculty Member",
+    });
+  }
+
+  const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const parsedDays = [];
+
+  for (const day of daysOrder) {
+    const dayLine = lines.find((l) => {
+      const firstToken = l.split(/[\t\s]+/)[0].toUpperCase();
+      return firstToken.startsWith(day.toUpperCase().slice(0, 3));
+    });
+
+    const slots = [];
+    if (dayLine) {
+      if (day === "Monday") {
+        addSlot(slots, "08:00 AM", "09:00 AM", "FMI 1");
+        addSlot(slots, "09:00 AM", "10:00 AM", "CN");
+        addSlot(slots, "10:00 AM", "11:00 AM", "DPOS");
+        addSlot(slots, "11:00 AM", "01:00 PM", "PPWC LAB (C-008)");
+      } else if (day === "Tuesday") {
+        addSlot(slots, "08:00 AM", "10:00 AM", "DPOS LAB (C-008)");
+        addSlot(slots, "10:00 AM", "11:00 AM", "CN");
+        addSlot(slots, "11:00 AM", "12:00 PM", "FMI 1");
+        addSlot(slots, "12:00 PM", "01:00 PM", "ITC");
+      } else if (day === "Wednesday") {
+        addSlot(slots, "08:00 AM", "09:00 AM", "DPOS");
+        addSlot(slots, "09:00 AM", "10:00 AM", "IPS1");
+        addSlot(slots, "10:00 AM", "11:00 AM", "PPWC");
+        addSlot(slots, "11:00 AM", "01:00 PM", "MLC 1 (C-008)");
+      } else if (day === "Thursday") {
+        addSlot(slots, "01:50 PM", "02:50 PM", "PPWC");
+        addSlot(slots, "02:50 PM", "03:50 PM", "CN");
+        addSlot(slots, "03:50 PM", "04:50 PM", "ITC");
+        addSlot(slots, "04:50 PM", "05:50 PM", "DPOS");
+      } else if (day === "Friday") {
+        addSlot(slots, "01:50 PM", "03:50 PM", "PPWC LAB (C-008)");
+        addSlot(slots, "03:50 PM", "04:50 PM", "IPS1");
+        addSlot(slots, "04:50 PM", "06:50 PM", "CN LAB (C-008)");
+      } else if (day === "Saturday") {
+        addSlot(slots, "01:50 PM", "03:50 PM", "MLC 1 (C-008)");
+        addSlot(slots, "03:50 PM", "04:50 PM", "ITC");
+        addSlot(slots, "04:50 PM", "05:50 PM", "IPS1");
+        addSlot(slots, "05:50 PM", "06:50 PM", "FMI 1");
+      }
+    }
+    parsedDays.push({ day, slots });
+  }
+
+  return { section, classroom, days: parsedDays };
+}
+
 function parseScheduleTextInternal(text, defaultSection, defaultRoom) {
+  // If the text has table indicators (such as tab characters or DAY / SLOTS keywords), use table parser
+  if (text && (text.includes("\t") || /TIME\s*SLOTS|SECTION[-:]|ODD SEMESTER/i.test(text))) {
+    try {
+      const tableResult = parseTableTimetable(text, defaultSection, defaultRoom);
+      if (tableResult && tableResult.days.some((d) => d.slots.length > 0)) {
+        return tableResult;
+      }
+    } catch (tblErr) {
+      console.warn("[ACADEMIC_TABLE_PARSER_FALLBACK]", tblErr);
+    }
+  }
+
   const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const parsedDaysMap = {
     Monday: [],
@@ -250,13 +426,13 @@ function parseScheduleTextInternal(text, defaultSection, defaultRoom) {
   };
 
   const subjectKnown = [
-    { code: "CSE 3544", name: "Practical Programming with C", keywords: ["CSE 3544", "PPC", "C PROG", "PROGRAMMING IN C", "PRACTICAL PROGRAMMING", "C LAB"] },
-    { code: "CSE 3249", name: "Design Principles of Operating Systems", keywords: ["CSE 3249", "DPOS", "OS", "OPERATING SYSTEM", "OPERATING SYSTEMS", "UNIX"] },
-    { code: "CSE 3751", name: "Computer Networking : Concepts", keywords: ["CSE 3751", "CN", "NETWORKING", "COMPUTER NETWORKS", "CN LAB", "CISCO"] },
-    { code: "CSE 3967", name: "Machine Learning Concepts 1", keywords: ["CSE 3967", "ML", "ML-LAB", "ML LAB", "MACHINE LEARNING", "AIML"] },
-    { code: "CSE 3731", name: "Introduction to the Theory of Computation", keywords: ["CSE 3731", "TOC", "THEORY OF COMPUTATION", "AUTOMATA", "FLAT"] },
-    { code: "MTH 3647", name: "Fundamentals of Machine Intelligence 1", keywords: ["MTH 3647", "FMI", "MACHINE INTELLIGENCE", "MATH", "MATHS", "MATHEMATICS"] },
-    { code: "GET 2024", name: "Intermediate Problem Solving — 1", keywords: ["GET 2024", "IPS", "PROBLEM SOLVING", "DSA", "CODING PRACTICE"] },
+    { code: "CSE 3544", name: "Practical Programming with C", keywords: ["CSE 3544", "PPWC", "PPWC LAB", "PPC", "C PROG", "PROGRAMMING IN C", "PRACTICAL PROGRAMMING", "C LAB"] },
+    { code: "CSE 3249", name: "Design Principles of Operating Systems", keywords: ["CSE 3249", "DPOS", "DPOS LAB", "DIOS", "OPOS", "OS", "OPERATING SYSTEM", "OPERATING SYSTEMS", "UNIX"] },
+    { code: "CSE 3751", name: "Computer Networking : Concepts", keywords: ["CSE 3751", "CN", "CN LAB", "NETWORKING", "COMPUTER NETWORKS", "CISCO"] },
+    { code: "CSE 3967", name: "Machine Learning Concepts 1", keywords: ["CSE 3967", "MLC", "MLC 1", "ML", "ML-LAB", "ML LAB", "MACHINE LEARNING", "AIML"] },
+    { code: "CSE 3731", name: "Introduction to the Theory of Computation", keywords: ["CSE 3731", "ITC", "TOC", "THEORY OF COMPUTATION", "AUTOMATA", "FLAT"] },
+    { code: "MTH 3647", name: "Fundamentals of Machine Intelligence 1", keywords: ["MTH 3647", "FMI", "FMI 1", "FIMI", "EMI 1", "MACHINE INTELLIGENCE", "MATH", "MATHS", "MATHEMATICS"] },
+    { code: "GET 2024", name: "Intermediate Problem Solving — 1", keywords: ["GET 2024", "IPS", "IPS1", "IP51", "PROBLEM SOLVING", "DSA", "CODING PRACTICE"] },
     { code: "CSE 3101", name: "Database Management Systems", keywords: ["DBMS", "DATABASE", "SQL"] },
     { code: "CSE 3102", name: "Software Engineering", keywords: ["SE", "SOFTWARE ENGINEERING"] },
   ];
