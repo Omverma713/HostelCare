@@ -29,11 +29,13 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(() => appUpdateService.getState().updateAvailable);
   const [latestVersion, setLatestVersion] = useState(() => appUpdateService.getState().latestVersion);
+  const [currentVersion, setCurrentVersion] = useState(() => appUpdateService.getDisplayVersion());
 
   useEffect(() => {
     const unsub = appUpdateService.addListener((state) => {
       setUpdateAvailable(Boolean(state.updateAvailable));
       if (state.latestVersion) setLatestVersion(state.latestVersion);
+      setCurrentVersion(appUpdateService.getDisplayVersion());
     });
     return unsub;
   }, []);
@@ -51,7 +53,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
           triggerToast('success', `New update v${res.latestVersion} found! Tap to install.`);
         }
       } else {
-        triggerToast('success', 'You are on the latest version of HostelCare (v1.2.2.18 🚀)!');
+        triggerToast('success', `You are on the latest version of HostelCare (v${appUpdateService.getDisplayVersion()} 🚀)!`);
       }
     } catch (e) {
       triggerToast('error', e.message || 'Update check failed.');
@@ -587,7 +589,7 @@ const handleSendMessage = (e) => {
                       gap: 4
                     }}
                   >
-                    <span>{updateAvailable ? '⚡ v' + latestVersion : 'v1.2.2.18 🚀'}</span>
+                    <span>{updateAvailable ? '⚡ v' + latestVersion : 'v' + currentVersion + ' 🚀'}</span>
                   </button>
                 </div>
               </div>
@@ -1111,7 +1113,7 @@ const handleSendMessage = (e) => {
                     <span className="tactile-pill-badge">SYSTEM &amp; UPDATES</span>
                     <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, margin: '14px 0 6px 0', color: 'var(--text-primary)' }}>HostelCare Mobile</h3>
                     <p style={{ margin: '0 0 14px 0', fontSize: 13.5, color: 'var(--text-secondary)' }}>
-                      Installed Version: <strong>v1.2.2.18 (Build 30) • Live OTA Verified 🚀</strong>
+                      Installed Version: <strong>v{currentVersion} (Build 30) • Live OTA Verified 🚀</strong>
                     </p>
                     <div className={`tactile-status-pill ${updateAvailable ? 'has-update' : 'up-to-date'}`}>
                       <span>{updateAvailable ? '⚡ New Update Available (v' + latestVersion + ')' : '✓ App is Up to Date'}</span>

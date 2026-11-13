@@ -1,7 +1,7 @@
 {
   "name": "hostelcare-frontend",
   "private": true,
-  "version": "1.2.2.19",
+  "version": "1.2.2.21",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -29,6 +29,7 @@
     "react-router-dom": "^7.18.2",
     "socket.io-client": "^4.8.4",
     "tailwindcss": "^4.3.3",
+    "tesseract.js": "^7.0.0",
     "three": "^0.185.1"
   },
   "devDependencies": {

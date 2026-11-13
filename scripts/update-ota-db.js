@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.19.1';
-  const checksum = '90cd62d77755d8c9413d63b49ad65206a067f89f842e810b56bc7e27cb4689ce';
+  const targetVer = '1.2.2.21';
+  const checksum = '15e77eaeda3ff425873a862b6cd6bdab15defde9fa55e3261f2ce7c98bd35169';
 
   config.otaUpdates = config.otaUpdates || {};
   config.otaUpdates.enabled = true;
@@ -18,11 +18,12 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
+  config.otaUpdates.notes = 'HostelCare v1.2.2.21: Instant Boot notifyAppReady (prevents rollback loop), Dynamic Dashboard Version Badge & Timetable OCR Vision Engine';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.19.1: Multi-Format Timetable Engine, Academic Calendar Deck & Force Live OTA Hotfix';
-  config.appVersion.forceUpdate = true;
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.21: Instant Boot notifyAppReady (no reload loop), Dynamic Version & Timetable OCR Vision';
+  config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');
   config.markModified('appVersion');

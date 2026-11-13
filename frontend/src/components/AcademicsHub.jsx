@@ -198,6 +198,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState(null);
   const [fileIsUploading, setFileIsUploading] = useState(false);
+  const [ocrStatus, setOcrStatus] = useState(null);
   const fileInputRef = useRef(null);
 
   // Timetable Parser & Editor Modal
@@ -333,6 +334,32 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
       setFileIsUploading(true);
       setActionMessage(null);
 
+      let extractedOcrText = "";
+      // If it's an image, run client-side OCR first to accurately read the schedule
+      if (selectedFile.type.startsWith("image/")) {
+        try {
+          setOcrStatus("🔍 Initializing OCR Vision Engine...");
+          const Tesseract = await import("tesseract.js");
+          setOcrStatus("📖 Scanning timetable photo (0%)...");
+          const result = await Tesseract.recognize(selectedFile, "eng", {
+            logger: (m) => {
+              if (m.status === "recognizing text") {
+                const pct = Math.round((m.progress || 0) * 100);
+                setOcrStatus(`📖 Scanning timetable photo with OCR (${pct}%)...`);
+              }
+            },
+          });
+          extractedOcrText = result?.data?.text || "";
+          if (extractedOcrText) {
+            setCustomText(extractedOcrText);
+          }
+        } catch (ocrErr) {
+          console.warn("[OCR_CLIENT_WARNING]:", ocrErr);
+        } finally {
+          setOcrStatus(null);
+        }
+      }
+
       const reader = new FileReader();
       reader.onload = async () => {
         try {
@@ -351,6 +378,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                 fileName: selectedFile.name,
                 fileType: selectedFile.type,
                 fileData: base64Data,
+                extractedText: extractedOcrText,
                 defaultSection: customSection,
                 defaultRoom: customRoom,
               }),
@@ -384,7 +412,9 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
           setActionMessage({
             type: "success",
-            text: `🎉 Timetable auto-adjusted and generated successfully from ${selectedFile.name}! Schedule and classes updated.`,
+            text: extractedOcrText
+              ? `🎉 Scanned with OCR Vision & auto-generated schedule from ${selectedFile.name}!`
+              : `🎉 Timetable auto-adjusted and generated successfully from ${selectedFile.name}!`,
           });
           setSelectedFile(null);
           setFilePreviewUrl(null);
@@ -713,9 +743,28 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                     disabled={fileIsUploading}
                     className="engine-generate-btn"
                   >
-                    {fileIsUploading ? "⚡ Processing & Auto-Adjusting..." : "⚡ Auto-Generate Timetable"}
+                    {fileIsUploading ? (ocrStatus || "⚡ Processing & Auto-Adjusting...") : "⚡ Auto-Generate Timetable"}
                   </button>
                 </div>
+                {ocrStatus && (
+                  <div style={{
+                    width: "100%",
+                    background: "rgba(192, 118, 96, 0.15)",
+                    border: "1px solid rgba(192, 118, 96, 0.4)",
+                    borderRadius: 8,
+                    padding: "8px 12px",
+                    color: "var(--accent-terracotta, #C07660)",
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    marginTop: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}>
+                    <span style={{ animation: "spin 1.2s linear infinite", display: "inline-block" }}>⚡</span>
+                    {ocrStatus}
+                  </div>
+                )}
               </div>
             )}
           </div>
