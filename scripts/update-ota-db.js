@@ -8,22 +8,25 @@ async function run() {
   const config = await SystemConfig.getEffectiveConfig();
   
   const targetVer = '1.2.2.21';
-  const checksum = '1f48d6a65bb01331f3539db8faea972ab8455840f50a3b8f7218222932b36459';
+  const checksum = 'bd4b85ccc7763647fa0a85bf850516db0b35e49f4ebc88be44f170b8c243f049';
+  const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
   config.otaUpdates.enabled = true;
   config.otaUpdates.currentBundleVersion = targetVer;
   config.otaUpdates.bundleChecksum = checksum;
   config.otaUpdates.bundleUrl = '/api/v1/app-version/ota-bundle';
+  config.otaUpdates.deployId = newDeployId;
+  config.otaUpdates.deployedAt = new Date();
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.21: Instant Boot notifyAppReady (prevents rollback loop), Dynamic Dashboard Version Badge & Timetable OCR Vision Engine';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.21: 1-Time Force Reload on New Deployment, 0% Reload on Swipe/Reopen, Cloud Vision OCR';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.21: Instant Boot notifyAppReady (no reload loop), Dynamic Version & Timetable OCR Vision';
-  config.appVersion.forceUpdate = false;
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.21: 1-Time Force Reload on New Deployment, 0% Reload on Swipe/Reopen';
+  config.appVersion.forceUpdate = true;
 
   config.markModified('otaUpdates');
   config.markModified('appVersion');

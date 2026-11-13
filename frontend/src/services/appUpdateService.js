@@ -170,12 +170,14 @@ class AppUpdateService {
       this.updateState.currentVersion = version;
 
       const activeChecksum = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_checksum')) || '';
+      const activeDeployId = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_deploy_id')) || '';
 
       const params = new URLSearchParams({
         currentVersion: version,
         platform,
         buildNumber: build,
         bundleChecksum: activeChecksum,
+        deployId: activeDeployId,
       });
 
       const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
@@ -272,6 +274,7 @@ class AppUpdateService {
         this.updateState.otaVersion = data.ota.bundleVersion;
         this.updateState.otaBundleUrl = data.ota.bundleUrl;
         this.updateState.otaChecksum = data.ota.bundleChecksum || '';
+        this.updateState.deployId = data.ota.deployId || '';
         this.updateState.requiresNativeApk = false;
 
         // Auto-download OTA live update silently in the background!
@@ -569,10 +572,14 @@ class AppUpdateService {
 
       if (typeof localStorage !== 'undefined') {
         try {
-          const appliedKey = `${this.updateState.otaVersion}_${this.updateState.otaChecksum || 'v1'}`;
+          const deployKey = this.updateState.deployId || this.updateState.otaChecksum || 'v1';
+          const appliedKey = `${this.updateState.otaVersion}_${deployKey}`;
           localStorage.setItem('hostelcare_active_ota_bundle_applied', appliedKey);
           localStorage.setItem('hostelcare_active_ota_version', this.updateState.otaVersion);
           localStorage.setItem('hostelcare_active_ota_last_reload_time', String(Date.now()));
+          if (this.updateState.deployId) {
+            localStorage.setItem('hostelcare_active_ota_deploy_id', this.updateState.deployId);
+          }
           if (this.updateState.otaChecksum) {
             localStorage.setItem('hostelcare_active_ota_checksum', this.updateState.otaChecksum);
           }
@@ -601,59 +608,15 @@ class AppUpdateService {
   async autoDownloadOtaInBackground() {
     if (this.isDownloadingOta || !this.updateState.otaAvailable) return;
 
-    // Safety guard 0: Do NOT reload if we already reloaded within the last 5 minutes!
-    const lastReload = parseInt((typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_last_reload_time')) || '0', 10);
-    if (Date.now() - lastReload < 5 * 60 * 1000) {
-      console.log('[AppUpdateService] App reloaded recently (< 5m ago). Suppressing further reload loop.');
-      return;
-    }
-
-    // Safety guard 1: Don't download or reload if this exact OTA bundle was already applied!
-    const targetKey = `${this.updateState.otaVersion}_${this.updateState.otaChecksum || 'v1'}`;
+    const deployKey = this.updateState.deployId || this.updateState.otaChecksum || 'v1';
+    const targetKey = `${this.updateState.otaVersion}_${deployKey}`;
     const appliedKey = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_bundle_applied')) || '';
     if (appliedKey === targetKey) {
-      console.log(`[AppUpdateService] OTA bundle ${targetKey} was already applied and verified in localStorage. Skipping.`);
+      console.log(`[AppUpdateService] OTA bundle ${targetKey} was already applied. Skipping.`);
       return;
     }
 
-    // Safety guard 2: Check if CapacitorUpdater is already active on this exact bundle version or checksum
-    if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('CapacitorUpdater')) {
-      try {
-        const current = await CapacitorUpdater.current();
-        const activeBundleVer = current?.bundle?.version;
-        const activeBundleChecksum = current?.bundle?.checksum;
-        if (
-          (activeBundleVer && activeBundleVer === this.updateState.otaVersion) ||
-          (this.updateState.otaChecksum && activeBundleChecksum === this.updateState.otaChecksum)
-        ) {
-          console.log(`[AppUpdateService] CapacitorUpdater is already on target bundle v${activeBundleVer}. Locking state and skipping.`);
-          if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('hostelcare_active_ota_bundle_applied', targetKey);
-            localStorage.setItem('hostelcare_active_ota_version', this.updateState.otaVersion);
-          }
-          return;
-        }
-      } catch (e) {
-        console.warn('[AppUpdateService] Error checking CapacitorUpdater.current():', e);
-      }
-    }
-
-    // Safety guard 3: Don't download or reload if app is ALREADY running the target OTA version AND target checksum
-    const { version } = await this.getInstalledVersion();
-    const activeChecksum = (typeof localStorage !== 'undefined' && localStorage.getItem('hostelcare_active_ota_checksum')) || '';
-    const isNewChecksum = Boolean(this.updateState.otaChecksum && this.updateState.otaChecksum !== activeChecksum);
-    const isSameOrHigherVersion = this.updateState.otaVersion && compareVersions(version, this.updateState.otaVersion) >= 0;
-
-    if (isSameOrHigherVersion && !isNewChecksum) {
-      console.log(`[AppUpdateService] Already running version v${version} with latest checksum. Skipping auto-download.`);
-      try {
-        localStorage.setItem('hostelcare_active_ota_bundle_applied', targetKey);
-        localStorage.setItem('hostelcare_active_ota_version', this.updateState.otaVersion);
-      } catch (_) {}
-      return;
-    }
-
-    // Safety guard 4: Session lock prevents multiple concurrent downloads in same session
+    // Session lock prevents multiple concurrent downloads in same session
     const sessionKey = `hostelcare_ota_applied_${targetKey}`;
     if (sessionStorage.getItem(sessionKey)) {
       console.log(`[AppUpdateService] OTA bundle ${targetKey} download already triggered in this session.`);
@@ -663,11 +626,10 @@ class AppUpdateService {
 
     this.isDownloadingOta = true;
     try {
-      console.log('[AppUpdateService] Starting background silent OTA download...');
-      // Silent background update: Download & set bundle without disrupting or reloading the active screen!
-      // The update seamlessly activates on the user's next clean app launch.
-      await this.downloadAndApplyOta({ reloadImmediately: false });
-      console.log('[AppUpdateService] Silent OTA bundle downloaded & activated for next launch!');
+      console.log(`[AppUpdateService] Applying new deployment ${targetKey} with 1-time reload...`);
+      // Reload IMMEDIATELY ONCE so user sees the newly forced update take effect!
+      await this.downloadAndApplyOta({ reloadImmediately: true });
+      console.log('[AppUpdateService] Live OTA bundle downloaded & applied successfully!');
     } catch (err) {
       console.warn('[AppUpdateService] Background silent OTA download notice:', err.message);
     } finally {

@@ -2575,6 +2575,9 @@ const updateSuperAdminAppVersionConfig = async (req, res) => {
       if (typeof ota.minNativeBuild === "number") config.otaUpdates.minNativeBuild = ota.minNativeBuild;
       if (typeof ota.requiresNativeApk === "boolean") config.otaUpdates.requiresNativeApk = ota.requiresNativeApk;
       if (typeof ota.notes === "string") config.otaUpdates.notes = ota.notes.trim().slice(0, 1000);
+      if (typeof ota.forceUpdate === "boolean") config.otaUpdates.forceUpdate = ota.forceUpdate;
+      config.otaUpdates.deployId = "dep_" + Date.now();
+      config.otaUpdates.deployedAt = new Date();
 
       config.markModified("otaUpdates");
     }

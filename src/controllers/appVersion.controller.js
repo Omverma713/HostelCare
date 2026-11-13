@@ -274,29 +274,36 @@ const getAppVersionStatus = async (req, res) => {
 
     const clientChecksum = (req.query.bundleChecksum || req.query.checksum || "").toString().trim().toLowerCase();
     const serverChecksum = (otaConfig.bundleChecksum || "").toString().trim().toLowerCase();
+    const clientDeployId = (req.query.deployId || "").toString().trim();
+    const serverDeployId = (otaConfig.deployId || (otaConfig.deployedAt ? String(new Date(otaConfig.deployedAt).getTime()) : "") || serverChecksum).toString().trim();
 
     const otaEligible = Boolean(otaConfig.enabled && otaConfig.bundleUrl && !isOldNativeApk);
 
-    // Check if version is newer, checksum is different, or forceUpdate is toggled by SuperAdmin
+    // Check if version is newer, checksum is different, or fresh deployment/force from SuperAdmin
     const isChecksumAlreadyInstalled = Boolean(
       serverChecksum && clientChecksum && serverChecksum === clientChecksum
     );
+    const isDeployAlreadyInstalled = Boolean(
+      serverDeployId && clientDeployId && serverDeployId === clientDeployId
+    );
+
     const hasNewerVersion = Boolean(
       currentVersion && compareVersions(otaConfig.currentBundleVersion, currentVersion) > 0
     );
     const hasDifferentChecksum = Boolean(
       serverChecksum && clientChecksum && serverChecksum !== clientChecksum
     );
-    // If client already has this exact checksum installed, do not re-force update loop
-    const isSameVersionForced = Boolean(
-      otaConfig.forceUpdate &&
-      !isChecksumAlreadyInstalled &&
-      currentVersion &&
-      compareVersions(otaConfig.currentBundleVersion, currentVersion) >= 0
+    const hasDifferentDeploy = Boolean(
+      serverDeployId && clientDeployId && serverDeployId !== clientDeployId
+    );
+
+    // Trigger update ONCE when forced or freshly deployed, then suppress once client matches
+    const isForceUpdateNeeded = Boolean(
+      otaConfig.forceUpdate && (!isChecksumAlreadyInstalled || (!isDeployAlreadyInstalled && clientDeployId))
     );
 
     const otaHasNewer = Boolean(
-      otaEligible && (hasNewerVersion || hasDifferentChecksum || isSameVersionForced)
+      otaEligible && (hasNewerVersion || hasDifferentChecksum || hasDifferentDeploy || isForceUpdateNeeded)
     );
 
     const otaPayload = {
@@ -305,9 +312,10 @@ const getAppVersionStatus = async (req, res) => {
       bundleVersion: otaConfig.currentBundleVersion || appVersionConfig.latestVersion,
       bundleUrl: otaConfig.bundleUrl || "/api/v1/app-version/ota-bundle",
       bundleChecksum: otaConfig.bundleChecksum || "",
+      deployId: serverDeployId,
       minNativeBuild: otaConfig.minNativeBuild || 22,
       requiresNativeApk: isOldNativeApk,
-      forceUpdate: Boolean(otaConfig.forceUpdate || isSameVersionForced),
+      forceUpdate: Boolean(otaConfig.forceUpdate || isForceUpdateNeeded),
     };
 
     return res.status(200).json({
