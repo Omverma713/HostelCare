@@ -232,11 +232,11 @@ const updateExamRadar = async (req, res) => {
 function parseTableTimetable(text, defaultSection, defaultRoom) {
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 
-  let section = defaultSection || "Section 24E1C3";
-  let classroom = defaultRoom || "Room C-024";
+  let section = defaultSection || "CSE Section 5A";
+  let classroom = defaultRoom || "Room 304";
 
   for (const line of lines) {
-    const secMatch = line.match(/SECTION\s*[-:]?\s*([A-Za-z0-9]+)/i);
+    const secMatch = line.match(/SECTION\s*[-:]?\s*([A-Za-z0-9\-]+(?:\s+[A-Za-z0-9]+)?)/i);
     if (secMatch) section = `Section ${secMatch[1].toUpperCase()}`;
     const rmMatch = line.match(/ROOM\s*(?:NO)?[:\s\-]+([A-Za-z0-9]+-[A-Za-z0-9]+|\d+)/i);
     if (rmMatch) classroom = `Room ${rmMatch[1].toUpperCase()}`;

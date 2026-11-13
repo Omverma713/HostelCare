@@ -756,9 +756,9 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
           <div className="timetable-controls-bar">
             <div className="timetable-section-pill-wrap">
               <span className="timetable-section-title">
-                🎓 {activeTimetable?.section ? (String(activeTimetable.section).startsWith("Section") ? activeTimetable.section : `Section ${activeTimetable.section}`) : "Section 24E1C3"}
+                🎓 {activeTimetable?.section ? (String(activeTimetable.section).startsWith("Section") ? activeTimetable.section : `Section ${activeTimetable.section}`) : (academicData?.defaultTimetable?.section || "Class Schedule")}
               </span>
-              <span className="timetable-hall-sub">🏛️ {activeTimetable?.classroom || "Room C-024"}</span>
+              <span className="timetable-hall-sub">🏛️ {activeTimetable?.classroom || academicData?.defaultTimetable?.classroom || "Campus Lecture Hall"}</span>
             </div>
 
             <div className="timetable-actions-wrap">
@@ -830,7 +830,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
                     {/* Subject Metadata Chips */}
                     <div className="slot-chips-row">
-                      <span className="slot-chip room-chip">📍 {slot.room || "Room C-024"}</span>
+                      <span className="slot-chip room-chip">📍 {slot.room || activeTimetable?.classroom || "Lecture Hall"}</span>
                       {cleanFaculty && cleanFaculty !== "Faculty Member" && (
                         <span className="slot-chip faculty-chip">👨‍🏫 {cleanFaculty}</span>
                       )}
