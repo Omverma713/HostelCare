@@ -98,5 +98,7 @@ jobs:
             exit 1
           }
           echo ""
+          echo ">>> Applying Fail2ban & Nginx Security Hardening on Host..."
+          bash scripts/configure-ec2-security.sh || true
           echo ">>> Deployment successful!"
           SSHEOF

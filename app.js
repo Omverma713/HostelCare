@@ -1,6 +1,7 @@
 const express        = require("express");
 const path           = require("path");
 const cors           = require("cors");
+const helmet         = require("helmet");
 const compression    = require("compression");
 const rateLimit      = require("express-rate-limit");
 
@@ -20,6 +21,26 @@ const app = express();
 
 // Enable trusted reverse proxy header (Cloudflare, AWS ALB, Nginx) for accurate client IP detection
 app.set("trust proxy", 1);
+
+// ─── 0. Security Headers (Helmet.js) ──────────────────────────────────────────
+// Hardens HTTP response headers: blocks clickjacking via iframe embedding (frameguard: deny),
+// enforces strict MIME type sniffing defense (nosniff), activates browser XSS filtering,
+// strips X-Powered-By identifier, and enforces 1-year HSTS.
+// Cross-Origin Resource Policy is explicitly configured as cross-origin to permit mobile Capacitor
+// clients and web SPAs to fetch live bundles, media, and avatars seamlessly.
+app.use(
+    helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false,
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        crossOriginOpenerPolicy: false,
+        frameguard: { action: "deny" },
+        hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+        noSniff: true,
+        xssFilter: true,
+        hidePoweredBy: true,
+    })
+);
 
 // ─── 1. CORS ──────────────────────────────────────────────────────────────────
 // Must be the first middleware so CORS headers are set on every response,
