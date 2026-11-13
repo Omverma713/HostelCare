@@ -310,7 +310,7 @@ const getAppVersionStatus = async (req, res) => {
       latestVersion: appVersionConfig.latestVersion,
       minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
       updateAvailable: evaluation.updateAvailable || otaHasNewer,
-      forceUpdate: evaluation.forceUpdate || otaHasNewer,
+      forceUpdate: evaluation.forceUpdate || (otaHasNewer && isOldNativeApk),
       updateType: otaHasNewer ? "ota_live" : (evaluation.forceUpdate ? "immediate" : (evaluation.updateAvailable ? "flexible" : "none")),
       isSuspended: false,
       isPilot: false,

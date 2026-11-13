@@ -442,7 +442,7 @@ export default function AppUpdateModal() {
   // 4. Live OTA Web Update: Suppress modal on app launch for 100% silent background auto-updates
   // Only display modal if user manually tapped "Check for Updates" in Settings or if a full native APK is required
   const isSilentOta = state?.otaAvailable && !state?.requiresNativeApk;
-  if (isSilentOta && !state?.manualCheck && !state?.forceUpdate) {
+  if (isSilentOta && !state?.manualCheck) {
     return null;
   }
 
