@@ -649,14 +649,22 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
             <div className="live-lecture-right">
               {currentLiveClass?.activeSlot ? (
                 <div className="live-lecture-meta-tags">
-                  <span className="live-meta-pill">📍 {currentLiveClass.activeSlot.room || "Room 304"}</span>
-                  <span className="live-meta-pill">👨‍🏫 {currentLiveClass.activeSlot.faculty || "Faculty"}</span>
+                  <span className="live-meta-pill room-pill">📍 {currentLiveClass.activeSlot.room || "Room 304"}</span>
+                  {currentLiveClass.activeSlot.faculty && (
+                    <span className="live-meta-pill faculty-pill">👨‍🏫 {currentLiveClass.activeSlot.faculty}</span>
+                  )}
                   <span className="live-meta-pill timer">⏳ {currentLiveClass.activeSlot.remainingMins}m remaining</span>
                 </div>
               ) : currentLiveClass?.nextSlot ? (
-                <div className="live-lecture-meta-tags">
-                  <span className="live-meta-pill">⏭️ Next: <strong>{currentLiveClass.nextSlot.subjectName}</strong> at {currentLiveClass.nextSlot.startTime}</span>
-                  <span className="live-meta-pill">📍 {currentLiveClass.nextSlot.room || "Room 304"}</span>
+                <div className="live-lecture-meta-tags next-slot-wrap">
+                  <div className="live-next-card">
+                    <div className="live-next-label-row">
+                      <span className="live-next-label">⏭️ Next Class</span>
+                      <span className="live-next-time">⏰ at {currentLiveClass.nextSlot.startTime}</span>
+                    </div>
+                    <div className="live-next-subject">{currentLiveClass.nextSlot.subjectName}</div>
+                  </div>
+                  <span className="live-meta-pill room-pill">📍 {currentLiveClass.nextSlot.room || activeTimetable?.classroom || "Room 304"}</span>
                 </div>
               ) : (
                 <span className="live-meta-pill">☕ No more lectures today</span>

@@ -235,9 +235,53 @@
 
 .live-lecture-right {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.live-lecture-meta-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.live-next-card {
+  background: var(--bg-card, #FFFFFF);
+  border: 1px solid var(--border-subtle, #E4DCD3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.live-next-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.live-next-label {
+  color: var(--accent-terracotta, #C07660);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.live-next-time {
+  color: var(--text-secondary, #6B685F);
+}
+
+.live-next-subject {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #242523);
+  line-height: 1.3;
 }
 
 .live-meta-pill {
@@ -246,11 +290,17 @@
   gap: 5px;
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 9999px;
   background: var(--bg-subtle, #F4EBE6);
   color: var(--text-secondary, #575854);
   border: 1px solid rgba(156, 91, 73, 0.15);
+  margin-top: 2px;
+}
+
+.live-meta-pill.room-pill {
+  font-weight: 700;
+  color: var(--accent-terracotta, #C07660);
 }
 
 .live-meta-pill.timer {
@@ -1377,6 +1427,13 @@ body.login-dark-theme .promotion-badge {
   max-width: 600px;
 }
 
+.engine-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .engine-toggle-btn {
   background: var(--bg-subtle, #FAF7F2);
   border: 1px solid var(--border-subtle, #E4DCD3);
@@ -1543,14 +1600,28 @@ body.login-dark-theme .engine-desc,
 .dark-theme .engine-toggle-btn,
 html.dark-theme .engine-toggle-btn,
 body.login-dark-theme .engine-toggle-btn,
-[data-theme="dark"] .engine-toggle-btn {
+[data-theme="dark"] .engine-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.engine-toggle-btn {
   color: #C9BFAF !important;
 }
 
 .dark-theme .engine-toggle-btn,
 html.dark-theme .engine-toggle-btn,
 body.login-dark-theme .engine-toggle-btn,
-[data-theme="dark"] .engine-toggle-btn {
+[data-theme="dark"] .engine-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.engine-toggle-btn {
   background: #2C241E !important;
   border-color: #42362C !important;
 }
@@ -1618,6 +1689,21 @@ body.login-dark-theme .quick-strip-card,
 html.dark-theme .live-lecture-subject,
 body.login-dark-theme .live-lecture-subject,
 [data-theme="dark"] .live-lecture-subject {
+  color: #F8F5EE !important;
+}
+
+.dark-theme .live-next-card,
+html.dark-theme .live-next-card,
+body.login-dark-theme .live-next-card,
+[data-theme="dark"] .live-next-card {
+  background: #251F1B !important;
+  border-color: #3D332B !important;
+}
+
+.dark-theme .live-next-subject,
+html.dark-theme .live-next-subject,
+body.login-dark-theme .live-next-subject,
+[data-theme="dark"] .live-next-subject {
   color: #F8F5EE !important;
 }
 
@@ -1725,7 +1811,26 @@ body.login-dark-theme .slot-chip.faculty-chip {
     padding: 14px 16px !important;
     margin: 12px 0 !important;
     border-radius: 14px !important;
-    gap: 10px !important;
+    gap: 12px !important;
+  }
+
+  .live-lecture-right {
+    width: 100% !important;
+    margin-top: 4px !important;
+  }
+
+  .live-lecture-meta-tags {
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .live-next-card {
+    width: 100% !important;
+    padding: 10px 12px !important;
+  }
+
+  .live-meta-pill.room-pill {
+    margin-top: 4px !important;
   }
 
   .live-lecture-subject {
@@ -1736,6 +1841,32 @@ body.login-dark-theme .slot-chip.faculty-chip {
     padding: 14px 16px !important;
     border-radius: 14px !important;
     margin-bottom: 12px !important;
+  }
+
+  .timetable-engine-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .engine-btn-group {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: 6px !important;
+  }
+
+  .engine-toggle-btn {
+    width: 100% !important;
+    padding: 12px 8px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin: 0 !important;
   }
 
   .engine-title {
