@@ -72,17 +72,8 @@ jobs:
             ConnectTimeout 30
           EOF
 
-          # Deploy via SSH with connection timeout protection & retry
-          for i in 1 2 3; do
-            ssh -i ~/.ssh/deploy_key -o ConnectTimeout=60 "$EC2_USER@$EC2_HOST" << 'SSHEOF' && break || {
-              if [ $i -eq 3 ]; then
-                echo "❌ SSH connection failed after 3 attempts!"
-                exit 1
-              fi
-              echo "⚠️ SSH attempt $i failed, retrying in 5s..."
-              sleep 5
-            }
-          done
+          # Deploy via SSH with connection timeout protection
+          ssh -i ~/.ssh/deploy_key -o ConnectTimeout=60 -o ServerAliveInterval=15 "$EC2_USER@$EC2_HOST" << 'SSHEOF'
           set -e
           cd /home/ubuntu/hostelcare
           echo ">>> Pulling latest code..."
@@ -117,4 +108,4 @@ jobs:
           echo ">>> Applying Fail2ban & Nginx Security Hardening on Host..."
           bash scripts/configure-ec2-security.sh || true
           echo ">>> Deployment successful!"
-          SSHEOF
+SSHEOF
