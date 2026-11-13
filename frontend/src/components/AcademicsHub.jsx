@@ -754,18 +754,19 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
           {/* Controls: Section & Edit / Reset Buttons */}
           <div className="timetable-controls-bar">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="timetable-section-pill-wrap">
               <span className="timetable-section-title">
-                Section: {activeTimetable?.section || "CSE Section 5A"}
+                🎓 {activeTimetable?.section ? (String(activeTimetable.section).startsWith("Section") ? activeTimetable.section : `Section ${activeTimetable.section}`) : "Section 24E1C3"}
               </span>
-              <span className="timetable-hall-sub">• Base Hall: {activeTimetable?.classroom || "Room 304"}</span>
+              <span className="timetable-hall-sub">🏛️ {activeTimetable?.classroom || "Room C-024"}</span>
             </div>
 
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div className="timetable-actions-wrap">
               {academicData?.userTimetable && (
                 <button
                   onClick={handleResetTimetable}
                   className="timetable-reset-btn"
+                  title="Reset to default department schedule"
                 >
                   ↺ Reset
                 </button>
@@ -800,35 +801,40 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
           {/* Schedule List */}
           <div className="timetable-timeline">
             {currentDaySlots.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>
-                ☕ No classes scheduled for {selectedDay}.
+              <div className="timetable-empty-day-card">
+                <span style={{ fontSize: 28, display: "block", marginBottom: 6 }}>☕</span>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>No classes scheduled for {selectedDay}</span>
+                <span style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginTop: 4 }}>Enjoy your rest or utilize this time for self-study!</span>
               </div>
             ) : (
               currentDaySlots.map((slot) => {
-                const isLab = slot.type === "lab" || slot.subjectCode === "CSE 3967";
+                const isLab = slot.type === "lab" || slot.subjectCode === "CSE 3967" || slot.subjectCode === "CSE 3544";
+                const cleanFaculty = (slot.faculty || "Faculty Member")
+                  .replace(/SKUIT/i, "Srijit")
+                  .replace(/SRUIT/i, "Srijit");
                 return (
-                  <div key={slot.id || `${slot.subjectCode}-${slot.startTime}`} className={`timetable-slot-card ${isLab ? "is-lab" : ""}`}>
-                    {/* Time Column */}
-                    <div className="slot-time-col">
-                      <span className="slot-time-range">{slot.startTime} – {slot.endTime}</span>
-                      <span className="slot-duration">{isLab ? "2-Hour Practical Lab" : "1-Hour Lecture"}</span>
-                    </div>
-
-                    {/* Subject Details */}
-                    <div className="slot-content-col">
-                      <div className="slot-title">{slot.subjectName}</div>
-                      <div className="slot-sub-info">
-                        <span>📍 <strong>{slot.room || "Room 304"}</strong></span>
-                        <span>👨‍🏫 {slot.faculty || "Faculty"}</span>
-                        <span>🏷️ {slot.subjectCode}</span>
+                  <div key={slot.id || `${slot.subjectCode}-${slot.startTime}`} className={`timetable-slot-card ${isLab ? "is-lab" : "is-theory"}`}>
+                    {/* Card Header: Time & Type Badge */}
+                    <div className="slot-header-row">
+                      <div className="slot-time-pill">
+                        <span className="slot-time-icon">⏰</span>
+                        <span className="slot-time-range">{slot.startTime} – {slot.endTime}</span>
                       </div>
+                      <span className={`slot-type-badge ${isLab ? "lab" : "theory"}`}>
+                        {isLab ? "🔬 2h Lab" : "📖 1h Lecture"}
+                      </span>
                     </div>
 
-                    {/* Badge Column */}
-                    <div className="slot-badge-col">
-                      <span className={`slot-type-badge ${isLab ? "lab" : "theory"}`}>
-                        {isLab ? "🔬 Lab Session" : "📖 Theory"}
-                      </span>
+                    {/* Subject Title */}
+                    <div className="slot-title">{slot.subjectName}</div>
+
+                    {/* Subject Metadata Chips */}
+                    <div className="slot-chips-row">
+                      <span className="slot-chip room-chip">📍 {slot.room || "Room C-024"}</span>
+                      {cleanFaculty && cleanFaculty !== "Faculty Member" && (
+                        <span className="slot-chip faculty-chip">👨‍🏫 {cleanFaculty}</span>
+                      )}
+                      <span className="slot-chip code-chip">🏷️ {slot.subjectCode}</span>
                     </div>
                   </div>
                 );

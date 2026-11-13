@@ -265,19 +265,41 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 12px;
+  padding: 10px 14px;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #EAE3D6);
+  border-radius: 14px;
+}
+
+.timetable-section-pill-wrap {
+  display: flex;
+  align-items: center;
   gap: 10px;
-  margin: 16px 0 10px;
+  flex-wrap: wrap;
+}
+
+.timetable-actions-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .timetable-section-title {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-primary, #242523);
+  letter-spacing: -0.01em;
 }
 
 .timetable-hall-sub {
   font-size: 12px;
-  color: var(--text-muted, #8C887B);
+  font-weight: 600;
+  color: var(--accent-terracotta, #C07660);
+  background: rgba(192, 118, 96, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 
 .timetable-reset-btn {
@@ -285,10 +307,16 @@
   border: 1px solid var(--border-subtle, #E6DCD0);
   color: var(--text-secondary, #575854);
   border-radius: 8px;
-  padding: 5px 10px;
+  padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timetable-reset-btn:hover {
+  background: rgba(192, 118, 96, 0.1);
+  color: var(--accent-terracotta, #C07660);
 }
 
 .timetable-edit-btn {
@@ -296,11 +324,119 @@
   color: #FAF7F2;
   border: none;
   border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 7px 14px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(192, 118, 96, 0.25);
+  box-shadow: 0 2px 8px rgba(192, 118, 96, 0.25);
+  transition: all 0.2s ease;
+}
+
+.timetable-edit-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+/* Slot Card - Modern Mobile-First Layout */
+.timetable-slot-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px solid var(--border-subtle, #EAE3D6);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  position: relative;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.timetable-slot-card.is-lab {
+  border-left: 4px solid var(--accent-terracotta, #D88B74);
+  background: var(--bg-card, #FFFBF8);
+}
+
+.timetable-slot-card.is-theory {
+  border-left: 4px solid var(--primary-matcha-dark, #9C5B49);
+}
+
+.slot-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.slot-time-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(192, 118, 96, 0.1);
+  color: var(--accent-terracotta, #C07660);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.slot-time-icon {
+  font-size: 11px;
+}
+
+.slot-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text-primary, #242523);
+  line-height: 1.35;
+  margin: 2px 0 0;
+}
+
+.slot-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.slot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-secondary, #6B685F);
+  border: 1px solid var(--border-subtle, #EAE3D6);
+}
+
+.slot-chip.room-chip {
+  background: rgba(192, 118, 96, 0.08);
+  color: var(--accent-terracotta, #C07660);
+  border-color: rgba(192, 118, 96, 0.2);
+  font-weight: 700;
+}
+
+.slot-chip.faculty-chip {
+  color: var(--text-primary, #242523);
+}
+
+.slot-chip.code-chip {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.timetable-empty-day-card {
+  text-align: center;
+  padding: 36px 20px;
+  background: var(--bg-card, #FAF7F2);
+  border: 1px dashed var(--border-subtle, #EAE3D6);
+  border-radius: 14px;
+  color: var(--text-primary, #242523);
 }
 
 /* Bottom Quick Strip */
@@ -1510,18 +1646,46 @@ body.login-dark-theme .quick-strip-card:hover,
 }
 
 /* =========================================================================
-   MOBILE RESPONSIVE FULL-SCREEN ADAPTIVE TUNING
+   DARK THEME SLOT CHIP & CONTROLS POLISHING
+   ========================================================================= */
+html.dark-theme .timetable-controls-bar,
+body.login-dark-theme .timetable-controls-bar {
+  background: #231E1A !important;
+  border-color: #383028 !important;
+}
+
+html.dark-theme .slot-chip,
+body.login-dark-theme .slot-chip {
+  background: #181512 !important;
+  border-color: #383028 !important;
+  color: #C9BFAF !important;
+}
+
+html.dark-theme .slot-chip.room-chip,
+body.login-dark-theme .slot-chip.room-chip {
+  background: rgba(192, 118, 96, 0.16) !important;
+  border-color: rgba(192, 118, 96, 0.35) !important;
+  color: #D88B74 !important;
+}
+
+html.dark-theme .slot-chip.faculty-chip,
+body.login-dark-theme .slot-chip.faculty-chip {
+  color: #FAF7F2 !important;
+}
+
+/* =========================================================================
+   MOBILE RESPONSIVE FULL-SCREEN ADAPTIVE TUNING (EDGE-TO-EDGE)
    ========================================================================= */
 @media (max-width: 680px) {
   .academics-hub-container {
-    padding: 6px 10px 140px !important;
+    padding: 6px 12px 180px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
 
   .acad-header-card {
-    padding: 14px 14px !important;
-    border-radius: 14px !important;
+    padding: 16px 16px !important;
+    border-radius: 16px !important;
     margin-bottom: 12px !important;
   }
 
@@ -1532,9 +1696,9 @@ body.login-dark-theme .quick-strip-card:hover,
   }
 
   .acad-subtitle {
-    font-size: 12px !important;
+    font-size: 12.5px !important;
     margin-bottom: 12px !important;
-    line-height: 1.4 !important;
+    line-height: 1.45 !important;
   }
 
   .acad-badge-row {
@@ -1542,7 +1706,7 @@ body.login-dark-theme .quick-strip-card:hover,
   }
 
   .acad-pill {
-    font-size: 10px !important;
+    font-size: 10.5px !important;
     padding: 3px 8px !important;
   }
 
@@ -1552,18 +1716,16 @@ body.login-dark-theme .quick-strip-card:hover,
   }
 
   .acad-nav-tab {
-    padding: 8px 12px !important;
-    font-size: 12px !important;
+    padding: 8px 14px !important;
+    font-size: 12.5px !important;
     border-radius: 10px !important;
   }
 
   .live-lecture-bar {
-    padding: 12px 14px !important;
-    margin: 10px 0 !important;
+    padding: 14px 16px !important;
+    margin: 12px 0 !important;
     border-radius: 14px !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 8px !important;
+    gap: 10px !important;
   }
 
   .live-lecture-subject {
@@ -1571,7 +1733,7 @@ body.login-dark-theme .quick-strip-card:hover,
   }
 
   .timetable-engine-box {
-    padding: 12px 14px !important;
+    padding: 14px 16px !important;
     border-radius: 14px !important;
     margin-bottom: 12px !important;
   }
@@ -1581,70 +1743,109 @@ body.login-dark-theme .quick-strip-card:hover,
   }
 
   .engine-desc {
-    font-size: 11.5px !important;
-    line-height: 1.4 !important;
+    font-size: 12px !important;
+    line-height: 1.45 !important;
   }
 
   .timetable-controls-bar {
-    margin: 10px 0 8px !important;
-  }
-
-  .day-selector-bar {
-    gap: 6px !important;
-    margin: 10px 0 14px !important;
-  }
-
-  .day-btn {
-    min-width: 68px !important;
-    padding: 8px 6px !important;
-    border-radius: 10px !important;
-  }
-
-  .day-btn span:first-child {
-    font-size: 13px !important;
-    font-weight: 700 !important;
-  }
-
-  .day-btn .day-slot-count {
-    font-size: 9.5px !important;
-  }
-
-  .timetable-timeline {
-    gap: 10px !important;
-  }
-
-  .timetable-slot-card {
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
-    padding: 12px 14px !important;
+    padding: 10px 14px !important;
     border-radius: 12px !important;
-  }
-
-  .slot-time-col {
+    margin: 12px 0 10px !important;
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
     width: 100% !important;
-    border-bottom: 1px dashed rgba(156, 91, 73, 0.2) !important;
-    padding-bottom: 6px !important;
+    box-sizing: border-box !important;
   }
 
-  .slot-time-range {
-    font-size: 12.5px !important;
+  .timetable-section-pill-wrap {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 3px !important;
   }
 
-  .slot-duration {
+  .timetable-section-title {
+    font-size: 13.5px !important;
+  }
+
+  .timetable-hall-sub {
+    font-size: 11px !important;
+  }
+
+  .timetable-actions-wrap {
+    gap: 6px !important;
+  }
+
+  .timetable-reset-btn {
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  .timetable-edit-btn {
+    padding: 6px 12px !important;
+    font-size: 11.5px !important;
+  }
+
+  .day-selector-bar {
+    gap: 8px !important;
+    margin: 10px 0 14px !important;
+  }
+
+  .day-btn {
+    min-width: 66px !important;
+    padding: 8px 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .day-btn span:first-child {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+  }
+
+  .day-btn .day-slot-count {
+    font-size: 10px !important;
+  }
+
+  .timetable-timeline {
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .timetable-slot-card {
+    padding: 14px 16px !important;
+    border-radius: 14px !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .slot-header-row {
+    margin-bottom: 2px !important;
+  }
+
+  .slot-time-pill {
+    font-size: 11.5px !important;
+    padding: 3px 8px !important;
+  }
+
+  .slot-type-badge {
     font-size: 10.5px !important;
+    padding: 3px 8px !important;
   }
 
   .slot-title {
-    font-size: 14.5px !important;
-    line-height: 1.3 !important;
+    font-size: 15px !important;
+    line-height: 1.35 !important;
   }
 
-  .slot-sub-info {
-    font-size: 11.5px !important;
-    gap: 8px !important;
+  .slot-chips-row {
+    gap: 6px !important;
+    margin-top: 4px !important;
+  }
+
+  .slot-chip {
+    font-size: 11px !important;
+    padding: 2.5px 7px !important;
   }
 
   .timetable-quick-strip {
