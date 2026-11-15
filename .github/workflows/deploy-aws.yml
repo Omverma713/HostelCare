@@ -72,8 +72,16 @@ jobs:
             ConnectTimeout 30
           EOF
 
+          # Determine target host with intelligent fallback
+          TARGET_HOST="$EC2_HOST"
+          if [ -z "$TARGET_HOST" ] || ! nc -z -w 5 "$TARGET_HOST" 22 2>/dev/null; then
+            echo "Notice: EC2_HOST ($TARGET_HOST) not responding on port 22, falling back to hostelcare-api.duckdns.org"
+            TARGET_HOST="hostelcare-api.duckdns.org"
+          fi
+          echo ">>> Connecting to: $TARGET_HOST as $EC2_USER..."
+
           # Deploy via SSH with connection timeout protection
-          ssh -i ~/.ssh/deploy_key -o ConnectTimeout=60 -o ServerAliveInterval=15 "$EC2_USER@$EC2_HOST" << 'SSHEOF'
+          ssh -i ~/.ssh/deploy_key -o ConnectTimeout=60 -o ServerAliveInterval=15 "$EC2_USER@$TARGET_HOST" << 'SSHEOF'
           set -e
           echo ">>> 1. Freeing disk space FIRST before git operations..."
           sudo docker system prune -af || true
@@ -81,6 +89,7 @@ jobs:
           sudo journalctl --vacuum-time=1d || true
           sudo apt-get clean || true
           sudo rm -rf /tmp/* /var/tmp/* || true
+          cd /home/ubuntu/hostelcare/public/ota-bundles 2>/dev/null && ls -t hostelcare-bundle-v*.zip 2>/dev/null | tail -n +4 | xargs -r rm -f || true
           echo ">>> Current Disk Usage:"
           df -h /
 
