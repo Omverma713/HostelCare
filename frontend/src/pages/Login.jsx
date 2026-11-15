@@ -404,7 +404,7 @@ export default function Login() {
 
             {/* OUTSIDE STATE: Popped-Out Pill Button (Animated Downward Morph) */}
             {isButtonPopped && (
-              <div className="wl-popped-pill-wrap">
+              <div className="wl-popped-pill-wrap" style={{ overflow: 'visible', background: 'transparent' }}>
                 <button
                   type="submit"
                   className="wl-popped-pill-btn"

@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.41';
-  const checksum = 'a6f5ab4173668d90984bd69eba64cd65ba8d0942063995d90b4cfdcbebdb3078';
+  const targetVer = '1.2.2.42';
+  const checksum = 'b326ce71c5cc225c1a7f5b58b05f7827822bb11d7398b28402b6b63d2bf3f731';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -21,11 +21,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.41: Desktop timetable responsive layout fix, unclipped time display, clean left indicator stripe';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.42: Fix login submit pill rectangular clipping box in app and web';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.41: Desktop & mobile timetable UI fix';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.42: Login button visual polish';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');

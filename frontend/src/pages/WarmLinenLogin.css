@@ -11,10 +11,10 @@
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 4px 14px rgba(192, 118, 96, 0.35);
+    box-shadow: 0 4px 14px rgba(192, 118, 96, 0.3);
   }
   50% {
-    box-shadow: 0 8px 24px rgba(192, 118, 96, 0.6), 0 0 10px rgba(192, 118, 96, 0.3);
+    box-shadow: 0 6px 22px rgba(192, 118, 96, 0.45);
   }
 }
 
@@ -363,8 +363,13 @@
 
 /* OUTSIDE POPPED PILL BUTTON */
 .wl-popped-pill-wrap {
-  overflow: hidden;
+  width: 100%;
   margin-top: 16px;
+  overflow: visible !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   animation: popDownPill 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
@@ -376,20 +381,25 @@
   color: #FFFFFF;
   font-size: 14px;
   font-weight: 600;
-  border: none;
+  border: none !important;
+  outline: none !important;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 8px 24px rgba(192, 118, 96, 0.4);
+  box-shadow: 0 4px 16px rgba(192, 118, 96, 0.35);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   animation: pulseGlow 3s infinite ease-in-out;
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  z-index: 2;
 }
 
 .wl-popped-pill-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(192, 118, 96, 0.55);
+  box-shadow: 0 8px 24px rgba(192, 118, 96, 0.45);
   background: linear-gradient(135deg, #67836F 0%, #4D6654 100%);
 }
 
@@ -902,4 +912,23 @@ body.login-dark-theme .wl-mess-btn:hover {
   color: #FFC5B5 !important;
   border-color: #6E4034 !important;
   transform: translateY(-1px);
+}
+
+/* Popped Pill Button Dark Theme Polish (No Rectangular Clipping) */
+html.dark-theme .wl-popped-pill-wrap,
+body.login-dark-theme .wl-popped-pill-wrap {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html.dark-theme .wl-popped-pill-btn,
+body.login-dark-theme .wl-popped-pill-btn {
+  background: linear-gradient(135deg, #C07660 0%, #9C5B49 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: 0 4px 18px rgba(192, 118, 96, 0.35) !important;
 }
