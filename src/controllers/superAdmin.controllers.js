@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const User = require("../models/user.model");
 const Session = require("../models/session.model");
 const SystemConfig = require("../models/systemConfig.model");
@@ -1458,7 +1459,22 @@ const sendAdminNotification = async (req, res) => {
     const shouldSchedule = Boolean(isScheduled && scheduledFor);
 
     if (shouldSchedule) {
-      const scheduledDate = new Date(scheduledFor);
+      let scheduledDate;
+      if (typeof scheduledFor === "string") {
+        const trimmed = scheduledFor.trim();
+        // If timezone suffix is present (e.g. Z or +05:30 or -04:00)
+        if (/Z|[+-]\d{2}(:?\d{2})?$/i.test(trimmed)) {
+          scheduledDate = new Date(trimmed);
+        } else {
+          // If no timezone suffix provided, treat strictly as IST (UTC+05:30)
+          const iso = trimmed.replace(" ", "T");
+          const withSeconds = iso.split(":").length === 2 ? `${iso}:00` : iso;
+          scheduledDate = new Date(`${withSeconds}+05:30`);
+        }
+      } else {
+        scheduledDate = new Date(scheduledFor);
+      }
+
       if (isNaN(scheduledDate.getTime())) {
         return res.status(400).json({
           success: false,
@@ -1623,6 +1639,7 @@ const getScheduledNotifications = async (req, res) => {
     return res.status(200).json({
       success: true,
       scheduled: campaigns.map((c) => ({
+        _id: c._id,
         id: c._id,
         title: c.title,
         body: c.body,
@@ -1663,6 +1680,13 @@ const getScheduledNotifications = async (req, res) => {
 const cancelScheduledNotification = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid scheduled notification ID.",
+      });
+    }
+
     const campaign = await NotificationCampaign.findOne({
       _id: id,
       deliveryType: "SCHEDULED",
@@ -1717,6 +1741,13 @@ const cancelScheduledNotification = async (req, res) => {
 const dispatchScheduledNotificationNow = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid scheduled notification ID.",
+      });
+    }
+
     const { executeNotificationDispatch } = require("../services/notificationScheduler");
 
     const campaign = await NotificationCampaign.findOne({
@@ -3478,7 +3509,6 @@ const createGlobalNotice = async (req, res) => {
       const Session = require("../models/session.model");
       let sessionQuery = { status: "active" };
       if (targetRole && targetRole !== "ALL") {
-        const User = require("../models/user.model");
         const userMatches = await User.find({ role: targetRole }).select("_id");
         sessionQuery.userId = { $in: userMatches.map((u) => u._id) };
       }

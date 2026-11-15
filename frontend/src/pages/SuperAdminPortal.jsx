@@ -2692,21 +2692,35 @@ export default function SuperAdminPortal() {
       return;
     }
 
+    let formattedScheduledFor = null;
     if (notifyForm.isScheduled) {
       if (!notifyForm.scheduledFor) {
         triggerToast('error', 'Please select a future date and time for the scheduled alert.', 'Schedule Time Missing');
         return;
       }
-      const sched = new Date(notifyForm.scheduledFor);
+      const rawVal = notifyForm.scheduledFor.trim();
+      let sched;
+      if (/Z|[+-]\d{2}(:?\d{2})?$/i.test(rawVal)) {
+        sched = new Date(rawVal);
+      } else {
+        const withSec = rawVal.split(':').length === 2 ? `${rawVal}:00` : rawVal;
+        sched = new Date(`${withSec}+05:30`);
+      }
+
       if (isNaN(sched.getTime()) || sched.getTime() <= Date.now() + 10000) {
         triggerToast('error', 'Scheduled time must be at least 1 minute in the future.', 'Invalid Time');
         return;
       }
+      formattedScheduledFor = sched.toISOString();
     }
 
     try {
       setSendingNotify(true);
-      const res = await adminApi.sendNotification(notifyForm);
+      const payload = {
+        ...notifyForm,
+        scheduledFor: formattedScheduledFor,
+      };
+      const res = await adminApi.sendNotification(payload);
       if (res.success) {
         triggerToast(
           'success',
@@ -2737,6 +2751,10 @@ export default function SuperAdminPortal() {
   };
 
   const handleCancelScheduled = async (id, title) => {
+    if (!id) {
+      triggerToast('error', 'Missing notification ID for cancellation.', 'Error');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to cancel the scheduled notification "${title}"?`)) {
       return;
     }
@@ -2755,6 +2773,10 @@ export default function SuperAdminPortal() {
   };
 
   const handleDispatchScheduledNow = async (id, title) => {
+    if (!id) {
+      triggerToast('error', 'Missing notification ID to dispatch.', 'Error');
+      return;
+    }
     if (!window.confirm(`Dispatch "${title}" immediately right now without waiting for the scheduled time?`)) {
       return;
     }
@@ -9992,7 +10014,15 @@ export default function SuperAdminPortal() {
                           border: '1px solid rgba(245, 158, 11, 0.25)',
                         }}
                       >
-                        🔔 Scheduled To Fire Automatically: {new Date(notifyForm.scheduledFor).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                        🔔 Scheduled To Fire Automatically: {(() => {
+                          try {
+                            const v = notifyForm.scheduledFor;
+                            const d = /Z|[+-]\d{2}/.test(v) ? new Date(v) : new Date((v.split(':').length === 2 ? v + ':00' : v) + '+05:30');
+                            return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST';
+                          } catch (e) {
+                            return notifyForm.scheduledFor;
+                          }
+                        })()}
                       </div>
                     )}
                   </div>
@@ -10284,6 +10314,7 @@ export default function SuperAdminPortal() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', maxHeight: '550px', overflowY: 'auto' }}>
                     {scheduledNotifications.map((s) => {
+                      const schedId = s._id || s.id;
                       const schedDate = new Date(s.scheduledFor);
                       const isPast = schedDate.getTime() <= Date.now();
                       const diffMs = schedDate.getTime() - Date.now();
@@ -10305,7 +10336,7 @@ export default function SuperAdminPortal() {
 
                       return (
                         <div
-                          key={s._id}
+                          key={schedId}
                           style={{
                             padding: '1rem',
                             borderRadius: '12px',
@@ -10400,8 +10431,8 @@ export default function SuperAdminPortal() {
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <button
                                   type="button"
-                                  onClick={() => handleDispatchScheduledNow(s._id, s.title)}
-                                  disabled={dispatchingScheduledId === s._id || cancellingScheduledId === s._id}
+                                  onClick={() => handleDispatchScheduledNow(schedId, s.title)}
+                                  disabled={dispatchingScheduledId === schedId || cancellingScheduledId === schedId}
                                   style={{
                                     padding: '4px 10px',
                                     borderRadius: '6px',
@@ -10417,13 +10448,13 @@ export default function SuperAdminPortal() {
                                   }}
                                   title="Dispatch immediately right now without waiting"
                                 >
-                                  {dispatchingScheduledId === s._id ? 'Firing...' : '⚡ Fire Now'}
+                                  {dispatchingScheduledId === schedId ? 'Firing...' : '⚡ Fire Now'}
                                 </button>
 
                                 <button
                                   type="button"
-                                  onClick={() => handleCancelScheduled(s._id, s.title)}
-                                  disabled={cancellingScheduledId === s._id || dispatchingScheduledId === s._id}
+                                  onClick={() => handleCancelScheduled(schedId, s.title)}
+                                  disabled={cancellingScheduledId === schedId || dispatchingScheduledId === schedId}
                                   style={{
                                     padding: '4px 10px',
                                     borderRadius: '6px',
@@ -10439,7 +10470,7 @@ export default function SuperAdminPortal() {
                                   }}
                                   title="Cancel this scheduled dispatch"
                                 >
-                                  {cancellingScheduledId === s._id ? 'Cancelling...' : '❌ Cancel Schedule'}
+                                  {cancellingScheduledId === schedId ? 'Cancelling...' : '❌ Cancel Schedule'}
                                 </button>
                               </div>
                             )}
