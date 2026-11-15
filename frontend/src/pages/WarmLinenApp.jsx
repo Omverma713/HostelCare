@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import './WarmLinenApp.css';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
-import { DEFAULT_MESS_SCHEDULE, DAYS_ORDER } from '../constants/messMenuData';
+import { DEFAULT_MESS_SCHEDULE, DAYS_ORDER, getKolkataTime, getMealStatusForDay } from '../constants/messMenuData';
 import { prioritizeMealDishes } from '../services/messNotificationService';
 import { triggerToast } from '../components/Toast';
 import { appUpdateService } from '../services/appUpdateService';
@@ -115,6 +115,7 @@ export default function WarmLinenApp({ embedded = false, initialTab }) {
     const item = DAYS_ORDER[d === 0 ? 6 : d - 1];
     return (item && typeof item === 'object' ? item.key : item) || 'monday';
   });
+  const [messViewFilter, setMessViewFilter] = useState('all'); // 'all' | 'upcoming'
 
   useEffect(() => {
     if (urlTab) {
@@ -594,36 +595,30 @@ const handleSendMessage = (e) => {
                 </div>
               </div>
 
-              {/* 2. TODAY'S ACTIVE MEAL / SNACKS SPOTLIGHT CARD (FIRST SECTION - CLEAN NO-RATING) */}
+              {/* 2. TODAY'S ACTIVE MEAL / SNACKS SPOTLIGHT CARD (DYNAMIC IST SERVING NOW vs UPCOMING NEXT) */}
               {(() => {
-                const now = new Date();
-                const currentMins = now.getHours() * 60 + now.getMinutes();
-                const d = now.getDay();
+                const kolkataTime = getKolkataTime();
+                const d = new Date().getDay();
                 const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
                 const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
                 const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
 
-                let slotKey = 'dinner';
-                let slotName = 'Dinner';
-                let slotTiming = '08:30 PM – 10:00 PM';
-                let mealObj = todayMeals.dinner;
+                const { activeSlot, nextSlot } = getMealStatusForDay(todayMeals, kolkataTime);
+                const isServingNow = Boolean(activeSlot);
+                const featuredSlot = activeSlot || nextSlot;
 
-                if (currentMins >= 7 * 60 && currentMins < 11 * 60 + 30) {
-                  slotKey = 'breakfast';
-                  slotName = 'Breakfast';
-                  slotTiming = '07:00 AM – 09:15 AM';
-                  mealObj = todayMeals.breakfast;
-                } else if (currentMins >= 11 * 60 + 30 && currentMins < 16 * 60) {
-                  slotKey = 'lunch';
-                  slotName = 'Lunch';
-                  slotTiming = '12:30 PM – 02:30 PM';
-                  mealObj = todayMeals.lunch;
-                } else if (currentMins >= 16 * 60 && currentMins < 20 * 60) {
-                  slotKey = 'snacks';
-                  slotName = 'Snacks';
-                  slotTiming = '05:45 PM – 07:30 PM';
-                  mealObj = todayMeals.snacks;
-                }
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                const curIdx = days.indexOf(kolkataTime.dayOfWeek);
+                const tomorrowDay = days[(curIdx + 1) % 7];
+                const tomorrowMeal = DEFAULT_MESS_SCHEDULE[tomorrowDay]?.meals?.breakfast;
+
+                const mealObj = (featuredSlot?.isTomorrow ? tomorrowMeal : featuredSlot?.data) || todayMeals.dinner;
+                const slotKey = featuredSlot?.key || 'dinner';
+                const slotName = featuredSlot?.name || 'Dinner';
+                const slotTiming = featuredSlot?.timing || '08:30 PM – 10:00 PM';
+                const countdown = featuredSlot?.countdownText;
+
+                const slotIcon = slotKey === 'breakfast' ? '🍳' : slotKey === 'lunch' ? '🍛' : slotKey === 'snacks' ? '☕' : '🍲';
 
                 const dishes = prioritizeMealDishes(mealObj);
                 const headlineDish = dishes[0] || 'Special campus meal menu';
@@ -632,22 +627,43 @@ const handleSendMessage = (e) => {
                 return (
                   <div 
                     className="tactile-spotlight-card"
-                    onClick={() => setActiveTab('mess')}
-                    title="Click to view full dining timetable"
+                    onClick={() => {
+                      if (!isServingNow) {
+                        setMessViewFilter('upcoming');
+                      }
+                      setActiveTab('mess');
+                    }}
+                    title="Click to view dining timetable & upcoming meals"
                     style={{ cursor: 'pointer' }}
                   >
                     <div className="tactile-spotlight-header">
                       <span className="tactile-spotlight-meal-tag">
-                        <span>{slotKey === 'breakfast' ? '🍳' : slotKey === 'lunch' ? '🍛' : slotKey === 'snacks' ? '☕' : '🍲'}</span>
-                        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 700 }}>{slotName}</span>
+                        <span>{slotIcon}</span>
+                        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 700 }}>
+                          {featuredSlot?.isTomorrow ? "Tomorrow's " : ''}{slotName}
+                        </span>
                       </span>
-                      <span className="tactile-live-badge">
-                        <span className="tactile-pulse-dot" />
-                        <span>Serving Now: {slotTiming}</span>
-                      </span>
+                      {isServingNow ? (
+                        <span className="tactile-live-badge" title="Currently within official dining hours">
+                          <span className="tactile-pulse-dot" />
+                          <span>Serving Now: {slotTiming}</span>
+                          {countdown && <span style={{ opacity: 0.9, fontSize: 11, marginLeft: 4 }}>({countdown})</span>}
+                        </span>
+                      ) : (
+                        <span 
+                          className="tactile-live-badge" 
+                          style={{ background: 'rgba(217, 119, 6, 0.15)', borderColor: 'rgba(217, 119, 6, 0.35)', color: '#D97706' }} 
+                          title="Upcoming scheduled dining window"
+                        >
+                          <span className="tactile-pulse-dot" style={{ background: '#F59E0B', boxShadow: '0 0 8px rgba(245, 158, 11, 0.6)' }} />
+                          <span>Upcoming Next • {countdown || slotTiming}</span>
+                        </span>
+                      )}
                     </div>
 
-                    <div className="tactile-section-label">Main dishes</div>
+                    <div className="tactile-section-label">
+                      {isServingNow ? 'Main dishes serving now' : 'Scheduled dishes for upcoming meal'}
+                    </div>
                     <h3 className="tactile-dish-headline">{headlineDish}</h3>
 
                     {accompaniments.length > 0 && (
@@ -662,8 +678,7 @@ const handleSendMessage = (e) => {
                         </div>
                       </>
                     )}
-
-                    </div>
+                  </div>
                 );
               })()}
 
@@ -757,9 +772,9 @@ const handleSendMessage = (e) => {
               VIEW 2: WEEKLY MESS TIMETABLE
              ========================================================================= */}
           {activeTab === 'mess' && (() => {
-            const now = new Date();
-            const currentMins = now.getHours() * 60 + now.getMinutes();
-            const d = now.getDay();
+            const kolkataTime = getKolkataTime();
+            const currentMins = kolkataTime.totalMinutes;
+            const d = new Date().getDay();
             const todayItem = DAYS_ORDER[d === 0 ? 6 : d - 1];
             const todayKey = (todayItem && typeof todayItem === 'object' ? todayItem.key : todayItem) || 'monday';
             const isViewingToday = selectedDay === todayKey;
@@ -772,6 +787,9 @@ const handleSendMessage = (e) => {
               { key: 'snacks', slot: meals.snacks, icon: '☕', name: 'Evening Snacks', defaultTime: '05:45 – 07:30 PM' },
               { key: 'dinner', slot: meals.dinner, icon: '🍲', name: 'Dinner', defaultTime: '08:30 – 10:00 PM' },
             ];
+
+            const todayMeals = (DEFAULT_MESS_SCHEDULE[todayKey] || DEFAULT_MESS_SCHEDULE.monday)?.meals || {};
+            const { activeSlot, nextSlot } = getMealStatusForDay(todayMeals, kolkataTime);
 
             return (
               <div className="detailed-view-container">
@@ -866,6 +884,59 @@ const handleSendMessage = (e) => {
                   </div>
                 </div>
 
+                {/* Quick View Switcher: All Meals vs Upcoming Next */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+                  <div style={{ display: 'inline-flex', padding: 4, background: 'rgba(0,0,0,0.04)', borderRadius: 9999, border: '1px solid rgba(0,0,0,0.06)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setMessViewFilter('all')}
+                      style={{
+                        padding: '6px 18px',
+                        borderRadius: 9999,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: messViewFilter === 'all' ? '#C07660' : 'transparent',
+                        color: messViewFilter === 'all' ? '#ffffff' : 'inherit',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      🍽️ All Meals
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMessViewFilter('upcoming');
+                        setSelectedDay(todayKey);
+                      }}
+                      style={{
+                        padding: '6px 18px',
+                        borderRadius: 9999,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: messViewFilter === 'upcoming' ? '#C07660' : 'transparent',
+                        color: messViewFilter === 'upcoming' ? '#ffffff' : 'inherit',
+                        transition: 'all 0.15s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <span>⏳ Upcoming Next</span>
+                      <span style={{ fontSize: 10, background: messViewFilter === 'upcoming' ? 'rgba(255,255,255,0.25)' : 'rgba(192,118,96,0.15)', color: messViewFilter === 'upcoming' ? '#fff' : '#C07660', padding: '2px 6px', borderRadius: 9999, fontWeight: 700 }}>
+                        {activeSlot ? 'LIVE' : 'NEXT'}
+                      </span>
+                    </button>
+                  </div>
+
+                  <span style={{ fontSize: 12.5, color: 'var(--text-muted)', fontWeight: 500 }}>
+                    🕒 Asia/Kolkata Clock: <strong>{kolkataTime.formattedTime}</strong>
+                  </span>
+                </div>
+
                 {/* Day Selector Pills (Mon - Sun) */}
                 <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 24, scrollbarWidth: 'none' }}>
                   {DAYS_ORDER.map((item) => {
@@ -877,7 +948,12 @@ const handleSendMessage = (e) => {
                     return (
                       <button
                         key={dayKey}
-                        onClick={() => setSelectedDay(dayKey)}
+                        onClick={() => {
+                          setSelectedDay(dayKey);
+                          if (dayKey !== todayKey && messViewFilter === 'upcoming') {
+                            setMessViewFilter('all');
+                          }
+                        }}
                         className={`dining-day-pill ${isSelected ? 'active' : ''}`}
                       >
                         {isToday && <span className="dining-day-dot" />}
@@ -888,13 +964,40 @@ const handleSendMessage = (e) => {
                   })}
                 </div>
 
-                {/* TACTILE FEATURED SPOTLIGHT CARD FOR SELECTED DAY (VARIATION 2: TACTILE LINEN) */}
+                {/* TACTILE FEATURED SPOTLIGHT CARD FOR SELECTED DAY (DYNAMIC LIVE vs UPCOMING) */}
                 {(() => {
-                  const currentSlotKey = currentMins < 11 * 60 + 30 ? 'breakfast' : (currentMins < 16 * 60 ? 'lunch' : (currentMins < 20 * 60 ? 'snacks' : 'dinner'));
-                  const spotlightMeal = isViewingToday 
-                    ? (meals[currentSlotKey] || meals.dinner)
-                    : (meals.dinner || meals.lunch || meals.breakfast);
-                  const spotlightSlotKey = isViewingToday ? currentSlotKey : 'dinner';
+                  let spotlightSlotKey = 'dinner';
+                  let spotlightMeal = meals.dinner;
+                  let badgeText = spotlightMeal?.timing || '08:30 PM – 10:00 PM';
+                  let isLive = false;
+                  let isUpcoming = false;
+
+                  if (isViewingToday) {
+                    if (activeSlot) {
+                      spotlightSlotKey = activeSlot.key;
+                      spotlightMeal = activeSlot.data || meals[activeSlot.key];
+                      badgeText = `LIVE NOW • ${activeSlot.timing}${activeSlot.countdownText ? ` (${activeSlot.countdownText})` : ''}`;
+                      isLive = true;
+                    } else if (nextSlot) {
+                      spotlightSlotKey = nextSlot.key;
+                      if (nextSlot.isTomorrow) {
+                        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                        const curIdx = days.indexOf(kolkataTime.dayOfWeek);
+                        const tomorrowDay = days[(curIdx + 1) % 7];
+                        spotlightMeal = DEFAULT_MESS_SCHEDULE[tomorrowDay]?.meals?.breakfast;
+                        badgeText = `UPCOMING NEXT • ${nextSlot.timing} (${nextSlot.countdownText})`;
+                      } else {
+                        spotlightMeal = nextSlot.data || meals[nextSlot.key];
+                        badgeText = `UPCOMING NEXT • ${nextSlot.timing}${nextSlot.countdownText ? ` (${nextSlot.countdownText})` : ''}`;
+                      }
+                      isUpcoming = true;
+                    }
+                  } else {
+                    spotlightSlotKey = 'dinner';
+                    spotlightMeal = meals.dinner || meals.lunch || meals.breakfast;
+                    badgeText = spotlightMeal?.timing || '08:30 PM – 10:00 PM';
+                  }
+
                   const spotlightName = spotlightSlotKey.charAt(0).toUpperCase() + spotlightSlotKey.slice(1);
                   const spotlightIcon = spotlightSlotKey === 'breakfast' ? '🍳' : (spotlightSlotKey === 'lunch' ? '🍛' : (spotlightSlotKey === 'snacks' ? '☕' : '🍲'));
 
@@ -907,11 +1010,22 @@ const handleSendMessage = (e) => {
                       <div className="tactile-spotlight-header">
                         <span className="tactile-spotlight-meal-tag">
                           <span>{spotlightIcon}</span>
-                          <span>{spotlightName} Spotlight • {dayData.label || selectedDay.toUpperCase()}</span>
+                          <span>
+                            {isLive ? 'Serving Now: ' : isUpcoming ? 'Upcoming Next: ' : ''}
+                            {spotlightName} Spotlight • {dayData.label || selectedDay.toUpperCase()}
+                          </span>
                         </span>
-                        <span className="tactile-live-badge">
-                          <span className="tactile-pulse-dot" />
-                          <span>{spotlightMeal?.timing || '08:30 PM – 10:00 PM'}</span>
+                        <span 
+                          className="tactile-live-badge"
+                          style={
+                            isUpcoming ? { background: 'rgba(217, 119, 6, 0.15)', borderColor: 'rgba(217, 119, 6, 0.35)', color: '#D97706' } : undefined
+                          }
+                        >
+                          <span 
+                            className="tactile-pulse-dot" 
+                            style={isUpcoming ? { background: '#F59E0B', boxShadow: '0 0 8px rgba(245, 158, 11, 0.6)' } : undefined}
+                          />
+                          <span>{badgeText}</span>
                         </span>
                       </div>
 
@@ -926,22 +1040,67 @@ const handleSendMessage = (e) => {
                           ))}
                         </div>
                       )}
-
-
                     </div>
                   );
                 })()}
 
-                {/* 4 Real Meal Cards for the Selected Day */}
+                {/* Real Meal Cards for the Selected Day (Filtered by All or Upcoming) */}
+                {messViewFilter === 'upcoming' && isViewingToday && nextSlot?.isTomorrow && !activeSlot && (
+                  <div style={{ background: '#FAF8F4', border: '1px solid #E6E0D5', borderRadius: 20, padding: '24px 20px', marginBottom: 20, textAlign: 'center' }}>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>🌙</div>
+                    <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--text-primary)', margin: '0 0 6px' }}>Tonight's Dinner has concluded</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 13.5, margin: '0 0 16px' }}>
+                      The kitchen is closed for tonight. Next upcoming meal is <strong>Tomorrow's Breakfast</strong> at 07:00 AM.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                        const curIdx = days.indexOf(kolkataTime.dayOfWeek);
+                        const tomorrowDay = days[(curIdx + 1) % 7];
+                        setSelectedDay(tomorrowDay);
+                        setMessViewFilter('all');
+                      }}
+                      style={{ background: '#C07660', color: '#ffffff', border: 'none', padding: '10px 22px', borderRadius: 9999, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      View Tomorrow's Timetable →
+                    </button>
+                  </div>
+                )}
+
                 <div className="dining-schedule-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 18 }}>
-                  {mealsList.map(({ key, slot, icon, name, defaultTime }) => {
+                  {mealsList
+                    .filter(({ key }) => {
+                      if (messViewFilter === 'upcoming' && isViewingToday) {
+                        if (activeSlot && key === activeSlot.key) return true;
+                        if (nextSlot && !nextSlot.isTomorrow && key === nextSlot.key) return true;
+                        return false;
+                      }
+                      return true;
+                    })
+                    .map(({ key, slot, icon, name, defaultTime }) => {
                     const startMins = (slot?.startHour ?? 0) * 60 + (slot?.startMinute ?? 0);
                     const endMins = (slot?.endHour ?? 24) * 60 + (slot?.endMinute ?? 0);
 
                     let statusBadge = null;
+                    const isCardActive = isViewingToday && activeSlot?.key === key;
+                    const isCardImmediateNext = isViewingToday && !activeSlot && nextSlot?.key === key;
+
                     if (isViewingToday) {
-                      if (currentMins >= startMins && currentMins <= endMins) {
-                        statusBadge = <span className="dining-timing-chip live">● LIVE NOW</span>;
+                      if (isCardActive) {
+                        statusBadge = (
+                          <span className="dining-timing-chip live" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span>● LIVE NOW</span>
+                            {activeSlot?.countdownText && <span style={{ opacity: 0.9, fontSize: 10 }}>({activeSlot.countdownText})</span>}
+                          </span>
+                        );
+                      } else if (isCardImmediateNext) {
+                        statusBadge = (
+                          <span className="dining-timing-chip upcoming" style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span>⏳ UPCOMING NEXT</span>
+                            {nextSlot?.countdownText && <span style={{ fontSize: 10 }}>({nextSlot.countdownText})</span>}
+                          </span>
+                        );
                       } else if (currentMins > endMins) {
                         statusBadge = <span className="dining-timing-chip finished">Finished</span>;
                       } else {
