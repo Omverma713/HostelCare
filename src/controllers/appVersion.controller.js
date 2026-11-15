@@ -178,83 +178,6 @@ const getAppVersionStatus = async (req, res) => {
       });
     }
 
-    // ── CHANNEL B: TARGET AUDIENCE IS SPECIFIC BUT USER IS NOT TARGETED ──
-    const targetedRegs = (appVersionConfig.targetedRegistrationNumbers || []).map((r) => String(r).trim().toUpperCase());
-    const targetedRoles = (appVersionConfig.targetedRoles || []).map((r) => String(r).trim().toLowerCase());
-    const targetedHostels = (appVersionConfig.targetedHostels || []).map((h) => String(h).trim().toLowerCase());
-
-    const isAppTargetedUser =
-      (clientRegistrationNumber && targetedRegs.includes(clientRegistrationNumber)) ||
-      (clientRole && targetedRoles.includes(clientRole)) ||
-      (clientHostel && targetedHostels.includes(clientHostel));
-
-    if (appVersionConfig.targetAudience === "specific" && !isAppTargetedUser) {
-      return res.status(200).json({
-        success: true,
-        clientVersion: currentVersion || null,
-        platform: platform || "android",
-        buildNumber: buildNumber || null,
-        latestVersion: currentVersion || appVersionConfig.latestVersion,
-        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
-        updateAvailable: false,
-        forceUpdate: false,
-        updateType: "none",
-        isSuspended: false,
-        isPilot: false,
-        targetAudience: "specific",
-        isTargeted: false,
-        updateMessage: "You are currently on the stable channel for your user account.",
-        updateUrl: appVersionConfig.updateUrl,
-        releaseNotes: "",
-        releaseMedia: [],
-        apkSha256: "",
-        checkedAt: new Date().toISOString(),
-      });
-    }
-
-    // ── CHANNEL C: GLOBAL ROLLOUT (ALL USERS) ──────────────────────────────────
-    if (appVersionConfig.isSuspended) {
-      return res.status(200).json({
-        success: true,
-        clientVersion: currentVersion || null,
-        platform: platform || "android",
-        buildNumber: buildNumber || null,
-        latestVersion: currentVersion || appVersionConfig.latestVersion,
-        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
-        updateAvailable: false,
-        forceUpdate: false,
-        updateType: "none",
-        isSuspended: true,
-        isPilot: false,
-        suspendedReason: appVersionConfig.suspendedReason || "Release is temporarily paused by administrator.",
-        targetAudience: "all",
-        isTargeted: true,
-        updateMessage: "Release is currently suspended by administration.",
-        updateUrl: appVersionConfig.updateUrl,
-        releaseNotes: "",
-        releaseMedia: [],
-        apkSha256: "",
-        checkedAt: new Date().toISOString(),
-      });
-    }
-
-    let evaluation = {
-      updateAvailable: false,
-      forceUpdate: false,
-      updateType: "none",
-      isBelowMinimum: false,
-      isBelowLatest: false,
-    };
-
-    if (currentVersion) {
-      evaluation = evaluateUpdate({
-        currentVersion,
-        latestVersion: appVersionConfig.latestVersion,
-        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
-        forceUpdateFlag: appVersionConfig.forceUpdate,
-      });
-    }
-
     // ── Live Over-The-Air (OTA) Bundle Evaluation ──────────────────────────────
     const otaConfig = config.otaUpdates || {
       enabled: true,
@@ -301,6 +224,84 @@ const getAppVersionStatus = async (req, res) => {
       requiresNativeApk: isOldNativeApk,
       forceUpdate: Boolean(otaConfig.forceUpdate),
     };
+
+    // ── CHANNEL B: TARGET AUDIENCE IS SPECIFIC BUT USER IS NOT TARGETED ──
+    const targetedRegs = (appVersionConfig.targetedRegistrationNumbers || []).map((r) => String(r).trim().toUpperCase());
+    const targetedRoles = (appVersionConfig.targetedRoles || []).map((r) => String(r).trim().toLowerCase());
+    const targetedHostels = (appVersionConfig.targetedHostels || []).map((h) => String(h).trim().toLowerCase());
+
+    const isAppTargetedUser =
+      (clientRegistrationNumber && targetedRegs.includes(clientRegistrationNumber)) ||
+      (clientRole && targetedRoles.includes(clientRole)) ||
+      (clientHostel && targetedHostels.includes(clientHostel));
+
+    if (appVersionConfig.targetAudience === "specific" && !isAppTargetedUser) {
+      return res.status(200).json({
+        success: true,
+        clientVersion: currentVersion || null,
+        platform: platform || "android",
+        buildNumber: buildNumber || null,
+        latestVersion: currentVersion || appVersionConfig.latestVersion,
+        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+        updateAvailable: otaHasNewer,
+        forceUpdate: false,
+        updateType: otaHasNewer ? "ota_live" : "none",
+        isSuspended: false,
+        isPilot: false,
+        targetAudience: "specific",
+        isTargeted: false,
+        updateMessage: "You are currently on the stable channel for your user account.",
+        updateUrl: appVersionConfig.updateUrl,
+        releaseNotes: "",
+        releaseMedia: [],
+        apkSha256: "",
+        ota: otaPayload,
+        checkedAt: new Date().toISOString(),
+      });
+    }
+
+    // ── CHANNEL C: GLOBAL ROLLOUT (ALL USERS) ──────────────────────────────────
+    if (appVersionConfig.isSuspended) {
+      return res.status(200).json({
+        success: true,
+        clientVersion: currentVersion || null,
+        platform: platform || "android",
+        buildNumber: buildNumber || null,
+        latestVersion: currentVersion || appVersionConfig.latestVersion,
+        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+        updateAvailable: false,
+        forceUpdate: false,
+        updateType: "none",
+        isSuspended: true,
+        isPilot: false,
+        suspendedReason: appVersionConfig.suspendedReason || "Release is temporarily paused by administrator.",
+        targetAudience: "all",
+        isTargeted: true,
+        updateMessage: "Release is currently suspended by administration.",
+        updateUrl: appVersionConfig.updateUrl,
+        releaseNotes: "",
+        releaseMedia: [],
+        apkSha256: "",
+        checkedAt: new Date().toISOString(),
+      });
+    }
+
+    let evaluation = {
+      updateAvailable: false,
+      forceUpdate: false,
+      updateType: "none",
+      isBelowMinimum: false,
+      isBelowLatest: false,
+    };
+
+    if (currentVersion) {
+      evaluation = evaluateUpdate({
+        currentVersion,
+        latestVersion: appVersionConfig.latestVersion,
+        minimumSupportedVersion: appVersionConfig.minimumSupportedVersion,
+        forceUpdateFlag: appVersionConfig.forceUpdate,
+      });
+    }
 
     return res.status(200).json({
       success: true,
