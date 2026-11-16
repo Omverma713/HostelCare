@@ -253,14 +253,22 @@ function isDummySlotClient(slot) {
 }
 
 function areSlotsSameSubjectClient(s1, s2) {
-  const norm1 = String(s1.subjectName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const norm2 = String(s2.subjectName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const code1 = String(s1.subjectCode || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const code2 = String(s2.subjectCode || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (code1 && code2 && code1 === code2) return true;
-  if (norm1 && norm2 && (norm1 === norm2 || norm1.includes(norm2) || norm2.includes(norm1))) return true;
-  if (code1 && norm2 && (code1 === norm2 || norm2.includes(code1))) return true;
-  if (code2 && norm1 && (code2 === norm1 || norm1.includes(code2))) return true;
+  if (!s1 || !s2) return false;
+  const code1 = String(s1.subjectCode || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const code2 = String(s2.subjectCode || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const name1 = String(s1.subjectName || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const name2 = String(s2.subjectName || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // 1. If both slots have meaningful course codes (at least 3 characters), they MUST match exactly
+  if (code1.length >= 3 && code2.length >= 3) {
+    return code1 === code2;
+  }
+
+  // 2. Otherwise, require exact match on normalized subject names
+  if (name1.length >= 3 && name2.length >= 3) {
+    return name1 === name2;
+  }
+
   return false;
 }
 
@@ -298,91 +306,18 @@ function formatFacultyNameClient(faculty) {
   return isDoctor ? `Dr. ${clean}` : `Prof. ${clean}`;
 }
 
-const CURRICULUM_CATALOG_CLIENT = [
-  {
-    code: "CSE 3544",
-    name: "Practical Programming with C",
-    aliases: ["PPWC", "PRACTICAL PROGRAMMING WITH C", "PPWC LAB", "PPWC-LAB", "C PROGRAMMING"],
-    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
-    labName: "Practical Programming with C (Lab)",
-  },
-  {
-    code: "CSE 3249",
-    name: "Design Principles of Operating Systems",
-    aliases: ["DPOS", "DESIGN PRINCIPLES OF OPERATING SYSTEMS", "DPOS LAB", "OPERATING SYSTEMS", "OS"],
-    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
-    labName: "Operating Systems (Unix Shell Lab)",
-  },
-  {
-    code: "CSE 3751",
-    name: "Computer Networking : Concepts",
-    aliases: ["CN", "COMPUTER NETWORKS", "COMPUTER NETWORKING", "COMPUTER NETWORKING : CONCEPTS", "CN LAB"],
-    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
-    labName: "Computer Networking Lab",
-  },
-  {
-    code: "CSE 3967",
-    name: "Machine Learning Concepts 1",
-    aliases: ["MLC 1", "MLC", "ML-LAB", "MACHINE LEARNING", "MACHINE LEARNING CONCEPTS 1"],
-    isLab: () => true,
-    labName: "Machine Learning Concepts 1 (ML-LAB)",
-  },
-  {
-    code: "CSE 3731",
-    name: "Introduction to the Theory of Computation",
-    aliases: ["ITC", "THEORY OF COMPUTATION", "TOC", "INTRODUCTION TO THE THEORY OF COMPUTATION"],
-    isLab: () => false,
-  },
-  {
-    code: "MTH 3647",
-    name: "Fundamentals of Machine Intelligence 1",
-    aliases: ["FMI 1", "FMI", "FUNDAMENTALS OF MACHINE INTELLIGENCE 1", "MACHINE INTELLIGENCE"],
-    isLab: () => false,
-  },
-  {
-    code: "GET 2024",
-    name: "Intermediate Problem Solving — 1",
-    aliases: ["IPS 1", "IPS1", "IPS", "INTERMEDIATE PROBLEM SOLVING - 1", "INTERMEDIATE PROBLEM SOLVING — 1"],
-    isLab: () => false,
-  },
-];
-
+// ─── ZERO-HARDCODING CLIENT ENRICHMENT ───────────────────────────────────────
+// Respects the user's custom schedule 100%: no forced catalogs or foreign teachers.
 function enrichSlotDetailsClient(slot) {
   if (!slot) return slot;
   const sName = String(slot.subjectName || "").trim();
   const sCode = String(slot.subjectCode || "").trim();
-  const normName = sName.toUpperCase();
-  const normCode = sCode.toUpperCase();
 
   const cloned = { ...slot };
+  const isLab = cloned.type === "lab" || /LAB/i.test(sName) || /LAB/i.test(sCode);
+  if (isLab) cloned.type = "lab";
 
-  for (const item of CURRICULUM_CATALOG_CLIENT) {
-    const isCodeMatch = normCode === item.code.toUpperCase();
-    const isAliasMatch = item.aliases.some((a) => {
-      const u = a.toUpperCase();
-      return normName === u || normCode === u || normName.startsWith(u + " ") || normName.endsWith(" " + u);
-    });
-
-    if (isCodeMatch || isAliasMatch) {
-      const isLab = (typeof item.isLab === "function" && item.isLab(sName, sCode)) || cloned.type === "lab" || /LAB/i.test(sName) || /LAB/i.test(sCode);
-      
-      // Expand subject acronym to full official course title
-      if (!sName || sName.length <= 12 || item.aliases.includes(sName.toUpperCase())) {
-        cloned.subjectName = isLab && item.labName ? item.labName : item.name;
-      }
-      
-      // Ensure official course code
-      if (!cloned.subjectCode || item.aliases.includes(cloned.subjectCode.toUpperCase())) {
-        cloned.subjectCode = item.code;
-      }
-      
-      if (isLab) cloned.type = "lab";
-      break;
-    }
-  }
-
-  // Format faculty cleanly & eliminate duplicate "Prof." prefixes
-  // NEVER inject foreign teachers from another student's section!
+  // Clean faculty name without duplicate prefixes; preserve user's own data
   cloned.faculty = formatFacultyNameClient(cloned.faculty);
 
   return cloned;
