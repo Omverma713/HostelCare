@@ -264,6 +264,140 @@ function areSlotsSameSubjectClient(s1, s2) {
   return false;
 }
 
+const CURRICULUM_CATALOG_CLIENT = [
+  {
+    code: "CSE 3544",
+    name: "Practical Programming with C",
+    aliases: ["PPWC", "PRACTICAL PROGRAMMING WITH C", "PPWC LAB", "PPWC-LAB", "C PROGRAMMING"],
+    defaultFaculty: "Prof. Srijit Chowdhury",
+    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
+    labName: "Practical Programming with C (Lab)",
+  },
+  {
+    code: "CSE 3249",
+    name: "Design Principles of Operating Systems",
+    aliases: ["DPOS", "DESIGN PRINCIPLES OF OPERATING SYSTEMS", "DPOS LAB", "OPERATING SYSTEMS", "OS"],
+    defaultFaculty: "Prof. S. Mohanty",
+    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
+    labName: "Operating Systems (Unix Shell Lab)",
+  },
+  {
+    code: "CSE 3751",
+    name: "Computer Networking : Concepts",
+    aliases: ["CN", "COMPUTER NETWORKS", "COMPUTER NETWORKING", "COMPUTER NETWORKING : CONCEPTS", "CN LAB"],
+    defaultFaculty: "Dr. A. K. Nayak",
+    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
+    labName: "Computer Networking Lab",
+  },
+  {
+    code: "CSE 3967",
+    name: "Machine Learning Concepts 1",
+    aliases: ["MLC 1", "MLC", "ML-LAB", "MACHINE LEARNING", "MACHINE LEARNING CONCEPTS 1"],
+    defaultFaculty: "Prof. D. Bhattacharyya",
+    isLab: () => true,
+    labName: "Machine Learning Concepts 1 (ML-LAB)",
+  },
+  {
+    code: "CSE 3731",
+    name: "Introduction to the Theory of Computation",
+    aliases: ["ITC", "THEORY OF COMPUTATION", "TOC", "INTRODUCTION TO THE THEORY OF COMPUTATION"],
+    defaultFaculty: "Prof. Bhupendra Kumar Gupta",
+    isLab: () => false,
+  },
+  {
+    code: "MTH 3647",
+    name: "Fundamentals of Machine Intelligence 1",
+    aliases: ["FMI 1", "FMI", "FUNDAMENTALS OF MACHINE INTELLIGENCE 1", "MACHINE INTELLIGENCE"],
+    defaultFaculty: "Prof. Tapan Kumar Patra",
+    isLab: () => false,
+  },
+  {
+    code: "GET 2024",
+    name: "Intermediate Problem Solving — 1",
+    aliases: ["IPS 1", "IPS1", "IPS", "INTERMEDIATE PROBLEM SOLVING - 1", "INTERMEDIATE PROBLEM SOLVING — 1"],
+    defaultFaculty: "Prof. Aditya Chatterjee",
+    isLab: () => false,
+  },
+];
+
+function enrichSlotDetailsClient(slot) {
+  if (!slot) return slot;
+  const sName = String(slot.subjectName || "").trim();
+  const sCode = String(slot.subjectCode || "").trim();
+  const sFaculty = String(slot.faculty || "").trim();
+  const normName = sName.toUpperCase();
+  const normCode = sCode.toUpperCase();
+
+  const cloned = { ...slot };
+
+  for (const item of CURRICULUM_CATALOG_CLIENT) {
+    const isCodeMatch = normCode === item.code.toUpperCase();
+    const isAliasMatch = item.aliases.some((a) => {
+      const u = a.toUpperCase();
+      return normName === u || normCode === u || normName.startsWith(u + " ") || normName.endsWith(" " + u);
+    });
+
+    if (isCodeMatch || isAliasMatch) {
+      const isLab = (typeof item.isLab === "function" && item.isLab(sName, sCode)) || cloned.type === "lab" || /LAB/i.test(sName) || /LAB/i.test(sCode);
+      
+      // Expand subject acronym to full official course title
+      if (!sName || sName.length <= 12 || item.aliases.includes(sName.toUpperCase())) {
+        cloned.subjectName = isLab && item.labName ? item.labName : item.name;
+      }
+      
+      // Ensure official course code
+      if (!cloned.subjectCode || item.aliases.includes(cloned.subjectCode.toUpperCase())) {
+        cloned.subjectCode = item.code;
+      }
+      
+      if (isLab) cloned.type = "lab";
+      
+      // Fill faculty if missing or generic placeholder
+      if (!sFaculty || sFaculty.toLowerCase() === "faculty member" || sFaculty.toLowerCase() === "tba" || sFaculty.length <= 2) {
+        cloned.faculty = item.defaultFaculty;
+      }
+      break;
+    }
+  }
+
+  // Format faculty name & clean common OCR typos
+  if (cloned.faculty) {
+    cloned.faculty = cloned.faculty
+      .replace(/SKUIT\s+CHOWDHURY/i, "Prof. Srijit Chowdhury")
+      .replace(/SRUIT\s+CHOWDHURY/i, "Prof. Srijit Chowdhury")
+      .replace(/SANJAYA\s+KUMAR\s+JENA/i, "Prof. Sanjaya Kumar Jena")
+      .replace(/BHANU\s+PRATAP\s+RAJAK/i, "Prof. Bhanu Pratap Rajak")
+      .replace(/TAPAN\s+KUMAR\s+PATRA/i, "Prof. Tapan Kumar Patra")
+      .replace(/ANMOL\s+PATTANAIK/i, "Prof. Anmol Pattanaik")
+      .replace(/PANKAJ\s+PRUSTY/i, "Prof. Pankaj Prusty")
+      .replace(/BHUPENDRA\s+KUMAR\s+GUPTA/i, "Prof. Bhupendra Kumar Gupta")
+      .replace(/LAMBODAR\s+JENA/i, "Prof. Lambodar Jena")
+      .replace(/KULDIP\s+MOHANTY/i, "Prof. Kuldip Mohanty")
+      .replace(/TRUSHNA\s+PARIDA/i, "Prof. Trushna Parida")
+      .replace(/SHUBHAM\s+YADAV/i, "Prof. Shubham Yadav")
+      .replace(/VENKETASH\s+DALEI/i, "Prof. Venketash Dalei")
+      .replace(/PARISHMITA\s+DAS/i, "Prof. Parishmita Das")
+      .replace(/JHILIRANI\s+NAYAK/i, "Prof. Jhilirani Nayak")
+      .replace(/SURYA\s+NARAYAN\s+MAHAPATRA/i, "Prof. Surya Narayan Mahapatra")
+      .replace(/ANIRBAN\s+DEY/i, "Prof. Anirban Dey")
+      .replace(/BISHNU\s+PRASAD\s+SWAIN/i, "Prof. Bishnu Prasad Swain")
+      .replace(/SUBHASHREE\s+SUBUDHI/i, "Prof. Subhashree Subudhi")
+      .replace(/BHARAT\s+MAHESHWARI/i, "Prof. Bharat Maheshwari");
+
+    if (/^[A-Z\s.-]+$/.test(cloned.faculty) && cloned.faculty.length > 3) {
+      cloned.faculty = cloned.faculty
+        .split(" ")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
+      if (!/^prof\.|^dr\./i.test(cloned.faculty)) {
+        cloned.faculty = `Prof. ${cloned.faculty}`;
+      }
+    }
+  }
+
+  return cloned;
+}
+
 function sanitizeAndMergeDaysClient(daysList, defaultRoom = "Campus Hall") {
   if (!Array.isArray(daysList)) return [];
   return daysList.map((dayObj) => {
@@ -280,10 +414,10 @@ function sanitizeAndMergeDaysClient(daysList, defaultRoom = "Campus Hall") {
 
     const merged = [];
     for (let i = 0; i < realSlots.length; i++) {
-      const current = {
+      const current = enrichSlotDetailsClient({
         ...realSlots[i],
         room: realSlots[i].room || defaultRoom,
-      };
+      });
 
       if (merged.length > 0) {
         const prev = merged[merged.length - 1];

@@ -33,9 +33,9 @@ const getAcademicOverview = async (req, res) => {
       userTimetable = await UserTimetable.findOne({ userId: user._id });
       if (userTimetable && Array.isArray(userTimetable.days)) {
         const cleanedDays = sanitizeAndMergeDays(userTimetable.days, userTimetable.classroom);
-        const rawCount = userTimetable.days.reduce((acc, d) => acc + (d.slots?.length || 0), 0);
-        const cleanCount = cleanedDays.reduce((acc, d) => acc + (d.slots?.length || 0), 0);
-        if (rawCount !== cleanCount) {
+        const prevJson = JSON.stringify(userTimetable.days);
+        const nextJson = JSON.stringify(cleanedDays);
+        if (prevJson !== nextJson) {
           userTimetable.days = cleanedDays;
           await userTimetable.save();
         }
@@ -89,9 +89,9 @@ const getUserTimetable = async (req, res) => {
 
     if (timetable && Array.isArray(timetable.days)) {
       const cleanedDays = sanitizeAndMergeDays(timetable.days, timetable.classroom);
-      const rawCount = timetable.days.reduce((acc, d) => acc + (d.slots?.length || 0), 0);
-      const cleanCount = cleanedDays.reduce((acc, d) => acc + (d.slots?.length || 0), 0);
-      if (rawCount !== cleanCount) {
+      const prevJson = JSON.stringify(timetable.days);
+      const nextJson = JSON.stringify(cleanedDays);
+      if (prevJson !== nextJson) {
         timetable.days = cleanedDays;
         await timetable.save();
       }
@@ -341,11 +341,146 @@ function areSlotsSameSubject(s1, s2) {
   return false;
 }
 
+// ─── CURRICULUM CATALOG & INTELLIGENT SLOT ENRICHMENT ─────────────────────────
+const CURRICULUM_CATALOG = [
+  {
+    code: "CSE 3544",
+    name: "Practical Programming with C",
+    aliases: ["PPWC", "PRACTICAL PROGRAMMING WITH C", "PPWC LAB", "PPWC-LAB", "C PROGRAMMING"],
+    defaultFaculty: "Prof. Srijit Chowdhury",
+    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
+    labName: "Practical Programming with C (Lab)",
+  },
+  {
+    code: "CSE 3249",
+    name: "Design Principles of Operating Systems",
+    aliases: ["DPOS", "DESIGN PRINCIPLES OF OPERATING SYSTEMS", "DPOS LAB", "OPERATING SYSTEMS", "OS"],
+    defaultFaculty: "Prof. S. Mohanty",
+    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
+    labName: "Operating Systems (Unix Shell Lab)",
+  },
+  {
+    code: "CSE 3751",
+    name: "Computer Networking : Concepts",
+    aliases: ["CN", "COMPUTER NETWORKS", "COMPUTER NETWORKING", "COMPUTER NETWORKING : CONCEPTS", "CN LAB"],
+    defaultFaculty: "Dr. A. K. Nayak",
+    isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
+    labName: "Computer Networking Lab",
+  },
+  {
+    code: "CSE 3967",
+    name: "Machine Learning Concepts 1",
+    aliases: ["MLC 1", "MLC", "ML-LAB", "MACHINE LEARNING", "MACHINE LEARNING CONCEPTS 1"],
+    defaultFaculty: "Prof. D. Bhattacharyya",
+    isLab: () => true,
+    labName: "Machine Learning Concepts 1 (ML-LAB)",
+  },
+  {
+    code: "CSE 3731",
+    name: "Introduction to the Theory of Computation",
+    aliases: ["ITC", "THEORY OF COMPUTATION", "TOC", "INTRODUCTION TO THE THEORY OF COMPUTATION"],
+    defaultFaculty: "Prof. Bhupendra Kumar Gupta",
+    isLab: () => false,
+  },
+  {
+    code: "MTH 3647",
+    name: "Fundamentals of Machine Intelligence 1",
+    aliases: ["FMI 1", "FMI", "FUNDAMENTALS OF MACHINE INTELLIGENCE 1", "MACHINE INTELLIGENCE"],
+    defaultFaculty: "Prof. Tapan Kumar Patra",
+    isLab: () => false,
+  },
+  {
+    code: "GET 2024",
+    name: "Intermediate Problem Solving — 1",
+    aliases: ["IPS 1", "IPS1", "IPS", "INTERMEDIATE PROBLEM SOLVING - 1", "INTERMEDIATE PROBLEM SOLVING — 1"],
+    defaultFaculty: "Prof. Aditya Chatterjee",
+    isLab: () => false,
+  },
+];
+
+function enrichSlotDetails(slot) {
+  if (!slot) return slot;
+  const sName = String(slot.subjectName || "").trim();
+  const sCode = String(slot.subjectCode || "").trim();
+  const sFaculty = String(slot.faculty || "").trim();
+  const normName = sName.toUpperCase();
+  const normCode = sCode.toUpperCase();
+
+  for (const item of CURRICULUM_CATALOG) {
+    const isCodeMatch = normCode === item.code.toUpperCase();
+    const isAliasMatch = item.aliases.some((a) => {
+      const u = a.toUpperCase();
+      return normName === u || normCode === u || normName.startsWith(u + " ") || normName.endsWith(" " + u);
+    });
+
+    if (isCodeMatch || isAliasMatch) {
+      const isLab = (typeof item.isLab === "function" && item.isLab(sName, sCode)) || slot.type === "lab" || /LAB/i.test(sName) || /LAB/i.test(sCode);
+      
+      // Expand subject acronym to full official course title
+      if (!sName || sName.length <= 12 || item.aliases.includes(sName.toUpperCase())) {
+        slot.subjectName = isLab && item.labName ? item.labName : item.name;
+      }
+      
+      // Ensure official course code
+      if (!slot.subjectCode || item.aliases.includes(slot.subjectCode.toUpperCase())) {
+        slot.subjectCode = item.code;
+      }
+      
+      if (isLab) slot.type = "lab";
+      
+      // Fill faculty if missing or placeholder
+      if (!sFaculty || sFaculty.toLowerCase() === "faculty member" || sFaculty.toLowerCase() === "tba" || sFaculty.length <= 2) {
+        slot.faculty = item.defaultFaculty;
+      }
+      break;
+    }
+  }
+
+  // Format faculty name & clean common OCR typos
+  if (slot.faculty) {
+    slot.faculty = slot.faculty
+      .replace(/SKUIT\s+CHOWDHURY/i, "Prof. Srijit Chowdhury")
+      .replace(/SRUIT\s+CHOWDHURY/i, "Prof. Srijit Chowdhury")
+      .replace(/SANJAYA\s+KUMAR\s+JENA/i, "Prof. Sanjaya Kumar Jena")
+      .replace(/BHANU\s+PRATAP\s+RAJAK/i, "Prof. Bhanu Pratap Rajak")
+      .replace(/TAPAN\s+KUMAR\s+PATRA/i, "Prof. Tapan Kumar Patra")
+      .replace(/ANMOL\s+PATTANAIK/i, "Prof. Anmol Pattanaik")
+      .replace(/PANKAJ\s+PRUSTY/i, "Prof. Pankaj Prusty")
+      .replace(/BHUPENDRA\s+KUMAR\s+GUPTA/i, "Prof. Bhupendra Kumar Gupta")
+      .replace(/LAMBODAR\s+JENA/i, "Prof. Lambodar Jena")
+      .replace(/KULDIP\s+MOHANTY/i, "Prof. Kuldip Mohanty")
+      .replace(/TRUSHNA\s+PARIDA/i, "Prof. Trushna Parida")
+      .replace(/SHUBHAM\s+YADAV/i, "Prof. Shubham Yadav")
+      .replace(/VENKETASH\s+DALEI/i, "Prof. Venketash Dalei")
+      .replace(/PARISHMITA\s+DAS/i, "Prof. Parishmita Das")
+      .replace(/JHILIRANI\s+NAYAK/i, "Prof. Jhilirani Nayak")
+      .replace(/SURYA\s+NARAYAN\s+MAHAPATRA/i, "Prof. Surya Narayan Mahapatra")
+      .replace(/ANIRBAN\s+DEY/i, "Prof. Anirban Dey")
+      .replace(/BISHNU\s+PRASAD\s+SWAIN/i, "Prof. Bishnu Prasad Swain")
+      .replace(/SUBHASHREE\s+SUBUDHI/i, "Prof. Subhashree Subudhi")
+      .replace(/BHARAT\s+MAHESHWARI/i, "Prof. Bharat Maheshwari");
+
+    // Title case if all-caps
+    if (/^[A-Z\s.-]+$/.test(slot.faculty) && slot.faculty.length > 3) {
+      slot.faculty = slot.faculty
+        .split(" ")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
+      if (!/^prof\.|^dr\./i.test(slot.faculty)) {
+        slot.faculty = `Prof. ${slot.faculty}`;
+      }
+    }
+  }
+
+  return slot;
+}
+
 /**
  * Cleans timetable slots:
  * 1. Discards empty/free slots ('X', 'NIL', 'BREAK', etc.)
- * 2. Merges contiguous slots of the same subject/lab (e.g. 2-hr or 3-hr lab practicals)
- * 3. Normalizes IDs
+ * 2. Enriches subject full names and teacher assignments from curriculum catalog
+ * 3. Merges contiguous slots of the same subject/lab (e.g. 2-hr or 3-hr lab practicals)
+ * 4. Normalizes IDs
  */
 function sanitizeAndMergeDays(daysList, defaultRoom = "Campus Hall") {
   if (!Array.isArray(daysList)) return [];
@@ -365,10 +500,10 @@ function sanitizeAndMergeDays(daysList, defaultRoom = "Campus Hall") {
       return 0;
     });
 
-    // 3. Intelligently merge contiguous slots (e.g. 2-hour labs or consecutive lectures)
+    // 3. Intelligently merge contiguous slots (e.g. 2-hour labs or consecutive lectures) & enrich
     const merged = [];
     for (let i = 0; i < realSlots.length; i++) {
-      const current = {
+      const current = enrichSlotDetails({
         id: realSlots[i].id,
         startTime: realSlots[i].startTime,
         endTime: realSlots[i].endTime,
@@ -377,7 +512,7 @@ function sanitizeAndMergeDays(daysList, defaultRoom = "Campus Hall") {
         type: realSlots[i].type === "lab" ? "lab" : "theory",
         room: realSlots[i].room || defaultRoom,
         faculty: realSlots[i].faculty || "Faculty Member",
-      };
+      });
 
       if (merged.length > 0) {
         const prev = merged[merged.length - 1];
@@ -440,7 +575,28 @@ CRITICAL EXTRACTION & OPTIMIZATION RULES:
    - Whenever a Lab/Practical or lecture spans consecutive periods with the same subject, merge it into ONE single continuous slot covering the full start and end time (e.g. startTime: "11:00 AM", endTime: "01:00 PM").
    - Do NOT split continuous labs into duplicate 1-hour entries.
 
-3. LAB VS THEORY TYPE:
+3. FULL SUBJECT NAMES & OFFICIAL COURSE CODES:
+   - College timetables frequently use abbreviations in the grid (e.g. "CN", "DPOS", "PPWC", "PPWC LAB", "FMI 1", "ITC", "IPS1", "MLC 1").
+   - Timetable documents always include a Subject/Faculty legend or footer table, or standard course curriculum.
+   - Always expand abbreviations to the full subject name:
+     * "CN" -> "Computer Networking : Concepts" (subjectCode: "CSE 3751")
+     * "CN LAB" -> "Computer Networking Lab" (subjectCode: "CSE 3751", type: "lab")
+     * "DPOS" -> "Design Principles of Operating Systems" (subjectCode: "CSE 3249")
+     * "DPOS LAB" -> "Operating Systems (Unix Shell Lab)" (subjectCode: "CSE 3249", type: "lab")
+     * "PPWC" -> "Practical Programming with C" (subjectCode: "CSE 3544")
+     * "PPWC LAB" -> "Practical Programming with C (Lab)" (subjectCode: "CSE 3544", type: "lab")
+     * "ITC" -> "Introduction to the Theory of Computation" (subjectCode: "CSE 3731")
+     * "FMI 1" / "FMI" -> "Fundamentals of Machine Intelligence 1" (subjectCode: "MTH 3647")
+     * "IPS 1" / "IPS1" -> "Intermediate Problem Solving — 1" (subjectCode: "GET 2024")
+     * "MLC 1" / "ML-LAB" -> "Machine Learning Concepts 1" (subjectCode: "CSE 3967", type: "lab")
+   - If the timetable image has a course name legend or course code column, use the full name and code from that legend.
+
+4. FACULTY / TEACHER EXTRACTION:
+   - Thoroughly inspect the timetable for the faculty/instructor name for each course (often found in the cell under the subject acronym, or in the bottom legend/footer table next to the course name).
+   - If a teacher's name is listed (e.g. "Prof. Srijit Chowdhury", "Dr. A. K. Nayak", "Prof. Anmol Pattanaik", "Prof. Pankaj Prusty", "Prof. Tapan Kumar Patra", "Prof. Bhupendra Kumar Gupta", "Prof. Kuldip Mohanty"), set "faculty" to their full name with proper honorific.
+   - Do NOT leave faculty blank or "Faculty Member" if a faculty name or code is present in the schedule or legend.
+
+5. LAB VS THEORY TYPE:
    - If a slot is a Laboratory, Lab, Practical or Workshop, set "type": "lab", otherwise "type": "theory".
 
 Return ONLY valid JSON matching this exact structure:
