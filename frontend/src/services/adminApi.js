@@ -144,6 +144,12 @@ export const adminApi = {
     });
   },
 
+  deleteUser(userId) {
+    return adminRequest(`/superadmin/users/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Super Admin Self Profile
   getSuperAdminProfile() {
     return adminRequest('/superadmin/me');

@@ -1038,27 +1038,54 @@ const flushUserAccount = async (req, res) => {
     user.sessionsRevokedAt = new Date();
     await user.save();
 
-    // 2. Revoke all active sessions
+    // 2. Revoke all active sessions (matching both userId and registrationNumber)
     const sessionResult = await Session.updateMany(
-      { userId: user._id, status: "active" },
+      {
+        $or: [
+          { userId: user._id },
+          { registrationNumber: user.registrationNumber },
+        ],
+        status: "active",
+      },
       {
         $set: {
           status: "revoked",
           revokedAt: new Date(),
-          revokedBy: `admin:${req.user.registrationNumber}:flush`,
+          revokedBy: `admin:${req.user?.registrationNumber || "superadmin"}:flush`,
           pushToken: null,
           pushProvider: "none",
         },
       }
     );
 
-    // 3. Clear/prune hardware device bindings
+    // 3. Clear/prune hardware device bindings (matching both userId and regNo)
     let prunedCount = 0;
     try {
       const DeviceRegistry = require("../models/deviceRegistry.model");
-      const deviceResult = await DeviceRegistry.deleteMany({ userId: user._id });
+      const deviceResult = await DeviceRegistry.deleteMany({
+        $or: [
+          { userId: user._id },
+          { regNo: user.registrationNumber },
+        ],
+      });
       prunedCount = deviceResult.deletedCount || 0;
     } catch (_) { }
+
+    // 4. Real-time kick out via Socket.IO
+    try {
+      const { getChatIO } = require("../sockets/chatSocket");
+      const io = getChatIO();
+      if (io) {
+        io.to(`user_${user._id}`).emit("force_logout", {
+          reason: "Your account has been administratively flushed. Please log in again.",
+        });
+        io.to(`user_${user.registrationNumber}`).emit("force_logout", {
+          reason: "Your account has been administratively flushed. Please log in again.",
+        });
+      }
+    } catch (socketErr) {
+      console.warn("Socket broadcast error during flush:", socketErr.message);
+    }
 
     await recordAudit({
       req,
@@ -1095,6 +1122,96 @@ const flushUserAccount = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to flush user account",
+      error: error.message,
+    });
+  }
+};
+
+// ─── PERMANENT DELETE / PURGE USER ACCOUNT ────────────────────────────────────
+// DELETE /api/v1/superadmin/users/:userId
+const deleteUserAccount = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const currentAdminId = String(req.user?.id || req.user?._id || "");
+    if (String(user._id) === currentAdminId) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot delete your own Super Admin account while logged in.",
+      });
+    }
+
+    if (user.role === "superadmin" && user.registrationNumber === "SA-2026-001") {
+      return res.status(403).json({
+        success: false,
+        message: "The Master Super Admin account (SA-2026-001) is protected and cannot be deleted.",
+      });
+    }
+
+    const regNo = user.registrationNumber;
+    const userName = user.name;
+    const userRole = user.role;
+
+    // 1. Kick user immediately via Socket.IO if online
+    try {
+      const { getChatIO } = require("../sockets/chatSocket");
+      const io = getChatIO();
+      if (io) {
+        io.to(`user_${user._id}`).emit("force_logout", {
+          reason: "Your account has been deleted by an administrator.",
+        });
+        io.to(`user_${regNo}`).emit("force_logout", {
+          reason: "Your account has been deleted by an administrator.",
+        });
+      }
+    } catch (_) {}
+
+    // 2. Remove all sessions
+    await Session.deleteMany({
+      $or: [{ userId: user._id }, { registrationNumber: regNo }],
+    });
+
+    // 3. Remove hardware device registry entries
+    try {
+      const DeviceRegistry = require("../models/deviceRegistry.model");
+      await DeviceRegistry.deleteMany({
+        $or: [{ userId: user._id }, { regNo: regNo }],
+      });
+    } catch (_) {}
+
+    // 4. Delete the User document
+    await User.findByIdAndDelete(userId);
+
+    // 5. Record Audit
+    await recordAudit({
+      req,
+      action: "ACCOUNT_DELETED",
+      targetType: "USER",
+      targetId: user._id,
+      targetIdentifier: regNo,
+      summary: `Permanently deleted user account ${regNo} (${userName || "User"}, ${userRole}).`,
+      details: {
+        registrationNumber: regNo,
+        name: userName,
+        role: userRole,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Account for ${userName || regNo} (${regNo}) has been permanently deleted from the database.`,
+      deletedUserId: userId,
+    });
+  } catch (error) {
+    console.error("deleteUserAccount error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete user account",
       error: error.message,
     });
   }
@@ -4383,6 +4500,7 @@ module.exports = {
   simulateAutoFireMessAlert,
   rearmMessSlotForToday,
   flushUserAccount,
+  deleteUserAccount,
   getSuperAdminSelfProfile,
   updateSuperAdminSelfProfile,
   getDelegationsList,

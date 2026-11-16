@@ -92,6 +92,16 @@ export function connectChatSocket(token) {
     emitLocalEvent("user_presence", data);
   });
 
+  socket.on("force_logout", (data) => {
+    console.warn("⚠️ [ChatSocketService] Force logout signal received:", data?.reason);
+    localStorage.removeItem("token");
+    window.dispatchEvent(
+      new CustomEvent("auth-session-expired", {
+        detail: { reason: data?.reason || "Your account has been administratively flushed." }
+      })
+    );
+  });
+
   socket.on("ticket_activity", (data) => {
     emitLocalEvent("ticket_activity", data);
   });

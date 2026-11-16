@@ -52,6 +52,8 @@ const auditLogSchema = new mongoose.Schema(
         "CBT_APPLICATION_REJECTED",
         "CBT_APPLICATION_DELETED",
         "CBT_BULK_APPROVED",
+        "ACCOUNT_FLUSHED",
+        "ACCOUNT_DELETED",
       ],
     },
 

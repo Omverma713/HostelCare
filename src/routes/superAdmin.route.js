@@ -55,6 +55,7 @@ const {
   simulateAutoFireMessAlert,
   rearmMessSlotForToday,
   flushUserAccount,
+  deleteUserAccount,
   getSuperAdminSelfProfile,
   updateSuperAdminSelfProfile,
   getDelegationsList,
@@ -124,6 +125,7 @@ router.post("/users/:userId/unlock", sensitiveActionLimiter, unlockUserAccount);
 router.post("/users/:userId/lock", sensitiveActionLimiter, lockUserAccount);
 router.patch("/users/:userId/lock-duration", sensitiveActionLimiter, adjustUserLockDuration);
 router.post("/users/:userId/flush", sensitiveActionLimiter, flushUserAccount);
+router.delete("/users/:userId", sensitiveActionLimiter, deleteUserAccount);
 
 // Temporary Sub-Admin Delegation Management
 router.get("/delegations", getDelegationsList);

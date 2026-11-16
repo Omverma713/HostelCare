@@ -75,6 +75,7 @@ export default function SuperAdminPortal() {
   const [resetPasswordModal, setResetPasswordModal] = useState({ open: false, userId: null, newPassword: '', adminPassword: '' });
   const [lockedUsersCount, setLockedUsersCount] = useState(0);
   const [flushingUser, setFlushingUser] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   // Super Admin Self-Profile State
   const [isMyProfileModalOpen, setIsMyProfileModalOpen] = useState(false);
@@ -2244,6 +2245,40 @@ export default function SuperAdminPortal() {
       triggerToast('error', err.message || 'Failed to flush account', 'Flush Failed');
     } finally {
       setFlushingUser(false);
+    }
+  };
+
+  // Permanent Deletion of User Account from Database
+  const handleDeleteUser = async (user) => {
+    if (!user) return;
+    const userId = user._id || user.id;
+    const identifier = user.registrationNumber || user.name || 'this user';
+
+    if (user.role === 'superadmin' && user.registrationNumber === 'SA-2026-001') {
+      triggerToast('error', 'Master Super Admin (SA-2026-001) cannot be deleted.', 'Action Forbidden');
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `🚨 PERMANENT ACCOUNT DELETION:\n\nAre you sure you want to PERMANENTLY DELETE user ${identifier}?\n\nThis will:\n1. Erase the account from the database completely\n2. Terminate all active sessions and kick off connected devices\n3. Wipe all device tokens and biometric bindings\n\n⚠️ This action CANNOT be undone!`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingUser(true);
+      const res = await adminApi.deleteUser(userId);
+      if (res.success) {
+        triggerToast('success', res.message || `User ${identifier} permanently deleted`, 'Account Deleted');
+        setSelectedUser(null);
+        loadUsers(userPagination.page);
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to delete user account', 'Delete Failed');
+    } finally {
+      setDeletingUser(false);
     }
   };
 
@@ -4895,7 +4930,7 @@ export default function SuperAdminPortal() {
                 <button
                   type="button"
                   onClick={() => handleFlushUser(selectedUser._id)}
-                  disabled={flushingUser}
+                  disabled={flushingUser || deletingUser}
                   style={{
                     padding: '0.6rem 0.75rem',
                     borderRadius: '8px',
@@ -4904,7 +4939,7 @@ export default function SuperAdminPortal() {
                     color: '#f87171',
                     fontWeight: 750,
                     fontSize: '0.8rem',
-                    cursor: flushingUser ? 'not-allowed' : 'pointer',
+                    cursor: flushingUser || deletingUser ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -4921,6 +4956,38 @@ export default function SuperAdminPortal() {
                   <span>🔥</span>
                   <span>{flushingUser ? 'Flushing Account...' : 'Flush Account (Purge Sessions & Device Vault)'}</span>
                 </button>
+
+                {selectedUser.registrationNumber !== 'SA-2026-001' && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteUser(selectedUser)}
+                    disabled={deletingUser || flushingUser}
+                    style={{
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(220, 38, 38, 0.6)',
+                      background: 'linear-gradient(135deg, rgba(185, 28, 28, 0.22) 0%, rgba(127, 29, 29, 0.38) 100%)',
+                      color: '#fca5a5',
+                      fontWeight: 750,
+                      fontSize: '0.8rem',
+                      cursor: deletingUser || flushingUser ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      gap: '6px',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      whiteSpace: 'normal',
+                      lineHeight: 1.3,
+                      boxShadow: '0 2px 10px rgba(185, 28, 28, 0.25)',
+                    }}
+                    title="Permanently erase this account, its sessions, and hardware registry from the database"
+                  >
+                    <span>🗑️</span>
+                    <span>{deletingUser ? 'Deleting Account...' : 'Delete User (Permanently Erase from DB)'}</span>
+                  </button>
+                )}
 
                 {selectedUser.role !== 'superadmin' && (
                   selectedUser.isDelegatedSubAdmin ? (
