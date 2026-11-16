@@ -189,6 +189,115 @@ function formatHolidayDate(dateStr) {
   return dateStr;
 }
 
+// ─── TIMETABLE SANITIZATION & MULTI-HOUR LAB MERGER (CLIENT) ───────────────
+function timeToMinutesClient(timeStr) {
+  if (!timeStr) return null;
+  const clean = String(timeStr).trim().toUpperCase().replace(/NOON/i, "PM").replace(/MIDNIGHT/i, "AM");
+  const m = clean.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2] || "0", 10);
+  let meridiem = m[3] ? m[3].toUpperCase() : null;
+  if (!meridiem) {
+    if (h >= 8 && h <= 11) meridiem = "AM";
+    else if (h === 12 || (h >= 1 && h <= 7)) meridiem = "PM";
+    else meridiem = "AM";
+  }
+  if (meridiem === "PM" && h < 12) h += 12;
+  if (meridiem === "AM" && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+function isDummySlotClient(slot) {
+  if (!slot) return true;
+  const name = String(slot.subjectName || "").trim().toLowerCase();
+  const code = String(slot.subjectCode || "").trim().toLowerCase();
+  const dummyWords = [
+    "x", "xx", "xxx", "-", "--", "---", ".", "nil", "na", "n/a", "none", "null", "undefined",
+    "free", "free period", "off", "no class", "noclass", "empty", "vacant", "recess", "break",
+    "lunch", "lunch break", "tea break", "recess break", "interval", "leisure", "library", "self study"
+  ];
+  if (!name || name === "x" || name === "-" || name === "." || name === "_" || name === "nil") return true;
+  if (dummyWords.includes(name)) return true;
+  if (dummyWords.includes(code) && (name === "academic lecture" || name === "subject class" || dummyWords.includes(name))) return true;
+  if (/^x+$/i.test(name) || /^[-_.]+$/.test(name)) return true;
+  if (/^x+$/i.test(code) && (name.length <= 2 || dummyWords.includes(name))) return true;
+  return false;
+}
+
+function areSlotsSameSubjectClient(s1, s2) {
+  const norm1 = String(s1.subjectName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const norm2 = String(s2.subjectName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const code1 = String(s1.subjectCode || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const code2 = String(s2.subjectCode || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (code1 && code2 && code1 === code2) return true;
+  if (norm1 && norm2 && (norm1 === norm2 || norm1.includes(norm2) || norm2.includes(norm1))) return true;
+  if (code1 && norm2 && (code1 === norm2 || norm2.includes(code1))) return true;
+  if (code2 && norm1 && (code2 === norm1 || norm1.includes(code2))) return true;
+  return false;
+}
+
+function sanitizeAndMergeDaysClient(daysList, defaultRoom = "Campus Hall") {
+  if (!Array.isArray(daysList)) return [];
+  return daysList.map((dayObj) => {
+    const day = dayObj.day;
+    const rawSlots = Array.isArray(dayObj.slots) ? dayObj.slots : [];
+    const realSlots = rawSlots.filter((s) => !isDummySlotClient(s));
+
+    realSlots.sort((a, b) => {
+      const tA = timeToMinutesClient(a.startTime);
+      const tB = timeToMinutesClient(b.startTime);
+      if (tA !== null && tB !== null) return tA - tB;
+      return 0;
+    });
+
+    const merged = [];
+    for (let i = 0; i < realSlots.length; i++) {
+      const current = {
+        ...realSlots[i],
+        room: realSlots[i].room || defaultRoom,
+      };
+
+      if (merged.length > 0) {
+        const prev = merged[merged.length - 1];
+        const prevEndMin = timeToMinutesClient(prev.endTime);
+        const currStartMin = timeToMinutesClient(current.startTime);
+
+        const isContiguous =
+          prevEndMin !== null &&
+          currStartMin !== null &&
+          Math.abs(currStartMin - prevEndMin) <= 15;
+
+        const isSame = areSlotsSameSubjectClient(prev, current);
+
+        if (isContiguous && isSame) {
+          prev.endTime = current.endTime;
+          if (current.type === "lab" || prev.type === "lab") prev.type = "lab";
+          if (!prev.faculty || prev.faculty === "Faculty Member") prev.faculty = current.faculty;
+          if (!prev.room || prev.room === "Campus Hall" || prev.room === defaultRoom) prev.room = current.room;
+          if (!prev.subjectCode) prev.subjectCode = current.subjectCode;
+          continue;
+        }
+      }
+
+      merged.push(current);
+    }
+
+    const dayPrefix = String(day || "day").toLowerCase().slice(0, 3);
+    const finalSlots = merged.map((s, idx) => ({
+      ...s,
+      id: s.id || `${dayPrefix}-${idx + 1}`,
+      type: s.type === "lab" ? "lab" : "theory",
+      room: s.room || defaultRoom,
+    }));
+
+    return {
+      day,
+      slots: finalSlots,
+    };
+  });
+}
+
 export default function AcademicsHub({ userRole = "student", onBackToHome }) {
   let isDarkMode = false;
   try {
@@ -421,8 +530,16 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
     }
   }, []);
 
-  const activeTimetable =
+  const rawActiveTimetable =
     academicData?.activeTimetable || academicData?.defaultTimetable || FALLBACK_WEEKLY_TIMETABLE;
+
+  const activeTimetable = useMemo(() => {
+    if (!rawActiveTimetable || !Array.isArray(rawActiveTimetable.days)) return rawActiveTimetable;
+    return {
+      ...rawActiveTimetable,
+      days: sanitizeAndMergeDaysClient(rawActiveTimetable.days, rawActiveTimetable.classroom),
+    };
+  }, [rawActiveTimetable]);
   const curriculumList = academicData?.curriculum || FALLBACK_CURRICULUM;
   const holidaysList = academicData?.holidays || FALLBACK_HOLIDAYS;
   const examRadar = academicData?.examRadar || {
@@ -445,7 +562,8 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
 
     const parseToMins = (timeStr) => {
       if (!timeStr) return 0;
-      const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
+      const clean = String(timeStr).replace(/NOON/i, "PM").replace(/MIDNIGHT/i, "AM");
+      const match = clean.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
       if (!match) return 0;
       let hours = parseInt(match[1], 10);
       const mins = match[2] ? parseInt(match[2], 10) : 0;

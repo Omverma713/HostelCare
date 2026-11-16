@@ -31,6 +31,15 @@ const getAcademicOverview = async (req, res) => {
     let userTimetable = null;
     if (user) {
       userTimetable = await UserTimetable.findOne({ userId: user._id });
+      if (userTimetable && Array.isArray(userTimetable.days)) {
+        const cleanedDays = sanitizeAndMergeDays(userTimetable.days, userTimetable.classroom);
+        const rawCount = userTimetable.days.reduce((acc, d) => acc + (d.slots?.length || 0), 0);
+        const cleanCount = cleanedDays.reduce((acc, d) => acc + (d.slots?.length || 0), 0);
+        if (rawCount !== cleanCount) {
+          userTimetable.days = cleanedDays;
+          await userTimetable.save();
+        }
+      }
     }
 
     return res.status(200).json({
@@ -78,6 +87,16 @@ const getUserTimetable = async (req, res) => {
       });
     }
 
+    if (timetable && Array.isArray(timetable.days)) {
+      const cleanedDays = sanitizeAndMergeDays(timetable.days, timetable.classroom);
+      const rawCount = timetable.days.reduce((acc, d) => acc + (d.slots?.length || 0), 0);
+      const cleanCount = cleanedDays.reduce((acc, d) => acc + (d.slots?.length || 0), 0);
+      if (rawCount !== cleanCount) {
+        timetable.days = cleanedDays;
+        await timetable.save();
+      }
+    }
+
     return res.status(200).json({
       success: true,
       isCustom: true,
@@ -108,14 +127,17 @@ const saveUserTimetable = async (req, res) => {
       });
     }
 
+    const targetRoom = classroom || "Room 304";
+    const cleanedDays = sanitizeAndMergeDays(days, targetRoom);
+
     const updated = await UserTimetable.findOneAndUpdate(
       { userId },
       {
         userId,
         registrationNumber: req.user.registrationNumber || "",
         section: section || "CSE Section 5A",
-        classroom: classroom || "Room 304",
-        days,
+        classroom: targetRoom,
+        days: cleanedDays,
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
@@ -226,6 +248,154 @@ const updateExamRadar = async (req, res) => {
   }
 };
 
+// ─── TIMETABLE OPTIMIZATION & SANITIZATION HELPERS ─────────────────────────
+
+/**
+ * Converts formatted 12-hour or natural time strings to minutes from midnight
+ * Examples: "09:00 AM" -> 540, "12:00 NOON" -> 720, "12:00 PM" -> 720, "01:00 PM" -> 780
+ */
+function timeToMinutes(timeStr) {
+  if (!timeStr) return null;
+  const str = String(timeStr).trim().toUpperCase();
+  const clean = str.replace(/NOON/i, "PM").replace(/MIDNIGHT/i, "AM");
+  const m = clean.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2] || "0", 10);
+  let meridiem = m[3] ? m[3].toUpperCase() : null;
+  if (!meridiem) {
+    if (h >= 8 && h <= 11) meridiem = "AM";
+    else if (h === 12 || (h >= 1 && h <= 7)) meridiem = "PM";
+    else meridiem = "AM";
+  }
+  if (meridiem === "PM" && h < 12) h += 12;
+  if (meridiem === "AM" && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+/**
+ * Checks if a slot represents an empty / dummy / free period
+ * (e.g. 'X', 'XX', '-', 'NIL', 'FREE', 'NO CLASS', 'RECESS', 'BREAK', 'LUNCH', etc.)
+ */
+function isDummySlot(slot) {
+  if (!slot) return true;
+  const name = String(slot.subjectName || "").trim().toLowerCase();
+  const code = String(slot.subjectCode || "").trim().toLowerCase();
+
+  const dummyWords = [
+    "x", "xx", "xxx", "-", "--", "---", ".", "nil", "na", "n/a", "none", "null", "undefined",
+    "free", "free period", "off", "no class", "noclass", "empty", "vacant", "recess", "break",
+    "lunch", "lunch break", "tea break", "recess break", "interval", "leisure", "library", "self study"
+  ];
+
+  if (!name || name === "x" || name === "-" || name === "." || name === "_" || name === "nil") return true;
+  if (dummyWords.includes(name)) return true;
+  if (dummyWords.includes(code) && (name === "academic lecture" || name === "subject class" || dummyWords.includes(name))) return true;
+  if (/^x+$/i.test(name) || /^[-_.]+$/.test(name)) return true;
+  if (/^x+$/i.test(code) && (name.length <= 2 || dummyWords.includes(name))) return true;
+
+  return false;
+}
+
+/**
+ * Checks if two slots represent the same course/subject
+ */
+function areSlotsSameSubject(s1, s2) {
+  const norm1 = String(s1.subjectName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const norm2 = String(s2.subjectName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const code1 = String(s1.subjectCode || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const code2 = String(s2.subjectCode || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // Direct code match
+  if (code1 && code2 && code1 === code2) return true;
+  // Direct name match
+  if (norm1 && norm2 && (norm1 === norm2 || norm1.includes(norm2) || norm2.includes(norm1))) return true;
+  // Cross code/name match
+  if (code1 && norm2 && (code1 === norm2 || norm2.includes(code1))) return true;
+  if (code2 && norm1 && (code2 === norm1 || norm1.includes(code2))) return true;
+
+  return false;
+}
+
+/**
+ * Cleans timetable slots:
+ * 1. Discards empty/free slots ('X', 'NIL', 'BREAK', etc.)
+ * 2. Merges contiguous slots of the same subject/lab (e.g. 2-hr or 3-hr lab practicals)
+ * 3. Normalizes IDs
+ */
+function sanitizeAndMergeDays(daysList, defaultRoom = "Campus Hall") {
+  if (!Array.isArray(daysList)) return [];
+
+  return daysList.map((dayObj) => {
+    const day = dayObj.day;
+    const rawSlots = Array.isArray(dayObj.slots) ? dayObj.slots : [];
+
+    // 1. Filter out all dummy slots (X, free periods, etc.)
+    const realSlots = rawSlots.filter((s) => !isDummySlot(s));
+
+    // 2. Sort slots chronologically if times are parseable
+    realSlots.sort((a, b) => {
+      const tA = timeToMinutes(a.startTime);
+      const tB = timeToMinutes(b.startTime);
+      if (tA !== null && tB !== null) return tA - tB;
+      return 0;
+    });
+
+    // 3. Intelligently merge contiguous slots (e.g. 2-hour labs or consecutive lectures)
+    const merged = [];
+    for (let i = 0; i < realSlots.length; i++) {
+      const current = {
+        id: realSlots[i].id,
+        startTime: realSlots[i].startTime,
+        endTime: realSlots[i].endTime,
+        subjectCode: realSlots[i].subjectCode || "",
+        subjectName: realSlots[i].subjectName || "Academic Lecture",
+        type: realSlots[i].type === "lab" ? "lab" : "theory",
+        room: realSlots[i].room || defaultRoom,
+        faculty: realSlots[i].faculty || "Faculty Member",
+      };
+
+      if (merged.length > 0) {
+        const prev = merged[merged.length - 1];
+        const prevEndMin = timeToMinutes(prev.endTime);
+        const currStartMin = timeToMinutes(current.startTime);
+
+        const isContiguous =
+          prevEndMin !== null &&
+          currStartMin !== null &&
+          Math.abs(currStartMin - prevEndMin) <= 15;
+
+        const isSame = areSlotsSameSubject(prev, current);
+
+        if (isContiguous && isSame) {
+          prev.endTime = current.endTime;
+          if (current.type === "lab" || prev.type === "lab") prev.type = "lab";
+          if (!prev.faculty || prev.faculty === "Faculty Member") prev.faculty = current.faculty;
+          if (!prev.room || prev.room === "Campus Hall" || prev.room === defaultRoom) prev.room = current.room;
+          if (!prev.subjectCode) prev.subjectCode = current.subjectCode;
+          continue;
+        }
+      }
+
+      merged.push(current);
+    }
+
+    // 4. Re-assign sequential IDs
+    const dayPrefix = String(day || "day").toLowerCase().slice(0, 3);
+    const finalSlots = merged.map((s, idx) => ({
+      ...s,
+      id: `${dayPrefix}-${idx + 1}`,
+      type: s.type === "lab" ? "lab" : "theory",
+      room: s.room || defaultRoom,
+    }));
+
+    return {
+      day,
+      slots: finalSlots,
+    };
+  });
+}
+
 // ─── GEMINI MULTIMODAL VISION TIMETABLE PARSER ─────────────────────────────
 async function parseTimetableWithGemini({ text, fileData, fileType, defaultSection, defaultRoom }) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -234,24 +404,37 @@ async function parseTimetableWithGemini({ text, fileData, fileType, defaultSecti
   const prompt = `You are an expert college academic timetable analyzer.
 Extract the complete weekly class schedule from the provided timetable (image or text).
 Analyze the days of the week, time intervals, subject names, course codes, room numbers, and faculty names.
-If a slot is a Laboratory, Lab, Practical or Workshop, set "type": "lab", otherwise "type": "theory".
+
+CRITICAL EXTRACTION & OPTIMIZATION RULES:
+1. EXCLUDE EMPTY / FREE / BREAK SLOTS:
+   - College timetables frequently print 'X', 'XX', '-', 'NIL', 'FREE', 'NO CLASS', 'LUNCH', 'RECESS', 'BREAK', 'LIBRARY', or blank cells for periods with no scheduled lecture.
+   - You MUST completely SKIP and EXCLUDE all such slots.
+   - ONLY include REAL academic subjects and lectures. NEVER output a slot with subject "X", "-", "NIL", "Break", or "Free".
+
+2. MERGE MULTI-HOUR LAB PRACTICALS & EXTENDED LECTURES:
+   - University practicals and laboratories typically run for 2 or 3 continuous hours (e.g. 11:00 AM to 01:00 PM, or 02:00 PM to 04:00 PM, or 02:00 PM to 05:00 PM), even when drawn across multiple adjacent 1-hour columns in the grid.
+   - Whenever a Lab/Practical or lecture spans consecutive periods with the same subject, merge it into ONE single continuous slot covering the full start and end time (e.g. startTime: "11:00 AM", endTime: "01:00 PM").
+   - Do NOT split continuous labs into duplicate 1-hour entries.
+
+3. LAB VS THEORY TYPE:
+   - If a slot is a Laboratory, Lab, Practical or Workshop, set "type": "lab", otherwise "type": "theory".
 
 Return ONLY valid JSON matching this exact structure:
 {
-  "section": "string representing section or branch, e.g. CSE 5A, Mech 3B, Section 24E1C3",
-  "classroom": "string representing default lecture hall or room e.g. Room 304, LH-201",
+  "section": "string representing section or branch, e.g. Section 24E122A11, CSE 5A",
+  "classroom": "string representing default lecture hall or room e.g. Room C-024, Room 304",
   "days": [
     {
       "day": "Monday",
       "slots": [
         {
-          "startTime": "08:00 AM",
-          "endTime": "09:00 AM",
-          "subjectCode": "CSE 3544",
-          "subjectName": "Full Subject Name",
+          "startTime": "09:00 AM",
+          "endTime": "10:00 AM",
+          "subjectCode": "CN",
+          "subjectName": "Computer Networks",
           "type": "theory",
-          "room": "Room 304",
-          "faculty": "Prof. Faculty Name"
+          "room": "C-024",
+          "faculty": "Faculty Name"
         }
       ]
     }
@@ -303,19 +486,22 @@ Extract EXACTLY what is present in the provided schedule. Do NOT substitute with
           if (parsed && Array.isArray(parsed.days) && parsed.days.length > 0) {
             parsed.section = parsed.section || defaultSection || "My Section";
             parsed.classroom = parsed.classroom || defaultRoom || "Campus Hall";
-            parsed.days = parsed.days.map((d) => ({
-              day: d.day,
-              slots: (d.slots || []).map((s, sIdx) => ({
-                id: `${d.day.toLowerCase().slice(0, 3)}-${sIdx + 1}`,
-                startTime: s.startTime || "08:00 AM",
-                endTime: s.endTime || "09:00 AM",
-                subjectCode: s.subjectCode || "",
-                subjectName: s.subjectName || "Subject Class",
-                type: s.type === "lab" ? "lab" : "theory",
-                room: s.room || parsed.classroom,
-                faculty: s.faculty || "Faculty Member",
+            parsed.days = sanitizeAndMergeDays(
+              parsed.days.map((d) => ({
+                day: d.day,
+                slots: (d.slots || []).map((s, sIdx) => ({
+                  id: `${d.day.toLowerCase().slice(0, 3)}-${sIdx + 1}`,
+                  startTime: s.startTime || "08:00 AM",
+                  endTime: s.endTime || "09:00 AM",
+                  subjectCode: s.subjectCode || "",
+                  subjectName: s.subjectName || "Subject Class",
+                  type: s.type === "lab" ? "lab" : "theory",
+                  room: s.room || parsed.classroom,
+                  faculty: s.faculty || "Faculty Member",
+                })),
               })),
-            }));
+              parsed.classroom
+            );
             return parsed;
           }
         }
@@ -462,10 +648,12 @@ function parseScheduleTextInternal(text, defaultSection, defaultRoom) {
     slots: parsedDaysMap[day] || [],
   }));
 
+  const cleanedDays = sanitizeAndMergeDays(structuredDays, classroom);
+
   return {
     section,
     classroom,
-    days: structuredDays,
+    days: cleanedDays,
   };
 }
 
@@ -600,6 +788,11 @@ const uploadAndProcessTimetableFile = async (req, res) => {
           slots: [],
         })),
       };
+    }
+
+    // 4. Ensure final timetable is completely sanitized and multi-hour labs are merged
+    if (parsedData && Array.isArray(parsedData.days)) {
+      parsedData.days = sanitizeAndMergeDays(parsedData.days, parsedData.classroom);
     }
 
     // Auto-save directly if user is authenticated
