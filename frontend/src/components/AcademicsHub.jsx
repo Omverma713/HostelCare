@@ -264,12 +264,45 @@ function areSlotsSameSubjectClient(s1, s2) {
   return false;
 }
 
+function formatFacultyNameClient(faculty) {
+  if (!faculty) return "";
+  let clean = String(faculty).trim();
+  if (!clean || /^(faculty\s*member|tba|n\/a|-|null|undefined)$/i.test(clean)) {
+    return "";
+  }
+
+  // Preserve Dr. if present in original text
+  const isDoctor = /\bdr\.?\b/i.test(clean);
+
+  // Common OCR typo corrections
+  clean = clean
+    .replace(/SKUIT/i, "Srijit")
+    .replace(/SRUIT/i, "Srijit");
+
+  // Strip ALL repeated occurrences of "Prof.", "Professor", "Dr.", "Dr", spaces, dots
+  clean = clean.replace(/^(?:prof(?:essor)?\.?|dr\.?|\s+)+/gi, "").trim();
+  clean = clean.replace(/\b(?:prof(?:essor)?\.?|dr\.?)\b/gi, "").trim();
+  clean = clean.replace(/\s+/g, " ").trim();
+
+  if (!clean || clean.length < 2) return "";
+
+  // Title Case if all uppercase or all lowercase
+  if (/^[A-Z\s.-]+$/.test(clean) || /^[a-z\s.-]+$/.test(clean)) {
+    clean = clean
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  // Prepend honorific EXACTLY ONCE
+  return isDoctor ? `Dr. ${clean}` : `Prof. ${clean}`;
+}
+
 const CURRICULUM_CATALOG_CLIENT = [
   {
     code: "CSE 3544",
     name: "Practical Programming with C",
     aliases: ["PPWC", "PRACTICAL PROGRAMMING WITH C", "PPWC LAB", "PPWC-LAB", "C PROGRAMMING"],
-    defaultFaculty: "Prof. Srijit Chowdhury",
     isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
     labName: "Practical Programming with C (Lab)",
   },
@@ -277,7 +310,6 @@ const CURRICULUM_CATALOG_CLIENT = [
     code: "CSE 3249",
     name: "Design Principles of Operating Systems",
     aliases: ["DPOS", "DESIGN PRINCIPLES OF OPERATING SYSTEMS", "DPOS LAB", "OPERATING SYSTEMS", "OS"],
-    defaultFaculty: "Prof. S. Mohanty",
     isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
     labName: "Operating Systems (Unix Shell Lab)",
   },
@@ -285,7 +317,6 @@ const CURRICULUM_CATALOG_CLIENT = [
     code: "CSE 3751",
     name: "Computer Networking : Concepts",
     aliases: ["CN", "COMPUTER NETWORKS", "COMPUTER NETWORKING", "COMPUTER NETWORKING : CONCEPTS", "CN LAB"],
-    defaultFaculty: "Dr. A. K. Nayak",
     isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
     labName: "Computer Networking Lab",
   },
@@ -293,7 +324,6 @@ const CURRICULUM_CATALOG_CLIENT = [
     code: "CSE 3967",
     name: "Machine Learning Concepts 1",
     aliases: ["MLC 1", "MLC", "ML-LAB", "MACHINE LEARNING", "MACHINE LEARNING CONCEPTS 1"],
-    defaultFaculty: "Prof. D. Bhattacharyya",
     isLab: () => true,
     labName: "Machine Learning Concepts 1 (ML-LAB)",
   },
@@ -301,21 +331,18 @@ const CURRICULUM_CATALOG_CLIENT = [
     code: "CSE 3731",
     name: "Introduction to the Theory of Computation",
     aliases: ["ITC", "THEORY OF COMPUTATION", "TOC", "INTRODUCTION TO THE THEORY OF COMPUTATION"],
-    defaultFaculty: "Prof. Bhupendra Kumar Gupta",
     isLab: () => false,
   },
   {
     code: "MTH 3647",
     name: "Fundamentals of Machine Intelligence 1",
     aliases: ["FMI 1", "FMI", "FUNDAMENTALS OF MACHINE INTELLIGENCE 1", "MACHINE INTELLIGENCE"],
-    defaultFaculty: "Prof. Tapan Kumar Patra",
     isLab: () => false,
   },
   {
     code: "GET 2024",
     name: "Intermediate Problem Solving — 1",
     aliases: ["IPS 1", "IPS1", "IPS", "INTERMEDIATE PROBLEM SOLVING - 1", "INTERMEDIATE PROBLEM SOLVING — 1"],
-    defaultFaculty: "Prof. Aditya Chatterjee",
     isLab: () => false,
   },
 ];
@@ -324,7 +351,6 @@ function enrichSlotDetailsClient(slot) {
   if (!slot) return slot;
   const sName = String(slot.subjectName || "").trim();
   const sCode = String(slot.subjectCode || "").trim();
-  const sFaculty = String(slot.faculty || "").trim();
   const normName = sName.toUpperCase();
   const normCode = sCode.toUpperCase();
 
@@ -351,49 +377,13 @@ function enrichSlotDetailsClient(slot) {
       }
       
       if (isLab) cloned.type = "lab";
-      
-      // Fill faculty if missing or generic placeholder
-      if (!sFaculty || sFaculty.toLowerCase() === "faculty member" || sFaculty.toLowerCase() === "tba" || sFaculty.length <= 2) {
-        cloned.faculty = item.defaultFaculty;
-      }
       break;
     }
   }
 
-  // Format faculty name & clean common OCR typos
-  if (cloned.faculty) {
-    cloned.faculty = cloned.faculty
-      .replace(/SKUIT\s+CHOWDHURY/i, "Prof. Srijit Chowdhury")
-      .replace(/SRUIT\s+CHOWDHURY/i, "Prof. Srijit Chowdhury")
-      .replace(/SANJAYA\s+KUMAR\s+JENA/i, "Prof. Sanjaya Kumar Jena")
-      .replace(/BHANU\s+PRATAP\s+RAJAK/i, "Prof. Bhanu Pratap Rajak")
-      .replace(/TAPAN\s+KUMAR\s+PATRA/i, "Prof. Tapan Kumar Patra")
-      .replace(/ANMOL\s+PATTANAIK/i, "Prof. Anmol Pattanaik")
-      .replace(/PANKAJ\s+PRUSTY/i, "Prof. Pankaj Prusty")
-      .replace(/BHUPENDRA\s+KUMAR\s+GUPTA/i, "Prof. Bhupendra Kumar Gupta")
-      .replace(/LAMBODAR\s+JENA/i, "Prof. Lambodar Jena")
-      .replace(/KULDIP\s+MOHANTY/i, "Prof. Kuldip Mohanty")
-      .replace(/TRUSHNA\s+PARIDA/i, "Prof. Trushna Parida")
-      .replace(/SHUBHAM\s+YADAV/i, "Prof. Shubham Yadav")
-      .replace(/VENKETASH\s+DALEI/i, "Prof. Venketash Dalei")
-      .replace(/PARISHMITA\s+DAS/i, "Prof. Parishmita Das")
-      .replace(/JHILIRANI\s+NAYAK/i, "Prof. Jhilirani Nayak")
-      .replace(/SURYA\s+NARAYAN\s+MAHAPATRA/i, "Prof. Surya Narayan Mahapatra")
-      .replace(/ANIRBAN\s+DEY/i, "Prof. Anirban Dey")
-      .replace(/BISHNU\s+PRASAD\s+SWAIN/i, "Prof. Bishnu Prasad Swain")
-      .replace(/SUBHASHREE\s+SUBUDHI/i, "Prof. Subhashree Subudhi")
-      .replace(/BHARAT\s+MAHESHWARI/i, "Prof. Bharat Maheshwari");
-
-    if (/^[A-Z\s.-]+$/.test(cloned.faculty) && cloned.faculty.length > 3) {
-      cloned.faculty = cloned.faculty
-        .split(" ")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ");
-      if (!/^prof\.|^dr\./i.test(cloned.faculty)) {
-        cloned.faculty = `Prof. ${cloned.faculty}`;
-      }
-    }
-  }
+  // Format faculty cleanly & eliminate duplicate "Prof." prefixes
+  // NEVER inject foreign teachers from another student's section!
+  cloned.faculty = formatFacultyNameClient(cloned.faculty);
 
   return cloned;
 }
@@ -1247,11 +1237,14 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
             ) : (
               currentDaySlots.map((slot) => {
                 const isLab = slot.type === "lab" || slot.subjectCode === "CSE 3967" || slot.subjectCode === "CSE 3544";
-                const cleanFaculty = (slot.faculty || "Faculty Member")
-                  .replace(/SKUIT/i, "Srijit")
-                  .replace(/SRUIT/i, "Srijit");
+                const cleanFaculty = formatFacultyNameClient(slot.faculty);
                 return (
-                  <div key={slot.id || `${slot.subjectCode}-${slot.startTime}`} className={`timetable-slot-card ${isLab ? "is-lab" : "is-theory"}`}>
+                  <div
+                    key={slot.id || `${slot.subjectCode}-${slot.startTime}`}
+                    className={`timetable-slot-card ${isLab ? "is-lab" : "is-theory"}`}
+                    onClick={() => openEditSlotModal(selectedDay, slot)}
+                    style={{ cursor: "pointer" }}
+                  >
                     {/* Card Header: Time & Type Badge */}
                     <div className="slot-header-row">
                       <div className="slot-time-pill">
@@ -1260,9 +1253,30 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                           {slot.endTime ? `${slot.startTime} – ${slot.endTime}` : slot.startTime}
                         </span>
                       </div>
-                      <span className={`slot-type-label ${isLab ? "lab" : "theory"}`}>
-                        {isLab ? "🧪 Lab Practical" : "📚 Lecture"}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span className={`slot-type-label ${isLab ? "lab" : "theory"}`}>
+                          {isLab ? "🧪 Lab Practical" : "📚 Lecture"}
+                        </span>
+                        <button
+                          type="button"
+                          className="slot-edit-action-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditSlotModal(selectedDay, slot);
+                          }}
+                          title="Edit this class"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: 13,
+                            padding: "2px 4px",
+                            opacity: 0.75,
+                          }}
+                        >
+                          ✏️
+                        </button>
+                      </div>
                     </div>
 
                     {/* Subject Title */}
@@ -1271,7 +1285,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
                     {/* Subject Metadata Chips */}
                     <div className="slot-chips-row">
                       <span className="slot-chip room-chip">📍 {slot.room || activeTimetable?.classroom || "Lecture Hall"}</span>
-                      {cleanFaculty && cleanFaculty !== "Faculty Member" && (
+                      {cleanFaculty && (
                         <span className="slot-chip faculty-chip">👨‍🏫 {cleanFaculty}</span>
                       )}
                       {slot.subjectCode && (

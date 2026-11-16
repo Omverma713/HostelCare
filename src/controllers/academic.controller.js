@@ -341,13 +341,49 @@ function areSlotsSameSubject(s1, s2) {
   return false;
 }
 
+// ─── FACULTY NAME FORMATTER (ZERO DUPLICATE PREFIXES) ────────────────────────
+function formatFacultyName(faculty) {
+  if (!faculty) return "";
+  let clean = String(faculty).trim();
+  if (!clean || /^(faculty\s*member|tba|n\/a|-|null|undefined)$/i.test(clean)) {
+    return "";
+  }
+
+  // Preserve Dr. if present in original text
+  const isDoctor = /\bdr\.?\b/i.test(clean);
+
+  // Common OCR typo corrections
+  clean = clean
+    .replace(/SKUIT/i, "Srijit")
+    .replace(/SRUIT/i, "Srijit");
+
+  // Strip ALL repeated occurrences of "Prof.", "Professor", "Dr.", "Dr", spaces, dots
+  clean = clean.replace(/^(?:prof(?:essor)?\.?|dr\.?|\s+)+/gi, "").trim();
+  clean = clean.replace(/\b(?:prof(?:essor)?\.?|dr\.?)\b/gi, "").trim();
+  clean = clean.replace(/\s+/g, " ").trim();
+
+  if (!clean || clean.length < 2) return "";
+
+  // Title Case if all uppercase or all lowercase
+  if (/^[A-Z\s.-]+$/.test(clean) || /^[a-z\s.-]+$/.test(clean)) {
+    clean = clean
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  // Prepend honorific EXACTLY ONCE
+  return isDoctor ? `Dr. ${clean}` : `Prof. ${clean}`;
+}
+
 // ─── CURRICULUM CATALOG & INTELLIGENT SLOT ENRICHMENT ─────────────────────────
+// Note: Faculty is strictly user-specific (per college section); curriculum catalog
+// only provides standardized course names and codes, NEVER foreign teachers.
 const CURRICULUM_CATALOG = [
   {
     code: "CSE 3544",
     name: "Practical Programming with C",
     aliases: ["PPWC", "PRACTICAL PROGRAMMING WITH C", "PPWC LAB", "PPWC-LAB", "C PROGRAMMING"],
-    defaultFaculty: "Prof. Srijit Chowdhury",
     isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
     labName: "Practical Programming with C (Lab)",
   },
@@ -355,7 +391,6 @@ const CURRICULUM_CATALOG = [
     code: "CSE 3249",
     name: "Design Principles of Operating Systems",
     aliases: ["DPOS", "DESIGN PRINCIPLES OF OPERATING SYSTEMS", "DPOS LAB", "OPERATING SYSTEMS", "OS"],
-    defaultFaculty: "Prof. S. Mohanty",
     isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
     labName: "Operating Systems (Unix Shell Lab)",
   },
@@ -363,7 +398,6 @@ const CURRICULUM_CATALOG = [
     code: "CSE 3751",
     name: "Computer Networking : Concepts",
     aliases: ["CN", "COMPUTER NETWORKS", "COMPUTER NETWORKING", "COMPUTER NETWORKING : CONCEPTS", "CN LAB"],
-    defaultFaculty: "Dr. A. K. Nayak",
     isLab: (name, code) => /LAB/i.test(name) || /LAB/i.test(code),
     labName: "Computer Networking Lab",
   },
@@ -371,7 +405,6 @@ const CURRICULUM_CATALOG = [
     code: "CSE 3967",
     name: "Machine Learning Concepts 1",
     aliases: ["MLC 1", "MLC", "ML-LAB", "MACHINE LEARNING", "MACHINE LEARNING CONCEPTS 1"],
-    defaultFaculty: "Prof. D. Bhattacharyya",
     isLab: () => true,
     labName: "Machine Learning Concepts 1 (ML-LAB)",
   },
@@ -379,21 +412,18 @@ const CURRICULUM_CATALOG = [
     code: "CSE 3731",
     name: "Introduction to the Theory of Computation",
     aliases: ["ITC", "THEORY OF COMPUTATION", "TOC", "INTRODUCTION TO THE THEORY OF COMPUTATION"],
-    defaultFaculty: "Prof. Bhupendra Kumar Gupta",
     isLab: () => false,
   },
   {
     code: "MTH 3647",
     name: "Fundamentals of Machine Intelligence 1",
     aliases: ["FMI 1", "FMI", "FUNDAMENTALS OF MACHINE INTELLIGENCE 1", "MACHINE INTELLIGENCE"],
-    defaultFaculty: "Prof. Tapan Kumar Patra",
     isLab: () => false,
   },
   {
     code: "GET 2024",
     name: "Intermediate Problem Solving — 1",
     aliases: ["IPS 1", "IPS1", "IPS", "INTERMEDIATE PROBLEM SOLVING - 1", "INTERMEDIATE PROBLEM SOLVING — 1"],
-    defaultFaculty: "Prof. Aditya Chatterjee",
     isLab: () => false,
   },
 ];
@@ -402,7 +432,6 @@ function enrichSlotDetails(slot) {
   if (!slot) return slot;
   const sName = String(slot.subjectName || "").trim();
   const sCode = String(slot.subjectCode || "").trim();
-  const sFaculty = String(slot.faculty || "").trim();
   const normName = sName.toUpperCase();
   const normCode = sCode.toUpperCase();
 
@@ -427,50 +456,13 @@ function enrichSlotDetails(slot) {
       }
       
       if (isLab) slot.type = "lab";
-      
-      // Fill faculty if missing or placeholder
-      if (!sFaculty || sFaculty.toLowerCase() === "faculty member" || sFaculty.toLowerCase() === "tba" || sFaculty.length <= 2) {
-        slot.faculty = item.defaultFaculty;
-      }
       break;
     }
   }
 
-  // Format faculty name & clean common OCR typos
-  if (slot.faculty) {
-    slot.faculty = slot.faculty
-      .replace(/SKUIT\s+CHOWDHURY/i, "Prof. Srijit Chowdhury")
-      .replace(/SRUIT\s+CHOWDHURY/i, "Prof. Srijit Chowdhury")
-      .replace(/SANJAYA\s+KUMAR\s+JENA/i, "Prof. Sanjaya Kumar Jena")
-      .replace(/BHANU\s+PRATAP\s+RAJAK/i, "Prof. Bhanu Pratap Rajak")
-      .replace(/TAPAN\s+KUMAR\s+PATRA/i, "Prof. Tapan Kumar Patra")
-      .replace(/ANMOL\s+PATTANAIK/i, "Prof. Anmol Pattanaik")
-      .replace(/PANKAJ\s+PRUSTY/i, "Prof. Pankaj Prusty")
-      .replace(/BHUPENDRA\s+KUMAR\s+GUPTA/i, "Prof. Bhupendra Kumar Gupta")
-      .replace(/LAMBODAR\s+JENA/i, "Prof. Lambodar Jena")
-      .replace(/KULDIP\s+MOHANTY/i, "Prof. Kuldip Mohanty")
-      .replace(/TRUSHNA\s+PARIDA/i, "Prof. Trushna Parida")
-      .replace(/SHUBHAM\s+YADAV/i, "Prof. Shubham Yadav")
-      .replace(/VENKETASH\s+DALEI/i, "Prof. Venketash Dalei")
-      .replace(/PARISHMITA\s+DAS/i, "Prof. Parishmita Das")
-      .replace(/JHILIRANI\s+NAYAK/i, "Prof. Jhilirani Nayak")
-      .replace(/SURYA\s+NARAYAN\s+MAHAPATRA/i, "Prof. Surya Narayan Mahapatra")
-      .replace(/ANIRBAN\s+DEY/i, "Prof. Anirban Dey")
-      .replace(/BISHNU\s+PRASAD\s+SWAIN/i, "Prof. Bishnu Prasad Swain")
-      .replace(/SUBHASHREE\s+SUBUDHI/i, "Prof. Subhashree Subudhi")
-      .replace(/BHARAT\s+MAHESHWARI/i, "Prof. Bharat Maheshwari");
-
-    // Title case if all-caps
-    if (/^[A-Z\s.-]+$/.test(slot.faculty) && slot.faculty.length > 3) {
-      slot.faculty = slot.faculty
-        .split(" ")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ");
-      if (!/^prof\.|^dr\./i.test(slot.faculty)) {
-        slot.faculty = `Prof. ${slot.faculty}`;
-      }
-    }
-  }
+  // Format faculty cleanly & eliminate duplicate "Prof." prefixes
+  // NEVER inject foreign teachers from another student's section!
+  slot.faculty = formatFacultyName(slot.faculty);
 
   return slot;
 }
