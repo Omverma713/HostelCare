@@ -212,16 +212,43 @@ function isDummySlotClient(slot) {
   if (!slot) return true;
   const name = String(slot.subjectName || "").trim().toLowerCase();
   const code = String(slot.subjectCode || "").trim().toLowerCase();
+  const start = String(slot.startTime || "").trim().toUpperCase();
+  const end = String(slot.endTime || "").trim().toUpperCase();
+
+  // 1. Invalid time slots (e.g. 50:00 PM or 00:00 AM or 00:00 PM)
+  if (/^(5\d|6\d|7\d|8\d|9\d|00):/i.test(start) || /^(5\d|6\d|7\d|8\d|9\d):/i.test(end)) {
+    return true;
+  }
+
+  // 2. Day names appearing as lecture subjects (e.g. "TUESDAY WEDNESDAY THURSDAY SATURDAY", "DAY FRIDAY")
+  const dayNames = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+  const containsMultipleDays = dayNames.filter((d) => name.includes(d)).length >= 2;
+  if (containsMultipleDays || /^day\s+(monday|tuesday|wednesday|thursday|friday|saturday)/i.test(name)) {
+    return true;
+  }
+
+  // 3. Raw OCR junk markers
+  if (/time\s*slots?/i.test(name) || /room\s*no/i.test(name) || /faculty/i.test(name)) {
+    return true;
+  }
+
+  // 4. Dummy Words
   const dummyWords = [
-    "x", "xx", "xxx", "-", "--", "---", ".", "nil", "na", "n/a", "none", "null", "undefined",
+    "x", "xx", "xxx", "xxxx", "-", "--", "---", ".", "nil", "na", "n/a", "none", "null", "undefined",
     "free", "free period", "off", "no class", "noclass", "empty", "vacant", "recess", "break",
     "lunch", "lunch break", "tea break", "recess break", "interval", "leisure", "library", "self study"
   ];
+
   if (!name || name === "x" || name === "-" || name === "." || name === "_" || name === "nil") return true;
   if (dummyWords.includes(name)) return true;
   if (dummyWords.includes(code) && (name === "academic lecture" || name === "subject class" || dummyWords.includes(name))) return true;
   if (/^x+$/i.test(name) || /^[-_.]+$/.test(name)) return true;
   if (/^x+$/i.test(code) && (name.length <= 2 || dummyWords.includes(name))) return true;
+
+  // 5. Raw OCR lines starting with time digits like "11..00noon", "9..00am", "8..00am" or containing multiple x's
+  if (/^\d{1,2}\.?\.\d{2}\s*(am|pm|noon)/i.test(name)) return true;
+  if (/\b(x\s*){2,}\b/i.test(name)) return true;
+
   return false;
 }
 
