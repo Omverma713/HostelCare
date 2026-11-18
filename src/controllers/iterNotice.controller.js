@@ -172,9 +172,8 @@ const downloadNoticePdf = async (req, res) => {
     if (fs.existsSync(cachedFilePath)) {
       return res.sendFile(cachedFilePath, {
         headers: {
-          "Content-Type": "application/octet-stream",
-          "Content-Disposition": `attachment; filename="${filename}"`,
-          "Content-Transfer-Encoding": "binary",
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="${filename}"`,
           "Cache-Control": "public, max-age=86400",
         },
       });
@@ -214,10 +213,9 @@ const downloadNoticePdf = async (req, res) => {
     });
 
     res.set({
-      "Content-Type": "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="${filename}"`,
       "Content-Length": pdfBytes.length,
-      "Content-Transfer-Encoding": "binary",
       "Cache-Control": "public, max-age=86400",
     });
 

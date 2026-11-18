@@ -170,65 +170,15 @@ export default function IterNoticesSection({ apiBaseUrl }) {
     };
   }, [activeNoticeModal]);
 
-  // Download Official PDF (Direct System Download Manager -> Saves straight to Device Downloads)
-  const handleDownloadPdf = (notice) => {
+  // Tarika 1: Google Drive Viewer & Exporter (100% OTA • All Pages • Direct Save to Drive & Phone)
+  const handleOpenDrive = (notice) => {
     if (!notice) return;
     const noticeId = notice.noticeId;
-    const title = notice.title || "ITER Official Notice";
-    const totalPages = notice.pageCount || 1;
+    const fullDownloadUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
 
-    setDownloadProgress((prev) => ({
-      ...prev,
-      [noticeId]: { percent: 100, status: "loading" },
-    }));
-
-    const fullUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
-
-    // 1. Trigger system download (Capacitor _system delegates directly to Android OS DownloadManager)
-    if (Capacitor.isNativePlatform()) {
-      window.open(fullUrl, "_system");
-    } else {
-      // Desktop / Web browser
-      const link = document.createElement("a");
-      link.href = fullUrl;
-      link.download = `HostelCare-SOA-ITER-${slugify(title)}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    // 2. Schedule native notification
-    try {
-      if (Capacitor.isNativePlatform()) {
-        import("@capacitor/local-notifications").then(({ LocalNotifications }) => {
-          LocalNotifications.schedule({
-            notifications: [
-              {
-                id: Math.floor(Math.random() * 100000) + 1,
-                title: "HostelCare: Download Started",
-                body: `Downloading "${title.substring(0, 38)}..." (${totalPages} ${totalPages > 1 ? "pages" : "page"}) to your device`,
-                schedule: { at: new Date(Date.now() + 200) },
-              },
-            ],
-          });
-        }).catch(() => {});
-      }
-    } catch (_) {}
-
-    setTimeout(() => {
-      setDownloadProgress((prev) => ({
-        ...prev,
-        [noticeId]: { percent: 100, status: "done" },
-      }));
-    }, 1500);
-
-    setTimeout(() => {
-      setDownloadProgress((prev) => {
-        const copy = { ...prev };
-        delete copy[noticeId];
-        return copy;
-      });
-    }, 4500);
+    // Google Docs / Drive Viewer URL fetches full multi-page PDF, displays all pages, and has direct Download & Save to Drive buttons
+    const driveUrl = `https://docs.google.com/viewerng/viewer?url=${encodeURIComponent(fullDownloadUrl)}`;
+    window.open(driveUrl, "_system");
   };
 
   const totalPages = activeNoticeModal ? (activeNoticeModal.pageCount || 1) : 1;
@@ -365,32 +315,16 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                     className="iter-view-btn"
                     onClick={() => openNoticeModal(notice)}
                   >
-                    👁️ Full Screen View
+                    👁️ In-App Full View
                   </button>
-                  {(() => {
-                    const prog = downloadProgress[notice.noticeId];
-                    const isDownloading = prog?.status === "loading";
-                    const isDone = prog?.status === "done";
-                    const isError = prog?.status === "error";
-
-                    return (
-                      <button
-                        type="button"
-                        className={`iter-download-btn ${isDownloading ? "downloading" : ""} ${isDone ? "done" : ""}`}
-                        title={`Download Official Notice PDF (${pages} ${pages > 1 ? "Pages" : "Page"})`}
-                        disabled={isDownloading}
-                        onClick={() => handleDownloadPdf(notice)}
-                      >
-                        {isDownloading
-                          ? "⏳ Starting Download..."
-                          : isDone
-                          ? `✅ Downloaded (${pages} ${pages > 1 ? "Pages" : "Page"})`
-                          : isError
-                          ? "⚠️ Retry Download"
-                          : `⬇️ Download PDF (${pages} ${pages > 1 ? "Pages" : "Page"})`}
-                      </button>
-                    );
-                  })()}
+                  <button
+                    type="button"
+                    className="iter-download-btn"
+                    title={`Open in Google Drive & Save ${pages} ${pages > 1 ? "Pages" : "Page"} PDF to Device`}
+                    onClick={() => handleOpenDrive(notice)}
+                  >
+                    📑 Drive & Save ({pages} {pages > 1 ? "Pgs" : "Pg"})
+                  </button>
                 </div>
               </div>
             );
@@ -421,34 +355,19 @@ export default function IterNoticesSection({ apiBaseUrl }) {
               {activeNoticeModal.title}
             </div>
 
-            {(() => {
-              const modalProg = downloadProgress[activeNoticeModal.noticeId];
-              const isModalDownloading = modalProg?.status === "loading";
-              const isModalDone = modalProg?.status === "done";
-
-              return (
-                <button
-                  type="button"
-                  className="iter-fs-download-btn"
-                  disabled={isModalDownloading}
-                  onClick={() => handleDownloadPdf(activeNoticeModal)}
-                  title="Download PDF to Phone"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  <span>
-                    {isModalDownloading
-                      ? "Downloading..."
-                      : isModalDone
-                      ? "Saved!"
-                      : `Download (${totalPages} ${totalPages > 1 ? "Pgs" : "Pg"})`}
-                  </span>
-                </button>
-              );
-            })()}
+            <button
+              type="button"
+              className="iter-fs-download-btn"
+              onClick={() => handleOpenDrive(activeNoticeModal)}
+              title="Open in Google Drive to Save or Print all pages"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Drive Save ({totalPages} {totalPages > 1 ? "Pgs" : "Pg"})</span>
+            </button>
           </div>
 
           {/* 100% Edge-to-Edge Document Viewport (Continuous Vertical Stack) */}
