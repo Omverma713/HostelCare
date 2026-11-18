@@ -170,139 +170,65 @@ export default function IterNoticesSection({ apiBaseUrl }) {
     };
   }, [activeNoticeModal]);
 
-  // In-App Download (Strictly In-App • Zero Chrome Redirection • Multi-Page Streaming)
-  const handleDownloadPdf = async (notice) => {
+  // Download Official PDF (Direct System Download Manager -> Saves straight to Device Downloads)
+  const handleDownloadPdf = (notice) => {
     if (!notice) return;
     const noticeId = notice.noticeId;
     const title = notice.title || "ITER Official Notice";
     const totalPages = notice.pageCount || 1;
 
-    // Guard against multiple simultaneous taps
-    if (downloadProgress[noticeId]?.status === "loading") return;
+    setDownloadProgress((prev) => ({
+      ...prev,
+      [noticeId]: { percent: 100, status: "loading" },
+    }));
 
+    const fullUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
+
+    // 1. Trigger system download (Capacitor _system delegates directly to Android OS DownloadManager)
+    if (Capacitor.isNativePlatform()) {
+      window.open(fullUrl, "_system");
+    } else {
+      // Desktop / Web browser
+      const link = document.createElement("a");
+      link.href = fullUrl;
+      link.download = `HostelCare-SOA-ITER-${slugify(title)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 2. Schedule native notification
     try {
-      setDownloadProgress((prev) => ({
-        ...prev,
-        [noticeId]: { percent: 5, status: "loading" },
-      }));
-
-      const fullUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
-      const response = await fetch(fullUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to download (HTTP ${response.status})`);
+      if (Capacitor.isNativePlatform()) {
+        import("@capacitor/local-notifications").then(({ LocalNotifications }) => {
+          LocalNotifications.schedule({
+            notifications: [
+              {
+                id: Math.floor(Math.random() * 100000) + 1,
+                title: "HostelCare: Download Started",
+                body: `Downloading "${title.substring(0, 38)}..." (${totalPages} ${totalPages > 1 ? "pages" : "page"}) to your device`,
+                schedule: { at: new Date(Date.now() + 200) },
+              },
+            ],
+          });
+        }).catch(() => {});
       }
+    } catch (_) {}
 
-      const contentLength = response.headers.get("content-length");
-      const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
-
-      let blob;
-      if (response.body && totalBytes > 0) {
-        const reader = response.body.getReader();
-        const chunks = [];
-        let receivedBytes = 0;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(value);
-          receivedBytes += value.length;
-          const percent = Math.min(98, Math.round((receivedBytes / totalBytes) * 100));
-          setDownloadProgress((prev) => ({
-            ...prev,
-            [noticeId]: { percent, status: "loading" },
-          }));
-        }
-        blob = new Blob(chunks, { type: "application/pdf" });
-      } else {
-        blob = await response.blob();
-      }
-
+    setTimeout(() => {
       setDownloadProgress((prev) => ({
         ...prev,
         [noticeId]: { percent: 100, status: "done" },
       }));
+    }, 1500);
 
-      const safeFilename = `HostelCare-SOA-ITER-${slugify(title)}.pdf`;
-
-      // 1. Mobile Native In-App Share Sheet (Save to files / Drive / View inside HostelCare)
-      let savedViaShare = false;
-      if (typeof navigator !== "undefined" && typeof navigator.canShare === "function") {
-        try {
-          const file = new File([blob], safeFilename, { type: "application/pdf" });
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: title,
-              text: `HostelCare Official Siksha 'O' Anusandhan Notice (${totalPages} ${totalPages > 1 ? "Pages" : "Page"})`,
-            });
-            savedViaShare = true;
-          }
-        } catch (shareErr) {
-          if (shareErr.name === "AbortError") {
-            savedViaShare = true;
-          } else {
-            console.warn("[SHARE_ERROR]", shareErr);
-          }
-        }
-      }
-
-      // 2. In-App Anchor Download (Fallback for WebView, stays strictly in-app without launching Chrome)
-      if (!savedViaShare) {
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = safeFilename;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(blobUrl);
-        }, 3000);
-      }
-
-      // 3. Android Local Notification
-      try {
-        if (Capacitor.isNativePlatform()) {
-          const { LocalNotifications } = await import("@capacitor/local-notifications");
-          await LocalNotifications.schedule({
-            notifications: [
-              {
-                id: Math.floor(Math.random() * 100000) + 1,
-                title: "HostelCare: Download Complete",
-                body: `"${title.substring(0, 42)}..." (${totalPages} ${totalPages > 1 ? "pages" : "page"}) saved to device`,
-                schedule: { at: new Date(Date.now() + 300) },
-              },
-            ],
-          });
-        }
-      } catch (notifErr) {
-        console.warn("[LOCAL_NOTIF_ERROR]", notifErr);
-      }
-
-      // Reset state after 3.5 seconds
-      setTimeout(() => {
-        setDownloadProgress((prev) => {
-          const updated = { ...prev };
-          delete updated[noticeId];
-          return updated;
-        });
-      }, 3500);
-
-    } catch (err) {
-      console.error("[IN_APP_DOWNLOAD_ERROR]", err);
-      setDownloadProgress((prev) => ({
-        ...prev,
-        [noticeId]: { percent: 0, status: "error" },
-      }));
-      setTimeout(() => {
-        setDownloadProgress((prev) => {
-          const updated = { ...prev };
-          delete updated[noticeId];
-          return updated;
-        });
-      }, 3500);
-    }
+    setTimeout(() => {
+      setDownloadProgress((prev) => {
+        const copy = { ...prev };
+        delete copy[noticeId];
+        return copy;
+      });
+    }, 4500);
   };
 
   const totalPages = activeNoticeModal ? (activeNoticeModal.pageCount || 1) : 1;
@@ -456,7 +382,7 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                         onClick={() => handleDownloadPdf(notice)}
                       >
                         {isDownloading
-                          ? `⏳ Downloading (${prog.percent}%)...`
+                          ? "⏳ Starting Download..."
                           : isDone
                           ? `✅ Downloaded (${pages} ${pages > 1 ? "Pages" : "Page"})`
                           : isError
@@ -515,7 +441,7 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                   </svg>
                   <span>
                     {isModalDownloading
-                      ? `(${modalProg.percent}%)`
+                      ? "Downloading..."
                       : isModalDone
                       ? "Saved!"
                       : `Download (${totalPages} ${totalPages > 1 ? "Pgs" : "Pg"})`}

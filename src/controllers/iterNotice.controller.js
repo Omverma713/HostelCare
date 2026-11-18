@@ -171,8 +171,9 @@ const downloadNoticePdf = async (req, res) => {
     // 1. If cached on disk, stream immediately without any CPU overhead!
     if (fs.existsSync(cachedFilePath)) {
       res.set({
-        "Content-Type": "application/pdf",
+        "Content-Type": "application/octet-stream",
         "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Transfer-Encoding": "binary",
         "Cache-Control": "public, max-age=86400",
       });
       return res.sendFile(cachedFilePath);
@@ -212,9 +213,10 @@ const downloadNoticePdf = async (req, res) => {
     });
 
     res.set({
-      "Content-Type": "application/pdf",
+      "Content-Type": "application/octet-stream",
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Content-Length": pdfBytes.length,
+      "Content-Transfer-Encoding": "binary",
       "Cache-Control": "public, max-age=86400",
     });
 
