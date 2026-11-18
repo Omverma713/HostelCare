@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useTheme } from "../hooks/ThemeContext";
+import IterNoticesSection from "./IterNoticesSection";
 import "./AcademicsHub.css";
 
 const RAW_API_BASE =
@@ -396,7 +397,7 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
         document.body.classList.contains("login-dark-theme"));
   }
 
-  const [activeSubTab, setActiveSubTab] = useState("timetable"); // 'timetable' | 'exam' | 'curriculum' | 'calendar'
+  const [activeSubTab, setActiveSubTab] = useState("timetable"); // 'timetable' | 'exam' | 'notices' | 'curriculum' | 'calendar'
   const [loading, setLoading] = useState(true);
   const [academicData, setAcademicData] = useState(null);
   const [selectedDay, setSelectedDay] = useState("Monday");
@@ -976,6 +977,12 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
             🎯 Exam Radar
           </button>
           <button
+            className={`acad-nav-tab ${activeSubTab === "notices" ? "active" : ""}`}
+            onClick={() => setActiveSubTab("notices")}
+          >
+            📢 ITER Notices
+          </button>
+          <button
             className={`acad-nav-tab ${activeSubTab === "curriculum" ? "active" : ""}`}
             onClick={() => setActiveSubTab("curriculum")}
           >
@@ -1405,6 +1412,13 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* =========================================================================
+          VIEW: ITER OFFICIAL NOTICES & CIRCULARS (PAGE 1 OFFICIAL FEED)
+         ========================================================================= */}
+      {activeSubTab === "notices" && (
+        <IterNoticesSection apiBaseUrl={API_BASE} />
       )}
 
       {/* =========================================================================

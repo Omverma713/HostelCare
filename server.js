@@ -3,6 +3,7 @@ const app       = require("./app");
 const connectDB = require("./src/db/db");
 const { startMessReminderScheduler, stopMessReminderScheduler } = require("./src/services/messReminderScheduler");
 const { startNotificationScheduler, stopNotificationScheduler } = require("./src/services/notificationScheduler");
+const { startIterNoticeScheduler, stopIterNoticeScheduler } = require("./src/services/iterNoticeScheduler");
 const { initChatSocket } = require("./src/sockets/chatSocket");
 require("dotenv").config();
 
@@ -11,14 +12,16 @@ const PORT = process.env.PORT || 3000;
 async function start() {
     await connectDB();
 
-    // Start autonomous daemons: mess reminder and scheduled notifications
+    // Start autonomous daemons: mess reminder, scheduled notifications, and ITER notices sync
     startMessReminderScheduler();
     startNotificationScheduler();
+    startIterNoticeScheduler();
 
     const server = http.createServer(app);
 
     // Initialize real-time Socket.IO chat engine for Student <-> Developer messaging
-    initChatSocket(server);
+    const io = initChatSocket(server);
+    app.set("io", io);
 
     server.listen(PORT, () => {
         console.log(`HostelCare server with Real-Time Socket.IO running on port ${PORT}`);
@@ -33,6 +36,7 @@ async function start() {
         console.log(`Received ${signal}. Closing server…`);
         stopMessReminderScheduler();
         stopNotificationScheduler();
+        stopIterNoticeScheduler();
         server.close(() => {
             console.log("HTTP server closed. Disconnecting from MongoDB…");
             const mongoose = require("mongoose");
