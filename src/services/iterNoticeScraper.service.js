@@ -1,5 +1,9 @@
 const https = require("https");
+const sharp = require("sharp");
 const IterNotice = require("../models/iterNotice.model");
+
+// In-memory cache for Box session tokens & templates (6 hour TTL)
+const boxSessionCache = new Map();
 
 /**
  * Helper to fetch HTTPS content following redirects (up to maxRedirects)
@@ -41,6 +45,37 @@ function fetchHttpsWithRedirect(url, maxRedirects = 5) {
 }
 
 /**
+ * Helper to download binary Buffer
+ */
+function fetchBufferWithAuth(url, token = null) {
+  return new Promise((resolve, reject) => {
+    const headers = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const req = https.get(url, { headers }, (res) => {
+      if ([301, 302, 303, 307].includes(res.statusCode) && res.headers.location) {
+        return resolve(fetchBufferWithAuth(res.headers.location, token));
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`Failed to download binary: HTTP ${res.statusCode}`));
+      }
+      const chunks = [];
+      res.on("data", (chunk) => chunks.push(chunk));
+      res.on("end", () => resolve(Buffer.concat(chunks)));
+    });
+
+    req.on("error", reject);
+    req.setTimeout(15000, () => {
+      req.destroy();
+      reject(new Error("Binary fetch timeout: " + url));
+    });
+  });
+}
+
+/**
  * Determine dynamic category & label based on notice title
  */
 function categorizeNotice(title = "") {
@@ -66,10 +101,16 @@ function categorizeNotice(title = "") {
 }
 
 /**
- * Resolve Box.com metadata (file version ID, file name, page count)
+ * Resolve Box.com metadata (file version ID, file name, page count, tokens)
  */
-async function resolveBoxNoticeDetails(sharedName) {
+async function resolveBoxNoticeDetails(sharedName, forceRefresh = false) {
   if (!sharedName) return null;
+
+  // Check cache first
+  const cached = boxSessionCache.get(sharedName);
+  if (!forceRefresh && cached && cached.expiry > Date.now()) {
+    return cached;
+  }
 
   try {
     const boxUrl = `https://soadu.box.com/s/${sharedName}`;
@@ -80,45 +121,42 @@ async function resolveBoxNoticeDetails(sharedName) {
     let fileVersionId = "";
     let fileName = "";
     let pageCount = 1;
+    let fileId = "";
+    let readToken = "";
+    let templateUrl = "";
 
     // 1. Try Box.prefetchedData
     const prefetchMatch = body.match(/Box\.prefetchedData\s*=\s*(\{[\s\S]*?\});/);
     if (prefetchMatch) {
       try {
         const pData = JSON.parse(prefetchMatch[1]);
+        const tokenMap = pData["preview_prefetch_token_map"] || {};
+        const fIds = Object.keys(tokenMap);
+        if (fIds.length > 0) {
+          fileId = fIds[0];
+          readToken = tokenMap[fileId].read || "";
+        }
+
         const meta = pData["preview_metadata"];
         if (meta) {
           if (meta.file_version && meta.file_version.id) fileVersionId = String(meta.file_version.id);
           if (meta.name) fileName = String(meta.name);
           if (meta.representations && Array.isArray(meta.representations.entries)) {
-            const webpRep = meta.representations.entries.find((e) => e.representation === "webp" || e.representation === "jpg");
-            if (webpRep && webpRep.metadata && webpRep.metadata.pages) {
-              pageCount = Number(webpRep.metadata.pages) || 1;
+            const webpRep = meta.representations.entries.find((e) => e.representation === "webp");
+            if (webpRep) {
+              if (webpRep.metadata && webpRep.metadata.pages) {
+                pageCount = Number(webpRep.metadata.pages) || 1;
+              }
+              if (webpRep.content && webpRep.content.url_template) {
+                templateUrl = webpRep.content.url_template;
+              }
             }
           }
         }
-      } catch (err) {
-        // Fallback to regex
-      }
+      } catch (err) {}
     }
 
-    // 2. Try Box.postStreamData fallback
-    if (!fileVersionId) {
-      const streamMatch = body.match(/Box\.postStreamData\s*=\s*(\{[\s\S]*?\});/);
-      if (streamMatch) {
-        try {
-          const sData = JSON.parse(streamMatch[1]);
-          for (const k in sData) {
-            const entry = sData[k];
-            if (entry && entry.items && entry.items[0]) {
-              if (entry.items[0].name) fileName = entry.items[0].name;
-            }
-          }
-        } catch (e) {}
-      }
-    }
-
-    // 3. Fallback file version extraction
+    // 2. Fallback regexes
     if (!fileVersionId) {
       const fvMatch = body.match(/file_version_(\d+)/);
       if (fvMatch) fileVersionId = fvMatch[1];
@@ -128,16 +166,69 @@ async function resolveBoxNoticeDetails(sharedName) {
       ? `https://app.box.com/representation/file_version_${fileVersionId}/thumb_1024.jpg?shared_name=${sharedName}`
       : "";
 
-    return {
+    const details = {
       fileVersionId,
       fileName,
       pageCount,
       previewUrl,
+      fileId,
+      readToken,
+      templateUrl,
+      expiry: Date.now() + 6 * 3600 * 1000, // 6 hour in-memory cache
     };
+
+    boxSessionCache.set(sharedName, details);
+    return details;
   } catch (error) {
     console.warn(`[ITER_SCRAPER] Failed to resolve Box details for ${sharedName}:`, error.message);
     return null;
   }
+}
+
+/**
+ * Downloads a specific page of a notice as a pristine JPEG Buffer
+ */
+async function getPageImageBuffer(notice, pageNumber = 1) {
+  const pageNum = Math.max(1, parseInt(pageNumber, 10) || 1);
+  const sharedName = notice.boxSharedName;
+
+  // 1. Try BoxCloud WebP template with token (supports all pages)
+  if (sharedName) {
+    let details = boxSessionCache.get(sharedName);
+    if (!details || !details.templateUrl || !details.readToken) {
+      details = await resolveBoxNoticeDetails(sharedName);
+    }
+
+    if (details && details.templateUrl && details.readToken) {
+      try {
+        const targetPage = Math.min(pageNum, details.pageCount || 1);
+        const pageUrl = details.templateUrl.replace("{+asset_path}", `${targetPage}.webp`);
+        const webpBuf = await fetchBufferWithAuth(pageUrl, details.readToken);
+        const jpegBuf = await sharp(webpBuf).jpeg({ quality: 90 }).toBuffer();
+        return {
+          buffer: jpegBuf,
+          page: targetPage,
+          totalPages: details.pageCount || 1,
+        };
+      } catch (err) {
+        console.warn(`[ITER_PAGE_RESOLVER] WebP page fetch failed, trying fallback:`, err.message);
+      }
+    }
+
+    // Fallback: Page 1 thumb
+    if (pageNum === 1 && notice.boxPreviewUrl) {
+      const imgBuf = await fetchBufferWithAuth(notice.boxPreviewUrl);
+      return { buffer: imgBuf, page: 1, totalPages: notice.pageCount || 1 };
+    }
+  }
+
+  // 2. Fallback to assetUrl (Squarespace poster)
+  if (notice.assetUrl) {
+    const imgBuf = await fetchBufferWithAuth(notice.assetUrl);
+    return { buffer: imgBuf, page: 1, totalPages: 1 };
+  }
+
+  throw new Error("No image available for this notice page");
 }
 
 /**
@@ -177,16 +268,18 @@ async function syncPage1IterNotices(io = null) {
         }
       }
 
-      // Check if existing notice already has resolved box details
       const existing = await IterNotice.findOne({ noticeId });
       let boxDetails = null;
 
-      if (existing && existing.boxFileVersionId && existing.boxPreviewUrl) {
+      if (existing && existing.boxFileVersionId && existing.boxPreviewUrl && existing.boxTemplateUrl) {
         boxDetails = {
           fileVersionId: existing.boxFileVersionId,
           fileName: existing.boxFileName,
           pageCount: existing.pageCount,
           previewUrl: existing.boxPreviewUrl,
+          fileId: existing.boxFileId,
+          readToken: existing.boxReadToken,
+          templateUrl: existing.boxTemplateUrl,
         };
       } else if (boxSharedName) {
         boxDetails = await resolveBoxNoticeDetails(boxSharedName);
@@ -207,6 +300,9 @@ async function syncPage1IterNotices(io = null) {
         boxFileVersionId: boxDetails ? boxDetails.fileVersionId : "",
         boxFileName: boxDetails ? boxDetails.fileName : "",
         boxPreviewUrl: boxDetails ? boxDetails.previewUrl : "",
+        boxTemplateUrl: boxDetails ? boxDetails.templateUrl : "",
+        boxReadToken: boxDetails ? boxDetails.readToken : "",
+        boxFileId: boxDetails ? boxDetails.fileId : "",
         pageCount: boxDetails ? boxDetails.pageCount : 1,
         fullUrl,
         assetUrl,
@@ -216,7 +312,7 @@ async function syncPage1IterNotices(io = null) {
       const doc = await IterNotice.findOneAndUpdate(
         { noticeId },
         { $set: noticeData, $setOnInsert: { isNewNotice: true } },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: "after" }
       );
 
       if (!existing) {
@@ -230,6 +326,7 @@ async function syncPage1IterNotices(io = null) {
             categoryLabel: doc.categoryLabel,
             publishDate: doc.publishDate,
             boxPreviewUrl: doc.boxPreviewUrl,
+            pageCount: doc.pageCount,
           });
         }
       }
@@ -256,6 +353,7 @@ async function syncPage1IterNotices(io = null) {
 module.exports = {
   syncPage1IterNotices,
   resolveBoxNoticeDetails,
+  getPageImageBuffer,
   categorizeNotice,
   fetchHttpsWithRedirect,
 };

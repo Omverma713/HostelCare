@@ -18,3 +18,4 @@ mobile-app/dist-apk/
 dist-apk/
 dist-ota/
 pac backend/
+public/notice-cache/

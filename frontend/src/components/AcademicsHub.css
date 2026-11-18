@@ -1937,15 +1937,15 @@ body.login-dark-theme .slot-chip.faculty-chip {
    ========================================================================= */
 @media (max-width: 680px) {
   .academics-hub-container {
-    padding: 6px 12px 180px !important;
+    padding: 14px 16px 180px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
 
   .acad-header-card {
-    padding: 16px 16px !important;
-    border-radius: 16px !important;
-    margin-bottom: 12px !important;
+    padding: 20px 18px !important;
+    border-radius: 18px !important;
+    margin-bottom: 16px !important;
   }
 
   .acad-title {

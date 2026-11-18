@@ -49,6 +49,18 @@ const iterNoticeSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    boxTemplateUrl: {
+      type: String,
+      default: "",
+    },
+    boxReadToken: {
+      type: String,
+      default: "",
+    },
+    boxFileId: {
+      type: String,
+      default: "",
+    },
     pageCount: {
       type: Number,
       default: 1,

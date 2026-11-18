@@ -1,34 +1,13 @@
+const fs = require("fs");
+const path = require("path");
 const IterNotice = require("../models/iterNotice.model");
-const { syncPage1IterNotices, fetchHttpsWithRedirect } = require("../services/iterNoticeScraper.service");
+const { syncPage1IterNotices, getPageImageBuffer } = require("../services/iterNoticeScraper.service");
 const { PDFDocument } = require("pdf-lib");
-const https = require("https");
 
-/**
- * Helper to download an image as a Buffer
- */
-function fetchBuffer(url) {
-  return new Promise((resolve, reject) => {
-    https.get(
-      url,
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        },
-      },
-      (res) => {
-        if ([301, 302, 303, 307].includes(res.statusCode) && res.headers.location) {
-          return resolve(fetchBuffer(res.headers.location));
-        }
-        if (res.statusCode !== 200) {
-          return reject(new Error(`Failed to download image: HTTP ${res.statusCode}`));
-        }
-        const chunks = [];
-        res.on("data", (chunk) => chunks.push(chunk));
-        res.on("end", () => resolve(Buffer.concat(chunks)));
-      }
-    ).on("error", reject);
-  });
+// Ensure local cache directory for fast multi-page PDF streaming without CPU spikes
+const CACHE_DIR = path.resolve(__dirname, "../../public/notice-cache");
+if (!fs.existsSync(CACHE_DIR)) {
+  fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
 
 /**
@@ -135,11 +114,13 @@ const getNoticeById = async (req, res) => {
 
 /**
  * GET /api/v1/academics/iter-notices/:id/preview
- * In-app high-res preview stream (bypasses Box CORS / external domain blocks)
+ * In-app high-res preview stream for ANY page (e.g. ?page=1, ?page=2)
  */
 const proxyNoticeImage = async (req, res) => {
   try {
     const { id } = req.params;
+    const pageNum = Math.max(1, parseInt(req.query.page, 10) || 1);
+
     const notice = await IterNotice.findOne({
       $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { noticeId: id }],
     });
@@ -148,23 +129,17 @@ const proxyNoticeImage = async (req, res) => {
       return res.status(404).json({ success: false, message: "Notice not found" });
     }
 
-    const previewUrl = notice.boxPreviewUrl || notice.assetUrl;
-    if (!previewUrl) {
-      return res.status(404).json({
-        success: false,
-        message: "No document image preview available for this notice",
-      });
-    }
-
-    const imgBuffer = await fetchBuffer(previewUrl);
+    const { buffer, page, totalPages } = await getPageImageBuffer(notice, pageNum);
 
     res.set({
       "Content-Type": "image/jpeg",
-      "Content-Length": imgBuffer.length,
-      "Cache-Control": "public, max-age=86400", // 24 hours client cache
+      "Content-Length": buffer.length,
+      "X-Current-Page": page,
+      "X-Total-Pages": totalPages,
+      "Cache-Control": "public, max-age=86400", // 24 hour client cache
     });
 
-    return res.send(imgBuffer);
+    return res.send(buffer);
   } catch (error) {
     console.error("[ITER_PROXY_IMAGE_ERROR]", error);
     return res.status(502).json({
@@ -177,7 +152,7 @@ const proxyNoticeImage = async (req, res) => {
 
 /**
  * GET /api/v1/academics/iter-notices/:id/download
- * In-App 1-Tap PDF Download (assembled directly by HostelCare)
+ * In-App 1-Tap PDF Download (Includes ALL PAGES, with local disk caching)
  */
 const downloadNoticePdf = async (req, res) => {
   try {
@@ -190,46 +165,51 @@ const downloadNoticePdf = async (req, res) => {
       return res.status(404).json({ success: false, message: "Notice not found" });
     }
 
-    const previewUrl = notice.boxPreviewUrl || notice.assetUrl;
-    if (!previewUrl) {
-      return res.status(404).json({
-        success: false,
-        message: "Document file not available for download",
+    const filename = `HostelCare-SOA-ITER-${slugify(notice.title)}.pdf`;
+    const cachedFilePath = path.join(CACHE_DIR, `${notice.noticeId}.pdf`);
+
+    // 1. If cached on disk, stream immediately without any CPU overhead!
+    if (fs.existsSync(cachedFilePath)) {
+      res.set({
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "public, max-age=86400",
       });
+      return res.sendFile(cachedFilePath);
     }
 
-    // Download the high-res circular image
-    const imgBuffer = await fetchBuffer(previewUrl);
-
-    // Create a pristine PDF document with the circular image embedded
+    // 2. Generate multi-page PDF covering ALL pages
+    const totalPages = notice.pageCount || 1;
     const pdfDoc = await PDFDocument.create();
-    let embeddedImg;
 
-    try {
-      embeddedImg = await pdfDoc.embedJpg(imgBuffer);
-    } catch (e) {
-      // Fallback for png
-      embeddedImg = await pdfDoc.embedPng(imgBuffer);
+    for (let p = 1; p <= totalPages; p++) {
+      try {
+        const { buffer } = await getPageImageBuffer(notice, p);
+        const embeddedImg = await pdfDoc.embedJpg(buffer);
+        const imgDims = embeddedImg.scale(1);
+        const page = pdfDoc.addPage([imgDims.width, imgDims.height]);
+        page.drawImage(embeddedImg, {
+          x: 0,
+          y: 0,
+          width: imgDims.width,
+          height: imgDims.height,
+        });
+      } catch (pageErr) {
+        console.warn(`[ITER_PDF_PAGE_WARN] Page ${p} generation skipped:`, pageErr.message);
+      }
     }
 
-    const imgDims = embeddedImg.scale(1);
-    // Page dimensions matching the image aspect ratio
-    const page = pdfDoc.addPage([imgDims.width, imgDims.height]);
-    page.drawImage(embeddedImg, {
-      x: 0,
-      y: 0,
-      width: imgDims.width,
-      height: imgDims.height,
-    });
-
-    // Embed metadata
     pdfDoc.setTitle(notice.title);
     pdfDoc.setAuthor("ITER | SIKSHA 'O' ANUSANDHAN");
     pdfDoc.setSubject("HostelCare Official Academic Circular");
     pdfDoc.setCreationDate(notice.publishDate || new Date());
 
     const pdfBytes = await pdfDoc.save();
-    const filename = `HostelCare-SOA-ITER-${slugify(notice.title)}.pdf`;
+
+    // Save to disk cache asynchronously for instant future requests
+    fs.writeFile(cachedFilePath, Buffer.from(pdfBytes), (err) => {
+      if (err) console.warn("[ITER_CACHE_WRITE_WARN]", err.message);
+    });
 
     res.set({
       "Content-Type": "application/pdf",
