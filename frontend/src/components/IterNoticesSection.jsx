@@ -176,8 +176,8 @@ export default function IterNoticesSection({ apiBaseUrl }) {
     const noticeId = notice.noticeId;
     const fullDownloadUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
 
-    // Google Docs / Drive Viewer URL fetches full multi-page PDF, displays all pages, and has direct Download & Save to Drive buttons
-    const driveUrl = `https://docs.google.com/viewerng/viewer?url=${encodeURIComponent(fullDownloadUrl)}`;
+    // Google Drive Viewer URL (drive.google.com triggers the native Google Drive App / Viewer on Android)
+    const driveUrl = `https://drive.google.com/viewerng/viewer?url=${encodeURIComponent(fullDownloadUrl)}`;
     window.open(driveUrl, "_system");
   };
 
