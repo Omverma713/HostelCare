@@ -230,6 +230,241 @@ const downloadNoticePdf = async (req, res) => {
   }
 };
 
+function escapeHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * GET /api/v1/academics/iter-notices/:id/view
+ * 100% Mobile-Native Responsive Document Reader (Zero Desktop Scaling • All Pages • Direct Download Bar)
+ */
+const renderMobileNoticeView = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notice = await IterNotice.findOne({
+      $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { noticeId: id }],
+    });
+
+    if (!notice) {
+      return res.status(404).send(`<!DOCTYPE html><html><body style="font-family:sans-serif;background:#141210;color:#FAF7F2;text-align:center;padding:50px;"><h2>Notice Not Found</h2><p>This circular is no longer available.</p></body></html>`);
+    }
+
+    const totalPages = notice.pageCount || 1;
+    const formattedDate = notice.publishDate
+      ? new Date(notice.publishDate).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "Official Circular";
+
+    const downloadUrl = `/api/v1/academics/iter-notices/${notice.noticeId}/download`;
+    const shareText = encodeURIComponent(`Official ITER Notice: ${notice.title}\nView & Download (${totalPages} Pages):\nhttps://hostelcare-api.duckdns.org/api/v1/academics/iter-notices/${notice.noticeId}/view`);
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${shareText}`;
+
+    let pagesHtml = "";
+    for (let p = 1; p <= totalPages; p++) {
+      pagesHtml += `
+        <div class="page-card">
+          <img src="/api/v1/academics/iter-notices/${notice.noticeId}/preview?page=${p}" alt="Page ${p}" class="page-img" loading="${p === 1 ? 'eager' : 'lazy'}" />
+          <div class="page-footer-pill">Page ${p} of ${totalPages}</div>
+        </div>
+      `;
+    }
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+  <meta name="theme-color" content="#1C1815">
+  <title>${escapeHtml(notice.title)} - HostelCare</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #141210;
+      color: #FAF7F2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 90px;
+    }
+    .reader-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(28, 24, 21, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .reader-top-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(192, 118, 96, 0.2);
+      color: #E28870;
+      border: 1px solid rgba(192, 118, 96, 0.35);
+    }
+    .date-pill {
+      font-size: 0.74rem;
+      color: #A6A096;
+    }
+    .reader-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #FAF7F2;
+    }
+    .document-container {
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .page-card {
+      background: #FFFFFF;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+    .page-img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .page-footer-pill {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #FFFFFF;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+    /* Sticky Mobile Bottom Floating Action Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 60;
+      background: rgba(28, 24, 21, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .btn-download {
+      flex: 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #C07660;
+      color: #FFFFFF;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 12px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(192, 118, 96, 0.4);
+      transition: opacity 0.15s;
+    }
+    .btn-download:active { opacity: 0.85; }
+    .btn-action {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #FAF7F2;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 12px 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      cursor: pointer;
+    }
+    .btn-action:active { background: rgba(255, 255, 255, 0.15); }
+    @media print {
+      .reader-header, .bottom-bar { display: none !important; }
+      body { background: #FFFFFF; padding: 0; }
+      .page-card { box-shadow: none; border-radius: 0; page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+  <header class="reader-header">
+    <div class="reader-top-meta">
+      <span class="badge">Official ITER SOA</span>
+      <span class="date-pill">📅 ${escapeHtml(formattedDate)} • ${totalPages} ${totalPages > 1 ? 'Pages' : 'Page'}</span>
+    </div>
+    <h1 class="reader-title">${escapeHtml(notice.title)}</h1>
+  </header>
+
+  <main class="document-container">
+    ${pagesHtml}
+  </main>
+
+  <footer class="bottom-bar">
+    <a href="${downloadUrl}" class="btn-download" download>
+      <span>⬇️</span>
+      <span>Download PDF (${totalPages} ${totalPages > 1 ? 'Pages' : 'Page'})</span>
+    </a>
+    <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="btn-action">
+      <span>💬</span>
+      <span>WhatsApp</span>
+    </a>
+    <button type="button" class="btn-action" onclick="window.print()">
+      <span>🖨️</span>
+      <span>Print / PDF</span>
+    </button>
+  </footer>
+</body>
+</html>`;
+
+    res.set({
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+    });
+    return res.send(html);
+  } catch (error) {
+    console.error("[ITER_RENDER_MOBILE_VIEW_ERROR]", error);
+    return res.status(500).send("Internal Server Error rendering notice");
+  }
+};
+
 /**
  * POST /api/v1/academics/iter-notices/sync
  * Manually trigger refresh from ITER website
@@ -259,5 +494,6 @@ module.exports = {
   getNoticeById,
   proxyNoticeImage,
   downloadNoticePdf,
+  renderMobileNoticeView,
   triggerSyncNotices,
 };

@@ -5,6 +5,7 @@ const {
   getNoticeById,
   proxyNoticeImage,
   downloadNoticePdf,
+  renderMobileNoticeView,
   triggerSyncNotices,
 } = require("../controllers/iterNotice.controller");
 
@@ -13,6 +14,7 @@ router.get("/", getNotices);
 router.get("/:id", getNoticeById);
 router.get("/:id/preview", proxyNoticeImage);
 router.get("/:id/download", downloadNoticePdf);
+router.get("/:id/view", renderMobileNoticeView);
 router.post("/sync", triggerSyncNotices);
 
 module.exports = router;
