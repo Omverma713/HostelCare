@@ -350,8 +350,26 @@
 }
 
 .iter-download-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.75;
   cursor: wait;
+}
+
+.iter-download-btn.downloading {
+  background: rgba(192, 118, 96, 0.15);
+  border-color: var(--accent-terracotta, #C07660);
+  color: var(--accent-terracotta, #C07660);
+  animation: pulseNoticeBtn 1.5s infinite ease-in-out;
+}
+
+.iter-download-btn.done {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10B981;
+  color: #10B981;
+}
+
+@keyframes pulseNoticeBtn {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 /* ─── 4. Empty State ─── */

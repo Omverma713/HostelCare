@@ -40,8 +40,7 @@ export default function IterNoticesSection({ apiBaseUrl }) {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [downloadingId, setDownloadingId] = useState(null);
-  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadProgress, setDownloadProgress] = useState({}); // { [noticeId]: { percent: number, status: 'loading' | 'done' | 'error' } }
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -118,15 +117,26 @@ export default function IterNoticesSection({ apiBaseUrl }) {
     }
   };
 
+  const closeNoticeModal = () => {
+    setActiveNoticeModal(null);
+    if (typeof window !== "undefined" && window.history.state && window.history.state.iterNoticeViewerOpen) {
+      window.history.back();
+    }
+  };
+
+  const openNoticeModal = (notice) => {
+    setActiveNoticeModal(notice);
+  };
+
   // Native Android Hardware Back Button + History Guard (Zero App Restart)
   useEffect(() => {
     if (!activeNoticeModal) return;
 
-    // Push dummy history entry so browser back pops this state first
+    // Push history entry so back pops this state cleanly without closing app
     window.history.pushState({ iterNoticeViewerOpen: true }, "");
 
     const handlePopState = () => {
-      closeNoticeModal();
+      setActiveNoticeModal(null);
     };
     window.addEventListener("popstate", handlePopState);
 
@@ -136,7 +146,15 @@ export default function IterNoticesSection({ apiBaseUrl }) {
       import("@capacitor/app")
         .then(({ App }) => {
           App.addListener("backButton", () => {
-            closeNoticeModal();
+            setActiveNoticeModal((prev) => {
+              if (prev) {
+                if (window.history.state && window.history.state.iterNoticeViewerOpen) {
+                  window.history.back();
+                }
+                return null;
+              }
+              return prev;
+            });
           }).then((handle) => {
             backListenerHandle = handle;
           });
@@ -152,21 +170,139 @@ export default function IterNoticesSection({ apiBaseUrl }) {
     };
   }, [activeNoticeModal]);
 
-  // Native Browser / System Download (Triggers Real OS Download Notification with Progress Bar)
-  const handleDownloadPdf = (noticeId, title) => {
-    const fullUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
+  // In-App Download (Strictly In-App • Zero Chrome Redirection • Multi-Page Streaming)
+  const handleDownloadPdf = async (notice) => {
+    if (!notice) return;
+    const noticeId = notice.noticeId;
+    const title = notice.title || "ITER Official Notice";
+    const totalPages = notice.pageCount || 1;
 
-    // Open via native system browser / Download Manager
-    // Android immediately displays the native download notification with progress bar and ETA (matching Chrome)
-    window.open(fullUrl, "_blank");
-  };
+    // Guard against multiple simultaneous taps
+    if (downloadProgress[noticeId]?.status === "loading") return;
 
-  const openNoticeModal = (notice) => {
-    setActiveNoticeModal(notice);
-  };
+    try {
+      setDownloadProgress((prev) => ({
+        ...prev,
+        [noticeId]: { percent: 5, status: "loading" },
+      }));
 
-  const closeNoticeModal = () => {
-    setActiveNoticeModal(null);
+      const fullUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
+      const response = await fetch(fullUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to download (HTTP ${response.status})`);
+      }
+
+      const contentLength = response.headers.get("content-length");
+      const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+
+      let blob;
+      if (response.body && totalBytes > 0) {
+        const reader = response.body.getReader();
+        const chunks = [];
+        let receivedBytes = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          receivedBytes += value.length;
+          const percent = Math.min(98, Math.round((receivedBytes / totalBytes) * 100));
+          setDownloadProgress((prev) => ({
+            ...prev,
+            [noticeId]: { percent, status: "loading" },
+          }));
+        }
+        blob = new Blob(chunks, { type: "application/pdf" });
+      } else {
+        blob = await response.blob();
+      }
+
+      setDownloadProgress((prev) => ({
+        ...prev,
+        [noticeId]: { percent: 100, status: "done" },
+      }));
+
+      const safeFilename = `HostelCare-SOA-ITER-${slugify(title)}.pdf`;
+
+      // 1. Mobile Native In-App Share Sheet (Save to files / Drive / View inside HostelCare)
+      let savedViaShare = false;
+      if (typeof navigator !== "undefined" && typeof navigator.canShare === "function") {
+        try {
+          const file = new File([blob], safeFilename, { type: "application/pdf" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: title,
+              text: `HostelCare Official Siksha 'O' Anusandhan Notice (${totalPages} ${totalPages > 1 ? "Pages" : "Page"})`,
+            });
+            savedViaShare = true;
+          }
+        } catch (shareErr) {
+          if (shareErr.name === "AbortError") {
+            savedViaShare = true;
+          } else {
+            console.warn("[SHARE_ERROR]", shareErr);
+          }
+        }
+      }
+
+      // 2. In-App Anchor Download (Fallback for WebView, stays strictly in-app without launching Chrome)
+      if (!savedViaShare) {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = safeFilename;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 3000);
+      }
+
+      // 3. Android Local Notification
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const { LocalNotifications } = await import("@capacitor/local-notifications");
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                id: Math.floor(Math.random() * 100000) + 1,
+                title: "HostelCare: Download Complete",
+                body: `"${title.substring(0, 42)}..." (${totalPages} ${totalPages > 1 ? "pages" : "page"}) saved to device`,
+                schedule: { at: new Date(Date.now() + 300) },
+              },
+            ],
+          });
+        }
+      } catch (notifErr) {
+        console.warn("[LOCAL_NOTIF_ERROR]", notifErr);
+      }
+
+      // Reset state after 3.5 seconds
+      setTimeout(() => {
+        setDownloadProgress((prev) => {
+          const updated = { ...prev };
+          delete updated[noticeId];
+          return updated;
+        });
+      }, 3500);
+
+    } catch (err) {
+      console.error("[IN_APP_DOWNLOAD_ERROR]", err);
+      setDownloadProgress((prev) => ({
+        ...prev,
+        [noticeId]: { percent: 0, status: "error" },
+      }));
+      setTimeout(() => {
+        setDownloadProgress((prev) => {
+          const updated = { ...prev };
+          delete updated[noticeId];
+          return updated;
+        });
+      }, 3500);
+    }
   };
 
   const totalPages = activeNoticeModal ? (activeNoticeModal.pageCount || 1) : 1;
@@ -292,11 +428,9 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                     {notice.title}
                   </h3>
 
-                  {pages > 1 && (
-                    <div style={{ marginTop: 6, fontSize: "0.74rem", color: "var(--accent-terracotta, #C07660)", fontWeight: 700 }}>
-                      📑 {pages} Pages (Full Programme)
-                    </div>
-                  )}
+                  <div style={{ marginTop: 6, fontSize: "0.75rem", color: pages > 1 ? "var(--accent-terracotta, #C07660)" : "var(--hc-text-muted, #8E8A83)", fontWeight: 700 }}>
+                    {pages > 1 ? `📑 ${pages} Pages Complete Official Circular` : "📄 1 Page Official Circular"}
+                  </div>
                 </div>
 
                 <div className="iter-card-actions">
@@ -307,14 +441,30 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                   >
                     👁️ Full Screen View
                   </button>
-                  <button
-                    type="button"
-                    className="iter-download-btn"
-                    title="Download Official Notice PDF (All Pages)"
-                    onClick={() => handleDownloadPdf(notice.noticeId, notice.title)}
-                  >
-                    ⬇️ Download PDF{pages > 1 ? ` (${pages} Pgs)` : ""}
-                  </button>
+                  {(() => {
+                    const prog = downloadProgress[notice.noticeId];
+                    const isDownloading = prog?.status === "loading";
+                    const isDone = prog?.status === "done";
+                    const isError = prog?.status === "error";
+
+                    return (
+                      <button
+                        type="button"
+                        className={`iter-download-btn ${isDownloading ? "downloading" : ""} ${isDone ? "done" : ""}`}
+                        title={`Download Official Notice PDF (${pages} ${pages > 1 ? "Pages" : "Page"})`}
+                        disabled={isDownloading}
+                        onClick={() => handleDownloadPdf(notice)}
+                      >
+                        {isDownloading
+                          ? `⏳ Downloading (${prog.percent}%)...`
+                          : isDone
+                          ? `✅ Downloaded (${pages} ${pages > 1 ? "Pages" : "Page"})`
+                          : isError
+                          ? "⚠️ Retry Download"
+                          : `⬇️ Download PDF (${pages} ${pages > 1 ? "Pages" : "Page"})`}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -345,19 +495,34 @@ export default function IterNoticesSection({ apiBaseUrl }) {
               {activeNoticeModal.title}
             </div>
 
-            <button
-              type="button"
-              className="iter-fs-download-btn"
-              onClick={() => handleDownloadPdf(activeNoticeModal.noticeId, activeNoticeModal.title)}
-              title="Download PDF to Phone"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Download</span>
-            </button>
+            {(() => {
+              const modalProg = downloadProgress[activeNoticeModal.noticeId];
+              const isModalDownloading = modalProg?.status === "loading";
+              const isModalDone = modalProg?.status === "done";
+
+              return (
+                <button
+                  type="button"
+                  className="iter-fs-download-btn"
+                  disabled={isModalDownloading}
+                  onClick={() => handleDownloadPdf(activeNoticeModal)}
+                  title="Download PDF to Phone"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>
+                    {isModalDownloading
+                      ? `(${modalProg.percent}%)`
+                      : isModalDone
+                      ? "Saved!"
+                      : `Download (${totalPages} ${totalPages > 1 ? "Pgs" : "Pg"})`}
+                  </span>
+                </button>
+              );
+            })()}
           </div>
 
           {/* 100% Edge-to-Edge Document Viewport (Continuous Vertical Stack) */}
