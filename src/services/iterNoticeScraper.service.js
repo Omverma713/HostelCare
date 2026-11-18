@@ -153,7 +153,7 @@ async function resolveBoxNoticeDetails(sharedName, forceRefresh = false) {
             }
           }
         }
-      } catch (err) {}
+      } catch (err) { }
     }
 
     // 2. Fallback regexes

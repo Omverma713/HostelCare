@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Capacitor } from "@capacitor/core";
 import { addChatListener } from "../services/chatSocketService";
 import "./IterNoticesSection.css";
 
@@ -20,19 +21,33 @@ function slugify(text) {
     .slice(0, 50);
 }
 
+function getAbsoluteDownloadUrl(endpointBase, noticeId) {
+  if (endpointBase && endpointBase.startsWith("http")) {
+    return `${endpointBase}/iter-notices/${noticeId}/download`;
+  }
+  const isLocalOrCapacitor =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.protocol === "capacitor:" ||
+      window.location.protocol === "file:");
+  const origin = isLocalOrCapacitor
+    ? "https://hostelcare-api.duckdns.org"
+    : (window.location.origin || "https://hostelcare-api.duckdns.org");
+  return `${origin}/api/v1/academics/iter-notices/${noticeId}/download`;
+}
+
 export default function IterNoticesSection({ apiBaseUrl }) {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Full-Screen Modal & Multi-Page View States
   const [activeNoticeModal, setActiveNoticeModal] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [imgLoading, setImgLoading] = useState(true);
   const [realtimeAlert, setRealtimeAlert] = useState(null);
 
   const endpointBase = apiBaseUrl || "/api/v1/academics";
@@ -103,13 +118,57 @@ export default function IterNoticesSection({ apiBaseUrl }) {
     }
   };
 
-  // In-App Blob Download (Zero External Chrome / Browser Redirects)
+  // High-Performance PDF Download with Real-Time Percentage & Android Storage Support
   const handleDownloadPdf = async (noticeId, title) => {
     try {
       setDownloadingId(noticeId);
-      const downloadUrl = `${endpointBase}/iter-notices/${noticeId}/download`;
-      const res = await fetch(downloadUrl);
+      setDownloadProgress(15);
+
+      const fullUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
+
+      // 1. Android Native Capacitor Platform
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { LocalNotifications } = await import("@capacitor/local-notifications");
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                id: Math.floor(Math.random() * 90000) + 1000,
+                title: "📥 Downloading Official Notice PDF",
+                body: `${(title || "ITER Circular").slice(0, 48)}... Saving to phone Downloads.`,
+                schedule: { at: new Date(Date.now() + 100) },
+              },
+            ],
+          });
+        } catch (notifErr) {
+          console.warn("[DOWNLOAD_NOTIF_WARN]", notifErr);
+        }
+
+        setDownloadProgress(45);
+
+        // Pre-warm HEAD request so backend prepares and caches multi-page PDF on disk
+        try {
+          await fetch(fullUrl, { method: "HEAD" });
+        } catch (_) {}
+
+        setDownloadProgress(80);
+
+        // Hand off to Android Native Download Manager (saves directly to /storage/emulated/0/Download/)
+        window.open(fullUrl, "_system");
+
+        setDownloadProgress(100);
+        setTimeout(() => {
+          setDownloadingId(null);
+          setDownloadProgress(0);
+        }, 1200);
+        return;
+      }
+
+      // 2. Standard Web / Desktop Browsers (Direct Blob Stream)
+      setDownloadProgress(35);
+      const res = await fetch(fullUrl);
       if (!res.ok) throw new Error("HTTP " + res.status);
+      setDownloadProgress(70);
       const blob = await res.blob();
       const blobUrl = window.URL.createObjectURL(blob);
 
@@ -120,27 +179,29 @@ export default function IterNoticesSection({ apiBaseUrl }) {
       link.click();
       document.body.removeChild(link);
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
+
+      setDownloadProgress(100);
+      setTimeout(() => {
+        setDownloadingId(null);
+        setDownloadProgress(0);
+      }, 1000);
     } catch (err) {
       console.error("[ITER_DOWNLOAD_ERROR]", err);
-      // Fallback
-      window.open(`${endpointBase}/iter-notices/${noticeId}/download`, "_self");
-    } finally {
+      const fallbackUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
+      window.open(fallbackUrl, "_blank");
       setDownloadingId(null);
+      setDownloadProgress(0);
     }
   };
 
   const openNoticeModal = (notice) => {
     setActiveNoticeModal(notice);
-    setCurrentPage(1);
     setZoomLevel(1);
-    setImgLoading(true);
   };
 
   const closeNoticeModal = () => {
     setActiveNoticeModal(null);
-    setCurrentPage(1);
     setZoomLevel(1);
-    setImgLoading(true);
   };
 
   const totalPages = activeNoticeModal ? (activeNoticeModal.pageCount || 1) : 1;
@@ -288,7 +349,9 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                     disabled={downloadingId === notice.noticeId}
                     onClick={() => handleDownloadPdf(notice.noticeId, notice.title)}
                   >
-                    {downloadingId === notice.noticeId ? "⏳ Saving..." : "⬇️ Download PDF"}
+                    {downloadingId === notice.noticeId
+                      ? `⏳ Downloading ${downloadProgress || 15}%...`
+                      : `⬇️ Download PDF${pages > 1 ? ` (${pages} Pgs)` : ""}`}
                   </button>
                 </div>
               </div>
@@ -298,7 +361,7 @@ export default function IterNoticesSection({ apiBaseUrl }) {
       )}
 
       {/* =========================================================================
-         FULL-SCREEN IMMERSIVE NOTICE DOCUMENT VIEWER (MULTI-PAGE & ZOOM)
+         FULL-SCREEN IMMERSIVE NOTICE DOCUMENT VIEWER (CONTINUOUS SCROLL & ZOOM)
          ========================================================================= */}
       {activeNoticeModal && (
         <div className="iter-modal-backdrop fullscreen" onClick={closeNoticeModal}>
@@ -313,6 +376,11 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                   <span style={{ fontSize: "0.78rem", color: "var(--text-secondary, #6E685E)" }}>
                     📅 {new Date(activeNoticeModal.publishDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                   </span>
+                  {totalPages > 1 && (
+                    <span className="iter-page-count-badge">
+                      📑 {totalPages} Pages Continuous
+                    </span>
+                  )}
                 </div>
                 <h3 className="iter-modal-title">{activeNoticeModal.title}</h3>
               </div>
@@ -325,7 +393,9 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                   disabled={downloadingId === activeNoticeModal.noticeId}
                   onClick={() => handleDownloadPdf(activeNoticeModal.noticeId, activeNoticeModal.title)}
                 >
-                  {downloadingId === activeNoticeModal.noticeId ? "⏳ Downloading..." : "⬇️ Download PDF"}
+                  {downloadingId === activeNoticeModal.noticeId
+                    ? `⏳ Downloading ${downloadProgress || 15}%...`
+                    : "⬇️ Download PDF"}
                 </button>
                 <button
                   type="button"
@@ -338,42 +408,15 @@ export default function IterNoticesSection({ apiBaseUrl }) {
               </div>
             </div>
 
-            {/* Document Body Viewport with Multi-Page & Zoom Controls */}
+            {/* Document Body Viewport with Continuous Scroll & Zoom Controls */}
             <div className="iter-doc-viewport fullscreen">
               {/* Floating Multi-Page & Zoom Bar */}
               <div className="iter-doc-controls-bar">
-                {/* Page Navigation if Multi-page */}
-                {totalPages > 1 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, borderRight: "1px solid rgba(255, 255, 255, 0.2)", paddingRight: 8 }}>
-                    <button
-                      type="button"
-                      className="iter-page-nav-btn"
-                      disabled={currentPage <= 1}
-                      onClick={() => {
-                        setCurrentPage((p) => Math.max(1, p - 1));
-                        setImgLoading(true);
-                      }}
-                      title="Previous Page"
-                    >
-                      ◀
-                    </button>
-                    <span className="iter-page-indicator">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      className="iter-page-nav-btn"
-                      disabled={currentPage >= totalPages}
-                      onClick={() => {
-                        setCurrentPage((p) => Math.min(totalPages, p + 1));
-                        setImgLoading(true);
-                      }}
-                      title="Next Page"
-                    >
-                      ▶
-                    </button>
-                  </div>
-                )}
+                <div className="iter-controls-doc-info">
+                  <span className="iter-pages-total-pill">
+                    📄 {totalPages} {totalPages > 1 ? "Pages • Scroll vertically to read all" : "Page Document"}
+                  </span>
+                </div>
 
                 {/* Zoom Controls */}
                 <button
@@ -403,65 +446,47 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                 </button>
               </div>
 
-              {/* Loading Indicator */}
-              {imgLoading && (
-                <div style={{ color: "#D8D0C5", fontSize: 13, padding: "30px 0", textAlign: "center" }}>
-                  <span style={{ fontSize: 28, display: "block", marginBottom: 8 }}>📄</span>
-                  Loading Page {currentPage} of {totalPages}...
-                </div>
-              )}
-
-              {/* Render High-Res Notice Image */}
+              {/* Continuous Vertical Scroll of ALL Notice Pages */}
               <div
-                className="iter-doc-image-wrapper"
+                className="iter-pages-scroll-container"
                 style={{
                   transform: `scale(${zoomLevel})`,
                   transformOrigin: "top center",
-                  display: imgLoading ? "none" : "block",
                 }}
               >
-                <img
-                  key={`${activeNoticeModal.noticeId}-p${currentPage}`}
-                  src={`${endpointBase}/iter-notices/${activeNoticeModal.noticeId}/preview?page=${currentPage}`}
-                  alt={`${activeNoticeModal.title} - Page ${currentPage}`}
-                  className="iter-doc-image"
-                  loading="eager"
-                  onLoad={() => setImgLoading(false)}
-                  onError={(e) => {
-                    setImgLoading(false);
-                    if (activeNoticeModal.assetUrl && e.target.src !== activeNoticeModal.assetUrl) {
-                      e.target.src = activeNoticeModal.assetUrl;
-                    }
-                  }}
-                />
+                {Array.from({ length: totalPages }, (_, idx) => {
+                  const pageNum = idx + 1;
+                  return (
+                    <div key={pageNum} className="iter-page-sheet">
+                      {totalPages > 1 && (
+                        <div className="iter-page-sheet-badge">
+                          <span>📄 Page {pageNum} of {totalPages}</span>
+                          <span style={{ opacity: 0.6 }}>• Official SOA ITER Circular</span>
+                        </div>
+                      )}
+                      <div className="iter-doc-image-wrapper">
+                        <img
+                          src={`${endpointBase}/iter-notices/${activeNoticeModal.noticeId}/preview?page=${pageNum}`}
+                          alt={`${activeNoticeModal.title} - Page ${pageNum}`}
+                          className="iter-doc-image"
+                          loading={pageNum === 1 ? "eager" : "lazy"}
+                          onError={(e) => {
+                            if (pageNum === 1 && activeNoticeModal.assetUrl && e.target.src !== activeNoticeModal.assetUrl) {
+                              e.target.src = activeNoticeModal.assetUrl;
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              {/* Bottom Multi-Page Quick Navigation Pills if Multi-page */}
-              {totalPages > 1 && (
-                <div className="iter-page-pills-row">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
-                    <button
-                      key={pg}
-                      type="button"
-                      className={`iter-page-pill ${currentPage === pg ? "active" : ""}`}
-                      onClick={() => {
-                        if (currentPage !== pg) {
-                          setCurrentPage(pg);
-                          setImgLoading(true);
-                        }
-                      }}
-                    >
-                      Page {pg}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Fullscreen Modal Footer */}
             <div className="iter-modal-footer fullscreen">
               <span className="iter-verified-badge">
-                ✅ Official Siksha 'O' Anusandhan (SOA) Circular • Page {currentPage} of {totalPages}
+                ✅ Official Siksha 'O' Anusandhan (SOA) Circular • {totalPages} {totalPages > 1 ? "Pages Complete" : "Page"}
               </span>
               <button
                 type="button"
@@ -469,7 +494,9 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                 disabled={downloadingId === activeNoticeModal.noticeId}
                 onClick={() => handleDownloadPdf(activeNoticeModal.noticeId, activeNoticeModal.title)}
               >
-                {downloadingId === activeNoticeModal.noticeId ? "⏳ Downloading..." : `⬇️ Download Full PDF (${totalPages} Pages)`}
+                {downloadingId === activeNoticeModal.noticeId
+                  ? `⏳ Downloading ${downloadProgress || 15}%...`
+                  : `⬇️ Download Full PDF (${totalPages} Pages)`}
               </button>
             </div>
           </div>
