@@ -365,289 +365,161 @@
   font-size: 0.92rem;
 }
 
-/* ─── 5. FULL-SCREEN IMMERSIVE DOCUMENT VIEWER ─── */
-.iter-modal-backdrop.fullscreen {
+/* ─── 5. PURE EDGE-TO-EDGE IMMERSIVE DOCUMENT VIEWER (MATCHING CHROME PDF) ─── */
+.iter-fullscreen-viewer {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   z-index: 99999999 !important;
-  background: #000000;
+  background: #F4F4F5;
   display: flex;
   flex-direction: column;
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  animation: fadeInModal 0.2s ease-out;
+  animation: fsFadeIn 0.15s ease-out;
 }
 
-@keyframes fadeInModal {
+@keyframes fsFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.iter-modal-window.fullscreen {
-  width: 100vw;
-  height: 100vh;
-  max-width: 100vw;
-  max-height: 100vh;
-  border-radius: 0;
-  border: none;
-  background: #12100E;
+/* Minimal Frosted Floating Top Bar */
+.iter-fs-topbar {
+  height: 52px;
+  min-height: 52px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E4E4E7;
+  padding: 0 16px;
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  z-index: 10;
   box-sizing: border-box;
 }
 
-.iter-modal-header.fullscreen {
-  padding: max(12px, env(safe-area-inset-top, 12px)) 20px 12px 20px;
-  background: #1C1815;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: space-between;
+.iter-fs-back-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  z-index: 10;
-}
-
-.iter-modal-title-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-}
-
-.iter-modal-title {
-  margin: 0;
-  font-size: 1.05rem;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #18181B;
+  font-size: 15px;
   font-weight: 700;
-  color: #FAF7F2;
-  line-height: 1.35;
-  word-break: break-word;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  white-space: nowrap;
 }
 
-.iter-modal-close-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #FAF7F2;
-  font-size: 0.84rem;
+.iter-fs-back-btn:hover {
+  background: #F4F4F5;
+}
+
+.iter-fs-title-text {
+  flex: 1;
+  font-size: 13.5px;
   font-weight: 600;
+  color: #27272A;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 8px;
+}
+
+.iter-fs-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #C07660;
+  border: none;
+  color: #FFFFFF;
+  font-size: 13.5px;
+  font-weight: 700;
   cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 9px;
+  padding: 7px 14px;
+  border-radius: 8px;
   transition: all 0.15s ease;
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(192, 118, 96, 0.3);
 }
 
-.iter-modal-close-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+.iter-fs-download-btn:hover {
+  background: #A85D48;
 }
 
-/* Document Viewport */
-.iter-doc-viewport.fullscreen {
+/* Document Scroll Viewport */
+.iter-fs-document-scroll {
   flex: 1;
   overflow-y: auto;
-  overflow-x: auto;
-  padding: 16px;
-  background: #0E0C0A;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
+  background: #F4F4F5;
+  padding: 0 0 32px;
 }
 
-.iter-doc-controls-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  background: rgba(28, 24, 21, 0.9);
-  padding: 6px 14px;
-  border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  user-select: none;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
-  position: sticky;
-  top: 6px;
-  z-index: 20;
-}
-
-.iter-page-nav-btn {
-  background: none;
-  border: none;
-  color: #FAF7F2;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 3px 8px;
-  border-radius: 6px;
-  transition: background 0.15s ease;
-}
-
-.iter-page-nav-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.iter-page-nav-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.iter-page-indicator {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--accent-terracotta, #C07660);
-  padding: 0 4px;
-  white-space: nowrap;
-}
-
-.iter-zoom-btn {
-  background: none;
-  border: none;
-  color: #FAF7F2;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s ease;
-}
-
-.iter-zoom-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.iter-zoom-level {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: rgba(250, 247, 242, 0.8);
-  min-width: 42px;
-  text-align: center;
-}
-
-/* Continuous Vertical Multi-Page Scroll Stack */
-.iter-pages-scroll-container {
+.iter-fs-pages-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 22px;
+  gap: 8px;
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  padding-bottom: 40px;
 }
 
-.iter-page-sheet {
+.iter-fs-page-wrapper {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.iter-page-sheet-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #D88B74;
-  background: rgba(28, 24, 21, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 5px 14px;
-  border-radius: 9999px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-  user-select: none;
-}
-
-.iter-page-count-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--accent-terracotta, #C07660);
-  background: rgba(192, 118, 96, 0.12);
-  border: 1px solid rgba(192, 118, 96, 0.25);
-  padding: 3px 8px;
-  border-radius: 9999px;
-}
-
-.iter-controls-doc-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.iter-pages-total-pill {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #E6DCD0;
-  white-space: nowrap;
-}
-
-.iter-doc-image-wrapper {
-  transition: transform 0.18s ease-out;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
-  border-radius: 8px;
-  overflow: hidden;
-  max-width: 95vw;
-}
-
-.iter-doc-image {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
   background: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Page Pills Row at Bottom of Document */
-.iter-page-pills-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-  padding: 8px 14px;
+.iter-fs-page-img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
-.iter-page-pill {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #FAF7F2;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.15s ease;
+/* Dark mode support */
+html.dark-theme .iter-fullscreen-viewer,
+body.login-dark-theme .iter-fullscreen-viewer,
+[data-theme="dark"] .iter-fullscreen-viewer {
+  background: #12100E;
 }
 
-.iter-page-pill:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.iter-page-pill.active {
-  background: var(--accent-terracotta, #C07660);
-  border-color: var(--accent-terracotta, #C07660);
-  color: #FAF7F2;
-  box-shadow: 0 2px 8px rgba(192, 118, 96, 0.35);
-}
-
-.iter-modal-footer.fullscreen {
-  padding: 12px 20px max(12px, env(safe-area-inset-bottom, 12px)) 20px;
+html.dark-theme .iter-fs-topbar,
+body.login-dark-theme .iter-fs-topbar,
+[data-theme="dark"] .iter-fs-topbar {
   background: #1C1815;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  z-index: 10;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark-theme .iter-fs-back-btn,
+body.login-dark-theme .iter-fs-back-btn,
+[data-theme="dark"] .iter-fs-back-btn {
+  color: #FAF7F2;
+}
+
+html.dark-theme .iter-fs-title-text,
+body.login-dark-theme .iter-fs-title-text,
+[data-theme="dark"] .iter-fs-title-text {
+  color: #FAF7F2;
+}
+
+html.dark-theme .iter-fs-document-scroll,
+body.login-dark-theme .iter-fs-document-scroll,
+[data-theme="dark"] .iter-fs-document-scroll {
+  background: #12100E;
 }
 
 .iter-verified-badge {
@@ -838,83 +710,37 @@ body.login-dark-theme .iter-card-actions,
     gap: 8px;
   }
 
-  /* Fullscreen Modal Mobile Adjustments */
-  .iter-modal-header.fullscreen {
-    padding: max(10px, env(safe-area-inset-top, 10px)) 14px 10px 14px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+  /* Fullscreen Document Mobile Adjustments */
+  .iter-fs-topbar {
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+    height: auto;
+    min-height: 50px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
-  .iter-modal-title {
-    font-size: 0.95rem;
-    line-height: 1.35;
+  .iter-fs-back-btn {
+    font-size: 14px;
+    padding: 6px 8px;
   }
 
-  .iter-doc-viewport.fullscreen {
-    padding: 10px 8px;
-    width: 100vw;
-    box-sizing: border-box;
+  .iter-fs-download-btn {
+    font-size: 12.5px;
+    padding: 6px 12px;
   }
 
-  .iter-doc-controls-bar {
-    padding: 6px 14px;
-    gap: 8px;
-    top: 6px;
-    width: calc(100% - 20px);
-    max-width: 400px;
-    box-sizing: border-box;
-    justify-content: space-between;
+  .iter-fs-document-scroll {
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
   }
 
-  .iter-pages-total-pill {
-    font-size: 0.76rem;
-  }
-
-  .iter-pages-scroll-container {
+  .iter-fs-pages-stack {
+    gap: 4px;
     width: 100% !important;
     max-width: 100% !important;
-    gap: 16px !important;
-    padding-bottom: 24px !important;
   }
 
-  .iter-page-sheet {
-    width: 100% !important;
-  }
-
-  .iter-doc-image-wrapper {
-    max-width: 100% !important;
-    width: 100% !important;
-    border-radius: 6px !important;
-  }
-
-  .iter-doc-image {
-    width: 100% !important;
-    height: auto !important;
-    border-radius: 6px !important;
-  }
-
-  .iter-zoom-btn {
-    font-size: 12px;
-    padding: 3px 6px;
-  }
-
-  .iter-modal-footer.fullscreen {
-    padding: 10px 14px max(10px, env(safe-area-inset-bottom, 10px)) 14px;
-    flex-direction: column-reverse;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .iter-modal-download-btn {
-    width: 100%;
-    padding: 11px 16px;
-    font-size: 0.85rem;
-  }
-
-  .iter-verified-badge {
-    justify-content: center;
-    font-size: 0.74rem;
+  .iter-fs-page-wrapper {
+    box-shadow: none !important;
   }
 }
 

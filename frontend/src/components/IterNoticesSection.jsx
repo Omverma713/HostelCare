@@ -118,90 +118,55 @@ export default function IterNoticesSection({ apiBaseUrl }) {
     }
   };
 
-  // High-Performance PDF Download with Real-Time Percentage & Android Storage Support
-  const handleDownloadPdf = async (noticeId, title) => {
-    try {
-      setDownloadingId(noticeId);
-      setDownloadProgress(15);
+  // Native Android Hardware Back Button + History Guard (Zero App Restart)
+  useEffect(() => {
+    if (!activeNoticeModal) return;
 
-      const fullUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
+    // Push dummy history entry so browser back pops this state first
+    window.history.pushState({ iterNoticeViewerOpen: true }, "");
 
-      // 1. Android Native Capacitor Platform
-      if (Capacitor.isNativePlatform()) {
-        try {
-          const { LocalNotifications } = await import("@capacitor/local-notifications");
-          await LocalNotifications.schedule({
-            notifications: [
-              {
-                id: Math.floor(Math.random() * 90000) + 1000,
-                title: "📥 Downloading Official Notice PDF",
-                body: `${(title || "ITER Circular").slice(0, 48)}... Saving to phone Downloads.`,
-                schedule: { at: new Date(Date.now() + 100) },
-              },
-            ],
+    const handlePopState = () => {
+      closeNoticeModal();
+    };
+    window.addEventListener("popstate", handlePopState);
+
+    // Capacitor Native Android Hardware Back Button listener
+    let backListenerHandle = null;
+    if (Capacitor.isNativePlatform()) {
+      import("@capacitor/app")
+        .then(({ App }) => {
+          App.addListener("backButton", () => {
+            closeNoticeModal();
+          }).then((handle) => {
+            backListenerHandle = handle;
           });
-        } catch (notifErr) {
-          console.warn("[DOWNLOAD_NOTIF_WARN]", notifErr);
-        }
-
-        setDownloadProgress(45);
-
-        // Pre-warm HEAD request so backend prepares and caches multi-page PDF on disk
-        try {
-          await fetch(fullUrl, { method: "HEAD" });
-        } catch (_) {}
-
-        setDownloadProgress(80);
-
-        // Hand off to Android Native Download Manager (saves directly to /storage/emulated/0/Download/)
-        window.open(fullUrl, "_system");
-
-        setDownloadProgress(100);
-        setTimeout(() => {
-          setDownloadingId(null);
-          setDownloadProgress(0);
-        }, 1200);
-        return;
-      }
-
-      // 2. Standard Web / Desktop Browsers (Direct Blob Stream)
-      setDownloadProgress(35);
-      const res = await fetch(fullUrl);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      setDownloadProgress(70);
-      const blob = await res.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `HostelCare-SOA-ITER-${slugify(title || noticeId)}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
-
-      setDownloadProgress(100);
-      setTimeout(() => {
-        setDownloadingId(null);
-        setDownloadProgress(0);
-      }, 1000);
-    } catch (err) {
-      console.error("[ITER_DOWNLOAD_ERROR]", err);
-      const fallbackUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
-      window.open(fallbackUrl, "_blank");
-      setDownloadingId(null);
-      setDownloadProgress(0);
+        })
+        .catch(() => {});
     }
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (backListenerHandle && typeof backListenerHandle.remove === "function") {
+        backListenerHandle.remove();
+      }
+    };
+  }, [activeNoticeModal]);
+
+  // Native Browser / System Download (Triggers Real OS Download Notification with Progress Bar)
+  const handleDownloadPdf = (noticeId, title) => {
+    const fullUrl = getAbsoluteDownloadUrl(endpointBase, noticeId);
+
+    // Open via native system browser / Download Manager
+    // Android immediately displays the native download notification with progress bar and ETA (matching Chrome)
+    window.open(fullUrl, "_blank");
   };
 
   const openNoticeModal = (notice) => {
     setActiveNoticeModal(notice);
-    setZoomLevel(1);
   };
 
   const closeNoticeModal = () => {
     setActiveNoticeModal(null);
-    setZoomLevel(1);
   };
 
   const totalPages = activeNoticeModal ? (activeNoticeModal.pageCount || 1) : 1;
@@ -346,12 +311,9 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                     type="button"
                     className="iter-download-btn"
                     title="Download Official Notice PDF (All Pages)"
-                    disabled={downloadingId === notice.noticeId}
                     onClick={() => handleDownloadPdf(notice.noticeId, notice.title)}
                   >
-                    {downloadingId === notice.noticeId
-                      ? `⏳ Downloading ${downloadProgress || 15}%...`
-                      : `⬇️ Download PDF${pages > 1 ? ` (${pages} Pgs)` : ""}`}
+                    ⬇️ Download PDF{pages > 1 ? ` (${pages} Pgs)` : ""}
                   </button>
                 </div>
               </div>
@@ -361,143 +323,64 @@ export default function IterNoticesSection({ apiBaseUrl }) {
       )}
 
       {/* =========================================================================
-         FULL-SCREEN IMMERSIVE NOTICE DOCUMENT VIEWER (CONTINUOUS SCROLL & ZOOM)
+         EDGE-TO-EDGE PURE IMMERSIVE DOCUMENT VIEWER (MATCHING CHROME PDF READER)
          ========================================================================= */}
       {activeNoticeModal && (
-        <div className="iter-modal-backdrop fullscreen" onClick={closeNoticeModal}>
-          <div className="iter-modal-window fullscreen" onClick={(e) => e.stopPropagation()}>
-            {/* Fullscreen Header Bar */}
-            <div className="iter-modal-header fullscreen">
-              <div className="iter-modal-title-wrap">
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                  <span className={`iter-category-badge ${activeNoticeModal.category || "general"}`}>
-                    {activeNoticeModal.categoryLabel}
-                  </span>
-                  <span style={{ fontSize: "0.78rem", color: "var(--text-secondary, #6E685E)" }}>
-                    📅 {new Date(activeNoticeModal.publishDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                  </span>
-                  {totalPages > 1 && (
-                    <span className="iter-page-count-badge">
-                      📑 {totalPages} Pages Continuous
-                    </span>
-                  )}
-                </div>
-                <h3 className="iter-modal-title">{activeNoticeModal.title}</h3>
-              </div>
+        <div className="iter-fullscreen-viewer">
+          {/* Minimal Sleek Floating Top Bar */}
+          <div className="iter-fs-topbar">
+            <button
+              type="button"
+              className="iter-fs-back-btn"
+              onClick={closeNoticeModal}
+              title="Back to Notices"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span>Back</span>
+            </button>
 
-              {/* Action buttons on header */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <button
-                  type="button"
-                  className="iter-modal-download-btn"
-                  disabled={downloadingId === activeNoticeModal.noticeId}
-                  onClick={() => handleDownloadPdf(activeNoticeModal.noticeId, activeNoticeModal.title)}
-                >
-                  {downloadingId === activeNoticeModal.noticeId
-                    ? `⏳ Downloading ${downloadProgress || 15}%...`
-                    : "⬇️ Download PDF"}
-                </button>
-                <button
-                  type="button"
-                  className="iter-modal-close-btn"
-                  onClick={closeNoticeModal}
-                  title="Close Full Screen Viewer"
-                >
-                  ✕ Close
-                </button>
-              </div>
+            <div className="iter-fs-title-text" title={activeNoticeModal.title}>
+              {activeNoticeModal.title}
             </div>
 
-            {/* Document Body Viewport with Continuous Scroll & Zoom Controls */}
-            <div className="iter-doc-viewport fullscreen">
-              {/* Floating Multi-Page & Zoom Bar */}
-              <div className="iter-doc-controls-bar">
-                <div className="iter-controls-doc-info">
-                  <span className="iter-pages-total-pill">
-                    📄 {totalPages} {totalPages > 1 ? "Pages • Scroll vertically to read all" : "Page Document"}
-                  </span>
-                </div>
+            <button
+              type="button"
+              className="iter-fs-download-btn"
+              onClick={() => handleDownloadPdf(activeNoticeModal.noticeId, activeNoticeModal.title)}
+              title="Download PDF to Phone"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download</span>
+            </button>
+          </div>
 
-                {/* Zoom Controls */}
-                <button
-                  type="button"
-                  className="iter-zoom-btn"
-                  onClick={() => setZoomLevel((z) => Math.max(0.6, Number((z - 0.2).toFixed(1))))}
-                  title="Zoom Out"
-                >
-                  🔍 –
-                </button>
-                <span className="iter-zoom-level">{Math.round(zoomLevel * 100)}%</span>
-                <button
-                  type="button"
-                  className="iter-zoom-btn"
-                  onClick={() => setZoomLevel((z) => Math.min(2.5, Number((z + 0.2).toFixed(1))))}
-                  title="Zoom In"
-                >
-                  🔍 +
-                </button>
-                <button
-                  type="button"
-                  className="iter-zoom-btn"
-                  onClick={() => setZoomLevel(1)}
-                  title="Reset Zoom"
-                >
-                  ⟲ Reset
-                </button>
-              </div>
-
-              {/* Continuous Vertical Scroll of ALL Notice Pages */}
-              <div
-                className="iter-pages-scroll-container"
-                style={{
-                  transform: `scale(${zoomLevel})`,
-                  transformOrigin: "top center",
-                }}
-              >
-                {Array.from({ length: totalPages }, (_, idx) => {
-                  const pageNum = idx + 1;
-                  return (
-                    <div key={pageNum} className="iter-page-sheet">
-                      {totalPages > 1 && (
-                        <div className="iter-page-sheet-badge">
-                          <span>📄 Page {pageNum} of {totalPages}</span>
-                          <span style={{ opacity: 0.6 }}>• Official SOA ITER Circular</span>
-                        </div>
-                      )}
-                      <div className="iter-doc-image-wrapper">
-                        <img
-                          src={`${endpointBase}/iter-notices/${activeNoticeModal.noticeId}/preview?page=${pageNum}`}
-                          alt={`${activeNoticeModal.title} - Page ${pageNum}`}
-                          className="iter-doc-image"
-                          loading={pageNum === 1 ? "eager" : "lazy"}
-                          onError={(e) => {
-                            if (pageNum === 1 && activeNoticeModal.assetUrl && e.target.src !== activeNoticeModal.assetUrl) {
-                              e.target.src = activeNoticeModal.assetUrl;
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Fullscreen Modal Footer */}
-            <div className="iter-modal-footer fullscreen">
-              <span className="iter-verified-badge">
-                ✅ Official Siksha 'O' Anusandhan (SOA) Circular • {totalPages} {totalPages > 1 ? "Pages Complete" : "Page"}
-              </span>
-              <button
-                type="button"
-                className="iter-modal-download-btn"
-                disabled={downloadingId === activeNoticeModal.noticeId}
-                onClick={() => handleDownloadPdf(activeNoticeModal.noticeId, activeNoticeModal.title)}
-              >
-                {downloadingId === activeNoticeModal.noticeId
-                  ? `⏳ Downloading ${downloadProgress || 15}%...`
-                  : `⬇️ Download Full PDF (${totalPages} Pages)`}
-              </button>
+          {/* 100% Edge-to-Edge Document Viewport (Continuous Vertical Stack) */}
+          <div className="iter-fs-document-scroll">
+            <div className="iter-fs-pages-stack">
+              {Array.from({ length: totalPages }, (_, idx) => {
+                const pageNum = idx + 1;
+                return (
+                  <div key={pageNum} className="iter-fs-page-wrapper">
+                    <img
+                      src={`${endpointBase}/iter-notices/${activeNoticeModal.noticeId}/preview?page=${pageNum}`}
+                      alt={`${activeNoticeModal.title} - Page ${pageNum}`}
+                      className="iter-fs-page-img"
+                      loading={pageNum === 1 ? "eager" : "lazy"}
+                      onError={(e) => {
+                        if (pageNum === 1 && activeNoticeModal.assetUrl && e.target.src !== activeNoticeModal.assetUrl) {
+                          e.target.src = activeNoticeModal.assetUrl;
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
