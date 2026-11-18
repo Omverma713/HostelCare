@@ -99,8 +99,10 @@ jobs:
           git reset --hard origin/main
           echo ">>> 3. Stopping existing container..."
           sudo docker compose down --remove-orphans || true
-          echo ">>> 4. Pruning unused docker resources..."
+          echo ">>> 4. Pruning unused docker resources and build cache..."
           sudo docker system prune -af || true
+          sudo docker builder prune -af || true
+          sudo truncate -s 0 /var/lib/docker/containers/*/*-json.log 2>/dev/null || true
           echo ">>> 5. Ensuring GEMINI_API_KEY in .env..."
           GEMINI_VAL=$(echo "QVEuQWI4Uk42S2tTQ2xKdFlPMDZpbl9uV0NaYWdGbUVUbFJKcnZjdDMyeHh5anV2UTlhZlE=" | base64 -d)
           if ! grep -q "GEMINI_API_KEY=" .env 2>/dev/null; then
