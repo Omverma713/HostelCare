@@ -168,12 +168,10 @@ const downloadNoticePdf = async (req, res) => {
     const filename = `HostelCare-SOA-ITER-${slugify(notice.title)}.pdf`;
     const cachedFilePath = path.join(CACHE_DIR, `${notice.noticeId}.pdf`);
 
-    // 1. If cached on disk, stream immediately without any CPU overhead!
+    // 1. If cached on disk, stream immediately as direct attachment download!
     if (fs.existsSync(cachedFilePath)) {
-      return res.sendFile(cachedFilePath, {
+      return res.download(cachedFilePath, filename, {
         headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `inline; filename="${filename}"`,
           "Cache-Control": "public, max-age=86400",
         },
       });
@@ -214,7 +212,7 @@ const downloadNoticePdf = async (req, res) => {
 
     res.set({
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${filename}"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Content-Length": pdfBytes.length,
       "Cache-Control": "public, max-age=86400",
     });
@@ -263,6 +261,7 @@ const renderMobileNoticeView = async (req, res) => {
         })
       : "Official Circular";
 
+    const filename = `HostelCare-SOA-ITER-${slugify(notice.title)}.pdf`;
     const downloadUrl = `/api/v1/academics/iter-notices/${notice.noticeId}/download`;
     const shareText = encodeURIComponent(`Official ITER Notice: ${notice.title}\nView & Download (${totalPages} Pages):\nhttps://hostelcare-api.duckdns.org/api/v1/academics/iter-notices/${notice.noticeId}/view`);
     const whatsappUrl = `https://api.whatsapp.com/send?text=${shareText}`;
@@ -417,10 +416,65 @@ const renderMobileNoticeView = async (req, res) => {
       cursor: pointer;
     }
     .btn-action:active { background: rgba(255, 255, 255, 0.15); }
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
     @media print {
-      .reader-header, .bottom-bar { display: none !important; }
-      body { background: #FFFFFF; padding: 0; }
-      .page-card { box-shadow: none; border-radius: 0; page-break-after: always; }
+      html, body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: 0 !important;
+      }
+      .reader-header,
+      .bottom-bar,
+      .page-footer-pill {
+        display: none !important;
+      }
+      .document-container {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 0 !important;
+      }
+      .page-card {
+        display: block !important;
+        width: 100% !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        page-break-before: auto !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        break-before: auto !important;
+        break-after: page !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+      }
+      .page-card:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+      .page-img {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        object-fit: contain !important;
+        display: block !important;
+        margin: 0 auto !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
     }
   </style>
 </head>
@@ -438,7 +492,7 @@ const renderMobileNoticeView = async (req, res) => {
   </main>
 
   <footer class="bottom-bar">
-    <a href="${downloadUrl}" class="btn-download" download>
+    <a href="${downloadUrl}" class="btn-download" download="${escapeHtml(filename)}">
       <span>⬇️</span>
       <span>Download PDF (${totalPages} ${totalPages > 1 ? 'Pages' : 'Page'})</span>
     </a>
