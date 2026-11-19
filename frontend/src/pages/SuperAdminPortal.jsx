@@ -3528,8 +3528,7 @@ export default function SuperAdminPortal() {
                       <span className="sa-dropdown-trigger-icon">{icon}</span>
                       <div className="sa-dropdown-trigger-text">
                         <div className="sa-dropdown-trigger-label">
-                          <span>{titleText}</span>
-                          <span className="sa-dropdown-badge">ACTIVE</span>
+                          <span className="sa-dropdown-title">{titleText}</span>
                         </div>
                         <div className="sa-dropdown-trigger-sub">{currentTab.desc || 'Super Admin Module'}</div>
                       </div>

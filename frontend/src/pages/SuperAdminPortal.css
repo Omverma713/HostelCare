@@ -2301,7 +2301,8 @@ body.login-dark-theme div[style*="background: #FFFFFF"] {
   align-items: center;
   gap: 12px;
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .sa-dropdown-trigger-icon {
@@ -2320,6 +2321,8 @@ body.login-dark-theme div[style*="background: #FFFFFF"] {
 .sa-dropdown-trigger-text {
   min-width: 0;
   flex: 1;
+  overflow: hidden;
+  text-align: left;
 }
 
 .sa-dropdown-trigger-label {
@@ -2330,6 +2333,15 @@ body.login-dark-theme div[style*="background: #FFFFFF"] {
   font-size: 0.96rem;
   color: #1E1A17;
   line-height: 1.25;
+  min-width: 0;
+}
+
+.sa-dropdown-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  display: block;
 }
 
 .sa-dropdown-badge {
@@ -2342,6 +2354,7 @@ body.login-dark-theme div[style*="background: #FFFFFF"] {
   color: #C07660;
   border: 1px solid rgba(192, 118, 96, 0.3);
   text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .sa-dropdown-trigger-sub {
@@ -2352,6 +2365,7 @@ body.login-dark-theme div[style*="background: #FFFFFF"] {
   text-overflow: ellipsis;
   margin-top: 3px;
   font-weight: 500;
+  display: block;
 }
 
 .sa-dropdown-trigger-right {
@@ -2359,6 +2373,7 @@ body.login-dark-theme div[style*="background: #FFFFFF"] {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .sa-dropdown-switch-hint {
