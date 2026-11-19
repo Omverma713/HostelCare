@@ -376,32 +376,50 @@ async function broadcastMealReminder(slotKey, options = {}) {
         deviceQuery.userRole = { $in: options.targetRoles };
       }
 
-      const devices = await DeviceRegistry.find(deviceQuery).lean();
+      const devices = await DeviceRegistry.find(deviceQuery).sort({ updatedAt: -1 }).lean();
 
       // Only query generic sessions if NOT testing specific device(s)
       let sessions = [];
       if (!isTargetedSpecific) {
         sessions = await Session.find(sessionQuery)
           .select("+pushToken +webPushSubscription")
+          .sort({ updatedAt: -1 })
           .lean();
       }
 
-      // Deduplicate targets across vault and legacy sessions
+      // Deduplicate targets across vault and legacy sessions: strictly 1 device per user
       const seenTokens = new Set();
       const seenEndpoints = new Set();
+      const seenUsers = new Set();
 
       for (const d of devices) {
-        if (d.pushToken) seenTokens.add(d.pushToken);
-        if (d.webPushSubscription?.endpoint) seenEndpoints.add(d.webPushSubscription.endpoint);
+        const userKey = d.regNo || (d.userId ? String(d.userId) : null);
+        if (userKey && seenUsers.has(userKey)) {
+          // Skip older hardware profiles for the same user
+          continue;
+        }
+        if (d.pushToken) {
+          if (seenTokens.has(d.pushToken)) continue;
+          seenTokens.add(d.pushToken);
+        }
+        if (d.webPushSubscription?.endpoint) {
+          if (seenEndpoints.has(d.webPushSubscription.endpoint)) continue;
+          seenEndpoints.add(d.webPushSubscription.endpoint);
+        }
+        if (userKey) seenUsers.add(userKey);
         targets.push(d);
       }
 
       for (const s of sessions) {
+        const userKey = s.userId ? String(s.userId) : null;
+        if (userKey && seenUsers.has(userKey)) continue;
         if (s.pushToken && !seenTokens.has(s.pushToken)) {
           seenTokens.add(s.pushToken);
+          if (userKey) seenUsers.add(userKey);
           targets.push(s);
         } else if (s.webPushSubscription?.endpoint && !seenEndpoints.has(s.webPushSubscription.endpoint)) {
           seenEndpoints.add(s.webPushSubscription.endpoint);
+          if (userKey) seenUsers.add(userKey);
           targets.push(s);
         }
       }

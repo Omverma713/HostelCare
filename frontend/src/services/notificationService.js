@@ -87,26 +87,9 @@ export async function initPushNotifications() {
         );
       }
 
-      // Schedule local notification with attachments so Android system tray displays the image too!
-      try {
-        await LocalNotifications.schedule({
-          notifications: [
-            {
-              id: Math.floor(Math.random() * 100000) + 1,
-              title,
-              body,
-              channelId: CHANNEL_ID,
-              smallIcon: 'ic_stat_hostelcare',
-              largeIcon: 'ic_launcher',
-              iconColor: '#C07660',
-              attachments: img ? [{ id: 'push_img_' + Date.now(), url: img }] : undefined,
-              extra: notification.data || {},
-            },
-          ],
-        });
-      } catch (e) {
-        console.warn('Local notification schedule fallback notice:', e);
-      }
+      // If app is in foreground, we show the clean in-app toast.
+      // We do NOT call LocalNotifications.schedule here because FCM OS service
+      // already handles or has displayed the system notification, preventing duplicate alerts in notification tray.
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
