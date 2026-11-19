@@ -62,6 +62,16 @@ export default function IterNoticesSection({ apiBaseUrl }) {
   // Full-Screen Modal & Multi-Page View States
   const [activeNoticeModal, setActiveNoticeModal] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const touchState = useRef({
+    startDist: 0,
+    initialZoom: 1,
+    startX: 0,
+    startY: 0,
+    isPinching: false,
+    isPanning: false,
+    lastTap: 0,
+  });
   const [realtimeAlert, setRealtimeAlert] = useState(null);
 
   const endpointBase = apiBaseUrl || "/api/v1/academics";
@@ -135,6 +145,7 @@ export default function IterNoticesSection({ apiBaseUrl }) {
   const closeNoticeModal = () => {
     setActiveNoticeModal(null);
     setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
     if (typeof window !== "undefined" && window.history.state && window.history.state.iterNoticeViewerOpen) {
       window.history.back();
     }
@@ -143,6 +154,80 @@ export default function IterNoticesSection({ apiBaseUrl }) {
   const openNoticeModal = (notice) => {
     setActiveNoticeModal(notice);
     setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
+
+  // Multi-Touch Two-Finger Pinch-to-Zoom & Pan Gesture Handlers
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      touchState.current.isPinching = true;
+      touchState.current.isPanning = false;
+      touchState.current.startDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchState.current.initialZoom = zoomLevel;
+    } else if (e.touches.length === 1) {
+      const now = Date.now();
+      if (now - touchState.current.lastTap < 300) {
+        if (zoomLevel > 1.2) {
+          setZoomLevel(1);
+          setPanOffset({ x: 0, y: 0 });
+        } else {
+          setZoomLevel(2.2);
+        }
+        touchState.current.lastTap = 0;
+        return;
+      }
+      touchState.current.lastTap = now;
+
+      if (zoomLevel > 1.05) {
+        touchState.current.isPanning = true;
+        touchState.current.startX = e.touches[0].clientX - panOffset.x;
+        touchState.current.startY = e.touches[0].clientY - panOffset.y;
+      }
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchState.current.isPinching && e.touches.length === 2) {
+      if (e.cancelable) e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (touchState.current.startDist > 0) {
+        const ratio = dist / touchState.current.startDist;
+        const newZoom = Math.min(Math.max(touchState.current.initialZoom * ratio, 1.0), 3.5);
+        setZoomLevel(+(newZoom.toFixed(2)));
+        if (newZoom <= 1.05) {
+          setPanOffset({ x: 0, y: 0 });
+        }
+      }
+    } else if (touchState.current.isPanning && e.touches.length === 1 && zoomLevel > 1.05) {
+      if (e.cancelable) e.preventDefault();
+      const currentX = e.touches[0].clientX - touchState.current.startX;
+      const currentY = e.touches[0].clientY - touchState.current.startY;
+      const maxPanX = 180 * (zoomLevel - 1);
+      const maxPanY = 300 * (zoomLevel - 1);
+      setPanOffset({
+        x: Math.min(Math.max(currentX, -maxPanX), maxPanX),
+        y: Math.min(Math.max(currentY, -maxPanY), maxPanY),
+      });
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (e.touches.length < 2) {
+      touchState.current.isPinching = false;
+      if (zoomLevel < 1.05) {
+        setZoomLevel(1);
+        setPanOffset({ x: 0, y: 0 });
+      }
+    }
+    if (e.touches.length === 0) {
+      touchState.current.isPanning = false;
+    }
   };
 
   // Native Android Hardware Back Button + History Guard (Zero App Restart)
@@ -395,24 +480,30 @@ export default function IterNoticesSection({ apiBaseUrl }) {
               onClick={() => handleOpenMobileReader(activeNoticeModal)}
               title="Open in Mobile Reader to Download or Share all pages"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
                 <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
-              <span>Save & Share ({totalPages} {totalPages > 1 ? "Pgs" : "Pg"})</span>
+              <span>Share / Save</span>
             </button>
           </div>
 
-          {/* 100% Edge-to-Edge Document Viewport (Continuous Vertical Stack) */}
-          <div className="iter-fs-document-scroll">
+          {/* 100% Edge-to-Edge Document Viewport (Continuous Vertical Stack with Touch Pinch & Pan) */}
+          <div
+            className="iter-fs-document-scroll"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div
               className="iter-fs-pages-stack"
               style={{
-                transform: `scale(${zoomLevel})`,
-                transformOrigin: "top center",
-                transition: "transform 0.15s ease-out",
-                width: zoomLevel > 1 ? `${zoomLevel * 100}%` : "100%",
+                transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoomLevel})`,
+                transformOrigin: "center top",
+                transition: touchState.current.isPinching || touchState.current.isPanning ? "none" : "transform 0.18s ease-out",
+                width: "100%",
+                touchAction: zoomLevel > 1.05 ? "none" : "pan-y",
               }}
             >
               {Array.from({ length: totalPages }, (_, idx) => {

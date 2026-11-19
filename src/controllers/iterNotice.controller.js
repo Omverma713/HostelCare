@@ -552,7 +552,33 @@ const renderMobileNoticeView = async (req, res) => {
   </footer>
 
   <script>
-    // 1. Direct PDF File Share to WhatsApp via Web Share API
+    // 1. Instant Direct PDF File Share to WhatsApp via Web Share API
+    let preloadedPdfFile = null;
+    let isPreloading = false;
+
+    async function preloadNoticePdf() {
+      if (isPreloading || preloadedPdfFile) return;
+      isPreloading = true;
+      try {
+        const res = await fetch("${downloadUrl}");
+        if (res.ok) {
+          const blob = await res.blob();
+          preloadedPdfFile = new File([blob], "${escapeHtml(filename)}", { type: "application/pdf" });
+        }
+      } catch (e) {
+        console.warn("[PRELOAD_PDF_WARN]", e);
+      } finally {
+        isPreloading = false;
+      }
+    }
+
+    // Preload PDF immediately so user gesture token never expires on 1st click!
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+      preloadNoticePdf();
+    } else {
+      document.addEventListener("DOMContentLoaded", preloadNoticePdf);
+    }
+
     async function sharePdfToWhatsApp() {
       const btn = document.getElementById("btnSharePdf");
       const icon = document.getElementById("shareIcon");
@@ -561,46 +587,58 @@ const renderMobileNoticeView = async (req, res) => {
       const origIcon = icon.innerText;
 
       try {
-        btn.disabled = true;
-        icon.innerText = "⏳";
-        text.innerText = "Preparing PDF...";
+        let fileToShare = preloadedPdfFile;
 
-        const pdfUrl = "${downloadUrl}";
-        const response = await fetch(pdfUrl);
-        if (!response.ok) throw new Error("Could not fetch notice PDF");
-        const blob = await response.blob();
+        if (!fileToShare) {
+          btn.disabled = true;
+          icon.innerText = "⏳";
+          text.innerText = "Loading PDF...";
 
-        const fileName = "${escapeHtml(filename)}";
-        const file = new File([blob], fileName, { type: "application/pdf" });
+          const pdfUrl = "${downloadUrl}";
+          const response = await fetch(pdfUrl);
+          if (!response.ok) throw new Error("Could not fetch notice PDF");
+          const blob = await response.blob();
+          fileToShare = new File([blob], "${escapeHtml(filename)}", { type: "application/pdf" });
+          preloadedPdfFile = fileToShare;
+        }
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (navigator.canShare && navigator.canShare({ files: [fileToShare] })) {
           await navigator.share({
-            files: [file],
+            files: [fileToShare],
             title: "${escapeHtml(notice.title)}",
-            text: "Official ITER Notice (${totalPages} ${totalPages > 1 ? 'Pages' : 'Page'})",
+            text: "Official ITER SOA Notice (${totalPages} ${totalPages > 1 ? 'Pages' : 'Page'})",
           });
         } else {
-          // Direct file download + WhatsApp fallback
+          // Fallback if browser does not support file sharing
           const a = document.createElement("a");
-          a.href = pdfUrl;
-          a.download = fileName;
+          a.href = "${downloadUrl}";
+          a.download = "${escapeHtml(filename)}";
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
 
-          const waUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent("Official ITER Notice: ${escapeHtml(notice.title)}\\nDirect PDF Download: " + window.location.origin + pdfUrl);
+          const waUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent("Official ITER Notice: ${escapeHtml(notice.title)}\\nDirect PDF Download: " + window.location.origin + "${downloadUrl}");
           window.open(waUrl, "_blank");
         }
       } catch (err) {
         if (err.name !== "AbortError") {
           console.warn("[SHARE_ERROR]", err);
+          // If gesture token expired during first load, file is now cached in preloadedPdfFile!
+          // Give user instant 1-tap share prompt rather than kicking to text link
+          if (preloadedPdfFile) {
+            text.innerText = "Tap to Share PDF";
+            icon.innerText = "📲";
+            return;
+          }
           const waUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent("Official ITER Notice: ${escapeHtml(notice.title)}\\nView & Download: " + window.location.href);
           window.open(waUrl, "_blank");
         }
       } finally {
         btn.disabled = false;
-        icon.innerText = origIcon;
-        text.innerText = origText;
+        if (text.innerText !== "Tap to Share PDF") {
+          icon.innerText = origIcon;
+          text.innerText = origText;
+        }
       }
     }
 
