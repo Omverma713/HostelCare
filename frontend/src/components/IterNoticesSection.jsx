@@ -134,6 +134,7 @@ export default function IterNoticesSection({ apiBaseUrl }) {
 
   const closeNoticeModal = () => {
     setActiveNoticeModal(null);
+    setZoomLevel(1);
     if (typeof window !== "undefined" && window.history.state && window.history.state.iterNoticeViewerOpen) {
       window.history.back();
     }
@@ -141,6 +142,7 @@ export default function IterNoticesSection({ apiBaseUrl }) {
 
   const openNoticeModal = (notice) => {
     setActiveNoticeModal(notice);
+    setZoomLevel(1);
   };
 
   // Native Android Hardware Back Button + History Guard (Zero App Restart)
@@ -189,7 +191,8 @@ export default function IterNoticesSection({ apiBaseUrl }) {
   const handleOpenMobileReader = (notice) => {
     if (!notice) return;
     const noticeId = notice.noticeId;
-    const readerUrl = getAbsoluteReaderUrl(endpointBase, noticeId);
+    const baseUrl = getAbsoluteReaderUrl(endpointBase, noticeId);
+    const readerUrl = `${baseUrl}?t=${Date.now()}`;
     window.open(readerUrl, "_system");
   };
 
@@ -363,8 +366,27 @@ export default function IterNoticesSection({ apiBaseUrl }) {
               <span>Back</span>
             </button>
 
-            <div className="iter-fs-title-text" title={activeNoticeModal.title}>
-              {activeNoticeModal.title}
+            {/* Quick In-App Zoom Controls */}
+            <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.1)", padding: "3px 8px", borderRadius: 16 }}>
+              <button
+                type="button"
+                onClick={() => setZoomLevel((prev) => Math.max(1, +(prev - 0.3).toFixed(1)))}
+                style={{ background: "none", border: "none", color: "#FAF7F2", fontSize: "1.1rem", cursor: "pointer", padding: "0 6px", lineHeight: 1 }}
+                title="Zoom Out"
+              >
+                −
+              </button>
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, minWidth: 38, textAlign: "center", color: "#FAF7F2" }}>
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setZoomLevel((prev) => Math.min(3, +(prev + 0.3).toFixed(1)))}
+                style={{ background: "none", border: "none", color: "#FAF7F2", fontSize: "1.1rem", cursor: "pointer", padding: "0 6px", lineHeight: 1 }}
+                title="Zoom In"
+              >
+                +
+              </button>
             </div>
 
             <button
@@ -378,17 +400,30 @@ export default function IterNoticesSection({ apiBaseUrl }) {
                 <polyline points="7 10 12 15 17 10"></polyline>
                 <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
-              <span>Mobile Reader ({totalPages} {totalPages > 1 ? "Pgs" : "Pg"})</span>
+              <span>Save & Share ({totalPages} {totalPages > 1 ? "Pgs" : "Pg"})</span>
             </button>
           </div>
 
           {/* 100% Edge-to-Edge Document Viewport (Continuous Vertical Stack) */}
           <div className="iter-fs-document-scroll">
-            <div className="iter-fs-pages-stack">
+            <div
+              className="iter-fs-pages-stack"
+              style={{
+                transform: `scale(${zoomLevel})`,
+                transformOrigin: "top center",
+                transition: "transform 0.15s ease-out",
+                width: zoomLevel > 1 ? `${zoomLevel * 100}%` : "100%",
+              }}
+            >
               {Array.from({ length: totalPages }, (_, idx) => {
                 const pageNum = idx + 1;
                 return (
-                  <div key={pageNum} className="iter-fs-page-wrapper">
+                  <div
+                    key={pageNum}
+                    className="iter-fs-page-wrapper"
+                    onDoubleClick={() => setZoomLevel((prev) => (prev > 1.2 ? 1 : 2.0))}
+                    title="Double-tap or use +/- to zoom"
+                  >
                     <img
                       src={`${endpointBase}/iter-notices/${activeNoticeModal.noticeId}/preview?page=${pageNum}`}
                       alt={`${activeNoticeModal.title} - Page ${pageNum}`}
