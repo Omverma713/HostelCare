@@ -280,7 +280,7 @@ const renderMobileNoticeView = async (req, res) => {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <meta name="theme-color" content="#1C1815">
   <title>${escapeHtml(notice.title)} - HostelCare</title>
   <style>
@@ -332,6 +332,14 @@ const renderMobileNoticeView = async (req, res) => {
       line-height: 1.35;
       color: #FAF7F2;
     }
+    .reader-hint {
+      font-size: 0.72rem;
+      color: #A6A096;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+    }
     .document-container {
       width: 100%;
       max-width: 820px;
@@ -339,19 +347,29 @@ const renderMobileNoticeView = async (req, res) => {
       padding: 12px 8px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
     .page-card {
       background: #FFFFFF;
-      border-radius: 8px;
+      border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
       position: relative;
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .page-card.is-zoomed {
+      z-index: 25;
+      touch-action: none;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
     }
     .page-img {
       width: 100%;
       height: auto;
       display: block;
+      transform-origin: center center;
+      will-change: transform;
     }
     .page-footer-pill {
       position: absolute;
@@ -364,6 +382,31 @@ const renderMobileNoticeView = async (req, res) => {
       padding: 3px 8px;
       border-radius: 4px;
       backdrop-filter: blur(4px);
+      pointer-events: none;
+      z-index: 5;
+    }
+    .zoom-reset-badge {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(28, 24, 21, 0.88);
+      color: #FAF7F2;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      z-index: 30;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .page-card.is-zoomed .zoom-reset-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     /* Sticky Mobile Bottom Floating Action Bar */
     .bottom-bar {
@@ -379,11 +422,11 @@ const renderMobileNoticeView = async (req, res) => {
       padding: 10px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
     }
     .btn-download {
-      flex: 2;
+      flex: 1.25;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -392,30 +435,32 @@ const renderMobileNoticeView = async (req, res) => {
       color: #FFFFFF;
       font-size: 0.88rem;
       font-weight: 700;
-      padding: 12px 14px;
-      border-radius: 10px;
+      padding: 13px 14px;
+      border-radius: 12px;
       text-decoration: none;
       box-shadow: 0 2px 8px rgba(192, 118, 96, 0.4);
-      transition: opacity 0.15s;
+      transition: opacity 0.15s, transform 0.1s;
     }
-    .btn-download:active { opacity: 0.85; }
-    .btn-action {
+    .btn-download:active { opacity: 0.85; transform: scale(0.98); }
+    .btn-share {
       flex: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      background: rgba(255, 255, 255, 0.08);
-      color: #FAF7F2;
-      font-size: 0.82rem;
-      font-weight: 600;
-      padding: 12px 10px;
-      border-radius: 10px;
-      text-decoration: none;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      gap: 6px;
+      background: #25D366;
+      color: #FFFFFF;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: none;
       cursor: pointer;
+      box-shadow: 0 2px 8px rgba(37, 211, 102, 0.35);
+      transition: opacity 0.15s, transform 0.1s;
     }
-    .btn-action:active { background: rgba(255, 255, 255, 0.15); }
+    .btn-share:active { opacity: 0.85; transform: scale(0.98); }
+    .btn-share:disabled { opacity: 0.6; cursor: wait; }
     @page {
       size: A4 portrait;
       margin: 0;
@@ -431,7 +476,8 @@ const renderMobileNoticeView = async (req, res) => {
       }
       .reader-header,
       .bottom-bar,
-      .page-footer-pill {
+      .page-footer-pill,
+      .zoom-reset-badge {
         display: none !important;
       }
       .document-container {
@@ -485,6 +531,9 @@ const renderMobileNoticeView = async (req, res) => {
       <span class="date-pill">📅 ${escapeHtml(formattedDate)} • ${totalPages} ${totalPages > 1 ? 'Pages' : 'Page'}</span>
     </div>
     <h1 class="reader-title">${escapeHtml(notice.title)}</h1>
+    <div class="reader-hint">
+      <span>🤏 Pinch with 2 fingers or double-tap to zoom pages</span>
+    </div>
   </header>
 
   <main class="document-container">
@@ -496,15 +545,183 @@ const renderMobileNoticeView = async (req, res) => {
       <span>⬇️</span>
       <span>Download PDF (${totalPages} ${totalPages > 1 ? 'Pages' : 'Page'})</span>
     </a>
-    <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="btn-action">
-      <span>💬</span>
-      <span>WhatsApp</span>
-    </a>
-    <button type="button" class="btn-action" onclick="window.print()">
-      <span>🖨️</span>
-      <span>Print / PDF</span>
+    <button type="button" class="btn-share" id="btnSharePdf" onclick="sharePdfToWhatsApp()">
+      <span id="shareIcon">💬</span>
+      <span id="shareText">WhatsApp PDF</span>
     </button>
   </footer>
+
+  <script>
+    // 1. Direct PDF File Share to WhatsApp via Web Share API
+    async function sharePdfToWhatsApp() {
+      const btn = document.getElementById("btnSharePdf");
+      const icon = document.getElementById("shareIcon");
+      const text = document.getElementById("shareText");
+      const origText = text.innerText;
+      const origIcon = icon.innerText;
+
+      try {
+        btn.disabled = true;
+        icon.innerText = "⏳";
+        text.innerText = "Preparing PDF...";
+
+        const pdfUrl = "${downloadUrl}";
+        const response = await fetch(pdfUrl);
+        if (!response.ok) throw new Error("Could not fetch notice PDF");
+        const blob = await response.blob();
+
+        const fileName = "${escapeHtml(filename)}";
+        const file = new File([blob], fileName, { type: "application/pdf" });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: "${escapeHtml(notice.title)}",
+            text: "Official ITER Notice (${totalPages} ${totalPages > 1 ? 'Pages' : 'Page'})",
+          });
+        } else {
+          // Direct file download + WhatsApp fallback
+          const a = document.createElement("a");
+          a.href = pdfUrl;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          const waUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent("Official ITER Notice: ${escapeHtml(notice.title)}\\nDirect PDF Download: " + window.location.origin + pdfUrl);
+          window.open(waUrl, "_blank");
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.warn("[SHARE_ERROR]", err);
+          const waUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent("Official ITER Notice: ${escapeHtml(notice.title)}\\nView & Download: " + window.location.href);
+          window.open(waUrl, "_blank");
+        }
+      } finally {
+        btn.disabled = false;
+        icon.innerText = origIcon;
+        text.innerText = origText;
+      }
+    }
+
+    // 2. Multi-Touch Pinch-to-Zoom & Pan Gesture Engine
+    document.querySelectorAll('.page-card').forEach(card => {
+      const img = card.querySelector('.page-img');
+      let scale = 1;
+      let posX = 0;
+      let posY = 0;
+      let startDist = 0;
+      let initialScale = 1;
+      let startX = 0;
+      let startY = 0;
+      let initialPosX = 0;
+      let initialPosY = 0;
+      let isPinching = false;
+      let isPanning = false;
+      let lastTapTime = 0;
+
+      const resetBadge = document.createElement('div');
+      resetBadge.className = 'zoom-reset-badge';
+      resetBadge.innerHTML = '🔍 Zoomed • Tap to reset';
+      card.appendChild(resetBadge);
+      resetBadge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resetZoom();
+      });
+
+      function updateTransform(animate = false) {
+        img.style.transition = animate ? 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none';
+        img.style.transform = "translate3d(" + posX + "px, " + posY + "px, 0) scale(" + scale + ")";
+        if (scale > 1.05) {
+          card.classList.add('is-zoomed');
+        } else {
+          card.classList.remove('is-zoomed');
+        }
+      }
+
+      function resetZoom() {
+        scale = 1;
+        posX = 0;
+        posY = 0;
+        updateTransform(true);
+      }
+
+      card.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          isPinching = true;
+          isPanning = false;
+          startDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          initialScale = scale;
+        } else if (e.touches.length === 1) {
+          const now = Date.now();
+          if (now - lastTapTime < 320) {
+            // Double-tap
+            if (scale > 1.2) {
+              resetZoom();
+            } else {
+              scale = 2.2;
+              const rect = card.getBoundingClientRect();
+              const tapX = e.touches[0].clientX - rect.left - rect.width / 2;
+              const tapY = e.touches[0].clientY - rect.top - rect.height / 2;
+              posX = -tapX * 0.7;
+              posY = -tapY * 0.7;
+              updateTransform(true);
+            }
+            lastTapTime = 0;
+            return;
+          }
+          lastTapTime = now;
+
+          if (scale > 1.05) {
+            isPanning = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            initialPosX = posX;
+            initialPosY = posY;
+          }
+        }
+      }, { passive: true });
+
+      card.addEventListener('touchmove', (e) => {
+        if (isPinching && e.touches.length === 2) {
+          if (e.cancelable) e.preventDefault();
+          const dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          if (startDist > 0) {
+            const ratio = dist / startDist;
+            scale = Math.min(Math.max(initialScale * ratio, 0.95), 4.5);
+            updateTransform(false);
+          }
+        } else if (isPanning && e.touches.length === 1 && scale > 1.05) {
+          if (e.cancelable) e.preventDefault();
+          const deltaX = e.touches[0].clientX - startX;
+          const deltaY = e.touches[0].clientY - startY;
+          const maxPanX = (card.offsetWidth * (scale - 1)) / 1.8;
+          const maxPanY = (card.offsetHeight * (scale - 1)) / 1.8;
+          posX = Math.min(Math.max(initialPosX + deltaX, -maxPanX), maxPanX);
+          posY = Math.min(Math.max(initialPosY + deltaY, -maxPanY), maxPanY);
+          updateTransform(false);
+        }
+      }, { passive: false });
+
+      card.addEventListener('touchend', (e) => {
+        if (isPinching && e.touches.length < 2) {
+          isPinching = false;
+          if (scale < 1.05) {
+            resetZoom();
+          }
+        }
+        if (isPanning && e.touches.length === 0) {
+          isPanning = false;
+        }
+      }, { passive: true });
+    });
+  </script>
 </body>
 </html>`;
 
