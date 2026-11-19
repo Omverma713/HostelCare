@@ -398,6 +398,25 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
   }
 
   const [activeSubTab, setActiveSubTab] = useState("timetable"); // 'timetable' | 'exam' | 'notices' | 'curriculum' | 'calendar'
+  const [isNavDropdownOpen, setIsNavDropdownOpen] = useState(false);
+  const navDropdownRef = useRef(null);
+
+  // Close interactive dropdown when tapping outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (navDropdownRef.current && !navDropdownRef.current.contains(e.target)) {
+        setIsNavDropdownOpen(false);
+      }
+    };
+    if (isNavDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [isNavDropdownOpen]);
   const [loading, setLoading] = useState(true);
   const [academicData, setAcademicData] = useState(null);
   const [selectedDay, setSelectedDay] = useState("Monday");
@@ -962,39 +981,122 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
           </div>
         )}
 
-        {/* 2. SUB-NAVIGATION TABS */}
-        <div className="acad-nav-tabs">
-          <button
-            className={`acad-nav-tab ${activeSubTab === "timetable" ? "active" : ""}`}
-            onClick={() => setActiveSubTab("timetable")}
-          >
-            🕒 Timetable
-          </button>
-          <button
-            className={`acad-nav-tab ${activeSubTab === "exam" ? "active" : ""}`}
-            onClick={() => setActiveSubTab("exam")}
-          >
-            🎯 Exam Radar
-          </button>
-          <button
-            className={`acad-nav-tab ${activeSubTab === "notices" ? "active" : ""}`}
-            onClick={() => setActiveSubTab("notices")}
-          >
-            📢 ITER Notices
-          </button>
-          <button
-            className={`acad-nav-tab ${activeSubTab === "curriculum" ? "active" : ""}`}
-            onClick={() => setActiveSubTab("curriculum")}
-          >
-            📚 Curriculum ({curriculumList.length})
-          </button>
-          <button
-            className={`acad-nav-tab ${activeSubTab === "calendar" ? "active" : ""}`}
-            onClick={() => setActiveSubTab("calendar")}
-          >
-            📅 Calendar &amp; Holidays (12)
-          </button>
-        </div>
+        {/* 2. RESPONSIVE SUB-NAVIGATION: INTERACTIVE DROPDOWN (Mobile) + SEGMENTED TABS (Desktop) */}
+        {(() => {
+          const ACADEMIC_SECTIONS = [
+            { id: "timetable", label: "Timetable", icon: "🕒", desc: "Live Classroom Tracker", badge: null },
+            { id: "exam", label: "Exam Radar", icon: "🎯", desc: "Mid-Sem & End-Sem Schedules", badge: null },
+            { id: "notices", label: "ITER Notices", icon: "📢", desc: "Official SOA Circulars", badge: "Live" },
+            { id: "curriculum", label: "Curriculum", icon: "📚", desc: "Subjects & Syllabus", badge: `${curriculumList.length}` },
+            { id: "calendar", label: "Calendar & Holidays", icon: "📅", desc: "12 Gazetted Holidays", badge: "12" },
+          ];
+          const currentSection = ACADEMIC_SECTIONS.find((s) => s.id === activeSubTab) || ACADEMIC_SECTIONS[0];
+
+          return (
+            <div className="acad-nav-interactive-wrapper" ref={navDropdownRef}>
+              {/* Mobile Interactive Dropdown Selector (Zero Horizontal Sliding) */}
+              <div className="acad-mobile-dropdown-container">
+                <button
+                  type="button"
+                  className={`acad-nav-dropdown-trigger ${isNavDropdownOpen ? "open" : ""}`}
+                  onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
+                  aria-expanded={isNavDropdownOpen}
+                  aria-haspopup="listbox"
+                  title="Tap to switch academic section"
+                >
+                  <div className="acad-dropdown-trigger-left">
+                    <span className="acad-dropdown-trigger-icon">{currentSection.icon}</span>
+                    <div className="acad-dropdown-trigger-text">
+                      <div className="acad-dropdown-trigger-label">
+                        <span>{currentSection.label}</span>
+                        {currentSection.badge && <span className="acad-dropdown-badge">{currentSection.badge}</span>}
+                      </div>
+                      <div className="acad-dropdown-trigger-sub">{currentSection.desc}</div>
+                    </div>
+                  </div>
+                  <div className="acad-dropdown-trigger-right">
+                    <span className="acad-dropdown-switch-hint">Switch</span>
+                    <svg
+                      className={`acad-dropdown-chevron ${isNavDropdownOpen ? "rotated" : ""}`}
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </button>
+
+                {/* Dropdown Options Popup */}
+                {isNavDropdownOpen && (
+                  <div className="acad-nav-dropdown-menu" role="listbox">
+                    <div className="acad-dropdown-menu-header">
+                      <span>Switch Academic Section</span>
+                      <span className="acad-dropdown-menu-subtext">Tap any section to view</span>
+                    </div>
+                    <div className="acad-dropdown-options-list">
+                      {ACADEMIC_SECTIONS.map((section) => {
+                        const isSelected = activeSubTab === section.id;
+                        return (
+                          <button
+                            key={section.id}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            className={`acad-dropdown-item ${isSelected ? "selected" : ""}`}
+                            onClick={() => {
+                              setActiveSubTab(section.id);
+                              setIsNavDropdownOpen(false);
+                            }}
+                          >
+                            <div className="acad-dropdown-item-icon">{section.icon}</div>
+                            <div className="acad-dropdown-item-info">
+                              <div className="acad-dropdown-item-title-row">
+                                <span className="acad-dropdown-item-title">{section.label}</span>
+                                {section.badge && (
+                                  <span className="acad-dropdown-badge">{section.badge}</span>
+                                )}
+                              </div>
+                              <span className="acad-dropdown-item-desc">{section.desc}</span>
+                            </div>
+                            {isSelected && (
+                              <div className="acad-dropdown-item-check" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Classic Segmented Tabs */}
+              <div className="acad-nav-tabs acad-desktop-tabs">
+                {ACADEMIC_SECTIONS.map((section) => (
+                  <button
+                    key={section.id}
+                    type="button"
+                    className={`acad-nav-tab ${activeSubTab === section.id ? "active" : ""}`}
+                    onClick={() => setActiveSubTab(section.id)}
+                  >
+                    <span>{section.icon}</span>
+                    <span>{section.label}</span>
+                    {section.badge && <span className="acad-nav-tab-badge">{section.badge}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* =========================================================================

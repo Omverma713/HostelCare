@@ -132,6 +132,347 @@
   box-shadow: 0 4px 12px rgba(192, 118, 96, 0.35);
 }
 
+.acad-nav-tab-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  margin-left: 4px;
+}
+
+.acad-nav-tab.active .acad-nav-tab-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+/* --- Interactive Dropdown Navigation --- */
+.acad-nav-interactive-wrapper {
+  position: relative;
+  width: 100%;
+  margin: 0 0 16px;
+  z-index: 30;
+}
+
+.acad-mobile-dropdown-container {
+  display: none;
+  position: relative;
+  width: 100%;
+}
+
+.acad-nav-dropdown-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-card, #FFFFFF);
+  border: 1.5px solid var(--border-subtle, #E6DFD5);
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.acad-nav-dropdown-trigger:active {
+  transform: scale(0.99);
+}
+
+.acad-nav-dropdown-trigger.open {
+  border-color: var(--accent-terracotta, #C07660);
+  box-shadow: 0 6px 18px rgba(192, 118, 96, 0.15);
+}
+
+.acad-dropdown-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.acad-dropdown-trigger-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-canvas, #F5EFE6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.acad-dropdown-trigger-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.acad-dropdown-trigger-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #1C1917);
+  line-height: 1.25;
+}
+
+.acad-dropdown-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: rgba(192, 118, 96, 0.15);
+  color: var(--accent-terracotta, #C07660);
+  letter-spacing: 0.3px;
+}
+
+.acad-dropdown-trigger-sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-secondary, #736E65);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acad-dropdown-trigger-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.acad-dropdown-switch-hint {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-terracotta, #C07660);
+  background: rgba(192, 118, 96, 0.1);
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.acad-dropdown-chevron {
+  color: var(--text-secondary, #736E65);
+  transition: transform 0.25s ease;
+}
+
+.acad-dropdown-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu Popup */
+.acad-nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card, #FFFFFF);
+  border: 1.5px solid var(--border-subtle, #E6DFD5);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  z-index: 100;
+  animation: acadDropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes acadDropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.acad-dropdown-menu-header {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid var(--border-subtle, #EFE8DC);
+  margin-bottom: 6px;
+}
+
+.acad-dropdown-menu-header span:first-child {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent-terracotta, #C07660);
+}
+
+.acad-dropdown-menu-subtext {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary, #8C877D);
+  margin-top: 2px;
+}
+
+.acad-dropdown-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.acad-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.acad-dropdown-item:active {
+  transform: scale(0.99);
+}
+
+.acad-dropdown-item:hover {
+  background: var(--bg-canvas, #F7F3EB);
+}
+
+.acad-dropdown-item.selected {
+  background: rgba(192, 118, 96, 0.08);
+  border-color: rgba(192, 118, 96, 0.25);
+}
+
+.acad-dropdown-item-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bg-canvas, #F0E9DC);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.acad-dropdown-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.acad-dropdown-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.acad-dropdown-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #1C1917);
+}
+
+.acad-dropdown-item-desc {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-secondary, #787369);
+  display: block;
+  margin-top: 1px;
+}
+
+.acad-dropdown-item-check {
+  color: var(--accent-terracotta, #C07660);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Dark theme overrides for interactive dropdown */
+:root.dark-theme .acad-nav-dropdown-trigger,
+body.login-dark-theme .acad-nav-dropdown-trigger {
+  background: #1C1A18 !important;
+  border-color: #38342F !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+:root.dark-theme .acad-nav-dropdown-trigger.open,
+body.login-dark-theme .acad-nav-dropdown-trigger.open {
+  border-color: #D48B70 !important;
+}
+
+:root.dark-theme .acad-dropdown-trigger-icon,
+body.login-dark-theme .acad-dropdown-trigger-icon {
+  background: #282420 !important;
+}
+
+:root.dark-theme .acad-dropdown-trigger-label,
+body.login-dark-theme .acad-dropdown-trigger-label {
+  color: #EDE8DE !important;
+}
+
+:root.dark-theme .acad-dropdown-trigger-sub,
+body.login-dark-theme .acad-dropdown-trigger-sub {
+  color: #A39D91 !important;
+}
+
+:root.dark-theme .acad-nav-dropdown-menu,
+body.login-dark-theme .acad-nav-dropdown-menu {
+  background: #1F1C19 !important;
+  border-color: #38342F !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6) !important;
+}
+
+:root.dark-theme .acad-dropdown-menu-header,
+body.login-dark-theme .acad-dropdown-menu-header {
+  border-bottom-color: #332F2A !important;
+}
+
+:root.dark-theme .acad-dropdown-item:hover,
+body.login-dark-theme .acad-dropdown-item:hover {
+  background: #2A2622 !important;
+}
+
+:root.dark-theme .acad-dropdown-item.selected,
+body.login-dark-theme .acad-dropdown-item.selected {
+  background: rgba(212, 139, 112, 0.14) !important;
+  border-color: rgba(212, 139, 112, 0.3) !important;
+}
+
+:root.dark-theme .acad-dropdown-item-icon,
+body.login-dark-theme .acad-dropdown-item-icon {
+  background: #282420 !important;
+}
+
+:root.dark-theme .acad-dropdown-item-title,
+body.login-dark-theme .acad-dropdown-item-title {
+  color: #EDE8DE !important;
+}
+
+:root.dark-theme .acad-dropdown-item-desc,
+body.login-dark-theme .acad-dropdown-item-desc {
+  color: #9C9588 !important;
+}
+
+@media (max-width: 768px) {
+  .acad-desktop-tabs {
+    display: none !important;
+  }
+  .acad-mobile-dropdown-container {
+    display: block !important;
+  }
+}
+
 .acad-back-pill-btn {
   background: transparent;
   border: 1px solid var(--accent-terracotta, #C07660);
@@ -1969,24 +2310,11 @@ body.login-dark-theme .slot-chip.faculty-chip {
     padding: 4px 10px !important;
   }
 
-  .acad-nav-tabs {
-    gap: 8px !important;
-    padding-bottom: 6px !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
+  .acad-desktop-tabs {
+    display: none !important;
   }
-
-  .acad-nav-tab {
-    padding: 10px 18px !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    border-radius: 12px !important;
-    white-space: nowrap !important;
-    min-height: 42px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    box-sizing: border-box !important;
+  .acad-mobile-dropdown-container {
+    display: block !important;
   }
 
   .live-lecture-bar {
