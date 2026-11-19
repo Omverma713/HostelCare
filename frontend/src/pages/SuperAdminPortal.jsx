@@ -27,20 +27,20 @@ export const DELEGATION_FEATURE_MODULES = [
 ];
 
 export const ALL_PORTAL_TABS = [
-  { id: 'overview', label: '📊 Overview', scope: 'overview' },
-  { id: 'users', label: '👥 User Directory', scope: 'users' },
-  { id: 'delegations', label: '👑 Sub-Admin Delegation', masterOnly: true },
-  { id: 'notices', label: '🚨 Global Notices', scope: 'notices' },
-  { id: 'sessions', label: '📱 Sessions & Devices', scope: 'sessions' },
-  { id: 'limits', label: '⚙️ Login Limits', scope: 'limits' },
-  { id: 'maintenance', label: '🛠️ Maintenance', scope: 'maintenance' },
-  { id: 'appversion', label: '📲 App Updates & OTA', scope: 'appversion' },
-  { id: 'pilottesting', label: '🧪 Pilot Testing', scope: 'pilottesting' },
-  { id: 'cbt', label: '🔬 Closed Beta', scope: 'cbt' },
-  { id: 'notifications', label: '🔔 Push Broadcast', scope: 'notifications' },
-  { id: 'messalerts', label: '🍱 Mess Auto-Alerts', scope: 'messalerts' },
-  { id: 'academics', label: '🎓 Academics & Exams', scope: 'academics' },
-  { id: 'audit', label: '📜 Audit Logs', scope: 'audit' },
+  { id: 'overview', label: '📊 Overview', scope: 'overview', desc: 'Live statistics, active device counters & system health' },
+  { id: 'users', label: '👥 User Directory', scope: 'users', desc: 'User management, profile edits, password resets & locks' },
+  { id: 'delegations', label: '👑 Sub-Admin Delegation', masterOnly: true, desc: 'Manage Sub-Admin privileges & scoped access' },
+  { id: 'notices', label: '🚨 Global Notices', scope: 'notices', desc: 'Campus-wide emergency & announcement notice board' },
+  { id: 'sessions', label: '📱 Sessions & Devices', scope: 'sessions', desc: 'Hardware radar, active devices, 1-click ping & mute' },
+  { id: 'limits', label: '⚙️ Login Limits', scope: 'limits', desc: 'Session concurrency, failed login lockouts & token lifespans' },
+  { id: 'maintenance', label: '🛠️ Maintenance', scope: 'maintenance', desc: 'Campus system maintenance toggle & countdown controls' },
+  { id: 'appversion', label: '📲 App Updates & OTA', scope: 'appversion', desc: 'Live Over-The-Air hotfixes, APK downloads & forced updates' },
+  { id: 'pilottesting', label: '🧪 Pilot Testing', scope: 'pilottesting', desc: 'Pilot user enrollment & staged feature rollout checks' },
+  { id: 'cbt', label: '🔬 Closed Beta', scope: 'cbt', desc: 'Closed beta testing release toggle & application reviews' },
+  { id: 'notifications', label: '🔔 Push Broadcast', scope: 'notifications', desc: 'Custom push broadcasts, flash messages & banners' },
+  { id: 'messalerts', label: '🍱 Mess Auto-Alerts', scope: 'messalerts', desc: 'Meal timings, lead-times, vacation freeze & auto-cron' },
+  { id: 'academics', label: '🎓 Academics & Exams', scope: 'academics', desc: 'Manage 2026-27 calendar, syllabus & exam radar' },
+  { id: 'audit', label: '📜 Audit Logs', scope: 'audit', desc: 'Comprehensive administrative action history & audit trails' },
 ];
 
 export const DEFAULT_DELEGATION_FORM = {
@@ -60,6 +60,8 @@ export default function SuperAdminPortal() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { token, user: currentUser, setDirectToken } = useAuth();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'overview');
+  const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
+  const tabDropdownRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
   // Overview State
@@ -180,6 +182,23 @@ export default function SuperAdminPortal() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedUser]);
+
+  // Close interactive mobile tab dropdown when clicking or touching outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (tabDropdownRef.current && !tabDropdownRef.current.contains(e.target)) {
+        setIsTabDropdownOpen(false);
+      }
+    };
+    if (isTabDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isTabDropdownOpen]);
 
   // Global Notices State
   const [notices, setNotices] = useState([]);
@@ -3486,18 +3505,119 @@ export default function SuperAdminPortal() {
           </div>
         )}
 
-        {/* Tab Switcher Pills */}
-        <div className="sa-tab-bar">
-          {visibleTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => handleTabChange(tab.id)}
-              className={`sa-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Interactive Tab Switcher & Dropdown Navigation */}
+        <div className="sa-nav-interactive-wrapper" ref={tabDropdownRef}>
+          {/* Mobile Interactive Dropdown Selector */}
+          <div className="sa-mobile-dropdown-container">
+            {(() => {
+              const currentTab = visibleTabs.find((t) => t.id === activeTab) || visibleTabs[0] || ALL_PORTAL_TABS[0];
+              const [icon, ...titleParts] = (currentTab.label || '').split(' ');
+              const titleText = titleParts.join(' ') || currentTab.label;
+
+              return (
+                <>
+                  <button
+                    type="button"
+                    className={`sa-nav-dropdown-trigger ${isTabDropdownOpen ? 'open' : ''}`}
+                    onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
+                    aria-expanded={isTabDropdownOpen}
+                    aria-haspopup="listbox"
+                    title="Tap to switch Super Admin module"
+                  >
+                    <div className="sa-dropdown-trigger-left">
+                      <span className="sa-dropdown-trigger-icon">{icon}</span>
+                      <div className="sa-dropdown-trigger-text">
+                        <div className="sa-dropdown-trigger-label">
+                          <span>{titleText}</span>
+                          <span className="sa-dropdown-badge">ACTIVE</span>
+                        </div>
+                        <div className="sa-dropdown-trigger-sub">{currentTab.desc || 'Super Admin Module'}</div>
+                      </div>
+                    </div>
+                    <div className="sa-dropdown-trigger-right">
+                      <span className="sa-dropdown-switch-hint">Switch</span>
+                      <svg
+                        className={`sa-dropdown-chevron ${isTabDropdownOpen ? 'rotated' : ''}`}
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* Dropdown Options Menu */}
+                  {isTabDropdownOpen && (
+                    <div className="sa-nav-dropdown-menu" role="listbox">
+                      <div className="sa-dropdown-menu-header">
+                        <span>Switch Admin Module</span>
+                        <span className="sa-dropdown-menu-subtext">Tap any of the {visibleTabs.length} modules to navigate</span>
+                      </div>
+                      <div className="sa-dropdown-options-list">
+                        {visibleTabs.map((tab) => {
+                          const isSelected = activeTab === tab.id;
+                          const [tabIcon, ...tabNameParts] = (tab.label || '').split(' ');
+                          const tabTitle = tabNameParts.join(' ') || tab.label;
+
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              className={`sa-dropdown-item ${isSelected ? 'selected' : ''}`}
+                              onClick={() => {
+                                handleTabChange(tab.id);
+                                setIsTabDropdownOpen(false);
+                              }}
+                            >
+                              <div className="sa-dropdown-item-icon">{tabIcon}</div>
+                              <div className="sa-dropdown-item-info">
+                                <div className="sa-dropdown-item-title-row">
+                                  <span className="sa-dropdown-item-title">{tabTitle}</span>
+                                  {tab.masterOnly && (
+                                    <span className="sa-dropdown-item-badge">MASTER</span>
+                                  )}
+                                </div>
+                                <span className="sa-dropdown-item-desc">{tab.desc || ''}</span>
+                              </div>
+                              {isSelected && (
+                                <div className="sa-dropdown-item-check" aria-hidden="true">
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                  </svg>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Desktop Classic Capsule Tabs */}
+          <div className="sa-tab-bar sa-desktop-tabs">
+            {visibleTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={`sa-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
