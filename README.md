@@ -1,10 +1,11 @@
-# 🏨 HostelCare — Smart Campus & Hostel Life Management Portal
+# 🏨 HostelCare ITER — Smart Campus & Hostel Life Management Portal
 
 [![Live Web Portal](https://img.shields.io/badge/Live%20Portal-hostelcare.omverma--dev.workers.dev-blue?style=for-the-badge&logo=cloudflare)](https://hostelcare.omverma-dev.workers.dev)
+[![Campus: ITER SOA](https://img.shields.io/badge/Campus-ITER%20SOA%20Bhubaneswar-purple?style=for-the-badge)](https://hostelcare.omverma-dev.workers.dev)
 [![AWS EC2 Cloud](https://img.shields.io/badge/Backend%20API-AWS%20EC2-orange?style=for-the-badge&logo=amazon-aws)](https://hostelcare-api.duckdns.org/health)
 [![License: ISC](https://img.shields.io/badge/License-ISC-green?style=for-the-badge)](LICENSE)
 
-> A modern, automated full-stack hostel life and dining management ecosystem designed for college campuses, residential hostels, and student communities.
+> Official modern, automated full-stack hostel life, dining and academic management ecosystem designed for **ITER (Institute of Technical Education and Research, SOA University Bhubaneswar)** students and hostelers.
 
 ---
 
