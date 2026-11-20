@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /mess-menu
+Disallow: /superadmin
+Disallow: /api/
+
+Sitemap: https://hostelcare.omverma-dev.workers.dev/sitemap.xml
