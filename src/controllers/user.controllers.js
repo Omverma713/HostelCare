@@ -970,8 +970,9 @@ const getMyRoomInfo = async (req, res) => {
 // POST /api/v1/users/forgot-password
 const forgotPassword = async (req, res) => {
   try {
-    const { registrationNumber, isResend = false, resendType = "otp" } = req.body;
+    const { registrationNumber, resetMethod = "otp", isResend = false, resendType } = req.body;
     const cleanReg = typeof registrationNumber === "string" ? registrationNumber.trim().toUpperCase() : "";
+    const effectiveMethod = isResend ? (resendType || "otp") : (resetMethod === "link" ? "link" : "otp");
 
     if (!cleanReg) {
       return res.status(400).json({ success: false, message: "Registration number is required." });
@@ -1069,6 +1070,7 @@ const forgotPassword = async (req, res) => {
         registrationNumber: user.registrationNumber,
         otp: rawOtp,
         resetLink,
+        resetMethod: effectiveMethod,
       });
     } catch (mailErr) {
       console.error("[FORGOT_PASSWORD_EMAIL_ERROR]", mailErr.message);
@@ -1100,8 +1102,11 @@ const forgotPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Password reset instructions sent to ${maskedEmail}`,
+      message: effectiveMethod === "link"
+        ? `1-Click reset link sent to ${maskedEmail}`
+        : `6-digit verification OTP sent to ${maskedEmail}`,
       maskedEmail,
+      resetMethod: effectiveMethod,
       resendCount: user.resetPasswordResendCount || 0,
       resendsRemaining,
     });
@@ -1115,11 +1120,12 @@ const forgotPassword = async (req, res) => {
 // POST /api/v1/users/forgot-password/verify-campus
 const forgotPasswordWithCampusVerification = async (req, res) => {
   try {
-    const { registrationNumber, hostel, roomNumber, newEmail } = req.body;
+    const { registrationNumber, hostel, roomNumber, newEmail, resetMethod = "otp" } = req.body;
     const cleanReg = typeof registrationNumber === "string" ? registrationNumber.trim().toUpperCase() : "";
     const cleanHostel = typeof hostel === "string" ? hostel.trim() : "";
     const cleanRoom = typeof roomNumber === "string" ? roomNumber.trim() : "";
     const cleanEmail = typeof newEmail === "string" ? newEmail.trim().toLowerCase() : "";
+    const effectiveMethod = resetMethod === "link" ? "link" : "otp";
 
     if (!cleanReg || !cleanHostel || !cleanRoom || !cleanEmail) {
       return res.status(400).json({
@@ -1187,6 +1193,7 @@ const forgotPasswordWithCampusVerification = async (req, res) => {
         registrationNumber: user.registrationNumber,
         otp: rawOtp,
         resetLink,
+        resetMethod: effectiveMethod,
       });
     } catch (mailErr) {
       console.error("[CAMPUS_VERIFICATION_EMAIL_ERROR]", mailErr.message);
@@ -1215,8 +1222,11 @@ const forgotPasswordWithCampusVerification = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Campus verification successful! Reset OTP & link sent to ${cleanEmail}`,
+      message: effectiveMethod === "link"
+        ? `Campus verified! 1-Click reset link sent to ${cleanEmail}`
+        : `Campus verified! 6-digit OTP code sent to ${cleanEmail}`,
       maskedEmail: cleanEmail,
+      resetMethod: effectiveMethod,
       resendCount: 0,
       resendsRemaining: 2,
     });

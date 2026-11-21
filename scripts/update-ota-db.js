@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.42';
-  const checksum = 'b326ce71c5cc225c1a7f5b58b05f7827822bb11d7398b28402b6b63d2bf3f731';
+  const targetVer = '1.2.2.73';
+  const checksum = '204d852e8fedf55cc64c4dec94cc666b16a061458aa7430ffe1858cac147a7e8';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -21,11 +21,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.42: Fix login submit pill rectangular clipping box in app and web';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.73: User Choice (6-Digit OTP vs 1-Click Link), reverse timer & 2-resend limit';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.42: Login button visual polish';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.73: Passcode Recovery system with OTP or direct Link selection';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');

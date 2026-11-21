@@ -77,6 +77,7 @@ export default function Login() {
   const [fpLoading, setFpLoading] = useState(false);
   const [fpCountdown, setFpCountdown] = useState(0);
   const [fpResendCount, setFpResendCount] = useState(0);
+  const [fpMethod, setFpMethod] = useState('otp'); // 'otp' | 'link'
   const [fpQuotaExceededModal, setFpQuotaExceededModal] = useState(false);
   const [fpResendExceededModal, setFpResendExceededModal] = useState(false);
 
@@ -145,7 +146,7 @@ export default function Login() {
     }
   };
 
-  // Handle Forgot Password - Step 1: Send OTP / Link
+  // Handle Forgot Password - Step 1: Send OTP OR 1-Click Link based on user selection
   const handleForgotSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     const cleanReg = fpRegNum.trim().toUpperCase();
@@ -155,16 +156,16 @@ export default function Login() {
     }
     setFpLoading(true);
     try {
-      const res = await api.forgotPassword(cleanReg, false);
+      const res = await api.forgotPassword(cleanReg, fpMethod, false);
       if (res.requiresCampusVerification || res.code === 'NO_EMAIL_LINKED') {
         triggerToast('info', 'No email linked to this account yet. Verify hostel & room to link your email.');
         setFpStep('campusVerify');
       } else if (res.success) {
-        triggerToast('success', res.message || 'Reset code & link sent to your registered email.');
+        triggerToast('success', res.message || 'Recovery instructions dispatched to your email.');
         setFpMaskedEmail(res.maskedEmail || '');
         setFpCountdown(60);
         setFpResendCount(res.resendCount || 0);
-        setFpStep('verifyAndReset');
+        setFpStep(fpMethod === 'link' ? 'linkSent' : 'verifyAndReset');
       } else {
         triggerToast('error', res.message || 'Account not found.');
       }
@@ -183,7 +184,7 @@ export default function Login() {
   };
 
   // Handle Resend with 60s Timer & Max 2 Limit Check
-  const handleResend = async (resendType = 'otp') => {
+  const handleResend = async (resendType = fpMethod) => {
     if (fpResendCount >= 2) {
       setFpResendExceededModal(true);
       return;
@@ -195,11 +196,11 @@ export default function Login() {
 
     setFpLoading(true);
     try {
-      const res = await api.forgotPassword(cleanReg, true, resendType);
+      const res = await api.forgotPassword(cleanReg, resendType, true, resendType);
       if (res.success) {
         setFpCountdown(60);
         setFpResendCount(res.resendCount ?? (fpResendCount + 1));
-        triggerToast('success', resendType === 'link' ? '1-Click Reset Link resent to email!' : 'New 6-digit OTP code resent to email!');
+        triggerToast('success', resendType === 'link' ? '1-Click Reset Link resent to your email!' : 'New 6-digit OTP code resent to your email!');
       } else {
         triggerToast('error', res.message || 'Failed to resend code.');
       }
@@ -231,13 +232,13 @@ export default function Login() {
     }
     setFpLoading(true);
     try {
-      const res = await api.forgotPasswordCampusVerify(cleanReg, cleanHostel, cleanRoom, cleanEmail);
+      const res = await api.forgotPasswordCampusVerify(cleanReg, cleanHostel, cleanRoom, cleanEmail, fpMethod);
       if (res.success) {
         triggerToast('success', res.message || 'Verification email dispatched successfully!');
         setFpMaskedEmail(cleanEmail);
         setFpCountdown(60);
         setFpResendCount(0);
-        setFpStep('verifyAndReset');
+        setFpStep(fpMethod === 'link' ? 'linkSent' : 'verifyAndReset');
       } else {
         triggerToast('error', res.message || 'Campus verification failed.');
       }
@@ -1035,13 +1036,14 @@ export default function Login() {
               <div className="wl-modal-header">
                 <h3 className="wl-modal-title">Recover Account</h3>
                 <p className="wl-modal-sub">
-                  {fpStep === 'init' && 'Enter your registration number to receive a 6-digit OTP & 1-click reset link.'}
+                  {fpStep === 'init' && 'Choose your preferred method to reset your passcode.'}
                   {fpStep === 'campusVerify' && 'Verify your campus hostel & room to securely link your email.'}
-                  {fpStep === 'verifyAndReset' && 'Enter your recovery code and choose a new passcode.'}
+                  {fpStep === 'linkSent' && '1-Click reset link has been dispatched to your email.'}
+                  {fpStep === 'verifyAndReset' && (fpToken ? 'Set your new passcode below.' : 'Enter your 6-digit OTP code and choose a new passcode.')}
                 </p>
               </div>
 
-              {/* STEP 1: INITIAL REGISTRATION NUMBER ENTRY */}
+              {/* STEP 1: REGISTRATION NUMBER & METHOD SELECTION */}
               {fpStep === 'init' && (
                 <form onSubmit={handleForgotSubmit}>
                   <div className="wl-form-group">
@@ -1060,8 +1062,34 @@ export default function Login() {
                     </div>
                   </div>
 
-                  <div className="wl-modal-info-banner">
-                    ✉️ We'll send a 6-digit OTP and direct 1-click password reset link to your registered email address.
+                  {/* USER SELECTS EITHER OTP OR EMAIL LINK */}
+                  <div style={{ marginTop: 12 }}>
+                    <label className="wl-form-label">Select How You Want to Reset:</label>
+                    <div className="wl-choice-grid">
+                      <div
+                        className={`wl-choice-card ${fpMethod === 'otp' ? 'active' : ''}`}
+                        onClick={() => setFpMethod('otp')}
+                      >
+                        <div className="wl-choice-icon">🔢</div>
+                        <div className="wl-choice-content">
+                          <div className="wl-choice-title">6-Digit In-App OTP</div>
+                          <div className="wl-choice-desc">Receive a 6-digit code on email to type in this app</div>
+                        </div>
+                        <div className="wl-choice-radio" />
+                      </div>
+
+                      <div
+                        className={`wl-choice-card ${fpMethod === 'link' ? 'active' : ''}`}
+                        onClick={() => setFpMethod('link')}
+                      >
+                        <div className="wl-choice-icon">🔗</div>
+                        <div className="wl-choice-content">
+                          <div className="wl-choice-title">1-Click Direct Email Link</div>
+                          <div className="wl-choice-desc">Receive a direct link in email (1 tap to reset, no OTP entry)</div>
+                        </div>
+                        <div className="wl-choice-radio" />
+                      </div>
+                    </div>
                   </div>
 
                   <button
@@ -1069,9 +1097,49 @@ export default function Login() {
                     className="wl-modal-submit-btn"
                     disabled={fpLoading}
                   >
-                    {fpLoading ? 'Checking Records...' : 'Send OTP & Reset Link →'}
+                    {fpLoading ? 'Sending...' : fpMethod === 'link' ? 'Send 1-Click Link →' : 'Send 6-Digit OTP →'}
                   </button>
                 </form>
+              )}
+
+              {/* STEP 1.5: 1-CLICK EMAIL LINK DISPATCHED CONFIRMATION SCREEN */}
+              {fpStep === 'linkSent' && (
+                <div style={{ textAlign: 'center', padding: '10px 0 6px 0' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>📨</div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '1.15rem', color: 'var(--text-primary)' }}>1-Click Reset Link Sent!</h4>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '0.84rem', color: '#8E8A83', lineHeight: 1.5 }}>
+                    We sent a secure password reset link to <strong>{fpMaskedEmail || 'your email'}</strong>.
+                  </p>
+
+                  <div className="wl-modal-info-banner" style={{ textAlign: 'left', marginBottom: 18 }}>
+                    💡 <strong>Next Step:</strong> Open your email app and click <strong>"Set New Passcode Now"</strong>. It will open HostelCare directly so you can create your new passcode instantly without typing any OTP.
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 11.5, color: '#8E8A83' }}>
+                    <span>Resend attempts remaining:</span>
+                    <span style={{ fontWeight: 700, color: fpResendCount >= 2 ? '#EF4444' : '#C07660' }}>
+                      {Math.max(0, 2 - fpResendCount)} / 2
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="wl-resend-btn"
+                    style={{ width: '100%', marginBottom: 14 }}
+                    disabled={fpCountdown > 0 || fpResendCount >= 2 || fpLoading}
+                    onClick={() => handleResend('link')}
+                  >
+                    {fpCountdown > 0 ? `⏳ Resend Link in ${formatTimer(fpCountdown)}` : '🔗 Resend Reset Link'}
+                  </button>
+
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', color: '#8E8A83', fontSize: 12, cursor: 'pointer' }}
+                    onClick={() => setFpStep('init')}
+                  >
+                    ← Choose Different Option
+                  </button>
+                </div>
               )}
 
               {/* STEP 2: CAMPUS VERIFICATION (FOR USERS WITHOUT LINKED EMAIL) */}
@@ -1132,7 +1200,7 @@ export default function Login() {
                     className="wl-modal-submit-btn"
                     disabled={fpLoading}
                   >
-                    {fpLoading ? 'Verifying Records...' : 'Verify & Send OTP →'}
+                    {fpLoading ? 'Verifying Records...' : fpMethod === 'link' ? 'Verify & Send 1-Click Link →' : 'Verify & Send 6-Digit OTP →'}
                   </button>
 
                   <div style={{ textAlign: 'center', marginTop: 12 }}>
@@ -1243,24 +1311,15 @@ export default function Login() {
                         </span>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <button
-                          type="button"
-                          className="wl-resend-btn"
-                          disabled={fpCountdown > 0 || fpResendCount >= 2 || fpLoading}
-                          onClick={() => handleResend('otp')}
-                        >
-                          {fpCountdown > 0 ? `⏳ OTP (${formatTimer(fpCountdown)})` : '✉️ Resend OTP'}
-                        </button>
-                        <button
-                          type="button"
-                          className="wl-resend-btn"
-                          disabled={fpCountdown > 0 || fpResendCount >= 2 || fpLoading}
-                          onClick={() => handleResend('link')}
-                        >
-                          {fpCountdown > 0 ? `⏳ Link (${formatTimer(fpCountdown)})` : '🔗 Resend Link'}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        className="wl-resend-btn"
+                        style={{ width: '100%', marginBottom: 12 }}
+                        disabled={fpCountdown > 0 || fpResendCount >= 2 || fpLoading}
+                        onClick={() => handleResend('otp')}
+                      >
+                        {fpCountdown > 0 ? `⏳ Resend OTP in ${formatTimer(fpCountdown)}` : '✉️ Resend OTP Code'}
+                      </button>
 
                       <div style={{ textAlign: 'center', marginTop: 12 }}>
                         <button

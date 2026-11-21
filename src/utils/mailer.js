@@ -387,15 +387,20 @@ async function sendFeedbackAcknowledgmentToVisitor({
 }
 
 /**
- * Sends Password Reset Email with both 6-Digit OTP and 1-Click Reset Link
+ * Sends Password Reset Email: sends EITHER 6-Digit OTP OR 1-Click Reset Link based on user selection
  */
-async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, resetLink }) {
+async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, resetLink, resetMethod = "otp" }) {
   const senderEmail =
     process.env.BREVO_SENDER_EMAIL ||
     process.env.EMAIL_USER ||
     "omverma.dev@gmail.com";
 
   const cleanName = name || registrationNumber || "Resident";
+  const isOtpMethod = resetMethod === "otp";
+
+  const subject = isOtpMethod
+    ? `🔐 Your 6-Digit HostelCare Passcode OTP [${otp}]`
+    : `🔗 Reset Your HostelCare Passcode (1-Click Link)`;
 
   const html = `
 <!DOCTYPE html>
@@ -403,7 +408,7 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reset Your HostelCare Password</title>
+  <title>${subject}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0f172a; padding: 32px 16px;">
@@ -415,7 +420,9 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
             <td style="padding: 28px 32px; background: linear-gradient(135deg, #1e1b18 0%, #292522 100%); border-bottom: 2px solid #C07660; text-align: center;">
               <div style="font-size: 32px; margin-bottom: 6px;">🌿</div>
               <h1 style="margin: 0; color: #FAF7F2; font-size: 22px; font-weight: 700; letter-spacing: -0.3px;">HostelCare</h1>
-              <p style="margin: 4px 0 0 0; color: #C07660; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Password Reset Request</p>
+              <p style="margin: 4px 0 0 0; color: #C07660; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                ${isOtpMethod ? "Passcode Verification Code" : "1-Click Passcode Reset Link"}
+              </p>
             </td>
           </tr>
 
@@ -426,31 +433,35 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
                 Hello <strong>${cleanName}</strong> (${registrationNumber}),
               </p>
               <p style="margin: 0 0 24px 0; color: #94a3b8; font-size: 14px; line-height: 1.6;">
-                We received a request to reset your HostelCare passcode. You can reset your password using either the <strong>6-digit OTP</strong> in the app or the <strong>1-Click Reset Link</strong> below.
+                ${isOtpMethod
+                  ? "We received a request to reset your HostelCare passcode using a 6-digit OTP code. Enter the code below on your screen:"
+                  : "We received a request to reset your HostelCare passcode via a direct link. Click the button below to set your new passcode instantly:"}
               </p>
 
-              <!-- Option 1: 6-Digit OTP Box -->
+              ${isOtpMethod ? `
+              <!-- 6-Digit OTP Box ONLY -->
               <div style="background: rgba(192, 118, 96, 0.08); border: 2px dashed #C07660; border-radius: 14px; padding: 22px; text-align: center; margin: 0 0 28px 0;">
                 <div style="font-size: 12px; color: #e28870; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 10px;">
-                  OPTION A: ENTER THIS 6-DIGIT OTP IN APP
+                  YOUR 6-DIGIT VERIFICATION CODE
                 </div>
                 <div style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #FAF7F2; background: #0f172a; display: inline-block; padding: 8px 24px; border-radius: 8px; border: 1px solid #334155;">
                   ${otp}
                 </div>
                 <div style="font-size: 12px; color: #94a3b8; margin-top: 10px;">
-                  ⏱️ Expires in <strong>10 minutes</strong>. Never share this code with anyone.
+                  ⏱️ Valid for <strong>10 minutes</strong>. Never share this code with anyone.
                 </div>
               </div>
-
-              <!-- Option 2: 1-Click Link Button -->
+              ` : `
+              <!-- 1-Click Link Button ONLY -->
               <div style="text-align: center; margin: 0 0 28px 0;">
-                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 12px;">
-                  OPTION B: 1-CLICK INSTANT RESET
-                </div>
                 <a href="${resetLink}" style="display: inline-block; background: #C07660; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 34px; border-radius: 10px; box-shadow: 0 4px 14px rgba(192, 118, 96, 0.4);">
-                  🔐 Set New Password Now →
+                  🔐 Set New Passcode Now →
                 </a>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 12px;">
+                  ⏱️ Link is valid for <strong>10 minutes</strong>.
+                </div>
               </div>
+              `}
 
               <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid #334155; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;">
                 <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
@@ -480,7 +491,7 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
     toName: cleanName,
     senderEmail,
     senderName: "HostelCare Portal",
-    subject: `🔐 Reset Your HostelCare Password [OTP: ${otp}]`,
+    subject,
     htmlContent: html,
   });
 }

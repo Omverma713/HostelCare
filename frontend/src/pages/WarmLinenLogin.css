@@ -1189,3 +1189,115 @@ body.login-dark-theme .wl-resend-btn:disabled {
   display: inline-block;
   filter: drop-shadow(0 4px 12px rgba(192, 118, 96, 0.3));
 }
+
+/* User Choice Cards (OTP vs 1-Click Link) */
+.wl-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 14px 0 18px 0;
+}
+
+.wl-choice-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(192, 118, 96, 0.22);
+  background: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.wl-choice-card:hover {
+  border-color: rgba(192, 118, 96, 0.5);
+  background: #FFFFFF;
+}
+
+.wl-choice-card.active {
+  border-color: #C07660;
+  background: rgba(192, 118, 96, 0.08);
+  box-shadow: 0 4px 14px rgba(192, 118, 96, 0.18);
+}
+
+.wl-choice-icon {
+  font-size: 1.5rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(192, 118, 96, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wl-choice-content {
+  flex: 1;
+}
+
+.wl-choice-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #292522;
+  margin-bottom: 2px;
+}
+
+.wl-choice-desc {
+  font-size: 0.74rem;
+  color: #8C827A;
+  line-height: 1.35;
+}
+
+.wl-choice-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(192, 118, 96, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wl-choice-card.active .wl-choice-radio {
+  border-color: #C07660;
+}
+
+.wl-choice-card.active .wl-choice-radio::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #C07660;
+}
+
+/* Dark mode overrides for choice cards */
+html.dark-theme .wl-choice-card,
+body.login-dark-theme .wl-choice-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark-theme .wl-choice-card:hover,
+body.login-dark-theme .wl-choice-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-theme .wl-choice-card.active,
+body.login-dark-theme .wl-choice-card.active {
+  background: rgba(192, 118, 96, 0.15);
+  border-color: #C07660;
+}
+
+html.dark-theme .wl-choice-title,
+body.login-dark-theme .wl-choice-title {
+  color: #FAF7F2;
+}
+
+html.dark-theme .wl-choice-desc,
+body.login-dark-theme .wl-choice-desc {
+  color: #A6A096;
+}
