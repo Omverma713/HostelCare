@@ -1354,7 +1354,7 @@ const resetPassword = async (req, res) => {
     }
 
     // Hash new password with Argon2
-    const hashedPassword = await argonLimiter(() =>
+    const hashedPassword = await argonLimiter.schedule(() =>
       Argon.hash(newPassword, {
         type: Argon.argon2id,
         memoryCost: 19456,
@@ -1439,13 +1439,13 @@ const changePassword = async (req, res) => {
     }
 
     // Verify old password
-    const isOldMatch = await argonLimiter(() => Argon.verify(user.password, oldPassword));
+    const isOldMatch = await argonLimiter.schedule(() => Argon.verify(user.password, oldPassword));
     if (!isOldMatch) {
       return res.status(400).json({ success: false, message: "Incorrect current passcode. Please try again." });
     }
 
     // Hash new password
-    const hashedPassword = await argonLimiter(() =>
+    const hashedPassword = await argonLimiter.schedule(() =>
       Argon.hash(newPassword, {
         type: Argon.argon2id,
         memoryCost: 19456,
