@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/ThemeContext';
@@ -68,6 +68,8 @@ export default function Login() {
   const [fpEmail, setFpEmail] = useState('');
   const [fpMaskedEmail, setFpMaskedEmail] = useState('');
   const [fpOtp, setFpOtp] = useState('');
+  const [fpOtpFocused, setFpOtpFocused] = useState(false);
+  const fpOtpInputRef = useRef(null);
   const [fpToken, setFpToken] = useState('');
   const [fpResetAuthToken, setFpResetAuthToken] = useState('');
   const [fpNewPassword, setFpNewPassword] = useState('');
@@ -112,6 +114,16 @@ export default function Login() {
       return () => clearTimeout(timer);
     }
   }, [fpCountdown]);
+
+  // Auto-focus OTP input on step entrance
+  useEffect(() => {
+    if (fpStep === 'verifyAndReset' && !fpToken) {
+      const timer = setTimeout(() => {
+        fpOtpInputRef.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [fpStep, fpToken]);
 
   // Handle Change Password (when current passcode is known)
   const handleChangePassword = async (e) => {
@@ -1232,19 +1244,54 @@ export default function Login() {
                       </div>
 
                       <div className="wl-form-group">
-                        <label className="wl-form-label" style={{ textAlign: 'center', display: 'block' }}>Enter 6-Digit Code</label>
-                        <div className="wl-otp-box-wrap">
+                        <label className="wl-form-label" style={{ textAlign: 'center', display: 'block', marginBottom: 6 }}>
+                          Enter 6-Digit Code
+                        </label>
+                        <div className="wl-otp-box-wrap" onClick={() => fpOtpInputRef.current?.focus()}>
                           <input
-                            type="text"
+                            ref={fpOtpInputRef}
+                            type="tel"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            autoComplete="one-time-code"
                             maxLength={6}
-                            className="wl-otp-input-field"
-                            placeholder="000000"
+                            className="wl-otp-hidden-native-input"
                             value={fpOtp}
                             onChange={(e) => setFpOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            onFocus={() => setFpOtpFocused(true)}
+                            onBlur={() => setFpOtpFocused(false)}
                             disabled={fpLoading}
+                            aria-label="6-Digit OTP Code"
                             autoFocus
                             required
                           />
+
+                          <div className="wl-otp-cells-row">
+                            {[0, 1, 2, 3, 4, 5].map((index) => {
+                              const digit = fpOtp[index];
+                              const isFilled = digit !== undefined && digit !== '';
+                              const isCurrent = fpOtp.length === index && fpOtpFocused;
+                              const isAllFilled = fpOtp.length === 6;
+
+                              return (
+                                <div
+                                  key={index}
+                                  className={`wl-otp-cell ${isFilled ? 'filled' : ''} ${isCurrent ? 'active' : ''} ${isAllFilled ? 'all-filled' : ''}`}
+                                  style={{ '--cell-index': index }}
+                                >
+                                  {isFilled ? (
+                                    <span key={`${index}-${digit}`} className="wl-otp-digit-anim">
+                                      {digit}
+                                    </span>
+                                  ) : isCurrent ? (
+                                    <span className="wl-otp-blinking-caret" />
+                                  ) : (
+                                    <span className="wl-otp-placeholder-dot">•</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     </>
