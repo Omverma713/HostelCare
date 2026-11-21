@@ -166,7 +166,7 @@ const downloadNoticePdf = async (req, res) => {
     }
 
     const filename = `HostelCare-SOA-ITER-${slugify(notice.title)}.pdf`;
-    const cachedFilePath = path.join(CACHE_DIR, `${notice.noticeId}.pdf`);
+    const cachedFilePath = path.join(CACHE_DIR, `${notice.noticeId}_hd.pdf`);
 
     // 1. If cached on disk, stream immediately as direct attachment download!
     if (fs.existsSync(cachedFilePath)) {
@@ -370,6 +370,8 @@ const renderMobileNoticeView = async (req, res) => {
       display: block;
       transform-origin: center center;
       will-change: transform;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
     }
     .page-footer-pill {
       position: absolute;

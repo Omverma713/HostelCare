@@ -142,13 +142,17 @@ async function resolveBoxNoticeDetails(sharedName, forceRefresh = false) {
           if (meta.file_version && meta.file_version.id) fileVersionId = String(meta.file_version.id);
           if (meta.name) fileName = String(meta.name);
           if (meta.representations && Array.isArray(meta.representations.entries)) {
-            const webpRep = meta.representations.entries.find((e) => e.representation === "webp");
-            if (webpRep) {
-              if (webpRep.metadata && webpRep.metadata.pages) {
-                pageCount = Number(webpRep.metadata.pages) || 1;
+            const webpRep = meta.representations.entries.find((e) => e.representation === "webp" && e.status?.state === "success");
+            const jpgRep = meta.representations.entries.find((e) => e.representation === "jpg" && e.status?.state === "success");
+            const pngRep = meta.representations.entries.find((e) => e.representation === "png");
+            const anyRep = meta.representations.entries[0];
+            const chosenRep = webpRep || jpgRep || pngRep || anyRep;
+            if (chosenRep) {
+              if (chosenRep.metadata && chosenRep.metadata.pages) {
+                pageCount = Number(chosenRep.metadata.pages) || 1;
               }
-              if (webpRep.content && webpRep.content.url_template) {
-                templateUrl = webpRep.content.url_template;
+              if (chosenRep.content && chosenRep.content.url_template) {
+                templateUrl = chosenRep.content.url_template;
               }
             }
           }
@@ -186,13 +190,41 @@ async function resolveBoxNoticeDetails(sharedName, forceRefresh = false) {
 }
 
 /**
+ * Super-Resolution & Unsharp Masking for pristine High-DPI (2048px) document rendering
+ */
+async function enhanceNoticeImage(buffer) {
+  if (!buffer || !Buffer.isBuffer(buffer)) return buffer;
+  try {
+    return await sharp(buffer)
+      .resize({
+        width: 2048,
+        kernel: sharp.kernel.lanczos3,
+        withoutEnlargement: false,
+      })
+      .sharpen({
+        sigma: 1.2,
+        m1: 1.0,
+        m2: 2.0,
+      })
+      .jpeg({
+        quality: 95,
+        chromaSubsampling: "4:4:4",
+      })
+      .toBuffer();
+  } catch (err) {
+    console.warn("[ITER_IMAGE_ENHANCE_WARN] Sharp enhancement failed, serving original:", err.message);
+    return buffer;
+  }
+}
+
+/**
  * Downloads a specific page of a notice as a pristine JPEG Buffer
  */
 async function getPageImageBuffer(notice, pageNumber = 1) {
   const pageNum = Math.max(1, parseInt(pageNumber, 10) || 1);
   const sharedName = notice.boxSharedName;
 
-  // 1. Try BoxCloud WebP template with token (supports all pages)
+  // 1. Try BoxCloud template with token (supports all pages)
   if (sharedName) {
     let details = boxSessionCache.get(sharedName);
     if (!details || !details.templateUrl || !details.readToken) {
@@ -202,30 +234,33 @@ async function getPageImageBuffer(notice, pageNumber = 1) {
     if (details && details.templateUrl && details.readToken) {
       try {
         const targetPage = Math.min(pageNum, details.pageCount || 1);
-        const pageUrl = details.templateUrl.replace("{+asset_path}", `${targetPage}.webp`);
-        const webpBuf = await fetchBufferWithAuth(pageUrl, details.readToken);
-        const jpegBuf = await sharp(webpBuf).jpeg({ quality: 90 }).toBuffer();
+        const ext = details.templateUrl.includes("jpg") ? "jpg" : details.templateUrl.includes("png") ? "png" : "webp";
+        const pageUrl = details.templateUrl.replace("{+asset_path}", `${targetPage}.${ext}`);
+        const rawBuf = await fetchBufferWithAuth(pageUrl, details.readToken);
+        const enhancedBuf = await enhanceNoticeImage(rawBuf);
         return {
-          buffer: jpegBuf,
+          buffer: enhancedBuf,
           page: targetPage,
           totalPages: details.pageCount || 1,
         };
       } catch (err) {
-        console.warn(`[ITER_PAGE_RESOLVER] WebP page fetch failed, trying fallback:`, err.message);
+        console.warn(`[ITER_PAGE_RESOLVER] Page asset fetch failed, trying fallback:`, err.message);
       }
     }
 
-    // Fallback: Page 1 thumb
+    // Fallback: Page 1 thumb with 2048px High-DPI Lanczos3 upsampling
     if (pageNum === 1 && notice.boxPreviewUrl) {
       const imgBuf = await fetchBufferWithAuth(notice.boxPreviewUrl);
-      return { buffer: imgBuf, page: 1, totalPages: notice.pageCount || 1 };
+      const enhancedBuf = await enhanceNoticeImage(imgBuf);
+      return { buffer: enhancedBuf, page: 1, totalPages: notice.pageCount || 1 };
     }
   }
 
   // 2. Fallback to assetUrl (Squarespace poster)
   if (notice.assetUrl) {
     const imgBuf = await fetchBufferWithAuth(notice.assetUrl);
-    return { buffer: imgBuf, page: 1, totalPages: 1 };
+    const enhancedBuf = await enhanceNoticeImage(imgBuf);
+    return { buffer: enhancedBuf, page: 1, totalPages: 1 };
   }
 
   throw new Error("No image available for this notice page");
