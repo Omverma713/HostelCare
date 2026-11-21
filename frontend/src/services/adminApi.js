@@ -124,6 +124,16 @@ export const adminApi = {
     });
   },
 
+  getPasswordResetsAudit() {
+    return adminRequest('/superadmin/password-resets');
+  },
+
+  exemptUserResetLimit(userId) {
+    return adminRequest(`/superadmin/users/${userId}/exempt-reset-limit`, {
+      method: 'POST',
+    });
+  },
+
   lockUser(userId, durationMinutes = 15, reason = '') {
     return adminRequest(`/superadmin/users/${userId}/lock`, {
       method: 'POST',

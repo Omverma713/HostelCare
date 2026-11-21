@@ -970,7 +970,7 @@ const getMyRoomInfo = async (req, res) => {
 // POST /api/v1/users/forgot-password
 const forgotPassword = async (req, res) => {
   try {
-    const { registrationNumber } = req.body;
+    const { registrationNumber, isResend = false, resendType = "otp" } = req.body;
     const cleanReg = typeof registrationNumber === "string" ? registrationNumber.trim().toUpperCase() : "";
 
     if (!cleanReg) {
@@ -999,6 +999,42 @@ const forgotPassword = async (req, res) => {
       });
     }
 
+    // ENFORCE STRICT RESEND LIMIT (MAX 2 RESENDS ALLOWED)
+    if (isResend) {
+      if ((user.resetPasswordResendCount || 0) >= 2) {
+        if (!user.resetPasswordHistory) user.resetPasswordHistory = [];
+        user.resetPasswordHistory.push({
+          action: "blocked",
+          email: user.email,
+          timestamp: new Date(),
+          ip: req.ip || req.headers["x-forwarded-for"] || "Unknown IP",
+          note: "Resend limit exceeded (Max 2 resends)",
+        });
+        await user.save();
+
+        return res.status(429).json({
+          success: false,
+          code: "RESEND_LIMIT_EXCEEDED",
+          resendsRemaining: 0,
+          resendCount: user.resetPasswordResendCount,
+          message: "Resend limit exceeded (Max 2 resends). Please visit the Hostel Administration Office to reset your passcode.",
+        });
+      }
+      user.resetPasswordResendCount = (user.resetPasswordResendCount || 0) + 1;
+    } else {
+      // If initial request and already blocked from previous attempts without admin reset
+      if ((user.resetPasswordResendCount || 0) >= 2) {
+        return res.status(429).json({
+          success: false,
+          code: "RESEND_LIMIT_EXCEEDED",
+          resendsRemaining: 0,
+          resendCount: user.resetPasswordResendCount,
+          message: "Account recovery limit exceeded. Please visit the Hostel Administration Office to reset your passcode.",
+        });
+      }
+      user.resetPasswordResendCount = 0;
+    }
+
     // Generate 6-digit OTP & 32-byte secure token
     const rawOtp = String(Math.floor(100000 + Math.random() * 900000));
     const rawToken = crypto.randomBytes(24).toString("hex");
@@ -1011,6 +1047,16 @@ const forgotPassword = async (req, res) => {
     user.resetPasswordExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     user.resetPasswordAttempts = 0;
     user.pendingResetEmail = null;
+
+    if (!user.resetPasswordHistory) user.resetPasswordHistory = [];
+    user.resetPasswordHistory.push({
+      action: isResend ? (resendType === "link" ? "resend_link" : "resend_otp") : "requested",
+      email: user.email,
+      timestamp: new Date(),
+      ip: req.ip || req.headers["x-forwarded-for"] || "Unknown IP",
+      note: isResend ? `Resend attempt ${user.resetPasswordResendCount}/2 (${resendType})` : "Initial password reset request",
+    });
+
     await user.save();
 
     const baseUrl = process.env.FRONTEND_URL || "https://hostelcare.omverma-dev.workers.dev";
@@ -1026,6 +1072,23 @@ const forgotPassword = async (req, res) => {
       });
     } catch (mailErr) {
       console.error("[FORGOT_PASSWORD_EMAIL_ERROR]", mailErr.message);
+
+      if (mailErr.code === "BREVO_DAILY_QUOTA_EXCEEDED") {
+        return res.status(429).json({
+          success: false,
+          code: "BREVO_DAILY_QUOTA_EXCEEDED",
+          message: "Daily email quota reached (300 limit). Please visit the Hostel Administration Office for immediate passcode reset.",
+        });
+      }
+
+      if (mailErr.code === "BREVO_IP_UNAUTHORISED") {
+        return res.status(503).json({
+          success: false,
+          code: "BREVO_IP_UNAUTHORISED",
+          message: "Email service IP restriction active. Please contact administration.",
+        });
+      }
+
       return res.status(500).json({
         success: false,
         message: "Failed to dispatch reset email via Brevo. Please check mail service or try again later.",
@@ -1033,11 +1096,14 @@ const forgotPassword = async (req, res) => {
     }
 
     const maskedEmail = user.email.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => `${a}${"*".repeat(Math.max(2, Math.min(b.length, 5)))}${c}`);
+    const resendsRemaining = Math.max(0, 2 - (user.resetPasswordResendCount || 0));
 
     return res.status(200).json({
       success: true,
       message: `Password reset instructions sent to ${maskedEmail}`,
       maskedEmail,
+      resendCount: user.resetPasswordResendCount || 0,
+      resendsRemaining,
     });
   } catch (err) {
     console.error("[FORGOT_PASSWORD_ERROR]", err);
@@ -1097,7 +1163,18 @@ const forgotPasswordWithCampusVerification = async (req, res) => {
     user.resetPasswordToken = hashedToken;
     user.resetPasswordExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
     user.resetPasswordAttempts = 0;
+    user.resetPasswordResendCount = 0;
     user.pendingResetEmail = cleanEmail;
+
+    if (!user.resetPasswordHistory) user.resetPasswordHistory = [];
+    user.resetPasswordHistory.push({
+      action: "requested",
+      email: cleanEmail,
+      timestamp: new Date(),
+      ip: req.ip || req.headers["x-forwarded-for"] || "Unknown IP",
+      note: "Campus verification initiated with new email",
+    });
+
     await user.save();
 
     const baseUrl = process.env.FRONTEND_URL || "https://hostelcare.omverma-dev.workers.dev";
@@ -1113,6 +1190,23 @@ const forgotPasswordWithCampusVerification = async (req, res) => {
       });
     } catch (mailErr) {
       console.error("[CAMPUS_VERIFICATION_EMAIL_ERROR]", mailErr.message);
+
+      if (mailErr.code === "BREVO_DAILY_QUOTA_EXCEEDED") {
+        return res.status(429).json({
+          success: false,
+          code: "BREVO_DAILY_QUOTA_EXCEEDED",
+          message: "Daily email quota reached (300 limit). Please visit the Hostel Administration Office for immediate passcode reset.",
+        });
+      }
+
+      if (mailErr.code === "BREVO_IP_UNAUTHORISED") {
+        return res.status(503).json({
+          success: false,
+          code: "BREVO_IP_UNAUTHORISED",
+          message: "Email service IP restriction active. Please contact administration.",
+        });
+      }
+
       return res.status(500).json({
         success: false,
         message: "Failed to dispatch verification email via Brevo. Please check email address or try again.",
@@ -1123,6 +1217,8 @@ const forgotPasswordWithCampusVerification = async (req, res) => {
       success: true,
       message: `Campus verification successful! Reset OTP & link sent to ${cleanEmail}`,
       maskedEmail: cleanEmail,
+      resendCount: 0,
+      resendsRemaining: 2,
     });
   } catch (err) {
     console.error("[CAMPUS_VERIFICATION_ERROR]", err);
@@ -1178,6 +1274,16 @@ const verifyResetOtp = async (req, res) => {
       process.env.JWT_SECRET || "hc_fallback_secret",
       { expiresIn: "10m" }
     );
+
+    if (!user.resetPasswordHistory) user.resetPasswordHistory = [];
+    user.resetPasswordHistory.push({
+      action: "otp_verified",
+      email: user.email,
+      timestamp: new Date(),
+      ip: req.ip || req.headers["x-forwarded-for"] || "Unknown IP",
+      note: "6-digit OTP code successfully verified",
+    });
+    await user.save();
 
     return res.status(200).json({
       success: true,
@@ -1269,11 +1375,22 @@ const resetPassword = async (req, res) => {
       user.pendingResetEmail = null;
     }
 
-    // Clear reset credentials
+    // Clear reset credentials and reset resend count on successful password change
     user.resetPasswordOtp = null;
     user.resetPasswordToken = null;
     user.resetPasswordExpiresAt = null;
     user.resetPasswordAttempts = 0;
+    user.resetPasswordResendCount = 0;
+    user.lastPasswordResetAt = new Date();
+
+    if (!user.resetPasswordHistory) user.resetPasswordHistory = [];
+    user.resetPasswordHistory.push({
+      action: "completed",
+      email: user.email,
+      timestamp: new Date(),
+      ip: req.ip || req.headers["x-forwarded-for"] || "Unknown IP",
+      note: isAuthorized && token ? "Completed via 1-Click Email Link" : "Completed via OTP verification",
+    });
 
     await user.save();
 

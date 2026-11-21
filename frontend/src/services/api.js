@@ -111,10 +111,10 @@ export const api = {
   },
 
   // --- PASSWORD RECOVERY & RESET ---
-  forgotPassword(registrationNumber) {
+  forgotPassword(registrationNumber, isResend = false, resendType = 'otp') {
     return request('/users/forgot-password', {
       method: 'POST',
-      body: JSON.stringify({ registrationNumber }),
+      body: JSON.stringify({ registrationNumber, isResend, resendType }),
     });
   },
 

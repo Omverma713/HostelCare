@@ -76,6 +76,15 @@ export default function Login() {
   const [fpShowConfirm, setFpShowConfirm] = useState(false);
   const [fpLoading, setFpLoading] = useState(false);
   const [fpCountdown, setFpCountdown] = useState(0);
+  const [fpResendCount, setFpResendCount] = useState(0);
+  const [fpQuotaExceededModal, setFpQuotaExceededModal] = useState(false);
+  const [fpResendExceededModal, setFpResendExceededModal] = useState(false);
+
+  const formatTimer = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
 
   // Detect 1-Click Link Token in URL on mount
   useEffect(() => {
@@ -138,7 +147,7 @@ export default function Login() {
 
   // Handle Forgot Password - Step 1: Send OTP / Link
   const handleForgotSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     const cleanReg = fpRegNum.trim().toUpperCase();
     if (!cleanReg) {
       triggerToast('error', 'Please enter your Registration Number.');
@@ -146,7 +155,7 @@ export default function Login() {
     }
     setFpLoading(true);
     try {
-      const res = await api.forgotPassword(cleanReg);
+      const res = await api.forgotPassword(cleanReg, false);
       if (res.requiresCampusVerification || res.code === 'NO_EMAIL_LINKED') {
         triggerToast('info', 'No email linked to this account yet. Verify hostel & room to link your email.');
         setFpStep('campusVerify');
@@ -154,12 +163,55 @@ export default function Login() {
         triggerToast('success', res.message || 'Reset code & link sent to your registered email.');
         setFpMaskedEmail(res.maskedEmail || '');
         setFpCountdown(60);
+        setFpResendCount(res.resendCount || 0);
         setFpStep('verifyAndReset');
       } else {
         triggerToast('error', res.message || 'Account not found.');
       }
     } catch (err) {
-      triggerToast('error', err.data?.message || err.message || 'Failed to process request.');
+      if (err.data?.code === 'BREVO_DAILY_QUOTA_EXCEEDED' || err.message?.includes('Daily email quota')) {
+        setFpQuotaExceededModal(true);
+      } else if (err.data?.code === 'RESEND_LIMIT_EXCEEDED') {
+        setFpResendCount(2);
+        setFpResendExceededModal(true);
+      } else {
+        triggerToast('error', err.data?.message || err.message || 'Failed to process request.');
+      }
+    } finally {
+      setFpLoading(false);
+    }
+  };
+
+  // Handle Resend with 60s Timer & Max 2 Limit Check
+  const handleResend = async (resendType = 'otp') => {
+    if (fpResendCount >= 2) {
+      setFpResendExceededModal(true);
+      return;
+    }
+    if (fpCountdown > 0) return;
+
+    const cleanReg = fpRegNum.trim().toUpperCase();
+    if (!cleanReg) return;
+
+    setFpLoading(true);
+    try {
+      const res = await api.forgotPassword(cleanReg, true, resendType);
+      if (res.success) {
+        setFpCountdown(60);
+        setFpResendCount(res.resendCount ?? (fpResendCount + 1));
+        triggerToast('success', resendType === 'link' ? '1-Click Reset Link resent to email!' : 'New 6-digit OTP code resent to email!');
+      } else {
+        triggerToast('error', res.message || 'Failed to resend code.');
+      }
+    } catch (err) {
+      if (err.data?.code === 'BREVO_DAILY_QUOTA_EXCEEDED' || err.message?.includes('Daily email quota')) {
+        setFpQuotaExceededModal(true);
+      } else if (err.data?.code === 'RESEND_LIMIT_EXCEEDED') {
+        setFpResendCount(2);
+        setFpResendExceededModal(true);
+      } else {
+        triggerToast('error', err.data?.message || err.message || 'Failed to resend.');
+      }
     } finally {
       setFpLoading(false);
     }
@@ -184,12 +236,17 @@ export default function Login() {
         triggerToast('success', res.message || 'Verification email dispatched successfully!');
         setFpMaskedEmail(cleanEmail);
         setFpCountdown(60);
+        setFpResendCount(0);
         setFpStep('verifyAndReset');
       } else {
         triggerToast('error', res.message || 'Campus verification failed.');
       }
     } catch (err) {
-      triggerToast('error', err.data?.message || err.message || 'Hostel or room details did not match records.');
+      if (err.data?.code === 'BREVO_DAILY_QUOTA_EXCEEDED' || err.message?.includes('Daily email quota')) {
+        setFpQuotaExceededModal(true);
+      } else {
+        triggerToast('error', err.data?.message || err.message || 'Hostel or room details did not match records.');
+      }
     } finally {
       setFpLoading(false);
     }
@@ -1178,26 +1235,101 @@ export default function Login() {
                   </button>
 
                   {!fpToken && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14, fontSize: 12 }}>
-                      <button
-                        type="button"
-                        style={{ background: 'none', border: 'none', color: '#8E8A83', cursor: 'pointer' }}
-                        onClick={() => setFpStep('init')}
-                      >
-                        ← Change Reg Number
-                      </button>
-                      <button
-                        type="button"
-                        style={{ background: 'none', border: 'none', color: fpCountdown > 0 ? '#A8A29E' : '#C07660', cursor: fpCountdown > 0 ? 'default' : 'pointer', fontWeight: 600 }}
-                        disabled={fpCountdown > 0 || fpLoading}
-                        onClick={handleForgotSubmit}
-                      >
-                        {fpCountdown > 0 ? `Resend in ${fpCountdown}s` : 'Resend Code'}
-                      </button>
+                    <div style={{ marginTop: 18, borderTop: '1px solid rgba(192, 118, 96, 0.15)', paddingTop: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 11.5, color: '#8E8A83' }}>
+                        <span>Resend attempts remaining:</span>
+                        <span style={{ fontWeight: 700, color: fpResendCount >= 2 ? '#EF4444' : '#C07660' }}>
+                          {Math.max(0, 2 - fpResendCount)} / 2
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <button
+                          type="button"
+                          className="wl-resend-btn"
+                          disabled={fpCountdown > 0 || fpResendCount >= 2 || fpLoading}
+                          onClick={() => handleResend('otp')}
+                        >
+                          {fpCountdown > 0 ? `⏳ OTP (${formatTimer(fpCountdown)})` : '✉️ Resend OTP'}
+                        </button>
+                        <button
+                          type="button"
+                          className="wl-resend-btn"
+                          disabled={fpCountdown > 0 || fpResendCount >= 2 || fpLoading}
+                          onClick={() => handleResend('link')}
+                        >
+                          {fpCountdown > 0 ? `⏳ Link (${formatTimer(fpCountdown)})` : '🔗 Resend Link'}
+                        </button>
+                      </div>
+
+                      <div style={{ textAlign: 'center', marginTop: 12 }}>
+                        <button
+                          type="button"
+                          style={{ background: 'none', border: 'none', color: '#8E8A83', fontSize: 12, cursor: 'pointer' }}
+                          onClick={() => setFpStep('init')}
+                        >
+                          ← Change Registration Number
+                        </button>
+                      </div>
                     </div>
                   )}
                 </form>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            POPUP 1: BREVO DAILY 300 QUOTA EXCEEDED MODAL
+            ========================================================================= */}
+        {fpQuotaExceededModal && (
+          <div className="wl-modal-backdrop" onClick={() => setFpQuotaExceededModal(false)}>
+            <div className="wl-modal-card wl-alert-popup-card" onClick={(e) => e.stopPropagation()}>
+              <div className="wl-alert-popup-icon">📢</div>
+              <h3 className="wl-modal-title" style={{ color: '#C07660', marginBottom: 8 }}>
+                Daily Email Limit Reached
+              </h3>
+              <p className="wl-modal-sub" style={{ fontSize: '0.88rem', lineHeight: 1.55, marginBottom: 18 }}>
+                The automated email dispatch service has reached its daily limit of 300 emails today.
+                <br /><br />
+                <strong>Please visit the Hostel Administration Office / Warden</strong> for immediate in-person passcode reset.
+              </p>
+              <button
+                type="button"
+                className="wl-modal-submit-btn"
+                onClick={() => setFpQuotaExceededModal(false)}
+              >
+                Go to Office / Understood
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            POPUP 2: RESEND LIMIT EXCEEDED (MAX 2 ATTEMPTS) MODAL
+            ========================================================================= */}
+        {fpResendExceededModal && (
+          <div className="wl-modal-backdrop" onClick={() => setFpResendExceededModal(false)}>
+            <div className="wl-modal-card wl-alert-popup-card" onClick={(e) => e.stopPropagation()}>
+              <div className="wl-alert-popup-icon">🛑</div>
+              <h3 className="wl-modal-title" style={{ color: '#EF4444', marginBottom: 8 }}>
+                Resend Limit Exceeded
+              </h3>
+              <p className="wl-modal-sub" style={{ fontSize: '0.88rem', lineHeight: 1.55, marginBottom: 18 }}>
+                You have reached the maximum allowed limit of <strong>2 resend requests</strong>.
+                <br /><br />
+                For your account security, automated recovery is temporarily locked for your registration number.
+                <br /><br />
+                <strong>Please visit the Hostel Administration Office</strong> or contact your Hostel Warden to reset your passcode or exempt your limit.
+              </p>
+              <button
+                type="button"
+                className="wl-modal-submit-btn"
+                style={{ background: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)' }}
+                onClick={() => setFpResendExceededModal(false)}
+              >
+                Go to Administration Office
+              </button>
             </div>
           </div>
         )}

@@ -1135,3 +1135,57 @@ body.login-dark-theme .wl-otp-input-field {
   border-color: #C07660;
   color: #FAF7F2;
 }
+
+.wl-resend-btn {
+  background: rgba(192, 118, 96, 0.08);
+  border: 1px solid rgba(192, 118, 96, 0.3);
+  color: #C07660;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 40px;
+}
+
+.wl-resend-btn:hover:not(:disabled) {
+  background: rgba(192, 118, 96, 0.16);
+  border-color: #C07660;
+}
+
+.wl-resend-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: rgba(168, 162, 158, 0.3);
+  color: #8E8A83;
+}
+
+html.dark-theme .wl-resend-btn,
+body.login-dark-theme .wl-resend-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #FFB3A0;
+}
+
+html.dark-theme .wl-resend-btn:disabled,
+body.login-dark-theme .wl-resend-btn:disabled {
+  color: #78716C;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.wl-alert-popup-card {
+  max-width: 400px;
+  text-align: center;
+}
+
+.wl-alert-popup-icon {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+  display: inline-block;
+  filter: drop-shadow(0 4px 12px rgba(192, 118, 96, 0.3));
+}

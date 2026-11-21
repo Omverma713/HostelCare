@@ -63,6 +63,8 @@ const {
   revokeDelegation,
   updateDelegationDuration,
   updateDelegationScopes,
+  getPasswordResetsAudit,
+  exemptUserResetLimit,
 } = require("../controllers/superAdmin.controllers");
 
 const {
@@ -126,6 +128,8 @@ router.post("/users/:userId/lock", sensitiveActionLimiter, lockUserAccount);
 router.patch("/users/:userId/lock-duration", sensitiveActionLimiter, adjustUserLockDuration);
 router.post("/users/:userId/flush", sensitiveActionLimiter, flushUserAccount);
 router.delete("/users/:userId", sensitiveActionLimiter, deleteUserAccount);
+router.post("/users/:userId/exempt-reset-limit", sensitiveActionLimiter, exemptUserResetLimit);
+router.get("/password-resets", getPasswordResetsAudit);
 
 // Temporary Sub-Admin Delegation Management
 router.get("/delegations", getDelegationsList);

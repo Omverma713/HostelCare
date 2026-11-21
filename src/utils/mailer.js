@@ -57,7 +57,45 @@ async function dispatchEmail({ toEmail, toName, senderEmail, senderName, replyTo
       return { success: true, provider: "brevo", data: result };
     } catch (brevoErr) {
       console.error("[Brevo API Error]:", brevoErr.message || brevoErr);
-      // Fall through to SMTP fallback
+
+      const errMsg = String(brevoErr.message || "").toLowerCase();
+      const errBody = JSON.stringify(brevoErr.response?.body || brevoErr.body || "").toLowerCase();
+      const statusCode = brevoErr.status || brevoErr.statusCode || brevoErr.response?.status;
+
+      const isQuotaExceeded =
+        statusCode === 402 ||
+        statusCode === 429 ||
+        errMsg.includes("credit") ||
+        errMsg.includes("quota") ||
+        errMsg.includes("limit") ||
+        errBody.includes("not_enough_credits") ||
+        errBody.includes("quota") ||
+        errBody.includes("credit") ||
+        errBody.includes("limit reached");
+
+      const isUnauthorisedIp =
+        statusCode === 401 ||
+        errMsg.includes("unrecognised ip") ||
+        errMsg.includes("authorised_ips") ||
+        errBody.includes("unrecognised ip");
+
+      if (isQuotaExceeded) {
+        const qErr = new Error("Daily Brevo email quota exhausted (300 limit).");
+        qErr.code = "BREVO_DAILY_QUOTA_EXCEEDED";
+        throw qErr;
+      }
+
+      if (isUnauthorisedIp) {
+        const ipErr = new Error("Brevo IP address unauthorized. Please deactivate IP restriction in Brevo security.");
+        ipErr.code = "BREVO_IP_UNAUTHORISED";
+        throw ipErr;
+      }
+
+      // If SMTP transporter is configured, attempt fallback; otherwise rethrow
+      const transporter = getTransporter();
+      if (!transporter) {
+        throw brevoErr;
+      }
     }
   }
 

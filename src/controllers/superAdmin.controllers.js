@@ -184,9 +184,11 @@ const getUsersDirectory = async (req, res) => {
       const lockMinutesRemaining = u.lockUntil && new Date(u.lockUntil) > new Date()
         ? Math.max(1, Math.ceil((new Date(u.lockUntil) - new Date()) / (60 * 1000)))
         : isLocked ? (config.lockoutDurationMinutes || 15) : 0;
+      const isResetBlocked = (u.resetPasswordResendCount || 0) >= 2;
       return {
         ...u,
         isLocked,
+        isResetBlocked,
         lockMinutesRemaining,
         activeDeviceCount: activeCount,
         effectiveDeviceLimit: effectiveLimit,
@@ -4448,7 +4450,116 @@ const updateDelegationScopes = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/v1/superadmin/password-resets
+ * Returns recovery audits and users with active/recent password reset requests
+ */
+const getPasswordResetsAudit = async (req, res) => {
+  try {
+    const users = await User.find({
+      $or: [
+        { resetPasswordResendCount: { $gt: 0 } },
+        { resetPasswordExpiresAt: { $ne: null } },
+        { lastPasswordResetAt: { $ne: null } },
+        { "resetPasswordHistory.0": { $exists: true } },
+      ],
+    })
+      .select("name registrationNumber role email hostel roomNumber resetPasswordResendCount resetPasswordAttempts resetPasswordExpiresAt lastPasswordResetAt resetPasswordHistory")
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const formatted = users.map((u) => {
+      const isBlocked = (u.resetPasswordResendCount || 0) >= 2;
+      const isPendingOtp = Boolean(u.resetPasswordExpiresAt && new Date(u.resetPasswordExpiresAt) > new Date());
+      let status = "normal";
+      if (isBlocked) status = "blocked";
+      else if (isPendingOtp) status = "pending_otp";
+      else if (u.lastPasswordResetAt) status = "completed";
+
+      return {
+        _id: u._id,
+        name: u.name,
+        registrationNumber: u.registrationNumber,
+        role: u.role,
+        email: u.email,
+        hostel: u.hostel,
+        roomNumber: u.roomNumber,
+        resendCount: u.resetPasswordResendCount || 0,
+        resendsRemaining: Math.max(0, 2 - (u.resetPasswordResendCount || 0)),
+        isBlocked,
+        status,
+        lastPasswordResetAt: u.lastPasswordResetAt,
+        history: (u.resetPasswordHistory || []).slice(-10),
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      resets: formatted,
+      totalBlocked: formatted.filter((r) => r.isBlocked).length,
+      totalActive: formatted.filter((r) => r.status === "pending_otp").length,
+    });
+  } catch (error) {
+    console.error("getPasswordResetsAudit error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load password resets audit", error: error.message });
+  }
+};
+
+/**
+ * POST /api/v1/superadmin/users/:userId/exempt-reset-limit
+ * Resets user's resend limit count to 0 and clears blocked state
+ */
+const exemptUserResetLimit = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const previousCount = user.resetPasswordResendCount || 0;
+    user.resetPasswordResendCount = 0;
+    user.resetPasswordAttempts = 0;
+
+    if (!user.resetPasswordHistory) user.resetPasswordHistory = [];
+    user.resetPasswordHistory.push({
+      action: "admin_exempted",
+      timestamp: new Date(),
+      note: `Recovery resend limit exempted by SuperAdmin (was ${previousCount}/2)`,
+      ip: req.ip || "Unknown IP",
+    });
+
+    await user.save();
+
+    await recordAudit({
+      req,
+      action: "USER_RESET_LIMIT_EXEMPTED",
+      targetType: "USER",
+      targetId: user._id,
+      targetIdentifier: user.registrationNumber,
+      summary: `Exempted password reset limit for ${user.name} (${user.registrationNumber})`,
+      details: { previousCount, newCount: 0 },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Reset limit successfully exempted for ${user.registrationNumber}. Student can now request OTP again.`,
+      user: {
+        _id: user._id,
+        registrationNumber: user.registrationNumber,
+        resendCount: 0,
+        resendsRemaining: 2,
+      },
+    });
+  } catch (error) {
+    console.error("exemptUserResetLimit error:", error);
+    return res.status(500).json({ success: false, message: "Failed to exempt reset limit", error: error.message });
+  }
+};
+
 module.exports = {
+  getPasswordResetsAudit,
+  exemptUserResetLimit,
   getSystemOverview,
   getUsersDirectory,
   getUserDetails,

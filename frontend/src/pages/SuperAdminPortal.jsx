@@ -76,6 +76,11 @@ export default function SuperAdminPortal() {
   const [editUserData, setEditUserData] = useState({ name: '', email: '', registrationNumber: '', role: '', hostel: '', roomNumber: '', newPassword: '' });
   const [resetPasswordModal, setResetPasswordModal] = useState({ open: false, userId: null, newPassword: '', adminPassword: '' });
   const [lockedUsersCount, setLockedUsersCount] = useState(0);
+  const [passwordResetsList, setPasswordResetsList] = useState([]);
+  const [resetsStats, setResetsStats] = useState({ totalBlocked: 0, totalActive: 0 });
+  const [showResetsRadar, setShowResetsRadar] = useState(false);
+  const [loadingResets, setLoadingResets] = useState(false);
+  const [exemptingLimitUserId, setExemptingLimitUserId] = useState(null);
   const [flushingUser, setFlushingUser] = useState(false);
   const [deletingUser, setDeletingUser] = useState(false);
 
@@ -536,6 +541,43 @@ export default function SuperAdminPortal() {
       setLoading(false);
     }
   }, [userFilters, userPagination.limit]);
+
+  // Load Password Resets & Recovery Radar
+  const loadPasswordResets = useCallback(async () => {
+    try {
+      setLoadingResets(true);
+      const res = await adminApi.getPasswordResetsAudit();
+      if (res && res.success) {
+        setPasswordResetsList(res.resets || []);
+        setResetsStats({ totalBlocked: res.totalBlocked || 0, totalActive: res.totalActive || 0 });
+      }
+    } catch (err) {
+      console.warn('Failed to load password resets audit:', err.message);
+    } finally {
+      setLoadingResets(false);
+    }
+  }, []);
+
+  const handleExemptResetLimit = async (userId) => {
+    try {
+      setExemptingLimitUserId(userId);
+      const res = await adminApi.exemptUserResetLimit(userId);
+      if (res && res.success) {
+        triggerToast('success', res.message || 'Reset limit exempted successfully', 'Recovery Radar');
+        await loadPasswordResets();
+        await loadUsers(userPagination.page);
+        if (selectedUser && selectedUser._id === userId) {
+          setSelectedUser((prev) => prev ? { ...prev, resetPasswordResendCount: 0, isResetBlocked: false } : prev);
+        }
+      } else {
+        triggerToast('error', res?.message || 'Failed to exempt limit', 'Recovery Radar');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Failed to exempt limit', 'Recovery Radar');
+    } finally {
+      setExemptingLimitUserId(null);
+    }
+  };
 
   // Load Sessions
   const loadSessions = useCallback(async (page = 1) => {
@@ -2160,6 +2202,7 @@ export default function SuperAdminPortal() {
     if (activeTab === 'overview') loadOverview();
     else if (activeTab === 'users') {
       loadUsers(1);
+      loadPasswordResets();
       loadAppVersion();
     }
     else if (activeTab === 'sessions') loadSessions(1);
@@ -3903,6 +3946,27 @@ export default function SuperAdminPortal() {
 
                 <button
                   type="button"
+                  onClick={() => setShowResetsRadar(!showResetsRadar)}
+                  className="sa-filter-btn"
+                  style={{
+                    background: resetsStats.totalBlocked > 0 ? 'rgba(239, 68, 68, 0.15)' : showResetsRadar ? 'rgba(192, 118, 96, 0.25)' : 'rgba(192, 118, 96, 0.12)',
+                    borderColor: resetsStats.totalBlocked > 0 ? '#EF4444' : 'var(--accent-terracotta, #C07660)',
+                    color: resetsStats.totalBlocked > 0 ? '#EF4444' : 'var(--accent-terracotta, #C07660)',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                  title="View students who requested password resets or have blocked limits"
+                >
+                  <span>🔑</span>
+                  <span>
+                    Recovery Radar {resetsStats.totalBlocked > 0 ? `(${resetsStats.totalBlocked} Blocked)` : `(${passwordResetsList.length})`}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setCreateUserModalOpen(true)}
                   className="sa-create-user-filter-btn"
                   id="btn-open-create-user-modal"
@@ -3912,6 +3976,165 @@ export default function SuperAdminPortal() {
                 </button>
               </div>
             </div>
+
+            {/* Passcode Recovery & Resets Audit Tracker Card */}
+            {(showResetsRadar || resetsStats.totalBlocked > 0) && (
+              <div
+                style={{
+                  background: 'var(--bg-secondary, #FAF7F2)',
+                  border: '1px solid rgba(192, 118, 96, 0.3)',
+                  borderRadius: '16px',
+                  padding: '18px 20px',
+                  marginBottom: '1.5rem',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: '1.4rem' }}>🔐</span>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.96rem', color: 'var(--text-primary)' }}>
+                        Passcode Reset & Recovery Audit Radar
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        Track self-service OTP requests, completed passcode changes, and students blocked by 2-resend policy.
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={loadPasswordResets}
+                      disabled={loadingResets}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-primary)',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.76rem',
+                        cursor: 'pointer',
+                        fontWeight: 650,
+                      }}
+                    >
+                      {loadingResets ? 'Refreshing...' : '🔄 Refresh Radar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowResetsRadar(false)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        fontSize: '1rem',
+                        cursor: 'pointer',
+                        padding: '2px 6px',
+                      }}
+                      title="Hide Radar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {passwordResetsList.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                    No active or blocked password recovery sessions currently.
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(192, 118, 96, 0.2)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '8px 10px' }}>Student</th>
+                          <th style={{ padding: '8px 10px' }}>Room</th>
+                          <th style={{ padding: '8px 10px' }}>Recovery Email</th>
+                          <th style={{ padding: '8px 10px' }}>Resends</th>
+                          <th style={{ padding: '8px 10px' }}>Status</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right' }}>Management</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {passwordResetsList.map((item) => (
+                          <tr key={item._id} style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                            <td style={{ padding: '8px 10px' }}>
+                              <div style={{ fontWeight: 700 }}>{item.registrationNumber}</div>
+                              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{item.name}</div>
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              {item.hostel ? `${item.hostel} - ${item.roomNumber || 'N/A'}` : 'N/A'}
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              {item.email || <span style={{ color: '#EF4444', fontStyle: 'italic' }}>No email linked</span>}
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <span style={{ fontWeight: 700, color: item.isBlocked ? '#EF4444' : item.resendCount > 0 ? '#C07660' : 'var(--text-secondary)' }}>
+                                {item.resendCount} / 2 {item.isBlocked ? '(Exceeded)' : ''}
+                              </span>
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              {item.isBlocked ? (
+                                <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', padding: '3px 8px', borderRadius: 6, fontWeight: 700, fontSize: '0.74rem' }}>
+                                  🛑 Blocked (Limit)
+                                </span>
+                              ) : item.status === 'pending_otp' ? (
+                                <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#D97706', padding: '3px 8px', borderRadius: 6, fontWeight: 700, fontSize: '0.74rem' }}>
+                                  ⏳ OTP Pending
+                                </span>
+                              ) : (
+                                <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#059669', padding: '3px 8px', borderRadius: 6, fontWeight: 700, fontSize: '0.74rem' }}>
+                                  ✅ Passcode Reset
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right' }}>
+                              {item.isBlocked || item.resendCount > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleExemptResetLimit(item._id)}
+                                  disabled={exemptingLimitUserId === item._id}
+                                  style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(192, 118, 96, 0.5)',
+                                    background: 'rgba(192, 118, 96, 0.15)',
+                                    color: 'var(--accent-terracotta, #C07660)',
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem',
+                                    cursor: 'pointer',
+                                  }}
+                                  title="Unblock user and reset their resend limit to 0"
+                                >
+                                  {exemptingLimitUserId === item._id ? 'Exempting...' : '🔄 Exempt Limit'}
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setResetPasswordModal({ open: true, userId: item._id, newPassword: '', adminPassword: '' });
+                                  }}
+                                  style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-primary)',
+                                    color: 'var(--text-secondary)',
+                                    fontSize: '0.74rem',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  Direct PIN
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Desktop Table View */}
             <div className="sa-desktop-table">
@@ -4960,6 +5183,38 @@ export default function SuperAdminPortal() {
                       </button>
                     </div>
                   </div>
+                )}
+
+                {/* Recovery Resend Limit Exemption Control */}
+                {((selectedUser.resetPasswordResendCount || 0) > 0 || selectedUser.isResetBlocked) && (
+                  <button
+                    type="button"
+                    onClick={() => handleExemptResetLimit(selectedUser._id)}
+                    disabled={exemptingLimitUserId === selectedUser._id}
+                    style={{
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(192, 118, 96, 0.45)',
+                      background: 'rgba(192, 118, 96, 0.12)',
+                      color: 'var(--accent-terracotta, #C07660)',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <span>🔄</span>
+                    <span>
+                      {exemptingLimitUserId === selectedUser._id
+                        ? 'Exempting...'
+                        : `Exempt Recovery Limit (${selectedUser.resetPasswordResendCount || 0}/2 Resends Blocked)`}
+                    </span>
+                  </button>
                 )}
 
                 {selectedUser.accountStatus === 'active' ? (

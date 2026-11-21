@@ -131,6 +131,30 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    resetPasswordResendCount: {
+      type: Number,
+      default: 0,
+    },
+
+    resetPasswordHistory: [
+      {
+        action: {
+          type: String,
+          enum: ["requested", "resend_otp", "resend_link", "otp_verified", "completed", "blocked", "admin_exempted"],
+          default: "requested",
+        },
+        email: { type: String, default: "" },
+        timestamp: { type: Date, default: Date.now },
+        ip: { type: String, default: "" },
+        note: { type: String, default: "" },
+      },
+    ],
+
+    lastPasswordResetAt: {
+      type: Date,
+      default: null,
+    },
+
     pendingResetEmail: {
       type: String,
       default: null,
