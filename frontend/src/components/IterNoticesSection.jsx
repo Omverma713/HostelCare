@@ -451,28 +451,30 @@ export default function IterNoticesSection({ apiBaseUrl }) {
               <span>Back</span>
             </button>
 
-            {/* Quick In-App Zoom Controls */}
-            <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.1)", padding: "3px 8px", borderRadius: 16 }}>
-              <button
-                type="button"
-                onClick={() => setZoomLevel((prev) => Math.max(1, +(prev - 0.3).toFixed(1)))}
-                style={{ background: "none", border: "none", color: "#FAF7F2", fontSize: "1.1rem", cursor: "pointer", padding: "0 6px", lineHeight: 1 }}
-                title="Zoom Out"
-              >
-                −
-              </button>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, minWidth: 38, textAlign: "center", color: "#FAF7F2" }}>
-                {Math.round(zoomLevel * 100)}%
-              </span>
-              <button
-                type="button"
-                onClick={() => setZoomLevel((prev) => Math.min(3, +(prev + 0.3).toFixed(1)))}
-                style={{ background: "none", border: "none", color: "#FAF7F2", fontSize: "1.1rem", cursor: "pointer", padding: "0 6px", lineHeight: 1 }}
-                title="Zoom In"
-              >
-                +
-              </button>
-            </div>
+            {/* Quick In-App Zoom Controls (for image stack) */}
+            {!activeNoticeModal.boxSharedName && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.1)", padding: "3px 8px", borderRadius: 16 }}>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((prev) => Math.max(1, +(prev - 0.3).toFixed(1)))}
+                  style={{ background: "none", border: "none", color: "#FAF7F2", fontSize: "1.1rem", cursor: "pointer", padding: "0 6px", lineHeight: 1 }}
+                  title="Zoom Out"
+                >
+                  −
+                </button>
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, minWidth: 38, textAlign: "center", color: "#FAF7F2" }}>
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((prev) => Math.min(3.5, +(prev + 0.3).toFixed(1)))}
+                  style={{ background: "none", border: "none", color: "#FAF7F2", fontSize: "1.1rem", cursor: "pointer", padding: "0 6px", lineHeight: 1 }}
+                  title="Zoom In"
+                >
+                  +
+                </button>
+              </div>
+            )}
 
             <button
               type="button"
@@ -489,48 +491,57 @@ export default function IterNoticesSection({ apiBaseUrl }) {
             </button>
           </div>
 
-          {/* 100% Edge-to-Edge Document Viewport (Continuous Vertical Stack with Touch Pinch & Pan) */}
-          <div
-            className="iter-fs-document-scroll"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
+          {/* 100% Vector Official Box Embed or Edge-to-Edge Document Viewport */}
+          {activeNoticeModal.boxSharedName ? (
+            <iframe
+              src={`https://soadu.app.box.com/embed/s/${activeNoticeModal.boxSharedName}?showDownload=false&showAnnotations=false`}
+              title={activeNoticeModal.title}
+              className="iter-fs-box-iframe"
+              allowFullScreen
+            />
+          ) : (
             <div
-              className="iter-fs-pages-stack"
-              style={{
-                transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoomLevel})`,
-                transformOrigin: "center top",
-                transition: touchState.current.isPinching || touchState.current.isPanning ? "none" : "transform 0.18s ease-out",
-                width: "100%",
-                touchAction: zoomLevel > 1.05 ? "none" : "pan-y",
-              }}
+              className="iter-fs-document-scroll"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              {Array.from({ length: totalPages }, (_, idx) => {
-                const pageNum = idx + 1;
-                return (
-                  <div
-                    key={pageNum}
-                    className="iter-fs-page-wrapper"
-                    onDoubleClick={() => setZoomLevel((prev) => (prev > 1.2 ? 1 : 2.0))}
-                    title="Double-tap or use +/- to zoom"
-                  >
-                    <img
-                      src={`${endpointBase}/iter-notices/${activeNoticeModal.noticeId}/preview?page=${pageNum}`}
-                      alt={`${activeNoticeModal.title} - Page ${pageNum}`}
-                      className="iter-fs-page-img"
-                      loading={pageNum === 1 ? "eager" : "lazy"}
-                      onError={(e) => {
-                        if (pageNum === 1 && activeNoticeModal.assetUrl && e.target.src !== activeNoticeModal.assetUrl) {
-                          e.target.src = activeNoticeModal.assetUrl;
-                        }
-                      }}
-                    />
-                  </div>
-                );
-              })}
+              <div
+                className="iter-fs-pages-stack"
+                style={{
+                  transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoomLevel})`,
+                  transformOrigin: "center top",
+                  transition: touchState.current.isPinching || touchState.current.isPanning ? "none" : "transform 0.18s ease-out",
+                  width: "100%",
+                  touchAction: zoomLevel > 1.05 ? "none" : "pan-y",
+                }}
+              >
+                {Array.from({ length: totalPages }, (_, idx) => {
+                  const pageNum = idx + 1;
+                  return (
+                    <div
+                      key={pageNum}
+                      className="iter-fs-page-wrapper"
+                      onDoubleClick={() => setZoomLevel((prev) => (prev > 1.2 ? 1 : 2.0))}
+                      title="Double-tap or use +/- to zoom"
+                    >
+                      <img
+                        src={`${endpointBase}/iter-notices/${activeNoticeModal.noticeId}/preview?page=${pageNum}&v=2048`}
+                        alt={`${activeNoticeModal.title} - Page ${pageNum}`}
+                        className="iter-fs-page-img"
+                        loading={pageNum === 1 ? "eager" : "lazy"}
+                        onError={(e) => {
+                          if (pageNum === 1 && activeNoticeModal.assetUrl && e.target.src !== activeNoticeModal.assetUrl) {
+                            e.target.src = activeNoticeModal.assetUrl;
+                          }
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

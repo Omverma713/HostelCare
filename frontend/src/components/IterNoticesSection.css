@@ -474,6 +474,14 @@
   background: #A85D48;
 }
 
+.iter-fs-box-iframe {
+  flex: 1;
+  width: 100%;
+  height: calc(100vh - 60px);
+  border: none;
+  background: #FFFFFF;
+}
+
 /* Document Scroll Viewport */
 .iter-fs-document-scroll {
   flex: 1;
