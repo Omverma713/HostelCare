@@ -411,34 +411,11 @@ export default function Login() {
     }
   };
 
-  // Pop-Out & Submit Handler
-  const handleTriggerPop = (e) => {
-    e?.preventDefault?.();
-    if (!isButtonPopped) {
-      setIsButtonPopped(true);
-    }
-    if (autoRetractTimerRef.current) clearTimeout(autoRetractTimerRef.current);
-    autoRetractTimerRef.current = setTimeout(() => {
-      setIsButtonPopped(false);
-    }, 7000);
-
-    // If inputs already filled, submit immediately
-    if (regNum.trim() && password) {
-      doLogin(regNum.trim(), password);
-    } else if (!regNum.trim()) {
-      triggerToast('info', 'Please enter your Registration Number');
-    } else if (!password) {
-      triggerToast('info', 'Please enter your Passcode');
-    }
-  };
-
+  // Submit Handler
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    if (!isButtonPopped) {
-      setIsButtonPopped(true);
-    }
     if (!regNum.trim() || !password) {
-      triggerToast('error', 'Please enter registration number and password.');
+      triggerToast('error', 'Please enter registration number and PIN.');
       return;
     }
     doLogin(regNum.trim(), password);
@@ -618,39 +595,13 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Password Field with Embedded Morphing Button */}
+            {/* PIN Field */}
             <div className="wl-form-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label className="wl-form-label" htmlFor="passwordInput" style={{ margin: 0 }}>
-                  Passcode
-                </label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <button
-                    type="button"
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: 11.5, color: '#8E8A83', fontWeight: 600, cursor: 'pointer' }}
-                    onClick={() => {
-                      setCpRegNum(regNum);
-                      setAuthModal('change');
-                    }}
-                  >
-                    Reset PIN
-                  </button>
-                  <span style={{ fontSize: 9, color: '#A8A29E' }}>•</span>
-                  <button
-                    type="button"
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: 11.5, color: '#C07660', fontWeight: 600, cursor: 'pointer' }}
-                    onClick={() => {
-                      setFpRegNum(regNum);
-                      setFpStep('init');
-                      setAuthModal('forgot');
-                    }}
-                  >
-                    Forgot PIN?
-                  </button>
-                </div>
-              </div>
+              <label className="wl-form-label" htmlFor="passwordInput">
+                PIN
+              </label>
 
-              {/* Password Box */}
+              {/* Unified Password Box */}
               <div className={`wl-input-wrapper ${shakeInputs ? 'shake-error' : ''}`}>
                 <input
                   id="passwordInput"
@@ -659,12 +610,6 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleTriggerPop();
-                    }
-                  }}
                   disabled={loading}
                   required
                 />
@@ -689,48 +634,56 @@ export default function Login() {
                     </svg>
                   )}
                 </button>
+              </div>
 
-                {/* INSIDE STATE: Submit button nestled snugly right inside password box */}
-                {!isButtonPopped && (
-                  <button
-                    type="button"
-                    onClick={handleTriggerPop}
-                    className="wl-inside-submit-btn"
-                    title="Click to launch submit pill button"
-                    aria-label="Unlock Sanctuary"
-                  >
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </button>
-                )}
+              {/* Repositioned Helper Links (Bottom-Right of PIN field) */}
+              <div className="wl-pin-actions">
+                <button
+                  type="button"
+                  className="wl-pin-helper-link"
+                  onClick={() => {
+                    setCpRegNum(regNum);
+                    setAuthModal('change');
+                  }}
+                >
+                  Reset PIN
+                </button>
+                <span className="wl-pin-sep">•</span>
+                <button
+                  type="button"
+                  className="wl-pin-helper-link forgot"
+                  onClick={() => {
+                    setFpRegNum(regNum);
+                    setFpStep('init');
+                    setAuthModal('forgot');
+                  }}
+                >
+                  Forgot PIN?
+                </button>
               </div>
             </div>
 
-            {/* OUTSIDE STATE: Popped-Out Pill Button (Animated Downward Morph) */}
-            {isButtonPopped && (
-              <div className="wl-popped-pill-wrap" style={{ overflow: 'visible', background: 'transparent' }}>
-                <button
-                  type="submit"
-                  className="wl-popped-pill-btn"
-                  disabled={loading}
-                  id="btn-login-submit"
-                >
-                  {loading ? (
-                    <>
-                      <span className="wl-spinner"></span>
-                      <span>Authenticating Sanctuary...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Unlock Sanctuary</span>
-                      <span>✨</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
+            {/* Prominent Primary Submit Button ("Unlock Sanctuary ✨") */}
+            <div className="wl-submit-btn-wrap">
+              <button
+                type="submit"
+                className="wl-primary-submit-btn"
+                disabled={loading}
+                id="btn-login-submit"
+              >
+                {loading ? (
+                  <>
+                    <span className="wl-spinner"></span>
+                    <span>Authenticating Sanctuary...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Unlock Sanctuary</span>
+                    <span>✨</span>
+                  </>
+                )}
+              </button>
+            </div>
 
             {/* Biometric Fingerprint Button (Native APK & Supported Browsers) */}
             {(Capacitor.isNativePlatform() || savedBiometricUser) && (

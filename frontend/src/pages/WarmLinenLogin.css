@@ -1036,7 +1036,7 @@ body.login-dark-theme .wl-pin-helper-link.forgot:hover {
 html.dark-theme .wl-primary-submit-btn,
 body.login-dark-theme .wl-primary-submit-btn {
   background: linear-gradient(135deg, #D88B74 0%, #B86752 100%) !important;
-  color: #14110F !important;
+  color: #FFFFFF !important;
   font-weight: 700 !important;
   box-shadow: 0 4px 16px rgba(216, 139, 116, 0.35) !important;
 }

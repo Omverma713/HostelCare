@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.77';
-  const checksum = 'c3a62630b74a806939dc4354fd6c553d4654a883efb1770054b26fa33854fefa';
+  const targetVer = '1.2.2.78';
+  const checksum = '8fbc99ff709a470dba5605607fd100f0c7e27581e27474eb274232dc0d6a9e64';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -21,11 +21,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.77: Restored original inside submit button & Unlock Sanctuary morphing pill button';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.78: Prominent full-width Unlock Sanctuary ✨ button with pure white text and authenticating spinner';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.77: Original interactive morphing submit button restored';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.78: Unlock Sanctuary button visual polish';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');
