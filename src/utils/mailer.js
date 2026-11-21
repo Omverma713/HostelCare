@@ -421,35 +421,6 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
-  <style>
-    @keyframes digitBounceIn {
-      0% { transform: scale(0.3) translateY(8px); opacity: 0; }
-      60% { transform: scale(1.22) translateY(-2px); opacity: 1; }
-      100% { transform: scale(1) translateY(0); opacity: 1; }
-    }
-    @keyframes pulseGlow {
-      0%, 100% {
-        box-shadow: 0 0 0 0 rgba(192, 118, 96, 0.35);
-        border-color: #C07660;
-      }
-      50% {
-        box-shadow: 0 0 16px 2px rgba(192, 118, 96, 0.55);
-        border-color: #E28870;
-      }
-    }
-    .otp-card-pulse {
-      animation: pulseGlow 2.5s infinite ease-in-out;
-    }
-    .otp-cell {
-      animation: digitBounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    }
-    .digit-1 { animation-delay: 0.08s; }
-    .digit-2 { animation-delay: 0.16s; }
-    .digit-3 { animation-delay: 0.24s; }
-    .digit-4 { animation-delay: 0.32s; }
-    .digit-5 { animation-delay: 0.40s; }
-    .digit-6 { animation-delay: 0.48s; }
-  </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0f172a; padding: 32px 16px;">
@@ -488,26 +459,16 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
               ` : ""}
 
               ${isOtpMethod ? `
-              <!-- 6-Digit Passcode Verification -->
-              <div class="otp-card-pulse" style="background: rgba(192, 118, 96, 0.08); border: 2px dashed #C07660; border-radius: 16px; padding: 24px 16px; text-align: center; margin: 0 0 28px 0;">
-                <div style="font-size: 12px; color: #e28870; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 16px;">
+              <!-- 6-Digit OTP Box ONLY -->
+              <div style="background: rgba(192, 118, 96, 0.08); border: 2px dashed #C07660; border-radius: 14px; padding: 22px; text-align: center; margin: 0 0 28px 0;">
+                <div style="font-size: 12px; color: #e28870; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 10px;">
                   YOUR 6-DIGIT VERIFICATION CODE
                 </div>
-
-                <!-- Segmented 6-Digit Luxury Cards with Pop-In Animation -->
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 16px auto;">
-                  <tr>
-                    ${otp.split("").map((digit, idx) => `
-                      <td align="center" valign="middle" class="otp-cell digit-${idx + 1}" style="width: 44px; height: 52px; background: #0f172a; border: 2px solid #C07660; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 28px; font-weight: 800; color: #FAF7F2; text-align: center; box-shadow: 0 4px 12px rgba(192, 118, 96, 0.25);">
-                        ${digit}
-                      </td>
-                      ${idx < 5 ? `<td style="width: 8px;"></td>` : ""}
-                    `).join("")}
-                  </tr>
-                </table>
-
-                <div style="font-size: 12px; color: #94a3b8;">
-                  ⏱️ Valid for <strong>5 minutes only</strong>. Never share this code with anyone.
+                <div style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #FAF7F2; background: #0f172a; display: inline-block; padding: 8px 24px; border-radius: 8px; border: 1px solid #334155;">
+                  ${otp}
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 10px;">
+                  ⏱️ Valid for <strong>5 minutes</strong> only. Never share this code with anyone.
                 </div>
               </div>
               ` : `
