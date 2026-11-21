@@ -1364,9 +1364,11 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid or expired reset credentials." });
     }
 
+    const cleanNewPass = String(newPassword).trim();
+
     // Hash new password with Argon2
     const hashedPassword = await argonLimiter.schedule(() =>
-      Argon.hash(newPassword, {
+      Argon.hash(cleanNewPass, {
         type: Argon.argon2id,
         memoryCost: 19456,
         timeCost: 2,
@@ -1394,16 +1396,49 @@ const resetPassword = async (req, res) => {
     user.resetPasswordResendCount = 0;
     user.lastPasswordResetAt = new Date();
 
-    if (!user.resetPasswordHistory) user.resetPasswordHistory = [];
+    if (!Array.isArray(user.resetPasswordHistory)) user.resetPasswordHistory = [];
     user.resetPasswordHistory.push({
       action: "completed",
-      email: user.email,
+      email: user.email || "",
       timestamp: new Date(),
       ip: req.ip || req.headers["x-forwarded-for"] || "Unknown IP",
       note: isAuthorized && token ? "Completed via 1-Click Email Link" : "Completed via OTP verification",
     });
 
-    await user.save();
+    try {
+      await user.save({ validateModifiedOnly: true });
+    } catch (saveErr) {
+      console.warn("[RESET_PASSWORD_SAVE_FALLBACK]", saveErr.message);
+      // Fallback to direct atomic update if legacy document validation fails
+      await User.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            password: hashedPassword,
+            isActivated: true,
+            failedLoginAttempts: 0,
+            lockUntil: null,
+            sessionsRevokedAt: new Date(),
+            resetPasswordOtp: null,
+            resetPasswordToken: null,
+            resetPasswordExpiresAt: null,
+            resetPasswordAttempts: 0,
+            resetPasswordResendCount: 0,
+            lastPasswordResetAt: new Date(),
+            ...(user.pendingResetEmail ? { email: user.pendingResetEmail, pendingResetEmail: null } : {}),
+          },
+          $push: {
+            resetPasswordHistory: {
+              action: "completed",
+              email: user.email || "",
+              timestamp: new Date(),
+              ip: req.ip || req.headers["x-forwarded-for"] || "Unknown IP",
+              note: isAuthorized && token ? "Completed via 1-Click Email Link" : "Completed via OTP verification",
+            },
+          },
+        }
+      );
+    }
 
     return res.status(200).json({
       success: true,

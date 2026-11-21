@@ -7,8 +7,8 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const config = await SystemConfig.getEffectiveConfig();
   
-  const targetVer = '1.2.2.75';
-  const checksum = '1b3ffaac5454e5f1a7a916c277d6284a43839a098dfb456542db217c14bdf512';
+  const targetVer = '1.2.2.76';
+  const checksum = '81b32aa3da9f3546f00bcc8530138ec01048e9d7a2d71116d351e715e6551466';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -21,11 +21,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.75: Animated 6-digit segmented OTP input with bounce-in, pulsing caret & all-filled wave';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.76: Floto 8 UX & Accessibility enhancements + Bulletproof PIN reset backend';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.75: Animated segmented OTP input experience';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.76: Floto UX & Accessibility upgrades + PIN reset fix';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');

@@ -414,31 +414,20 @@ export default function Login() {
   // Pop-Out & Submit Handler
   const handleTriggerPop = (e) => {
     e?.preventDefault?.();
-    if (!isButtonPopped) {
-      setIsButtonPopped(true);
-    }
-    if (autoRetractTimerRef.current) clearTimeout(autoRetractTimerRef.current);
-    autoRetractTimerRef.current = setTimeout(() => {
-      setIsButtonPopped(false);
-    }, 7000);
-
     // If inputs already filled, submit immediately
     if (regNum.trim() && password) {
       doLogin(regNum.trim(), password);
     } else if (!regNum.trim()) {
       triggerToast('info', 'Please enter your Registration Number');
     } else if (!password) {
-      triggerToast('info', 'Please enter your Passcode');
+      triggerToast('info', 'Please enter your PIN');
     }
   };
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    if (!isButtonPopped) {
-      setIsButtonPopped(true);
-    }
     if (!regNum.trim() || !password) {
-      triggerToast('error', 'Please enter registration number and password.');
+      triggerToast('error', 'Please enter registration number and PIN.');
       return;
     }
     doLogin(regNum.trim(), password);
@@ -540,13 +529,17 @@ export default function Login() {
         </div>
 
         {/* Tab Switcher: Sign In vs Activate Account with Smooth Sliding Pill */}
-        <div className="wl-auth-tabs">
+        <div className="wl-auth-tabs" role="tablist" aria-label="Account Access Options">
           <div 
             className="wl-sliding-indicator" 
             style={{ transform: activeTab === 'login' ? 'translateX(0%)' : 'translateX(100%)' }} 
           />
           <button
             type="button"
+            role="tab"
+            id="tab-login"
+            aria-selected={activeTab === 'login'}
+            aria-controls="panel-login"
             className={`wl-auth-tab-btn ${activeTab === 'login' ? 'active' : ''}`}
             onClick={() => { setActiveTab('login'); setIsButtonPopped(false); }}
           >
@@ -554,6 +547,10 @@ export default function Login() {
           </button>
           <button
             type="button"
+            role="tab"
+            id="tab-activate"
+            aria-selected={activeTab === 'activate'}
+            aria-controls="panel-activate"
             className={`wl-auth-tab-btn ${activeTab === 'activate' ? 'active' : ''}`}
             onClick={() => { setActiveTab('activate'); setIsButtonPopped(false); }}
           >
@@ -562,10 +559,10 @@ export default function Login() {
         </div>
 
         {/* -------------------------------------------------------------
-            TAB 1: SIGN IN (ZEN PAVILION WITH MORPHING BUTTON)
+            TAB 1: SIGN IN (ZEN PAVILION WITH PROMINENT PRIMARY CTA)
             ------------------------------------------------------------- */}
         {activeTab === 'login' ? (
-          <form onSubmit={handleFormSubmit}>
+          <form id="panel-login" role="tabpanel" aria-labelledby="tab-login" onSubmit={handleFormSubmit}>
 
             {/* Dual Role Switcher with Smooth Sliding Pill */}
             <div className="wl-role-grid">
@@ -610,39 +607,13 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Password Field with Embedded Morphing Button */}
+            {/* PIN Field */}
             <div className="wl-form-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label className="wl-form-label" htmlFor="passwordInput" style={{ margin: 0 }}>
-                  Passcode
-                </label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <button
-                    type="button"
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: 11.5, color: '#8E8A83', fontWeight: 600, cursor: 'pointer' }}
-                    onClick={() => {
-                      setCpRegNum(regNum);
-                      setAuthModal('change');
-                    }}
-                  >
-                    Reset PIN
-                  </button>
-                  <span style={{ fontSize: 9, color: '#A8A29E' }}>•</span>
-                  <button
-                    type="button"
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: 11.5, color: '#C07660', fontWeight: 600, cursor: 'pointer' }}
-                    onClick={() => {
-                      setFpRegNum(regNum);
-                      setFpStep('init');
-                      setAuthModal('forgot');
-                    }}
-                  >
-                    Forgot PIN?
-                  </button>
-                </div>
-              </div>
+              <label className="wl-form-label" htmlFor="passwordInput">
+                PIN
+              </label>
 
-              {/* Password Box */}
+              {/* Unified Password Box */}
               <div className={`wl-input-wrapper ${shakeInputs ? 'shake-error' : ''}`}>
                 <input
                   id="passwordInput"
@@ -651,12 +622,6 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleTriggerPop();
-                    }
-                  }}
                   disabled={loading}
                   required
                 />
@@ -681,48 +646,56 @@ export default function Login() {
                     </svg>
                   )}
                 </button>
+              </div>
 
-                {/* INSIDE STATE: Submit button nestled snugly right inside password box */}
-                {!isButtonPopped && (
-                  <button
-                    type="button"
-                    onClick={handleTriggerPop}
-                    className="wl-inside-submit-btn"
-                    title="Click to launch submit pill button"
-                    aria-label="Unlock Sanctuary"
-                  >
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </button>
-                )}
+              {/* Repositioned Helper Links (Bottom-Right of PIN field) */}
+              <div className="wl-pin-actions">
+                <button
+                  type="button"
+                  className="wl-pin-helper-link"
+                  onClick={() => {
+                    setCpRegNum(regNum);
+                    setAuthModal('change');
+                  }}
+                >
+                  Reset PIN
+                </button>
+                <span className="wl-pin-sep">•</span>
+                <button
+                  type="button"
+                  className="wl-pin-helper-link forgot"
+                  onClick={() => {
+                    setFpRegNum(regNum);
+                    setFpStep('init');
+                    setAuthModal('forgot');
+                  }}
+                >
+                  Forgot PIN?
+                </button>
               </div>
             </div>
 
-            {/* OUTSIDE STATE: Popped-Out Pill Button (Animated Downward Morph) */}
-            {isButtonPopped && (
-              <div className="wl-popped-pill-wrap" style={{ overflow: 'visible', background: 'transparent' }}>
-                <button
-                  type="submit"
-                  className="wl-popped-pill-btn"
-                  disabled={loading}
-                  id="btn-login-submit"
-                >
-                  {loading ? (
-                    <>
-                      <span className="wl-spinner"></span>
-                      <span>Authenticating Sanctuary...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Unlock Sanctuary</span>
-                      <span>✨</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
+            {/* Prominent Primary Sign In Button */}
+            <div className="wl-submit-btn-wrap">
+              <button
+                type="submit"
+                className="wl-primary-submit-btn"
+                disabled={loading}
+                id="btn-login-submit"
+              >
+                {loading ? (
+                  <>
+                    <span className="wl-spinner"></span>
+                    <span>Signing In...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <span className="wl-btn-arrow">→</span>
+                  </>
+                )}
+              </button>
+            </div>
 
             {/* Biometric Fingerprint Button (Native APK & Supported Browsers) */}
             {(Capacitor.isNativePlatform() || savedBiometricUser) && (
@@ -759,7 +732,7 @@ export default function Login() {
           /* -------------------------------------------------------------
               TAB 2: ACTIVATE ACCOUNT
               ------------------------------------------------------------- */
-          <form onSubmit={handleActivateSubmit}>
+          <form id="panel-activate" role="tabpanel" aria-labelledby="tab-activate" onSubmit={handleActivateSubmit}>
             <div className="wl-form-group">
               <label className="wl-form-label" htmlFor="actReg">Registration Number</label>
               <div className="wl-input-wrapper">
@@ -931,8 +904,8 @@ export default function Login() {
               </button>
 
               <div className="wl-modal-header">
-                <h3 className="wl-modal-title">Reset Passcode</h3>
-                <p className="wl-modal-sub">Update your current passcode with your existing credentials.</p>
+                <h3 className="wl-modal-title">Reset PIN</h3>
+                <p className="wl-modal-sub">Update your current PIN with your existing credentials.</p>
               </div>
 
               <form onSubmit={handleChangePassword}>
@@ -952,12 +925,12 @@ export default function Login() {
                 </div>
 
                 <div className="wl-form-group">
-                  <label className="wl-form-label">Old Passcode</label>
+                  <label className="wl-form-label">Old PIN</label>
                   <div className="wl-input-wrapper">
                     <input
                       type={cpShowOld ? 'text' : 'password'}
                       className="wl-text-input"
-                      placeholder="Current passcode"
+                      placeholder="Current PIN"
                       value={cpOldPassword}
                       onChange={(e) => setCpOldPassword(e.target.value)}
                       disabled={cpLoading}
@@ -975,7 +948,7 @@ export default function Login() {
                 </div>
 
                 <div className="wl-form-group">
-                  <label className="wl-form-label">New Passcode</label>
+                  <label className="wl-form-label">New PIN</label>
                   <div className="wl-input-wrapper">
                     <input
                       type={cpShowNew ? 'text' : 'password'}
@@ -998,12 +971,12 @@ export default function Login() {
                 </div>
 
                 <div className="wl-form-group">
-                  <label className="wl-form-label">Confirm New Passcode</label>
+                  <label className="wl-form-label">Confirm New PIN</label>
                   <div className="wl-input-wrapper">
                     <input
                       type={cpShowConfirm ? 'text' : 'password'}
                       className="wl-text-input"
-                      placeholder="Re-enter new passcode"
+                      placeholder="Re-enter new PIN"
                       value={cpConfirmPassword}
                       onChange={(e) => setCpConfirmPassword(e.target.value)}
                       disabled={cpLoading}
@@ -1025,7 +998,7 @@ export default function Login() {
                   className="wl-modal-submit-btn"
                   disabled={cpLoading}
                 >
-                  {cpLoading ? 'Updating Passcode...' : 'Save New Passcode →'}
+                  {cpLoading ? 'Updating PIN...' : 'Save New PIN →'}
                 </button>
               </form>
             </div>
@@ -1050,10 +1023,10 @@ export default function Login() {
               <div className="wl-modal-header">
                 <h3 className="wl-modal-title">Recover Account</h3>
                 <p className="wl-modal-sub">
-                  {fpStep === 'init' && 'Choose your preferred method to reset your passcode.'}
+                  {fpStep === 'init' && 'Choose your preferred method to reset your PIN.'}
                   {fpStep === 'campusVerify' && 'Verify your campus hostel & room to securely link your email.'}
                   {fpStep === 'linkSent' && '1-Click reset link has been dispatched to your email.'}
-                  {fpStep === 'verifyAndReset' && (fpToken ? 'Set your new passcode below.' : 'Enter your 6-digit OTP code and choose a new passcode.')}
+                  {fpStep === 'verifyAndReset' && (fpToken ? 'Set your new PIN below.' : 'Enter your 6-digit OTP code and choose a new PIN.')}
                 </p>
               </div>
 
@@ -1235,7 +1208,7 @@ export default function Login() {
                   {fpToken ? (
                     <div className="wl-modal-info-banner">
                       ✅ <strong>1-Click Email Link Verified!</strong><br />
-                      Set your new passcode below to complete password recovery.
+                      Set your new PIN below to complete password recovery.
                     </div>
                   ) : (
                     <>
@@ -1298,7 +1271,7 @@ export default function Login() {
                   )}
 
                   <div className="wl-form-group">
-                    <label className="wl-form-label">New Passcode</label>
+                    <label className="wl-form-label">New PIN</label>
                     <div className="wl-input-wrapper">
                       <input
                         type={fpShowNew ? 'text' : 'password'}
@@ -1321,12 +1294,12 @@ export default function Login() {
                   </div>
 
                   <div className="wl-form-group">
-                    <label className="wl-form-label">Confirm New Passcode</label>
+                    <label className="wl-form-label">Confirm New PIN</label>
                     <div className="wl-input-wrapper">
                       <input
                         type={fpShowConfirm ? 'text' : 'password'}
                         className="wl-text-input"
-                        placeholder="Re-enter new passcode"
+                        placeholder="Re-enter new PIN"
                         value={fpConfirmPassword}
                         onChange={(e) => setFpConfirmPassword(e.target.value)}
                         disabled={fpLoading}
@@ -1348,7 +1321,7 @@ export default function Login() {
                     className="wl-modal-submit-btn"
                     disabled={fpLoading}
                   >
-                    {fpLoading ? 'Resetting Passcode...' : 'Reset Passcode & Sign In →'}
+                    {fpLoading ? 'Resetting PIN...' : 'Reset PIN & Sign In →'}
                   </button>
 
                   {!fpToken && (

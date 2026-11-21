@@ -136,7 +136,7 @@
 
 .wl-subtitle {
   font-size: 13px;
-  color: #7D7F7A;
+  color: #52504A;
   margin: 0 0 22px;
   text-align: center;
   line-height: 1.5;
@@ -179,7 +179,7 @@
   border-radius: 10px;
   border: none;
   background: transparent;
-  color: #7D7F7A;
+  color: #52504A;
   cursor: pointer;
   transition: color 0.22s ease, transform 0.15s ease;
 }
@@ -361,6 +361,97 @@
   transform: scale(0.95);
 }
 
+/* PIN Helper Actions (Bottom Right Alignment) */
+.wl-pin-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.wl-pin-helper-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11.5px;
+  color: #52504A;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.wl-pin-helper-link:hover {
+  color: #242523;
+  text-decoration: underline;
+}
+
+.wl-pin-helper-link.forgot {
+  color: #B25D48;
+}
+
+.wl-pin-helper-link.forgot:hover {
+  color: #8C3E2B;
+}
+
+.wl-pin-sep {
+  font-size: 9px;
+  color: #8E8A83;
+}
+
+/* PROMINENT PRIMARY SIGN IN BUTTON (Always Visible, Full Width) */
+.wl-submit-btn-wrap {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.wl-primary-submit-btn {
+  width: 100%;
+  padding: 13px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #C07660 0%, #9C5B49 100%);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(192, 118, 96, 0.32);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.wl-primary-submit-btn:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 20px rgba(192, 118, 96, 0.45);
+}
+
+.wl-primary-submit-btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.wl-primary-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
+.wl-btn-arrow {
+  font-size: 15px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.wl-primary-submit-btn:hover .wl-btn-arrow {
+  transform: translateX(3px);
+}
+
 /* OUTSIDE POPPED PILL BUTTON */
 .wl-popped-pill-wrap {
   width: 100%;
@@ -457,33 +548,36 @@
 }
 
 .wl-mess-sub {
-  font-size: 11px;
-  color: #8E8F8A;
+  font-size: 11.5px;
+  color: #52504A;
   margin: 2px 0 0;
 }
 
 .wl-mess-btn {
-  padding: 6px 14px;
-  border-radius: 9999px;
-  background: #FFF1ED;
-  color: #C9826D;
-  border: 1px solid #F4D3C9;
-  font-size: 11.5px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  color: #242523;
+  border: 1px solid #E6E0D5;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .wl-mess-btn:hover {
-  background: #FCE8E2;
-  color: #B36E59;
+  background: #FAF8F4;
+  border-color: #D8D2C6;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* Footer Links */
 .wl-footer-links {
   margin-top: 20px;
   font-size: 11.5px;
-  color: #8E8F8A;
+  color: #52504A;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -491,13 +585,15 @@
 }
 
 .wl-footer-links a {
-  color: #7D7F7A;
+  color: #52504A;
   text-decoration: none;
+  font-weight: 500;
   transition: color 0.15s ease;
 }
 
 .wl-footer-links a:hover {
   color: #242523;
+  text-decoration: underline;
 }
 
 
@@ -889,29 +985,65 @@ body.login-dark-theme .wl-mess-title {
 
 html.dark-theme .wl-mess-sub,
 body.login-dark-theme .wl-mess-sub {
-  color: #8E867C !important;
-  font-size: 11px !important;
+  color: #B5B0A8 !important;
+  font-size: 11.5px !important;
 }
 
 html.dark-theme .wl-mess-btn,
 body.login-dark-theme .wl-mess-btn {
-  background: #3A231C !important;
-  border: 1px solid #5A352B !important;
-  color: #FFB3A0 !important;
-  padding: 6px 14px !important;
-  border-radius: 9999px !important;
-  font-size: 11.5px !important;
+  background: #231E1A !important;
+  border: 1px solid #3E352C !important;
+  color: #F2EDE4 !important;
+  padding: 8px 16px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
 }
 
 html.dark-theme .wl-mess-btn:hover,
 body.login-dark-theme .wl-mess-btn:hover {
-  background: #4A2C23 !important;
-  color: #FFC5B5 !important;
-  border-color: #6E4034 !important;
+  background: #2D2621 !important;
+  color: #FFFFFF !important;
+  border-color: #52473B !important;
   transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Primary Submit Button & PIN Links Dark Theme */
+html.dark-theme .wl-pin-helper-link,
+body.login-dark-theme .wl-pin-helper-link {
+  color: #B5B0A8 !important;
+}
+
+html.dark-theme .wl-pin-helper-link:hover,
+body.login-dark-theme .wl-pin-helper-link:hover {
+  color: #FFFFFF !important;
+}
+
+html.dark-theme .wl-pin-helper-link.forgot,
+body.login-dark-theme .wl-pin-helper-link.forgot {
+  color: #E29681 !important;
+}
+
+html.dark-theme .wl-pin-helper-link.forgot:hover,
+body.login-dark-theme .wl-pin-helper-link.forgot:hover {
+  color: #F7B5A3 !important;
+}
+
+html.dark-theme .wl-primary-submit-btn,
+body.login-dark-theme .wl-primary-submit-btn {
+  background: linear-gradient(135deg, #D88B74 0%, #B86752 100%) !important;
+  color: #14110F !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(216, 139, 116, 0.35) !important;
+}
+
+html.dark-theme .wl-primary-submit-btn:hover,
+body.login-dark-theme .wl-primary-submit-btn:hover {
+  box-shadow: 0 6px 22px rgba(216, 139, 116, 0.5) !important;
 }
 
 /* Popped Pill Button Dark Theme Polish (No Rectangular Clipping) */
