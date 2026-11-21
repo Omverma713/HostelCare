@@ -1045,7 +1045,7 @@ const forgotPassword = async (req, res) => {
 
     user.resetPasswordOtp = hashedOtp;
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.resetPasswordExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // Exactly 5 minutes validity
     user.resetPasswordAttempts = 0;
     user.pendingResetEmail = null;
 
@@ -1071,6 +1071,7 @@ const forgotPassword = async (req, res) => {
         otp: rawOtp,
         resetLink,
         resetMethod: effectiveMethod,
+        isResend: Boolean(isResend),
       });
     } catch (mailErr) {
       console.error("[FORGOT_PASSWORD_EMAIL_ERROR]", mailErr.message);
@@ -1167,7 +1168,7 @@ const forgotPasswordWithCampusVerification = async (req, res) => {
 
     user.resetPasswordOtp = hashedOtp;
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    user.resetPasswordExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // Exactly 5 minutes validity
     user.resetPasswordAttempts = 0;
     user.resetPasswordResendCount = 0;
     user.pendingResetEmail = cleanEmail;
@@ -1278,11 +1279,11 @@ const verifyResetOtp = async (req, res) => {
       });
     }
 
-    // Generate short-lived reset authorization token (valid 10 mins)
+    // Generate short-lived reset authorization token (valid 5 mins)
     const resetAuthToken = jwt.sign(
       { registrationNumber: user.registrationNumber, purpose: "password_reset" },
       process.env.JWT_SECRET || "hc_fallback_secret",
-      { expiresIn: "10m" }
+      { expiresIn: "5m" }
     );
 
     if (!user.resetPasswordHistory) user.resetPasswordHistory = [];

@@ -389,7 +389,7 @@ async function sendFeedbackAcknowledgmentToVisitor({
 /**
  * Sends Password Reset Email: sends EITHER 6-Digit OTP OR 1-Click Reset Link based on user selection
  */
-async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, resetLink, resetMethod = "otp" }) {
+async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, resetLink, resetMethod = "otp", isResend = false }) {
   const senderEmail =
     process.env.BREVO_SENDER_EMAIL ||
     process.env.EMAIL_USER ||
@@ -438,6 +438,14 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
                   : "We received a request to reset your HostelCare passcode via a direct link. Click the button below to set your new passcode instantly:"}
               </p>
 
+              ${isResend ? `
+              <div style="background: rgba(234, 179, 8, 0.12); border-left: 4px solid #EAB308; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 22px;">
+                <p style="margin: 0; font-size: 13px; color: #FDE047; line-height: 1.5;">
+                  ⚡ <strong>Resend Notice:</strong> This is your newly requested ${isOtpMethod ? "OTP code" : "reset link"}. Any previous ${isOtpMethod ? "OTP codes" : "links"} have been invalidated and will no longer work.
+                </p>
+              </div>
+              ` : ""}
+
               ${isOtpMethod ? `
               <!-- 6-Digit OTP Box ONLY -->
               <div style="background: rgba(192, 118, 96, 0.08); border: 2px dashed #C07660; border-radius: 14px; padding: 22px; text-align: center; margin: 0 0 28px 0;">
@@ -448,7 +456,7 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
                   ${otp}
                 </div>
                 <div style="font-size: 12px; color: #94a3b8; margin-top: 10px;">
-                  ⏱️ Valid for <strong>10 minutes</strong>. Never share this code with anyone.
+                  ⏱️ Valid for <strong>5 minutes</strong> only. Never share this code with anyone.
                 </div>
               </div>
               ` : `
@@ -458,7 +466,7 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
                   🔐 Set New Passcode Now →
                 </a>
                 <div style="font-size: 12px; color: #94a3b8; margin-top: 12px;">
-                  ⏱️ Link is valid for <strong>10 minutes</strong>.
+                  ⏱️ Link is valid for <strong>5 minutes</strong> only.
                 </div>
               </div>
               `}

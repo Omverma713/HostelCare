@@ -200,7 +200,9 @@ export default function Login() {
       if (res.success) {
         setFpCountdown(60);
         setFpResendCount(res.resendCount ?? (fpResendCount + 1));
-        triggerToast('success', resendType === 'link' ? '1-Click Reset Link resent to your email!' : 'New 6-digit OTP code resent to your email!');
+        setFpOtp('');
+        setFpResetAuthToken('');
+        triggerToast('success', resendType === 'link' ? '1-Click Reset Link resent to your email! (Previous link invalidated)' : 'New 6-digit OTP code resent to your email! (Previous OTP invalidated)');
       } else {
         triggerToast('error', res.message || 'Failed to resend code.');
       }
@@ -1226,7 +1228,7 @@ export default function Login() {
                   ) : (
                     <>
                       <div className="wl-modal-info-banner">
-                        ✉️ 6-digit OTP code sent to <strong>{fpMaskedEmail || 'your email'}</strong>. Valid for 15 minutes.
+                        ✉️ 6-digit OTP code sent to <strong>{fpMaskedEmail || 'your email'}</strong>. Valid for 5 minutes only.
                       </div>
 
                       <div className="wl-form-group">
