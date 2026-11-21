@@ -932,3 +932,206 @@ body.login-dark-theme .wl-popped-pill-btn {
   outline: none !important;
   box-shadow: 0 4px 18px rgba(192, 118, 96, 0.35) !important;
 }
+
+/* ==========================================================================
+   PASSWORD RECOVERY & CHANGE MODALS (WARM LINEN & ESPRESSO DARK)
+   ========================================================================== */
+.wl-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(18, 16, 14, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: wlFadeIn 0.2s ease-out;
+}
+
+.wl-modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: #FAF7F2;
+  border: 1px solid rgba(192, 118, 96, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.35);
+  padding: 26px 24px;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: wlScaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes wlFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes wlScaleUp {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.wl-modal-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  color: #8C827A;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wl-modal-close-btn:hover {
+  background: rgba(192, 118, 96, 0.15);
+  color: #C07660;
+}
+
+.wl-modal-header {
+  margin-bottom: 20px;
+  padding-right: 28px;
+}
+
+.wl-modal-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #292522;
+  margin: 0 0 4px 0;
+}
+
+.wl-modal-sub {
+  font-size: 0.82rem;
+  color: #8C827A;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.wl-modal-info-banner {
+  background: rgba(192, 118, 96, 0.08);
+  border: 1px solid rgba(192, 118, 96, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-size: 0.8rem;
+  color: #5C524A;
+  line-height: 1.5;
+}
+
+.wl-modal-info-banner.warning {
+  background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(220, 38, 38, 0.25);
+  color: #991B1B;
+}
+
+.wl-otp-box-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 18px 0;
+}
+
+.wl-otp-input-field {
+  font-family: 'Courier New', monospace;
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: 12px;
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 2px solid #C07660;
+  background: #FFFFFF;
+  color: #292522;
+  width: 220px;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(192, 118, 96, 0.15);
+}
+
+.wl-modal-submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #C07660 0%, #A85D48 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 20px;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 10px;
+  box-shadow: 0 4px 12px rgba(192, 118, 96, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.wl-modal-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(192, 118, 96, 0.45);
+}
+
+.wl-modal-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Dark Mode Overrides for Password Recovery Modals */
+html.dark-theme .wl-modal-card,
+body.login-dark-theme .wl-modal-card {
+  background: #1C1815;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+html.dark-theme .wl-modal-close-btn,
+body.login-dark-theme .wl-modal-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #A6A096;
+}
+
+html.dark-theme .wl-modal-close-btn:hover,
+body.login-dark-theme .wl-modal-close-btn:hover {
+  background: rgba(192, 118, 96, 0.25);
+  color: #FFB3A0;
+}
+
+html.dark-theme .wl-modal-title,
+body.login-dark-theme .wl-modal-title {
+  color: #FAF7F2;
+}
+
+html.dark-theme .wl-modal-sub,
+body.login-dark-theme .wl-modal-sub {
+  color: #A6A096;
+}
+
+html.dark-theme .wl-modal-info-banner,
+body.login-dark-theme .wl-modal-info-banner {
+  background: rgba(192, 118, 96, 0.12);
+  border-color: rgba(192, 118, 96, 0.3);
+  color: #E6DFD5;
+}
+
+html.dark-theme .wl-modal-info-banner.warning,
+body.login-dark-theme .wl-modal-info-banner.warning {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #FCA5A5;
+}
+
+html.dark-theme .wl-otp-input-field,
+body.login-dark-theme .wl-otp-input-field {
+  background: #141210;
+  border-color: #C07660;
+  color: #FAF7F2;
+}

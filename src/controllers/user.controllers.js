@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const argonLimiter = require("../../utils/argonLimiter");
 const { recordClientIdentity } = require("../utils/clientTracker");
+const { sendPasswordResetEmail } = require("../utils/mailer");
 
 /**
  * Safely parse User Agent string into device category, OS, and browser
@@ -965,6 +966,391 @@ const getMyRoomInfo = async (req, res) => {
   }
 };
 
+// ─── forgotPassword ─────────────────────────────────────────────────────────
+// POST /api/v1/users/forgot-password
+const forgotPassword = async (req, res) => {
+  try {
+    const { registrationNumber } = req.body;
+    const cleanReg = typeof registrationNumber === "string" ? registrationNumber.trim().toUpperCase() : "";
+
+    if (!cleanReg) {
+      return res.status(400).json({ success: false, message: "Registration number is required." });
+    }
+
+    const user = await User.findOne({
+      registrationNumber: { $regex: new RegExp(`^${cleanReg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    }).select("+resetPasswordOtp +resetPasswordToken +resetPasswordExpiresAt +password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "No account found with this Registration Number." });
+    }
+
+    if (user.accountStatus === "deactivated" || user.accountStatus === "suspended") {
+      return res.status(403).json({ success: false, message: "This account has been deactivated or suspended. Please contact Warden." });
+    }
+
+    // Check if user has no email in database
+    if (!user.email || !user.email.trim()) {
+      return res.status(200).json({
+        success: false,
+        code: "NO_EMAIL_LINKED",
+        requiresCampusVerification: true,
+        message: "No email is linked to this account yet. Please verify your hostel & room to link your email.",
+      });
+    }
+
+    // Generate 6-digit OTP & 32-byte secure token
+    const rawOtp = String(Math.floor(100000 + Math.random() * 900000));
+    const rawToken = crypto.randomBytes(24).toString("hex");
+
+    const hashedOtp = crypto.createHash("sha256").update(rawOtp).digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    user.resetPasswordOtp = hashedOtp;
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.resetPasswordAttempts = 0;
+    user.pendingResetEmail = null;
+    await user.save();
+
+    const baseUrl = process.env.FRONTEND_URL || "https://hostelcare.omverma-dev.workers.dev";
+    const resetLink = `${baseUrl}/reset-password?token=${rawToken}&reg=${encodeURIComponent(user.registrationNumber)}`;
+
+    try {
+      await sendPasswordResetEmail({
+        toEmail: user.email,
+        name: user.name,
+        registrationNumber: user.registrationNumber,
+        otp: rawOtp,
+        resetLink,
+      });
+    } catch (mailErr) {
+      console.error("[FORGOT_PASSWORD_EMAIL_ERROR]", mailErr.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to dispatch reset email via Brevo. Please check mail service or try again later.",
+      });
+    }
+
+    const maskedEmail = user.email.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => `${a}${"*".repeat(Math.max(2, Math.min(b.length, 5)))}${c}`);
+
+    return res.status(200).json({
+      success: true,
+      message: `Password reset instructions sent to ${maskedEmail}`,
+      maskedEmail,
+    });
+  } catch (err) {
+    console.error("[FORGOT_PASSWORD_ERROR]", err);
+    return res.status(500).json({ success: false, message: "Internal server error during password reset request." });
+  }
+};
+
+// ─── forgotPasswordWithCampusVerification ──────────────────────────────────
+// POST /api/v1/users/forgot-password/verify-campus
+const forgotPasswordWithCampusVerification = async (req, res) => {
+  try {
+    const { registrationNumber, hostel, roomNumber, newEmail } = req.body;
+    const cleanReg = typeof registrationNumber === "string" ? registrationNumber.trim().toUpperCase() : "";
+    const cleanHostel = typeof hostel === "string" ? hostel.trim() : "";
+    const cleanRoom = typeof roomNumber === "string" ? roomNumber.trim() : "";
+    const cleanEmail = typeof newEmail === "string" ? newEmail.trim().toLowerCase() : "";
+
+    if (!cleanReg || !cleanHostel || !cleanRoom || !cleanEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Registration number, hostel, room number, and email are all required.",
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ success: false, message: "Please provide a valid email address." });
+    }
+
+    const user = await User.findOne({
+      registrationNumber: { $regex: new RegExp(`^${cleanReg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    }).select("+resetPasswordOtp +resetPasswordToken +resetPasswordExpiresAt +password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "No account found with this Registration Number." });
+    }
+
+    // Verify hostel & room match registered records
+    const userHostel = String(user.hostel || "").trim().toLowerCase();
+    const userRoom = String(user.roomNumber || "").trim().toLowerCase();
+
+    if (userHostel !== cleanHostel.toLowerCase() || userRoom !== cleanRoom.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        message: "Hostel or Room Number does not match resident records for this registration number.",
+      });
+    }
+
+    // Generate 6-digit OTP & 32-byte secure token
+    const rawOtp = String(Math.floor(100000 + Math.random() * 900000));
+    const rawToken = crypto.randomBytes(24).toString("hex");
+
+    const hashedOtp = crypto.createHash("sha256").update(rawOtp).digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    user.resetPasswordOtp = hashedOtp;
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    user.resetPasswordAttempts = 0;
+    user.pendingResetEmail = cleanEmail;
+    await user.save();
+
+    const baseUrl = process.env.FRONTEND_URL || "https://hostelcare.omverma-dev.workers.dev";
+    const resetLink = `${baseUrl}/reset-password?token=${rawToken}&reg=${encodeURIComponent(user.registrationNumber)}`;
+
+    try {
+      await sendPasswordResetEmail({
+        toEmail: cleanEmail,
+        name: user.name,
+        registrationNumber: user.registrationNumber,
+        otp: rawOtp,
+        resetLink,
+      });
+    } catch (mailErr) {
+      console.error("[CAMPUS_VERIFICATION_EMAIL_ERROR]", mailErr.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to dispatch verification email via Brevo. Please check email address or try again.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Campus verification successful! Reset OTP & link sent to ${cleanEmail}`,
+      maskedEmail: cleanEmail,
+    });
+  } catch (err) {
+    console.error("[CAMPUS_VERIFICATION_ERROR]", err);
+    return res.status(500).json({ success: false, message: "Internal server error during campus verification." });
+  }
+};
+
+// ─── verifyResetOtp ─────────────────────────────────────────────────────────
+// POST /api/v1/users/verify-reset-otp
+const verifyResetOtp = async (req, res) => {
+  try {
+    const { registrationNumber, otp } = req.body;
+    const cleanReg = typeof registrationNumber === "string" ? registrationNumber.trim().toUpperCase() : "";
+    const cleanOtp = typeof otp === "string" ? otp.trim() : "";
+
+    if (!cleanReg || !cleanOtp) {
+      return res.status(400).json({ success: false, message: "Registration number and 6-digit OTP are required." });
+    }
+
+    const user = await User.findOne({
+      registrationNumber: { $regex: new RegExp(`^${cleanReg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    }).select("+resetPasswordOtp +resetPasswordExpiresAt");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    if (!user.resetPasswordOtp || !user.resetPasswordExpiresAt || user.resetPasswordExpiresAt < new Date()) {
+      return res.status(400).json({ success: false, message: "Reset code has expired. Please request a new one." });
+    }
+
+    if (user.resetPasswordAttempts >= 5) {
+      user.resetPasswordOtp = null;
+      user.resetPasswordExpiresAt = null;
+      await user.save();
+      return res.status(429).json({ success: false, message: "Too many failed attempts. Please request a new reset code." });
+    }
+
+    const hashedInputOtp = crypto.createHash("sha256").update(cleanOtp).digest("hex");
+
+    if (hashedInputOtp !== user.resetPasswordOtp) {
+      user.resetPasswordAttempts = (user.resetPasswordAttempts || 0) + 1;
+      await user.save();
+      return res.status(400).json({
+        success: false,
+        message: `Invalid OTP code. (${5 - user.resetPasswordAttempts} attempts remaining)`,
+      });
+    }
+
+    // Generate short-lived reset authorization token (valid 10 mins)
+    const resetAuthToken = jwt.sign(
+      { registrationNumber: user.registrationNumber, purpose: "password_reset" },
+      process.env.JWT_SECRET || "hc_fallback_secret",
+      { expiresIn: "10m" }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully. You can now set your new password.",
+      resetAuthToken,
+    });
+  } catch (err) {
+    console.error("[VERIFY_RESET_OTP_ERROR]", err);
+    return res.status(500).json({ success: false, message: "Failed to verify reset OTP." });
+  }
+};
+
+// ─── resetPassword ─────────────────────────────────────────────────────────
+// POST /api/v1/users/reset-password
+const resetPassword = async (req, res) => {
+  try {
+    const { registrationNumber, token, resetAuthToken, newPassword, confirmPassword } = req.body;
+    const cleanReg = typeof registrationNumber === "string" ? registrationNumber.trim().toUpperCase() : "";
+
+    if (!cleanReg) {
+      return res.status(400).json({ success: false, message: "Registration number is required." });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: "New password must be at least 6 characters long." });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: "Passwords do not match." });
+    }
+
+    let isAuthorized = false;
+
+    // Method 1: Verified OTP session token
+    if (resetAuthToken) {
+      try {
+        const decoded = jwt.verify(resetAuthToken, process.env.JWT_SECRET || "hc_fallback_secret");
+        if (decoded.purpose === "password_reset" && decoded.registrationNumber.toUpperCase() === cleanReg) {
+          isAuthorized = true;
+        }
+      } catch (jwtErr) {
+        return res.status(401).json({ success: false, message: "Reset authorization has expired. Please verify OTP again." });
+      }
+    }
+
+    const user = await User.findOne({
+      registrationNumber: { $regex: new RegExp(`^${cleanReg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    }).select("+resetPasswordOtp +resetPasswordToken +resetPasswordExpiresAt +password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    // Method 2: Direct 1-Click Link Token
+    if (!isAuthorized && token) {
+      const hashedToken = crypto.createHash("sha256").update(token.trim()).digest("hex");
+      if (user.resetPasswordToken && user.resetPasswordToken === hashedToken) {
+        if (user.resetPasswordExpiresAt && user.resetPasswordExpiresAt > new Date()) {
+          isAuthorized = true;
+        } else {
+          return res.status(400).json({ success: false, message: "Reset link has expired. Please request a new one." });
+        }
+      }
+    }
+
+    if (!isAuthorized) {
+      return res.status(400).json({ success: false, message: "Invalid or expired reset credentials." });
+    }
+
+    // Hash new password with Argon2
+    const hashedPassword = await argonLimiter(() =>
+      Argon.hash(newPassword, {
+        type: Argon.argon2id,
+        memoryCost: 19456,
+        timeCost: 2,
+        parallelism: 1,
+      })
+    );
+
+    user.password = hashedPassword;
+    user.isActivated = true;
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    user.sessionsRevokedAt = new Date();
+
+    // If student verified a pending email during campus recovery, link it permanently!
+    if (user.pendingResetEmail) {
+      user.email = user.pendingResetEmail;
+      user.pendingResetEmail = null;
+    }
+
+    // Clear reset credentials
+    user.resetPasswordOtp = null;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpiresAt = null;
+    user.resetPasswordAttempts = 0;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully! You can now log in with your new passcode.",
+    });
+  } catch (err) {
+    console.error("[RESET_PASSWORD_ERROR]", err);
+    return res.status(500).json({ success: false, message: "Failed to reset password." });
+  }
+};
+
+// ─── changePassword (When Old Password is Known) ───────────────────────────
+// POST /api/v1/users/change-password
+const changePassword = async (req, res) => {
+  try {
+    const { registrationNumber, oldPassword, newPassword, confirmPassword } = req.body;
+    const cleanReg = typeof registrationNumber === "string" ? registrationNumber.trim().toUpperCase() : "";
+
+    if (!cleanReg || !oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Registration number, current password, and new password are required.",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: "New password must be at least 6 characters long." });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: "New passwords do not match." });
+    }
+
+    const user = await User.findOne({
+      registrationNumber: { $regex: new RegExp(`^${cleanReg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    }).select("+password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    if (user.accountStatus === "deactivated" || user.accountStatus === "suspended") {
+      return res.status(403).json({ success: false, message: "This account has been deactivated or suspended." });
+    }
+
+    // Verify old password
+    const isOldMatch = await argonLimiter(() => Argon.verify(user.password, oldPassword));
+    if (!isOldMatch) {
+      return res.status(400).json({ success: false, message: "Incorrect current passcode. Please try again." });
+    }
+
+    // Hash new password
+    const hashedPassword = await argonLimiter(() =>
+      Argon.hash(newPassword, {
+        type: Argon.argon2id,
+        memoryCost: 19456,
+        timeCost: 2,
+        parallelism: 1,
+      })
+    );
+
+    user.password = hashedPassword;
+    user.sessionsRevokedAt = new Date();
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Passcode changed successfully! Please log in with your new passcode.",
+    });
+  } catch (err) {
+    console.error("[CHANGE_PASSWORD_ERROR]", err);
+    return res.status(500).json({ success: false, message: "Failed to change passcode." });
+  }
+};
+
 module.exports = {
   activateUser,
   loggedInUser,
@@ -975,4 +1361,9 @@ module.exports = {
   verifyUserPassword,
   testMyDevice,
   getMyRoomInfo,
+  forgotPassword,
+  forgotPasswordWithCampusVerification,
+  verifyResetOtp,
+  resetPassword,
+  changePassword,
 };

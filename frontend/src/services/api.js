@@ -110,6 +110,42 @@ export const api = {
     });
   },
 
+  // --- PASSWORD RECOVERY & RESET ---
+  forgotPassword(registrationNumber) {
+    return request('/users/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ registrationNumber }),
+    });
+  },
+
+  forgotPasswordCampusVerify(registrationNumber, hostel, roomNumber, newEmail) {
+    return request('/users/forgot-password/verify-campus', {
+      method: 'POST',
+      body: JSON.stringify({ registrationNumber, hostel, roomNumber, newEmail }),
+    });
+  },
+
+  verifyResetOtp(registrationNumber, otp) {
+    return request('/users/verify-reset-otp', {
+      method: 'POST',
+      body: JSON.stringify({ registrationNumber, otp }),
+    });
+  },
+
+  resetPassword({ registrationNumber, token, resetAuthToken, newPassword, confirmPassword }) {
+    return request('/users/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ registrationNumber, token, resetAuthToken, newPassword, confirmPassword }),
+    });
+  },
+
+  changePassword(registrationNumber, oldPassword, newPassword, confirmPassword) {
+    return request('/users/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ registrationNumber, oldPassword, newPassword, confirmPassword }),
+    });
+  },
+
   // --- STUDENT ---
   getStudentComplaints() {
     return request('/users/hostel-complaints');

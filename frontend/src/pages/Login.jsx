@@ -46,6 +46,214 @@ export default function Login() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // --- PASSWORD MODAL STATES (Change vs Forgot) ---
+  const [authModal, setAuthModal] = useState(null); // 'change' | 'forgot' | null
+
+  // Change Password (Old -> New)
+  const [cpRegNum, setCpRegNum] = useState('');
+  const [cpOldPassword, setCpOldPassword] = useState('');
+  const [cpNewPassword, setCpNewPassword] = useState('');
+  const [cpConfirmPassword, setCpConfirmPassword] = useState('');
+  const [cpShowOld, setCpShowOld] = useState(false);
+  const [cpShowNew, setCpShowNew] = useState(false);
+  const [cpShowConfirm, setCpShowConfirm] = useState(false);
+  const [cpLoading, setCpLoading] = useState(false);
+
+  // Forgot Password (OTP / Email Link / Campus Verify)
+  // fpStep: 'init' | 'campusVerify' | 'verifyAndReset'
+  const [fpStep, setFpStep] = useState('init');
+  const [fpRegNum, setFpRegNum] = useState('');
+  const [fpHostel, setFpHostel] = useState('');
+  const [fpRoom, setFpRoom] = useState('');
+  const [fpEmail, setFpEmail] = useState('');
+  const [fpMaskedEmail, setFpMaskedEmail] = useState('');
+  const [fpOtp, setFpOtp] = useState('');
+  const [fpToken, setFpToken] = useState('');
+  const [fpResetAuthToken, setFpResetAuthToken] = useState('');
+  const [fpNewPassword, setFpNewPassword] = useState('');
+  const [fpConfirmPassword, setFpConfirmPassword] = useState('');
+  const [fpShowNew, setFpShowNew] = useState(false);
+  const [fpShowConfirm, setFpShowConfirm] = useState(false);
+  const [fpLoading, setFpLoading] = useState(false);
+  const [fpCountdown, setFpCountdown] = useState(0);
+
+  // Detect 1-Click Link Token in URL on mount
+  useEffect(() => {
+    try {
+      const search = window.location.search;
+      if (search) {
+        const params = new URLSearchParams(search);
+        const tokenParam = params.get('token');
+        const regParam = params.get('reg');
+        if (tokenParam) {
+          setFpToken(tokenParam);
+          if (regParam) setFpRegNum(regParam);
+          setFpStep('verifyAndReset');
+          setAuthModal('forgot');
+        }
+      }
+    } catch (_) {}
+  }, []);
+
+  // Resend Countdown Timer
+  useEffect(() => {
+    if (fpCountdown > 0) {
+      const timer = setTimeout(() => setFpCountdown(fpCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [fpCountdown]);
+
+  // Handle Change Password (when current passcode is known)
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!cpRegNum.trim() || !cpOldPassword || !cpNewPassword) {
+      triggerToast('error', 'Please fill in all required fields.');
+      return;
+    }
+    if (cpNewPassword.length < 6) {
+      triggerToast('error', 'New passcode must be at least 6 characters.');
+      return;
+    }
+    if (cpNewPassword !== cpConfirmPassword) {
+      triggerToast('error', 'New passcodes do not match.');
+      return;
+    }
+    setCpLoading(true);
+    try {
+      const res = await api.changePassword(cpRegNum.trim(), cpOldPassword, cpNewPassword, cpConfirmPassword);
+      if (res.success) {
+        triggerToast('success', res.message || 'Passcode changed successfully! Please log in.');
+        setRegNum(cpRegNum.trim());
+        setPassword('');
+        setAuthModal(null);
+      } else {
+        triggerToast('error', res.message || 'Failed to change passcode.');
+      }
+    } catch (err) {
+      triggerToast('error', err.data?.message || err.message || 'Failed to change passcode.');
+    } finally {
+      setCpLoading(false);
+    }
+  };
+
+  // Handle Forgot Password - Step 1: Send OTP / Link
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    const cleanReg = fpRegNum.trim().toUpperCase();
+    if (!cleanReg) {
+      triggerToast('error', 'Please enter your Registration Number.');
+      return;
+    }
+    setFpLoading(true);
+    try {
+      const res = await api.forgotPassword(cleanReg);
+      if (res.requiresCampusVerification || res.code === 'NO_EMAIL_LINKED') {
+        triggerToast('info', 'No email linked to this account yet. Verify hostel & room to link your email.');
+        setFpStep('campusVerify');
+      } else if (res.success) {
+        triggerToast('success', res.message || 'Reset code & link sent to your registered email.');
+        setFpMaskedEmail(res.maskedEmail || '');
+        setFpCountdown(60);
+        setFpStep('verifyAndReset');
+      } else {
+        triggerToast('error', res.message || 'Account not found.');
+      }
+    } catch (err) {
+      triggerToast('error', err.data?.message || err.message || 'Failed to process request.');
+    } finally {
+      setFpLoading(false);
+    }
+  };
+
+  // Handle Campus Verification (for students without email in DB)
+  const handleCampusVerifySubmit = async (e) => {
+    e.preventDefault();
+    const cleanReg = fpRegNum.trim().toUpperCase();
+    const cleanHostel = fpHostel.trim();
+    const cleanRoom = fpRoom.trim();
+    const cleanEmail = fpEmail.trim().toLowerCase();
+
+    if (!cleanReg || !cleanHostel || !cleanRoom || !cleanEmail) {
+      triggerToast('error', 'Please fill all hostel and email details.');
+      return;
+    }
+    setFpLoading(true);
+    try {
+      const res = await api.forgotPasswordCampusVerify(cleanReg, cleanHostel, cleanRoom, cleanEmail);
+      if (res.success) {
+        triggerToast('success', res.message || 'Verification email dispatched successfully!');
+        setFpMaskedEmail(cleanEmail);
+        setFpCountdown(60);
+        setFpStep('verifyAndReset');
+      } else {
+        triggerToast('error', res.message || 'Campus verification failed.');
+      }
+    } catch (err) {
+      triggerToast('error', err.data?.message || err.message || 'Hostel or room details did not match records.');
+    } finally {
+      setFpLoading(false);
+    }
+  };
+
+  // Handle Final Password Reset (with OTP or 1-Click Token)
+  const handleFinalResetSubmit = async (e) => {
+    e.preventDefault();
+    const cleanReg = fpRegNum.trim().toUpperCase();
+
+    if (!fpNewPassword || fpNewPassword.length < 6) {
+      triggerToast('error', 'New passcode must be at least 6 characters.');
+      return;
+    }
+    if (fpNewPassword !== fpConfirmPassword) {
+      triggerToast('error', 'Passcodes do not match.');
+      return;
+    }
+    if (!fpToken && !fpOtp.trim()) {
+      triggerToast('error', 'Please enter the 6-digit OTP from your email.');
+      return;
+    }
+
+    setFpLoading(true);
+    try {
+      let authToken = fpResetAuthToken;
+      // If student typed OTP, verify OTP first
+      if (!fpToken && !authToken && fpOtp.trim()) {
+        const otpRes = await api.verifyResetOtp(cleanReg, fpOtp.trim());
+        if (!otpRes.success) {
+          triggerToast('error', otpRes.message || 'Invalid OTP code.');
+          setFpLoading(false);
+          return;
+        }
+        authToken = otpRes.resetAuthToken;
+        setFpResetAuthToken(authToken);
+      }
+
+      const resetRes = await api.resetPassword({
+        registrationNumber: cleanReg,
+        token: fpToken || undefined,
+        resetAuthToken: authToken || undefined,
+        newPassword: fpNewPassword,
+        confirmPassword: fpConfirmPassword,
+      });
+
+      if (resetRes.success) {
+        triggerToast('success', 'Passcode reset successfully! Please sign in with your new passcode.');
+        setRegNum(cleanReg);
+        setPassword('');
+        setAuthModal(null);
+        if (window.history.replaceState) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } else {
+        triggerToast('error', resetRes.message || 'Failed to reset passcode.');
+      }
+    } catch (err) {
+      triggerToast('error', err.data?.message || err.message || 'Failed to reset passcode.');
+    } finally {
+      setFpLoading(false);
+    }
+  };
+
   // Auto-retract submit button after 7 seconds of inactivity
   useEffect(() => {
     if (isButtonPopped && !loading) {
@@ -336,12 +544,30 @@ export default function Login() {
                 <label className="wl-form-label" htmlFor="passwordInput" style={{ margin: 0 }}>
                   Passcode
                 </label>
-                <span
-                  style={{ fontSize: 11.5, color: '#C07660', fontWeight: 600, cursor: 'pointer' }}
-                  onClick={() => triggerToast('info', 'Contact your Hostel Warden or Superintendent to reset password.')}
-                >
-                  Forgot PIN?
-                </span>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', padding: 0, fontSize: 11.5, color: '#8E8A83', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => {
+                      setCpRegNum(regNum);
+                      setAuthModal('change');
+                    }}
+                  >
+                    Reset PIN
+                  </button>
+                  <span style={{ fontSize: 9, color: '#A8A29E' }}>•</span>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', padding: 0, fontSize: 11.5, color: '#C07660', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => {
+                      setFpRegNum(regNum);
+                      setFpStep('init');
+                      setAuthModal('forgot');
+                    }}
+                  >
+                    Forgot PIN?
+                  </button>
+                </div>
               </div>
 
               {/* Password Box */}
@@ -616,6 +842,365 @@ export default function Login() {
           <span>•</span>
           <a href="#" onClick={(e) => { e.preventDefault(); triggerToast('info', 'HostelCare v1.2.2 - Campus Living Sanctuary.'); }}>Terms</a>
         </div>
+
+        {/* =========================================================================
+            MODAL 1: RESET PIN (WHEN OLD PASSCODE IS KNOWN)
+            ========================================================================= */}
+        {authModal === 'change' && (
+          <div className="wl-modal-backdrop" onClick={() => setAuthModal(null)}>
+            <div className="wl-modal-card" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="wl-modal-close-btn"
+                onClick={() => setAuthModal(null)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+
+              <div className="wl-modal-header">
+                <h3 className="wl-modal-title">Reset Passcode</h3>
+                <p className="wl-modal-sub">Update your current passcode with your existing credentials.</p>
+              </div>
+
+              <form onSubmit={handleChangePassword}>
+                <div className="wl-form-group">
+                  <label className="wl-form-label">Registration Number</label>
+                  <div className="wl-input-wrapper">
+                    <input
+                      type="text"
+                      className="wl-text-input"
+                      placeholder="e.g. 24E114B14"
+                      value={cpRegNum}
+                      onChange={(e) => setCpRegNum(e.target.value.trim().toUpperCase())}
+                      disabled={cpLoading}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="wl-form-group">
+                  <label className="wl-form-label">Old Passcode</label>
+                  <div className="wl-input-wrapper">
+                    <input
+                      type={cpShowOld ? 'text' : 'password'}
+                      className="wl-text-input"
+                      placeholder="Current passcode"
+                      value={cpOldPassword}
+                      onChange={(e) => setCpOldPassword(e.target.value)}
+                      disabled={cpLoading}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="wl-eye-btn"
+                      onClick={() => setCpShowOld(!cpShowOld)}
+                      aria-label="Toggle password"
+                    >
+                      {cpShowOld ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="wl-form-group">
+                  <label className="wl-form-label">New Passcode</label>
+                  <div className="wl-input-wrapper">
+                    <input
+                      type={cpShowNew ? 'text' : 'password'}
+                      className="wl-text-input"
+                      placeholder="At least 6 characters"
+                      value={cpNewPassword}
+                      onChange={(e) => setCpNewPassword(e.target.value)}
+                      disabled={cpLoading}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="wl-eye-btn"
+                      onClick={() => setCpShowNew(!cpShowNew)}
+                      aria-label="Toggle password"
+                    >
+                      {cpShowNew ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="wl-form-group">
+                  <label className="wl-form-label">Confirm New Passcode</label>
+                  <div className="wl-input-wrapper">
+                    <input
+                      type={cpShowConfirm ? 'text' : 'password'}
+                      className="wl-text-input"
+                      placeholder="Re-enter new passcode"
+                      value={cpConfirmPassword}
+                      onChange={(e) => setCpConfirmPassword(e.target.value)}
+                      disabled={cpLoading}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="wl-eye-btn"
+                      onClick={() => setCpShowConfirm(!cpShowConfirm)}
+                      aria-label="Toggle password"
+                    >
+                      {cpShowConfirm ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="wl-modal-submit-btn"
+                  disabled={cpLoading}
+                >
+                  {cpLoading ? 'Updating Passcode...' : 'Save New Passcode →'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            MODAL 2: FORGOT PIN (BREVO OTP / EMAIL LINK / CAMPUS VERIFY)
+            ========================================================================= */}
+        {authModal === 'forgot' && (
+          <div className="wl-modal-backdrop" onClick={() => setAuthModal(null)}>
+            <div className="wl-modal-card" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="wl-modal-close-btn"
+                onClick={() => setAuthModal(null)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+
+              <div className="wl-modal-header">
+                <h3 className="wl-modal-title">Recover Account</h3>
+                <p className="wl-modal-sub">
+                  {fpStep === 'init' && 'Enter your registration number to receive a 6-digit OTP & 1-click reset link.'}
+                  {fpStep === 'campusVerify' && 'Verify your campus hostel & room to securely link your email.'}
+                  {fpStep === 'verifyAndReset' && 'Enter your recovery code and choose a new passcode.'}
+                </p>
+              </div>
+
+              {/* STEP 1: INITIAL REGISTRATION NUMBER ENTRY */}
+              {fpStep === 'init' && (
+                <form onSubmit={handleForgotSubmit}>
+                  <div className="wl-form-group">
+                    <label className="wl-form-label">Registration Number</label>
+                    <div className="wl-input-wrapper">
+                      <input
+                        type="text"
+                        className="wl-text-input"
+                        placeholder="e.g. 24E114B14"
+                        value={fpRegNum}
+                        onChange={(e) => setFpRegNum(e.target.value.trim().toUpperCase())}
+                        disabled={fpLoading}
+                        required
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div className="wl-modal-info-banner">
+                    ✉️ We'll send a 6-digit OTP and direct 1-click password reset link to your registered email address.
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="wl-modal-submit-btn"
+                    disabled={fpLoading}
+                  >
+                    {fpLoading ? 'Checking Records...' : 'Send OTP & Reset Link →'}
+                  </button>
+                </form>
+              )}
+
+              {/* STEP 2: CAMPUS VERIFICATION (FOR USERS WITHOUT LINKED EMAIL) */}
+              {fpStep === 'campusVerify' && (
+                <form onSubmit={handleCampusVerifySubmit}>
+                  <div className="wl-modal-info-banner warning">
+                    ⚠️ <strong>Email Not Linked Yet</strong><br />
+                    To protect your account, verify your current hostel room records. We'll link your email permanently.
+                  </div>
+
+                  <div className="wl-form-group">
+                    <label className="wl-form-label">Hostel Name</label>
+                    <div className="wl-input-wrapper">
+                      <input
+                        type="text"
+                        className="wl-text-input"
+                        placeholder="e.g. BH-8 or GH-2"
+                        value={fpHostel}
+                        onChange={(e) => setFpHostel(e.target.value.toUpperCase())}
+                        disabled={fpLoading}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="wl-form-group">
+                    <label className="wl-form-label">Room Number</label>
+                    <div className="wl-input-wrapper">
+                      <input
+                        type="text"
+                        className="wl-text-input"
+                        placeholder="e.g. 302"
+                        value={fpRoom}
+                        onChange={(e) => setFpRoom(e.target.value.trim())}
+                        disabled={fpLoading}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="wl-form-group">
+                    <label className="wl-form-label">Your Email ID</label>
+                    <div className="wl-input-wrapper">
+                      <input
+                        type="email"
+                        className="wl-text-input"
+                        placeholder="yourname@gmail.com"
+                        value={fpEmail}
+                        onChange={(e) => setFpEmail(e.target.value.trim())}
+                        disabled={fpLoading}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="wl-modal-submit-btn"
+                    disabled={fpLoading}
+                  >
+                    {fpLoading ? 'Verifying Records...' : 'Verify & Send OTP →'}
+                  </button>
+
+                  <div style={{ textAlign: 'center', marginTop: 12 }}>
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: '#8E8A83', fontSize: 12, cursor: 'pointer' }}
+                      onClick={() => setFpStep('init')}
+                    >
+                      ← Back
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* STEP 3: OTP / 1-CLICK VERIFICATION & NEW PASSWORD */}
+              {fpStep === 'verifyAndReset' && (
+                <form onSubmit={handleFinalResetSubmit}>
+                  {fpToken ? (
+                    <div className="wl-modal-info-banner">
+                      ✅ <strong>1-Click Email Link Verified!</strong><br />
+                      Set your new passcode below to complete password recovery.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="wl-modal-info-banner">
+                        ✉️ 6-digit OTP code sent to <strong>{fpMaskedEmail || 'your email'}</strong>. Valid for 15 minutes.
+                      </div>
+
+                      <div className="wl-form-group">
+                        <label className="wl-form-label" style={{ textAlign: 'center', display: 'block' }}>Enter 6-Digit Code</label>
+                        <div className="wl-otp-box-wrap">
+                          <input
+                            type="text"
+                            maxLength={6}
+                            className="wl-otp-input-field"
+                            placeholder="000000"
+                            value={fpOtp}
+                            onChange={(e) => setFpOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            disabled={fpLoading}
+                            autoFocus
+                            required
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="wl-form-group">
+                    <label className="wl-form-label">New Passcode</label>
+                    <div className="wl-input-wrapper">
+                      <input
+                        type={fpShowNew ? 'text' : 'password'}
+                        className="wl-text-input"
+                        placeholder="At least 6 characters"
+                        value={fpNewPassword}
+                        onChange={(e) => setFpNewPassword(e.target.value)}
+                        disabled={fpLoading}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="wl-eye-btn"
+                        onClick={() => setFpShowNew(!fpShowNew)}
+                        aria-label="Toggle password"
+                      >
+                        {fpShowNew ? '👁️' : '👁️‍🗨️'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="wl-form-group">
+                    <label className="wl-form-label">Confirm New Passcode</label>
+                    <div className="wl-input-wrapper">
+                      <input
+                        type={fpShowConfirm ? 'text' : 'password'}
+                        className="wl-text-input"
+                        placeholder="Re-enter new passcode"
+                        value={fpConfirmPassword}
+                        onChange={(e) => setFpConfirmPassword(e.target.value)}
+                        disabled={fpLoading}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="wl-eye-btn"
+                        onClick={() => setFpShowConfirm(!fpShowConfirm)}
+                        aria-label="Toggle password"
+                      >
+                        {fpShowConfirm ? '👁️' : '👁️‍🗨️'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="wl-modal-submit-btn"
+                    disabled={fpLoading}
+                  >
+                    {fpLoading ? 'Resetting Passcode...' : 'Reset Passcode & Sign In →'}
+                  </button>
+
+                  {!fpToken && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14, fontSize: 12 }}>
+                      <button
+                        type="button"
+                        style={{ background: 'none', border: 'none', color: '#8E8A83', cursor: 'pointer' }}
+                        onClick={() => setFpStep('init')}
+                      >
+                        ← Change Reg Number
+                      </button>
+                      <button
+                        type="button"
+                        style={{ background: 'none', border: 'none', color: fpCountdown > 0 ? '#A8A29E' : '#C07660', cursor: fpCountdown > 0 ? 'default' : 'pointer', fontWeight: 600 }}
+                        disabled={fpCountdown > 0 || fpLoading}
+                        onClick={handleForgotSubmit}
+                      >
+                        {fpCountdown > 0 ? `Resend in ${fpCountdown}s` : 'Resend Code'}
+                      </button>
+                    </div>
+                  )}
+                </form>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

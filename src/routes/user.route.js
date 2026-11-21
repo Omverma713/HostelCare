@@ -10,6 +10,11 @@ const {
   verifyUserPassword,
   testMyDevice,
   getMyRoomInfo,
+  forgotPassword,
+  forgotPasswordWithCampusVerification,
+  verifyResetOtp,
+  resetPassword,
+  changePassword,
 } = require("../controllers/user.controllers");
 const authMiddleware = require("../middleware/auth.middleware");
 const {
@@ -40,8 +45,21 @@ const sensitiveActionLimiter = rateLimit({
   message: { success: false, message: "Too many attempts. Please try again later." },
 });
 
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many password reset requests. Please wait 15 minutes." },
+});
+
 router.post("/activate", activateUser);
 router.post("/login", loginLimiter, loggedInUser);
+router.post("/forgot-password", passwordResetLimiter, forgotPassword);
+router.post("/forgot-password/verify-campus", passwordResetLimiter, forgotPasswordWithCampusVerification);
+router.post("/verify-reset-otp", sensitiveActionLimiter, verifyResetOtp);
+router.post("/reset-password", sensitiveActionLimiter, resetPassword);
+router.post("/change-password", sensitiveActionLimiter, changePassword);
 router.post("/logout", authMiddleware, logoutUser);
 router.get("/my-sessions", authMiddleware, getMySessions);
 router.delete("/my-sessions/:sessionId", authMiddleware, revokeMySession);

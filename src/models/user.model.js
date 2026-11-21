@@ -108,6 +108,36 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Password Reset via Brevo (OTP + 1-Click Link)
+    resetPasswordOtp: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    resetPasswordToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    resetPasswordExpiresAt: {
+      type: Date,
+      default: null,
+    },
+
+    resetPasswordAttempts: {
+      type: Number,
+      default: 0,
+    },
+
+    pendingResetEmail: {
+      type: String,
+      default: null,
+      trim: true,
+      lowercase: true,
+    },
+
     // Temporary Sub-Admin Delegation tracking
     isDelegatedSubAdmin: {
       type: Boolean,
