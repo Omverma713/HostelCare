@@ -1,7 +1,5 @@
 const brevo = require("@getbrevo/brevo");
 const nodemailer = require("nodemailer");
-const sharp = require("sharp");
-const GIFEncoder = require("gif-encoder-2");
 
 /**
  * Creates and returns a Nodemailer transporter based on available environment variables.
@@ -401,78 +399,6 @@ async function sendFeedbackAcknowledgmentToVisitor({
 }
 
 /**
- * Generates an optimized, animated GIF of the 6-digit OTP code typing in sequentially.
- * This guarantees native animation on Gmail Android, iOS, Outlook, and webmail clients.
- */
-async function generateOtpAnimationGif(otp = "000000") {
-  try {
-    const width = 340;
-    const height = 82;
-    const encoder = new GIFEncoder(width, height, "neuquant", true);
-    encoder.setRepeat(0); // 0 = loop forever
-    encoder.start();
-
-    // Frames:
-    // f0: blank boxes (280ms)
-    // f1-f6: typing each digit (160ms each)
-    // f7: full OTP hold (2400ms)
-    const frames = [
-      { count: 0, delay: 280 },
-      { count: 1, delay: 160 },
-      { count: 2, delay: 160 },
-      { count: 3, delay: 160 },
-      { count: 4, delay: 160 },
-      { count: 5, delay: 160 },
-      { count: 6, delay: 160 },
-      { count: 6, delay: 2400 },
-    ];
-
-    for (let f = 0; f < frames.length; f++) {
-      const { count, delay } = frames[f];
-      encoder.setDelay(delay);
-      const charsToShow = otp.slice(0, count);
-
-      let boxesSvg = "";
-      for (let i = 0; i < 6; i++) {
-        const x = 14 + i * 53;
-        const char = charsToShow[i] || "";
-        const isFilled = Boolean(char);
-        const stroke = isFilled ? "#C07660" : "rgba(192, 118, 96, 0.35)";
-        const fill = isFilled ? "rgba(192, 118, 96, 0.16)" : "#141210";
-        const strokeWidth = isFilled ? "2.2" : "1.5";
-
-        let content = `<circle cx="${x + 22}" cy="41" r="3.5" fill="rgba(142, 138, 131, 0.45)"/>`;
-        if (char) {
-          content = `<text x="${x + 22}" y="50" fill="#FAF7F2" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="middle">${char}</text>`;
-        }
-
-        boxesSvg += `<rect x="${x}" y="10" width="44" height="60" rx="11" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"/>${content}`;
-      }
-
-      const svg = `
-        <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100%" height="100%" rx="14" fill="#0f172a"/>
-          ${boxesSvg}
-        </svg>
-      `.trim();
-
-      const { data: rawPixels } = await sharp(Buffer.from(svg))
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-
-      encoder.addFrame(rawPixels);
-    }
-
-    encoder.finish();
-    return encoder.out.getData();
-  } catch (err) {
-    console.error("[OTP_GIF_GENERATION_FAILED]", err.message);
-    return null;
-  }
-}
-
-/**
  * Sends Password Reset Email: sends EITHER 6-Digit OTP OR 1-Click Reset Link based on user selection
  */
 async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, resetLink, resetMethod = "otp", isResend = false }) {
@@ -487,18 +413,6 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
   const subject = isOtpMethod
     ? `🔐 Your 6-Digit HostelCare Passcode OTP [${otp}]`
     : `🔗 Reset Your HostelCare Passcode (1-Click Link)`;
-
-  const attachments = [];
-  let gifBuffer = null;
-  if (isOtpMethod) {
-    gifBuffer = await generateOtpAnimationGif(otp);
-    if (gifBuffer) {
-      attachments.push({
-        name: "otp-animated.gif",
-        content: gifBuffer.toString("base64"),
-      });
-    }
-  }
 
   const html = `
 <!DOCTYPE html>
@@ -523,15 +437,8 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
         border-color: #E28870;
       }
     }
-    @keyframes liveDotPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.3; transform: scale(0.8); }
-    }
     .otp-card-pulse {
       animation: pulseGlow 2.5s infinite ease-in-out;
-    }
-    .live-pulse-dot {
-      animation: liveDotPulse 1.4s infinite ease-in-out;
     }
     .otp-cell {
       animation: digitBounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -581,43 +488,26 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
               ` : ""}
 
               ${isOtpMethod ? `
-              <!-- 6-Digit Animated OTP Box -->
-              <div class="otp-card-pulse" style="background: rgba(192, 118, 96, 0.08); border: 2px dashed #C07660; border-radius: 16px; padding: 22px 14px; text-align: center; margin: 0 0 28px 0;">
-                <!-- Status Badge with Pulsing Live Dot -->
-                <div style="display: inline-block; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(192, 118, 96, 0.4); border-radius: 9999px; padding: 6px 16px; margin-bottom: 14px;">
-                  <span class="live-pulse-dot" style="display: inline-block; width: 8px; height: 8px; background: #10B981; border-radius: 50%; vertical-align: middle; margin-right: 6px;"></span>
-                  <span style="font-size: 11px; color: #e28870; text-transform: uppercase; letter-spacing: 1.4px; font-weight: 700;">
-                    LIVE 6-DIGIT VERIFICATION CODE
-                  </span>
+              <!-- 6-Digit Passcode Verification -->
+              <div class="otp-card-pulse" style="background: rgba(192, 118, 96, 0.08); border: 2px dashed #C07660; border-radius: 16px; padding: 24px 16px; text-align: center; margin: 0 0 28px 0;">
+                <div style="font-size: 12px; color: #e28870; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 16px;">
+                  YOUR 6-DIGIT VERIFICATION CODE
                 </div>
 
-                ${gifBuffer ? `
-                <!-- 1. Native Animated Typing GIF (Plays on Gmail Android, iOS, Outlook, Webmail) -->
-                <div style="text-align: center; margin: 4px auto 14px auto;">
-                  <img
-                    src="cid:otp-animated.gif"
-                    alt="${otp}"
-                    width="340"
-                    height="82"
-                    style="display: block; margin: 0 auto; max-width: 100%; height: auto; border-radius: 14px; border: 1px solid #334155; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);"
-                  />
-                </div>
-                ` : ""}
-
-                <!-- 2. Segmented 6-Digit Luxury Cards (Selectable & Screen-Reader accessible) -->
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 12px auto;">
+                <!-- Segmented 6-Digit Luxury Cards with Pop-In Animation -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 16px auto;">
                   <tr>
                     ${otp.split("").map((digit, idx) => `
-                      <td align="center" valign="middle" class="otp-cell digit-${idx + 1}" style="width: 42px; height: 50px; background: #0f172a; border: 2px solid #C07660; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 26px; font-weight: 800; color: #FAF7F2; text-align: center; box-shadow: 0 4px 10px rgba(192, 118, 96, 0.25);">
+                      <td align="center" valign="middle" class="otp-cell digit-${idx + 1}" style="width: 44px; height: 52px; background: #0f172a; border: 2px solid #C07660; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 28px; font-weight: 800; color: #FAF7F2; text-align: center; box-shadow: 0 4px 12px rgba(192, 118, 96, 0.25);">
                         ${digit}
                       </td>
-                      ${idx < 5 ? `<td style="width: 6px;"></td>` : ""}
+                      ${idx < 5 ? `<td style="width: 8px;"></td>` : ""}
                     `).join("")}
                   </tr>
                 </table>
 
-                <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">
-                  ⏱️ Code valid for <strong>5 minutes only</strong>. Never share this with anyone.
+                <div style="font-size: 12px; color: #94a3b8;">
+                  ⏱️ Valid for <strong>5 minutes only</strong>. Never share this code with anyone.
                 </div>
               </div>
               ` : `
@@ -662,7 +552,6 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
     senderName: "HostelCare Portal",
     subject,
     htmlContent: html,
-    attachments,
   });
 }
 
