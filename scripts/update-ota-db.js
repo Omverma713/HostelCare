@@ -10,8 +10,8 @@ async function run() {
     config = await SystemConfig.create({ key: "default" });
   }
   
-  const targetVer = '1.2.2.81';
-  const checksum = '05784720111b4d72708f6761d65a6379bea74afcfa43fe58f187fc506adebb4d';
+  const targetVer = '1.2.2.82';
+  const checksum = 'b1de96ac7843dd7956cd463dc1ee4760db754243cbe732ab5ce10f13d5d4836e';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -24,11 +24,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.81: Dynamic OTP resend attempts counter (0/2 on exempt/start, 1/2, 2/2) & performance pooling optimizations';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.82: Cinematic mountain sunrise & sunset celestial transition overlay when switching themes';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.81: Dynamic OTP resend attempts counter and stability fixes';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.82: Cinematic celestial mountain theme transition and visual polish';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');

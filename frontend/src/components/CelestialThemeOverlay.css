@@ -1,0 +1,259 @@
+/* ══════════════════════════════════════════════════════════════════════
+   CELESTIAL THEME TRANSITION OVERLAY
+   Cinematic Sunrise & Sunset/Moonrise between Mountain Silhouettes
+   GPU-Accelerated 60 FPS • Pure SVG & CSS
+   ══════════════════════════════════════════════════════════════════════ */
+
+.celestial-overlay-root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  pointer-events: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  transition: opacity 0.25s ease-out;
+}
+
+/* ─── SKY DOME BACKDROPS ─── */
+.celestial-overlay-root.phase-sunrise {
+  animation: skyDawnCycle 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.celestial-overlay-root.phase-sunset {
+  animation: skyDuskCycle 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes skyDawnCycle {
+  0% {
+    background: radial-gradient(circle at 50% 85%, rgba(200, 110, 60, 0.4) 0%, rgba(16, 20, 32, 0.98) 55%, #0B0E17 100%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    background: radial-gradient(circle at 50% 65%, rgba(255, 180, 80, 0.8) 0%, rgba(210, 100, 75, 0.85) 45%, #1c1427 100%);
+  }
+  80% {
+    background: radial-gradient(circle at 50% 45%, rgba(255, 230, 160, 0.95) 0%, rgba(246, 218, 180, 0.9) 55%, #F4ECE4 100%);
+    opacity: 1;
+  }
+  100% {
+    background: radial-gradient(circle at 50% 35%, rgba(255, 245, 220, 0.95) 0%, #FAF6F0 70%, #F5EFEB 100%);
+    opacity: 0;
+  }
+}
+
+@keyframes skyDuskCycle {
+  0% {
+    background: radial-gradient(circle at 50% 45%, rgba(255, 210, 130, 0.6) 0%, rgba(235, 175, 135, 0.5) 45%, rgba(245, 239, 235, 0.95) 100%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  45% {
+    background: radial-gradient(circle at 50% 65%, rgba(255, 120, 70, 0.8) 0%, rgba(180, 60, 80, 0.85) 40%, #1a1226 100%);
+  }
+  80% {
+    background: radial-gradient(circle at 50% 50%, rgba(70, 90, 160, 0.6) 0%, rgba(20, 24, 42, 0.95) 50%, #0B0E17 100%);
+    opacity: 1;
+  }
+  100% {
+    background: radial-gradient(circle at 50% 50%, rgba(30, 36, 56, 0.8) 0%, #0E111A 60%, #0B0E17 100%);
+    opacity: 0;
+  }
+}
+
+/* ─── CELESTIAL STAGE CANVAS / SVG CONTAINER ─── */
+.celestial-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ─── SUN ANIMATIONS ─── */
+.celestial-sun-sunrise {
+  transform-origin: center center;
+  animation: sunAscent 0.9s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+.celestial-sun-sunset {
+  transform-origin: center center;
+  animation: sunDescent 0.9s cubic-bezier(0.4, 0, 0.8, 0.6) forwards;
+}
+
+@keyframes sunAscent {
+  0% {
+    transform: translate3d(0, 140px, 0) scale(0.65);
+    opacity: 0;
+    filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.3));
+  }
+  20% {
+    opacity: 1;
+    filter: drop-shadow(0 0 25px rgba(255, 160, 40, 0.7));
+  }
+  65% {
+    transform: translate3d(0, -60px, 0) scale(1.15);
+    filter: drop-shadow(0 0 55px rgba(255, 210, 90, 0.95)) drop-shadow(0 0 90px rgba(255, 190, 70, 0.6));
+  }
+  100% {
+    transform: translate3d(0, -110px, 0) scale(1.4);
+    opacity: 0;
+    filter: drop-shadow(0 0 120px rgba(255, 255, 255, 1));
+  }
+}
+
+@keyframes sunDescent {
+  0% {
+    transform: translate3d(0, -60px, 0) scale(1.1);
+    opacity: 1;
+    filter: drop-shadow(0 0 45px rgba(255, 190, 60, 0.8));
+  }
+  40% {
+    transform: translate3d(0, 50px, 0) scale(0.95);
+    filter: drop-shadow(0 0 35px rgba(230, 80, 50, 0.85));
+  }
+  75% {
+    transform: translate3d(0, 140px, 0) scale(0.7);
+    opacity: 0.7;
+    filter: drop-shadow(0 0 15px rgba(180, 40, 40, 0.5));
+  }
+  100% {
+    transform: translate3d(0, 190px, 0) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* ─── MOON ANIMATION ─── */
+.celestial-moon-sunset {
+  transform-origin: center center;
+  animation: moonAscent 0.9s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
+}
+
+@keyframes moonAscent {
+  0% {
+    transform: translate3d(30px, 120px, 0) scale(0.6) rotate(-15deg);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.1;
+  }
+  65% {
+    transform: translate3d(15px, -30px, 0) scale(1.05) rotate(0deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 18px rgba(210, 225, 255, 0.85)) drop-shadow(0 0 35px rgba(160, 195, 255, 0.45));
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0px, -65px, 0) scale(1.12) rotate(5deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 25px rgba(230, 240, 255, 0.95));
+  }
+}
+
+/* ─── STARS TWINKLE ─── */
+.celestial-stars {
+  animation: starsTwinkle 0.9s ease-in-out forwards;
+}
+
+@keyframes starsTwinkle {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  45% {
+    opacity: 0.3;
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ─── MOUNTAIN RIDGES ─── */
+.mountains-bg {
+  animation: mountainSwayBg 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  transform-origin: bottom center;
+}
+
+.mountains-fg {
+  animation: mountainSwayFg 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  transform-origin: bottom center;
+}
+
+@keyframes mountainSwayBg {
+  0% {
+    transform: translate3d(0, 40px, 0);
+  }
+  40% {
+    transform: translate3d(0, 0px, 0);
+  }
+  85% {
+    transform: translate3d(0, 0px, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 20px, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes mountainSwayFg {
+  0% {
+    transform: translate3d(0, 50px, 0);
+  }
+  35% {
+    transform: translate3d(0, 0px, 0);
+  }
+  85% {
+    transform: translate3d(0, 0px, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 25px, 0);
+    opacity: 0;
+  }
+}
+
+/* ─── ATMOSPHERIC LIGHT FLASH (Midpoint Burst) ─── */
+.celestial-light-bloom {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: bloomPulse 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes bloomPulse {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0.15;
+  }
+  75% {
+    opacity: 0.65;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ─── ACCESSIBILITY: PREFERS-REDUCED-MOTION ─── */
+@media (prefers-reduced-motion: reduce) {
+  .celestial-overlay-root {
+    display: none !important;
+  }
+}

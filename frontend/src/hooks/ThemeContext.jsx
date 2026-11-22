@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useLayoutEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useLayoutEffect, useCallback, useRef } from 'react';
+import CelestialThemeOverlay from '../components/CelestialThemeOverlay';
 
 const ThemeContext = createContext(null);
 
@@ -28,19 +29,55 @@ export function ThemeProvider({ children }) {
     return initial;
   });
 
-  const setTheme = useCallback((newTheme) => {
-    setThemeState((prev) => {
-      const nextTheme = typeof newTheme === 'function' ? newTheme(prev) : newTheme;
-      if (nextTheme === prev) return prev;
+  // Celestial Transition Animation: 'sunrise' | 'sunset' | null
+  const [celestialPhase, setCelestialPhase] = useState(null);
+  const transitionTimerRef = useRef(null);
+  const flipTimerRef = useRef(null);
+  const isTransitioningRef = useRef(false);
+
+  const triggerCelestialTransition = useCallback((nextTheme) => {
+    // If user prefers reduced motion, switch instantly without animation
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       applyThemeClasses(nextTheme);
+      setThemeState(nextTheme);
       try {
         localStorage.setItem('theme', nextTheme);
-      } catch (e) {
-        // ignore quota error
-      }
-      return nextTheme;
-    });
+      } catch (e) {}
+      return;
+    }
+
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
+    // 'sunrise' if transitioning into light mode, 'sunset' if into dark mode
+    const phase = nextTheme === 'light' ? 'sunrise' : 'sunset';
+    setCelestialPhase(phase);
+
+    // Clear any pending timers
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+
+    // Midpoint Flip (380ms): Flip classes underneath when celestial body is at apex/valley
+    flipTimerRef.current = setTimeout(() => {
+      applyThemeClasses(nextTheme);
+      setThemeState(nextTheme);
+      try {
+        localStorage.setItem('theme', nextTheme);
+      } catch (e) {}
+    }, 380);
+
+    // Completion (880ms): Reset celestial overlay
+    transitionTimerRef.current = setTimeout(() => {
+      setCelestialPhase(null);
+      isTransitioningRef.current = false;
+    }, 880);
   }, []);
+
+  const setTheme = useCallback((newTheme) => {
+    const nextTheme = typeof newTheme === 'function' ? newTheme(theme) : newTheme;
+    if (nextTheme === theme) return;
+    triggerCelestialTransition(nextTheme);
+  }, [theme, triggerCelestialTransition]);
 
   useLayoutEffect(() => {
     applyThemeClasses(theme);
@@ -52,17 +89,26 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  }, [setTheme]);
+    const targetTheme = theme === 'light' ? 'dark' : 'light';
+    triggerCelestialTransition(targetTheme);
+  }, [theme, triggerCelestialTransition]);
 
   const value = {
     theme,
     setTheme,
     toggleTheme,
     isDark: theme === 'dark',
+    isTransitioning: Boolean(celestialPhase),
+    celestialPhase,
   };
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>
+      {children}
+      {/* Cinematic Mountain Sunrise & Sunset Celestial Overlay */}
+      <CelestialThemeOverlay phase={celestialPhase} />
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {
