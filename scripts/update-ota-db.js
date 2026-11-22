@@ -10,8 +10,8 @@ async function run() {
     config = await SystemConfig.create({ key: "default" });
   }
   
-  const targetVer = '1.2.2.82';
-  const checksum = 'b1de96ac7843dd7956cd463dc1ee4760db754243cbe732ab5ce10f13d5d4836e';
+  const targetVer = '1.2.2.83';
+  const checksum = 'd12abae019cac0398a77e653ab9b6c73bdbc5cdb7b9514fd474b37457c478ecf';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -24,11 +24,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.82: Cinematic mountain sunrise & sunset celestial transition overlay when switching themes';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.83: Left-side sunrise for light mode, sunset & moonrise for dark mode, mountain-free 1.6s celestial transition';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.82: Cinematic celestial mountain theme transition and visual polish';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.83: Left-side sunrise & sunset theme transition';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');
