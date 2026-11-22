@@ -464,21 +464,11 @@ const systemConfigSchema = new mongoose.Schema(
   }
 );
 
-let cachedConfig = null;
-let lastConfigFetch = 0;
-const CONFIG_CACHE_TTL = 5000; // 5 seconds micro-cache
-
 systemConfigSchema.statics.getEffectiveConfig = async function () {
-  const now = Date.now();
-  if (cachedConfig && (now - lastConfigFetch < CONFIG_CACHE_TTL)) {
-    return cachedConfig;
-  }
-  let config = await this.findOne({ key: "default" }).lean();
+  let config = await this.findOne({ key: "default" });
   if (!config) {
     config = await this.create({ key: "default" });
   }
-  cachedConfig = config;
-  lastConfigFetch = now;
   return config;
 };
 
