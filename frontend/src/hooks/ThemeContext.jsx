@@ -57,20 +57,20 @@ export function ThemeProvider({ children }) {
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
 
-    // Midpoint Flip (750ms): Flip classes underneath when celestial body is sweeping across sky
+    // Midpoint Flip (650ms): Flip classes underneath when celestial body is in center
     flipTimerRef.current = setTimeout(() => {
       applyThemeClasses(nextTheme);
       setThemeState(nextTheme);
       try {
         localStorage.setItem('theme', nextTheme);
       } catch (e) {}
-    }, 750);
+    }, 650);
 
-    // Completion (1600ms): Reset celestial overlay
+    // Completion (1400ms): Reset celestial overlay
     transitionTimerRef.current = setTimeout(() => {
       setCelestialPhase(null);
       isTransitioningRef.current = false;
-    }, 1600);
+    }, 1400);
   }, []);
 
   const setTheme = useCallback((newTheme) => {

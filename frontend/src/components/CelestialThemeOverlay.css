@@ -1,9 +1,9 @@
 /* ══════════════════════════════════════════════════════════════════════
-   CELESTIAL THEME TRANSITION OVERLAY (Pure Sky & Celestial Motion)
-   - Left-Side Sunrise for Light Mode
-   - Smooth Sunset & Moonrise for Dark Mode
-   - Mountain-free, Ultra-Clean & Minimalist Luxury
-   - 1.6s Cinematic Duration • 60 FPS GPU-Accelerated
+   CELESTIAL THEME TRANSITION OVERLAY
+   - Perfectly Screen-Centered (Compact, Sleek & Minimalist)
+   - Sunrise in Center for Light Mode
+   - Sunset & Crescent Moon in Center for Dark Mode
+   - Soft Ambient Vignette • Zero Overflow • 60 FPS GPU-Accelerated
    ══════════════════════════════════════════════════════════════════════ */
 
 .celestial-overlay-root {
@@ -19,227 +19,179 @@
   justify-content: center;
 }
 
-/* ─── SKY DOME BACKDROPS (1.6s Duration) ─── */
+/* ─── SOFT AMBIENT VIGNETTE BACKDROPS (Centered) ─── */
 .celestial-overlay-root.phase-sunrise {
-  animation: skySunriseFlow 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: bgSunriseCenter 1.4s cubic-bezier(0.25, 1, 0.4, 1) forwards;
 }
 
 .celestial-overlay-root.phase-sunset {
-  animation: skySunsetFlow 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: bgSunsetCenter 1.4s cubic-bezier(0.25, 1, 0.4, 1) forwards;
 }
 
-@keyframes skySunriseFlow {
+@keyframes bgSunriseCenter {
   0% {
-    background: radial-gradient(circle at 10% 90%, rgba(255, 140, 50, 0.35) 0%, rgba(24, 18, 36, 0.95) 45%, #0B0E17 100%);
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  45% {
-    background: radial-gradient(circle at 25% 65%, rgba(255, 175, 75, 0.9) 0%, rgba(230, 115, 65, 0.75) 35%, rgba(45, 26, 50, 0.92) 70%, #151020 100%);
-  }
-  75% {
-    background: radial-gradient(circle at 40% 40%, rgba(255, 235, 170, 0.95) 0%, rgba(250, 220, 185, 0.9) 45%, #F4ECE4 85%, #EFE8E0 100%);
-    opacity: 1;
-  }
-  100% {
-    background: radial-gradient(circle at 45% 35%, rgba(255, 245, 225, 0.95) 0%, #FAF6F0 60%, #F5EFEB 100%);
-    opacity: 0;
-  }
-}
-
-@keyframes skySunsetFlow {
-  0% {
-    background: radial-gradient(circle at 35% 35%, rgba(255, 220, 140, 0.7) 0%, rgba(245, 190, 145, 0.5) 40%, #FAF6F0 85%);
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  45% {
-    background: radial-gradient(circle at 75% 70%, rgba(255, 110, 60, 0.88) 0%, rgba(185, 55, 75, 0.85) 35%, rgba(35, 22, 45, 0.95) 75%, #0F0D1A 100%);
-  }
-  75% {
-    background: radial-gradient(circle at 75% 45%, rgba(90, 115, 190, 0.5) 0%, rgba(20, 25, 45, 0.95) 50%, #0B0E17 100%);
-    opacity: 1;
-  }
-  100% {
-    background: radial-gradient(circle at 75% 40%, rgba(35, 42, 68, 0.7) 0%, #0E111A 55%, #0B0E17 100%);
-    opacity: 0;
-  }
-}
-
-/* ─── SVG CANVAS FULLSCREEN ─── */
-.celestial-stage {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-/* ─── LEFT-SIDE SUNRISE TRAJECTORY ─── */
-/* Starts bottom-left (x: 80, y: 560), arcs up to upper-left center (x: 320, y: 190) */
-.celestial-sun-sunrise-arc {
-  animation: sunriseArcTrajectory 1.6s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
-  transform-origin: 0 0;
-}
-
-@keyframes sunriseArcTrajectory {
-  0% {
-    transform: translate3d(-180px, 420px, 0) scale(0.65);
+    background: radial-gradient(circle at 50% 50%, rgba(255, 180, 80, 0.3) 0%, rgba(20, 16, 30, 0.85) 60%, rgba(11, 14, 23, 0.95) 100%);
     opacity: 0;
   }
   20% {
     opacity: 1;
-    filter: drop-shadow(0 0 35px rgba(255, 150, 40, 0.75));
   }
-  50% {
-    transform: translate3d(80px, 90px, 0) scale(1.1);
-    filter: drop-shadow(0 0 65px rgba(255, 200, 70, 0.95)) drop-shadow(0 0 110px rgba(255, 160, 40, 0.6));
-  }
-  80% {
-    transform: translate3d(240px, -60px, 0) scale(1.35);
+  55% {
+    background: radial-gradient(circle at 50% 50%, rgba(255, 210, 120, 0.65) 0%, rgba(245, 175, 125, 0.5) 45%, rgba(246, 236, 226, 0.92) 80%, #FAF6F0 100%);
     opacity: 1;
-    filter: drop-shadow(0 0 120px rgba(255, 230, 130, 1));
+  }
+  85% {
+    background: radial-gradient(circle at 50% 50%, rgba(255, 240, 200, 0.7) 0%, #FAF6F0 70%, #F5EFEB 100%);
+    opacity: 0.9;
   }
   100% {
-    transform: translate3d(320px, -110px, 0) scale(1.6);
     opacity: 0;
-    filter: drop-shadow(0 0 160px rgba(255, 255, 255, 1));
   }
 }
 
-/* ─── SUNSET TRAJECTORY ─── */
-/* Starts high (x: 280, y: 190), arcs down toward bottom-right (x: 750, y: 580) */
-.celestial-sun-sunset-arc {
-  animation: sunsetArcTrajectory 1.6s cubic-bezier(0.35, 0.1, 0.75, 0.7) forwards;
-  transform-origin: 0 0;
-}
-
-@keyframes sunsetArcTrajectory {
+@keyframes bgSunsetCenter {
   0% {
-    transform: translate3d(240px, -60px, 0) scale(1.25);
+    background: radial-gradient(circle at 50% 50%, rgba(255, 190, 110, 0.4) 0%, rgba(245, 235, 225, 0.8) 55%, #F5EFEB 100%);
+    opacity: 0;
+  }
+  20% {
     opacity: 1;
-    filter: drop-shadow(0 0 50px rgba(255, 180, 50, 0.85));
   }
-  35% {
-    transform: translate3d(450px, 90px, 0) scale(1.05);
-    filter: drop-shadow(0 0 40px rgba(240, 95, 45, 0.9));
+  50% {
+    background: radial-gradient(circle at 50% 50%, rgba(255, 120, 70, 0.6) 0%, rgba(160, 50, 70, 0.65) 40%, rgba(22, 18, 36, 0.92) 80%, #0B0E17 100%);
+    opacity: 1;
   }
-  65% {
-    transform: translate3d(620px, 300px, 0) scale(0.85);
-    opacity: 0.85;
-    filter: drop-shadow(0 0 25px rgba(200, 50, 40, 0.7));
+  85% {
+    background: radial-gradient(circle at 50% 50%, rgba(65, 80, 140, 0.5) 0%, rgba(16, 20, 36, 0.95) 65%, #0B0E17 100%);
+    opacity: 0.95;
   }
-  90% {
-    transform: translate3d(720px, 460px, 0) scale(0.65);
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ─── COMPACT CENTER STAGE (200px x 200px) ─── */
+.celestial-center-stage {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* ─── CENTERED SUNRISE ANIMATION ─── */
+/* Rises from slightly below center (translateY: 55px) to exact center (0,0) */
+.celestial-sun-center-rise {
+  animation: sunRiseInCenter 1.4s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+  transform-origin: center center;
+}
+
+@keyframes sunRiseInCenter {
+  0% {
+    transform: translate3d(0, 60px, 0) scale(0.65);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+    filter: drop-shadow(0 0 18px rgba(255, 160, 40, 0.85));
+  }
+  55% {
+    transform: translate3d(0, 0px, 0) scale(1);
+    opacity: 1;
+    filter: drop-shadow(0 0 32px rgba(255, 205, 80, 0.95)) drop-shadow(0 0 55px rgba(255, 160, 40, 0.6));
+  }
+  85% {
+    transform: translate3d(0, -10px, 0) scale(1.1);
+    opacity: 1;
+    filter: drop-shadow(0 0 50px rgba(255, 235, 140, 1));
+  }
+  100% {
+    transform: translate3d(0, -15px, 0) scale(1.18);
+    opacity: 0;
+    filter: drop-shadow(0 0 70px rgba(255, 255, 255, 0.9));
+  }
+}
+
+/* ─── CENTERED SUNSET ANIMATION ─── */
+/* Sun starts in center and smoothly sinks downward */
+.celestial-sun-center-set {
+  animation: sunSetInCenter 1.4s cubic-bezier(0.35, 0.1, 0.7, 0.6) forwards;
+  transform-origin: center center;
+}
+
+@keyframes sunSetInCenter {
+  0% {
+    transform: translate3d(0, 0px, 0) scale(1);
+    opacity: 1;
+    filter: drop-shadow(0 0 25px rgba(255, 180, 50, 0.9));
+  }
+  40% {
+    transform: translate3d(0, 35px, 0) scale(0.85);
+    opacity: 0.9;
+    filter: drop-shadow(0 0 20px rgba(240, 90, 45, 0.85));
+  }
+  70% {
+    transform: translate3d(0, 65px, 0) scale(0.65);
     opacity: 0.3;
   }
   100% {
-    transform: translate3d(780px, 550px, 0) scale(0.5);
+    transform: translate3d(0, 85px, 0) scale(0.45);
     opacity: 0;
   }
 }
 
-/* ─── MOONRISE TRAJECTORY (Sunset Phase) ─── */
-/* Moon glides in from bottom-right into night sky at upper-right */
-.celestial-moon-sunset-arc {
-  animation: moonriseArcTrajectory 1.6s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
-  transform-origin: 0 0;
+/* ─── CENTERED MOONRISE ANIMATION ─── */
+/* Crescent Moon ascends into the exact center as the sun sinks */
+.celestial-moon-center-rise {
+  animation: moonRiseInCenter 1.4s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
+  transform-origin: center center;
 }
 
-@keyframes moonriseArcTrajectory {
+@keyframes moonRiseInCenter {
   0% {
-    transform: translate3d(720px, 350px, 0) scale(0.65) rotate(-20deg);
+    transform: translate3d(0, 45px, 0) scale(0.65) rotate(-10deg);
     opacity: 0;
   }
-  40% {
+  30% {
     opacity: 0;
   }
-  60% {
-    transform: translate3d(680px, 120px, 0) scale(0.95) rotate(-10deg);
-    opacity: 0.75;
-    filter: drop-shadow(0 0 25px rgba(200, 220, 255, 0.8));
+  55% {
+    transform: translate3d(0, 5px, 0) scale(0.95) rotate(-4deg);
+    opacity: 0.8;
+    filter: drop-shadow(0 0 16px rgba(200, 220, 255, 0.8));
   }
-  85% {
-    transform: translate3d(650px, 30px, 0) scale(1.15) rotate(0deg);
+  80% {
+    transform: translate3d(0, 0px, 0) scale(1) rotate(0deg);
     opacity: 1;
-    filter: drop-shadow(0 0 35px rgba(215, 235, 255, 0.95)) drop-shadow(0 0 70px rgba(160, 200, 255, 0.5));
+    filter: drop-shadow(0 0 24px rgba(220, 235, 255, 0.95)) drop-shadow(0 0 45px rgba(150, 190, 255, 0.5));
   }
   100% {
-    transform: translate3d(630px, -20px, 0) scale(1.2) rotate(4deg);
+    transform: translate3d(0, -6px, 0) scale(1.05) rotate(2deg);
     opacity: 0;
   }
 }
 
-/* ─── HORIZON GLOW (Ambient Dawn/Dusk Flare) ─── */
-.horizon-glow-left {
-  animation: horizonGlowPulse 1.6s ease-in-out forwards;
+/* ─── COMPACT TWINKLING STARS IN CENTER (Sunset Phase) ─── */
+.celestial-stars-centered {
+  animation: starsTwinkleCentered 1.4s ease-in-out forwards;
 }
 
-@keyframes horizonGlowPulse {
+@keyframes starsTwinkleCentered {
   0% {
     opacity: 0;
     transform: scale(0.8);
   }
-  30% {
-    opacity: 0.85;
-    transform: scale(1.15);
-  }
-  70% {
-    opacity: 0.9;
-    transform: scale(1.4);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.6);
-  }
-}
-
-/* ─── STARS TWINKLE (Smooth Fade-In During Sunset) ─── */
-.celestial-stars-pure {
-  animation: starsTwinklePure 1.6s ease-in-out forwards;
-}
-
-@keyframes starsTwinklePure {
-  0% {
-    opacity: 0;
-    transform: translateY(15px);
-  }
   40% {
-    opacity: 0.1;
+    opacity: 0.2;
   }
   65% {
-    opacity: 0.95;
-    transform: translateY(0);
+    opacity: 1;
+    transform: scale(1);
   }
-  90% {
+  85% {
     opacity: 0.9;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-/* ─── FULL-SCREEN AMBIENT BLOOM PULSE ─── */
-.celestial-light-bloom {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  animation: bloomPulseLong 1.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-@keyframes bloomPulseLong {
-  0% {
-    opacity: 0;
-  }
-  45% {
-    opacity: 0.25;
-  }
-  75% {
-    opacity: 0.75;
   }
   100% {
     opacity: 0;
