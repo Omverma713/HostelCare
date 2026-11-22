@@ -55,25 +55,40 @@ export function ThemeProvider({ children }) {
     const phase = nextTheme === 'light' ? 'sunrise' : 'sunset';
     setCelestialPhase(phase);
 
-    // Clear any pending timers
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+    // Native CSS View Transitions API (Chrome, Edge, Android WebView)
+    if (typeof document !== 'undefined' && document.startViewTransition) {
+      const transition = document.startViewTransition(() => {
+        applyThemeClasses(nextTheme);
+        appliedThemeRef.current = nextTheme;
+        setThemeState(nextTheme);
+        try {
+          localStorage.setItem('theme', nextTheme);
+        } catch (e) {}
+      });
 
-    // Midpoint Flip (580ms): Flip classes underneath right as the full-screen circular wave completely blankets the viewport
-    flipTimerRef.current = setTimeout(() => {
-      applyThemeClasses(nextTheme);
-      appliedThemeRef.current = nextTheme;
-      setThemeState(nextTheme);
-      try {
-        localStorage.setItem('theme', nextTheme);
-      } catch (e) {}
-    }, 580);
+      transition.finished.finally(() => {
+        setCelestialPhase(null);
+        isTransitioningRef.current = false;
+      });
+    } else {
+      // Graceful fallback for browsers without View Transitions API
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
 
-    // Completion (1300ms): Reset celestial overlay smoothly
-    transitionTimerRef.current = setTimeout(() => {
-      setCelestialPhase(null);
-      isTransitioningRef.current = false;
-    }, 1300);
+      flipTimerRef.current = setTimeout(() => {
+        applyThemeClasses(nextTheme);
+        appliedThemeRef.current = nextTheme;
+        setThemeState(nextTheme);
+        try {
+          localStorage.setItem('theme', nextTheme);
+        } catch (e) {}
+      }, 650);
+
+      transitionTimerRef.current = setTimeout(() => {
+        setCelestialPhase(null);
+        isTransitioningRef.current = false;
+      }, 1450);
+    }
   }, []);
 
   const setTheme = useCallback((newTheme) => {

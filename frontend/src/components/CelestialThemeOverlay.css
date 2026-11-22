@@ -1,108 +1,70 @@
 /* ══════════════════════════════════════════════════════════════════════
-   CELESTIAL THEME TRANSITION OVERLAY
-   - Top-to-Center Straight Drop
-   - Full-Screen Circular Wave ("ek wave se poora screen ko cover karte hue")
-   - Highly Polished 3D Sun & Moon Vector Artwork
-   - Pure 60 FPS Hardware-Accelerated Animation (Zero Stutter)
+   CELESTIAL THEME TRANSITION (Choreographed View Transitions API)
+   1. Sun & Moon descents straight down from top to center (0 - 0.35s)
+   2. On touchdown (0.35s), circular wave expands outward (0.35s - 1.45s)
+   3. The exact instant wave hits the corners (1.45s), Sun/Moon vanishes (zero delay)
    ══════════════════════════════════════════════════════════════════════ */
 
+/* ─── 1. VIEW TRANSITIONS API: CIRCULAR WAVE REVEAL ─── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Old Theme (Outside the wave) stays anchored underneath */
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+/* New Theme (Inside the wave): Starts expanding at 0.35s when orb touches center */
+::view-transition-new(root) {
+  z-index: 9999;
+  /* 0.35s delay so the descent is clearly seen, then 1.1s expansion to 58vmax */
+  animation: circularWaveReveal 1.1s cubic-bezier(0.2, 0.9, 0.3, 1) 0.35s both;
+}
+
+@keyframes circularWaveReveal {
+  0% {
+    clip-path: circle(0px at 50% 50%);
+  }
+  100% {
+    /* 58vmax is the exact diagonal from center to corner on both desktop & mobile */
+    clip-path: circle(58vmax at 50% 50%);
+  }
+}
+
+/* ─── 2. CELESTIAL ORB (Floats above the view transition) ─── */
 .celestial-overlay-root {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 999999;
+  z-index: 9999999;
   pointer-events: none;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  view-transition-name: celestial-orb;
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   1. FULL-SCREEN EXPANDING CIRCULAR WAVE
-   Pulsing outward from center to cover the entire viewport
-   ══════════════════════════════════════════════════════════════════════ */
-.celestial-fullscreen-wave {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 120px;
-  height: 120px;
-  margin-top: -60px;
-  margin-left: -60px;
-  border-radius: 50%;
-  pointer-events: none;
-  transform: scale(0);
-  opacity: 0;
-  will-change: transform, opacity;
+::view-transition-group(celestial-orb) {
+  z-index: 100000;
+  animation: none;
+}
+::view-transition-old(celestial-orb) {
+  display: none;
+}
+::view-transition-new(celestial-orb) {
+  animation: none;
 }
 
-/* Sunrise: Golden Daylight Circular Wave */
-.phase-sunrise .celestial-fullscreen-wave {
-  border: 4px solid rgba(255, 215, 64, 0.95);
-  box-shadow: 
-    0 0 50px rgba(255, 179, 0, 0.9),
-    0 0 100px rgba(255, 143, 0, 0.5),
-    inset 0 0 80px rgba(255, 238, 140, 0.75);
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 252, 245, 0.98) 55%,
-    rgba(255, 244, 214, 0.94) 75%,
-    rgba(255, 193, 7, 0.88) 95%,
-    rgba(255, 143, 0, 0.95) 100%
-  );
-  animation: fullScreenWaveExpand 1.3s cubic-bezier(0.18, 0.89, 0.32, 1) 0.35s forwards;
-}
-
-/* Sunset: Indigo Midnight Circular Wave */
-.phase-sunset .celestial-fullscreen-wave {
-  border: 4px solid rgba(165, 180, 252, 0.95);
-  box-shadow: 
-    0 0 50px rgba(99, 102, 241, 0.9),
-    0 0 100px rgba(79, 70, 229, 0.5),
-    inset 0 0 80px rgba(129, 140, 248, 0.7);
-  background: radial-gradient(
-    circle at center,
-    rgba(13, 17, 28, 0.98) 55%,
-    rgba(22, 28, 48, 0.94) 75%,
-    rgba(79, 70, 229, 0.85) 95%,
-    rgba(99, 102, 241, 0.95) 100%
-  );
-  animation: fullScreenWaveExpand 1.3s cubic-bezier(0.18, 0.89, 0.32, 1) 0.35s forwards;
-}
-
-@keyframes fullScreenWaveExpand {
-  0% {
-    transform: scale(0.2);
-    opacity: 0.95;
-  }
-  20% {
-    opacity: 1;
-  }
-  50% {
-    /* Covers full screen completely by ~550-600ms */
-    transform: scale(28);
-    opacity: 0.98;
-  }
-  75% {
-    transform: scale(42);
-    opacity: 0.85;
-  }
-  100% {
-    transform: scale(52);
-    opacity: 0;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   2. STAGE & VERTICAL DROP ANIMATION ("Straight from top to center")
-   ══════════════════════════════════════════════════════════════════════ */
-.celestial-center-stage {
+.celestial-orb-stage {
   position: relative;
-  z-index: 10;
-  width: 320px;
-  height: 320px;
+  z-index: 20;
+  width: 200px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -116,54 +78,53 @@
   pointer-events: none;
 }
 
-.celestial-vertical-carrier {
-  animation: verticalDescentDrop 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* ─── ☀️ 3D Sun: Descends straight from top, stays during wave, exits at 1.45s ─── */
+.sun-burst-art {
+  animation: sunStraightDescentAndHold 1.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: 0px 0px;
   will-change: transform, opacity;
+  filter: 
+    drop-shadow(0 0 16px rgba(255, 179, 0, 0.95)) 
+    drop-shadow(0 0 32px rgba(255, 109, 0, 0.45));
 }
 
-@keyframes verticalDescentDrop {
+@keyframes sunStraightDescentAndHold {
   0% {
-    /* Descending straight from the top of the screen */
-    transform: translate3d(0, -180px, 0) scale(0.6);
+    /* Straight down from above the top edge */
+    transform: translate3d(0, -180px, 0) scale(0.65);
     opacity: 0;
   }
-  20% {
+  15% {
     opacity: 1;
   }
-  35% {
-    /* Impact at center: wave triggers here! */
-    transform: translate3d(0, 0px, 0) scale(1.1);
+  24% {
+    /* Lands in center at 0.35s right as wave begins */
+    transform: translate3d(0, 0px, 0) scale(1.06);
     opacity: 1;
   }
-  45% {
-    /* Slight cushion bounce */
-    transform: translate3d(0, -4px, 0) scale(1.0);
+  32% {
+    /* Subtle cushion settle */
+    transform: translate3d(0, -2px, 0) scale(1.0);
     opacity: 1;
   }
-  75% {
-    /* Hovers proudly while the full wave sweeps the screen */
+  84% {
+    /* Stays solid while wave sweeps the screen */
     transform: translate3d(0, 0px, 0) scale(1.0);
     opacity: 1;
   }
   100% {
-    /* Dissolves into the newly revealed sky */
-    transform: translate3d(0, 8px, 0) scale(0.9);
+    /* Disappears the exact moment wave hits the corners */
+    transform: translate3d(0, 6px, 0) scale(0.85);
     opacity: 0;
   }
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   3. ARTISTIC CELESTIAL STYLING (Sun & Moon Masterpieces)
-   ══════════════════════════════════════════════════════════════════════ */
-
-/* Rotating Sun Corona Rays */
 .sun-rotating-rays {
-  animation: coronaSlowRotate 8s linear infinite;
+  animation: coronaSlowSpin 6s linear infinite;
   transform-origin: 0px 0px;
 }
 
-@keyframes coronaSlowRotate {
+@keyframes coronaSlowSpin {
   0% {
     transform: rotate(0deg);
   }
@@ -172,39 +133,77 @@
   }
 }
 
-/* 3D Sun Atmosphere */
-.sun-art-group {
+/* ─── 🌙 3D Pure Moon: Descends straight from top, stays during wave, exits at 1.45s ─── */
+.moon-glow-art {
+  animation: moonStraightDescentAndHold 1.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: 0px 0px;
+  will-change: transform, opacity;
   filter: 
-    drop-shadow(0 0 18px rgba(255, 179, 0, 0.9)) 
-    drop-shadow(0 0 38px rgba(255, 109, 0, 0.5));
+    drop-shadow(0 0 16px rgba(199, 210, 254, 0.95)) 
+    drop-shadow(0 0 30px rgba(99, 102, 241, 0.45));
 }
 
-/* 3D Moon Atmosphere */
-.moon-art-group {
-  filter: 
-    drop-shadow(0 0 18px rgba(199, 210, 254, 0.95)) 
-    drop-shadow(0 0 35px rgba(99, 102, 241, 0.5));
-}
-
-/* Twinkling Companion Star */
-.moon-companion-star {
-  animation: starDiamondTwinkle 1.3s ease-in-out infinite alternate;
-  transform-origin: 26px -8px;
-}
-
-@keyframes starDiamondTwinkle {
+@keyframes moonStraightDescentAndHold {
   0% {
-    transform: scale(0.85) rotate(0deg);
+    /* Straight down from above the top edge */
+    transform: translate3d(0, -180px, 0) scale(0.65);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  24% {
+    /* Lands in center at 0.35s right as wave begins */
+    transform: translate3d(0, 0px, 0) scale(1.06);
+    opacity: 1;
+  }
+  32% {
+    /* Subtle cushion settle */
+    transform: translate3d(0, -2px, 0) scale(1.0);
+    opacity: 1;
+  }
+  84% {
+    /* Stays solid while wave sweeps the screen */
+    transform: translate3d(0, 0px, 0) scale(1.0);
+    opacity: 1;
+  }
+  100% {
+    /* Disappears the exact moment wave hits the corners */
+    transform: translate3d(0, 6px, 0) scale(0.85);
+    opacity: 0;
+  }
+}
+
+.moon-companion-star {
+  animation: starTwinkleSlow 1.45s ease-in-out infinite alternate;
+  transform-origin: 25px -5px;
+}
+
+@keyframes starTwinkleSlow {
+  0% {
+    transform: scale(0.85);
     opacity: 0.7;
   }
   100% {
-    transform: scale(1.15) rotate(15deg);
+    transform: scale(1.2);
     opacity: 1;
+  }
+}
+
+/* ─── MOBILE SPECIFIC ENHANCEMENTS ─── */
+@media (max-width: 640px) {
+  .celestial-orb-stage {
+    width: 170px;
+    height: 170px;
   }
 }
 
 /* ─── ACCESSIBILITY ─── */
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(root),
+  ::view-transition-old(root) {
+    animation: none !important;
+  }
   .celestial-overlay-root {
     display: none !important;
   }
