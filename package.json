@@ -9,7 +9,8 @@
     "seed:superadmin": "node scripts/create-superadmin.js",
     "build:ota": "node scripts/package-ota.js",
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "start:cluster": "node server.cluster.js"
   },
   "author": "",
   "license": "ISC",

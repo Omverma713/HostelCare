@@ -2,6 +2,25 @@ const jwt = require("jsonwebtoken");
 const Session = require("../models/session.model");
 const User = require("../models/user.model");
 
+// In-memory micro-cache for user validation to prevent crushing MongoDB on high concurrency
+const userAuthCache = new Map();
+const USER_AUTH_TTL = 10000; // 10 seconds
+
+async function getCachedUser(userId) {
+  const cached = userAuthCache.get(userId);
+  const now = Date.now();
+  if (cached && (now - cached.timestamp < USER_AUTH_TTL)) {
+    return cached.doc;
+  }
+  const userDoc = await User.findById(userId).select(
+    "accountStatus isActivated sessionsRevokedAt role isDelegatedSubAdmin delegatedRole delegationIndefinite delegationExpiresAt delegationTitle delegationScopes"
+  ).lean();
+  if (userDoc) {
+    userAuthCache.set(userId, { doc: userDoc, timestamp: now });
+  }
+  return userDoc;
+}
+
 /**
  * Authentication Middleware with Real-Time Session Validation & Revocation Check
  * 
@@ -72,9 +91,7 @@ const authMiddleware = async (req, res, next) => {
 
     // 2. Fast check for account deactivation or global force-logout
     if (decoded.id) {
-      const userDoc = await User.findById(decoded.id).select(
-        "accountStatus isActivated sessionsRevokedAt role"
-      );
+      const userDoc = await getCachedUser(decoded.id);
 
       if (!userDoc) {
         return res.status(401).json({

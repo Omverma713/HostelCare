@@ -227,21 +227,40 @@ const caretakerComplaints = async (req, res) => {
 // ─── findingcomplaint ─────────────────────────────────────────────────────────
 // GET /api/v1/users/hostel-complaints
 // Returns student's own complaints
+// In-memory 15-second count cache per student to eliminate countDocuments storm
+const studentCountCache = new Map();
+const COUNT_CACHE_TTL = 15000;
+
 const findingcomplaint = async (req, res) => {
+    if (req.destroyed) return;
     try {
         const { page, limit, skip } = getPagination(req.query);
+        const regNo = req.user.registrationNumber;
 
-        const [complaints, total] = await Promise.all([
-            Complaint
-                .find({ registrationNo: req.user.registrationNumber })
-                .lean()
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit),
-            Complaint.countDocuments({ registrationNo: req.user.registrationNumber }),
-        ]);
+        const complaintsPromise = Complaint
+            .find({ registrationNo: regNo })
+            .lean()
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        if (total === 0) {
+        let countPromise;
+        const cachedCount = studentCountCache.get(regNo);
+        const now = Date.now();
+        if (cachedCount && (now - cachedCount.timestamp < COUNT_CACHE_TTL)) {
+            countPromise = Promise.resolve(cachedCount.total);
+        } else {
+            countPromise = Complaint.countDocuments({ registrationNo: regNo }).then((total) => {
+                studentCountCache.set(regNo, { total, timestamp: Date.now() });
+                return total;
+            });
+        }
+
+        const [complaints, total] = await Promise.all([complaintsPromise, countPromise]);
+
+        if (req.destroyed) return;
+
+        if (complaints.length === 0 && page === 1) {
             return res.status(404).json({
                 success: false,
                 message: "no complaint found"
@@ -251,9 +270,10 @@ const findingcomplaint = async (req, res) => {
         return res.status(200).json({
             success: true,
             complaints,
-            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+            pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) }
         });
     } catch (error) {
+        if (req.destroyed) return;
         return res.status(500).json({
             success: false,
             message: "due to system failure"
@@ -264,6 +284,7 @@ const findingcomplaint = async (req, res) => {
 // ─── savingComplaint ──────────────────────────────────────────────────────────
 // POST /api/v1/users/complaints  (user route — has authMiddleware)
 const savingComplaint = async (req, res) => {
+    if (req.destroyed) return;
     try {
         if (!req.body.department || !req.body.description) {
             return res.status(400).json({
@@ -397,6 +418,7 @@ const allComplaintsId = async (req, res) => {
 // PUT   /api/v1/complaints/Allcomplaints/:complaintId
 // Roles: warden, caretaker, superintendent
 const updateComplaintbyid = async (req, res) => {
+    if (req.destroyed) return;
     const { status, description } = req.body;
 
     // 1. Role check first — no DB calls yet
@@ -412,27 +434,10 @@ const updateComplaintbyid = async (req, res) => {
     }
 
     try {
-        // 2. Fetch to verify hostel ownership before writing
+        // Single-roundtrip atomic update with ownership verification
         const complaintId = req.params.id || req.params.complaintId;
-        const existing = await Complaint.findById(complaintId).lean();
-
-        if (existing == null) {
-            return res.status(404).json({
-                success: false,
-                message: "complaint not found"
-            });
-        }
-
-        if (existing.hostelNo !== req.user.hostel) {
-            return res.status(403).json({
-                success: false,
-                message: "you are not authorized to update this complaint"
-            });
-        }
-
-        // 3. Authorized — now perform the update
-        const updatedData = await Complaint.findByIdAndUpdate(
-            complaintId,
+        const updatedData = await Complaint.findOneAndUpdate(
+            { _id: complaintId, hostelNo: req.user.hostel },
             {
                 status,
                 description,
@@ -446,8 +451,15 @@ const updateComplaintbyid = async (req, res) => {
                 }
             },
             { returnDocument: "after", runValidators: true }
-
         );
+
+        if (updatedData == null) {
+            const exists = await Complaint.exists({ _id: complaintId });
+            return res.status(exists ? 403 : 404).json({
+                success: false,
+                message: exists ? "you are not authorized to update this complaint" : "complaint not found"
+            });
+        }
 
         return res.status(200).json({
             success: true,

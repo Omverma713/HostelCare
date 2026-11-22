@@ -92,6 +92,8 @@ createComplaint.index({ hostelNo: 1, status: 1 });
 // Benefit: student's own complaints lookup becomes IXSCAN instead of COLLSCAN.
 // Write cost: one index entry per document.
 createComplaint.index({ registrationNo: 1 });
+createComplaint.index({ registrationNo: 1, createdAt: -1 });
+createComplaint.index({ hostelNo: 1, createdAt: -1 });
 
 // Index: createdAt descending
 // Used by: dashboard sorting, future pagination by date

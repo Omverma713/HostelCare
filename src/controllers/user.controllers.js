@@ -1017,7 +1017,8 @@ const forgotPassword = async (req, res) => {
           success: false,
           code: "RESEND_LIMIT_EXCEEDED",
           resendsRemaining: 0,
-          resendCount: user.resetPasswordResendCount,
+          resendCount: user.resetPasswordResendCount || 2,
+          maxResends: 2,
           message: "Resend limit exceeded (Max 2 resends). Please visit the Hostel Administration Office to reset your passcode.",
         });
       }
@@ -1029,11 +1030,12 @@ const forgotPassword = async (req, res) => {
           success: false,
           code: "RESEND_LIMIT_EXCEEDED",
           resendsRemaining: 0,
-          resendCount: user.resetPasswordResendCount,
+          resendCount: user.resetPasswordResendCount || 2,
+          maxResends: 2,
           message: "Account recovery limit exceeded. Please visit the Hostel Administration Office to reset your passcode.",
         });
       }
-      user.resetPasswordResendCount = 0;
+      user.resetPasswordResendCount = user.resetPasswordResendCount || 0;
     }
 
     // Generate 6-digit OTP & 32-byte secure token
@@ -1109,6 +1111,7 @@ const forgotPassword = async (req, res) => {
       maskedEmail,
       resetMethod: effectiveMethod,
       resendCount: user.resetPasswordResendCount || 0,
+      maxResends: 2,
       resendsRemaining,
     });
   } catch (err) {
@@ -1229,6 +1232,7 @@ const forgotPasswordWithCampusVerification = async (req, res) => {
       maskedEmail: cleanEmail,
       resetMethod: effectiveMethod,
       resendCount: 0,
+      maxResends: 2,
       resendsRemaining: 2,
     });
   } catch (err) {

@@ -79,6 +79,7 @@ export default function Login() {
   const [fpLoading, setFpLoading] = useState(false);
   const [fpCountdown, setFpCountdown] = useState(0);
   const [fpResendCount, setFpResendCount] = useState(0);
+  const [fpMaxResends, setFpMaxResends] = useState(2);
   const [fpMethod, setFpMethod] = useState('otp'); // 'otp' | 'link'
   const [fpQuotaExceededModal, setFpQuotaExceededModal] = useState(false);
   const [fpResendExceededModal, setFpResendExceededModal] = useState(false);
@@ -176,7 +177,8 @@ export default function Login() {
         triggerToast('success', res.message || 'Recovery instructions dispatched to your email.');
         setFpMaskedEmail(res.maskedEmail || '');
         setFpCountdown(60);
-        setFpResendCount(res.resendCount || 0);
+        setFpResendCount(res.resendCount ?? 0);
+        if (res.maxResends) setFpMaxResends(res.maxResends);
         setFpStep(fpMethod === 'link' ? 'linkSent' : 'verifyAndReset');
       } else {
         triggerToast('error', res.message || 'Account not found.');
@@ -185,7 +187,9 @@ export default function Login() {
       if (err.data?.code === 'BREVO_DAILY_QUOTA_EXCEEDED' || err.message?.includes('Daily email quota')) {
         setFpQuotaExceededModal(true);
       } else if (err.data?.code === 'RESEND_LIMIT_EXCEEDED') {
-        setFpResendCount(2);
+        const maxLimit = err.data?.maxResends || 2;
+        setFpMaxResends(maxLimit);
+        setFpResendCount(err.data?.resendCount ?? maxLimit);
         setFpResendExceededModal(true);
       } else {
         triggerToast('error', err.data?.message || err.message || 'Failed to process request.');
@@ -195,9 +199,9 @@ export default function Login() {
     }
   };
 
-  // Handle Resend with 60s Timer & Max 2 Limit Check
+  // Handle Resend with 60s Timer & Max Limit Check
   const handleResend = async (resendType = fpMethod) => {
-    if (fpResendCount >= 2) {
+    if (fpResendCount >= fpMaxResends) {
       setFpResendExceededModal(true);
       return;
     }
@@ -212,6 +216,7 @@ export default function Login() {
       if (res.success) {
         setFpCountdown(60);
         setFpResendCount(res.resendCount ?? (fpResendCount + 1));
+        if (res.maxResends) setFpMaxResends(res.maxResends);
         setFpOtp('');
         setFpResetAuthToken('');
         triggerToast('success', resendType === 'link' ? '1-Click Reset Link resent to your email! (Previous link invalidated)' : 'New 6-digit OTP code resent to your email! (Previous OTP invalidated)');
@@ -222,7 +227,9 @@ export default function Login() {
       if (err.data?.code === 'BREVO_DAILY_QUOTA_EXCEEDED' || err.message?.includes('Daily email quota')) {
         setFpQuotaExceededModal(true);
       } else if (err.data?.code === 'RESEND_LIMIT_EXCEEDED') {
-        setFpResendCount(2);
+        const maxLimit = err.data?.maxResends || 2;
+        setFpMaxResends(maxLimit);
+        setFpResendCount(err.data?.resendCount ?? maxLimit);
         setFpResendExceededModal(true);
       } else {
         triggerToast('error', err.data?.message || err.message || 'Failed to resend.');
@@ -251,7 +258,8 @@ export default function Login() {
         triggerToast('success', res.message || 'Verification email dispatched successfully!');
         setFpMaskedEmail(cleanEmail);
         setFpCountdown(60);
-        setFpResendCount(0);
+        setFpResendCount(res.resendCount ?? 0);
+        if (res.maxResends) setFpMaxResends(res.maxResends);
         setFpStep(fpMethod === 'link' ? 'linkSent' : 'verifyAndReset');
       } else {
         triggerToast('error', res.message || 'Campus verification failed.');
@@ -1091,9 +1099,9 @@ export default function Login() {
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 11.5, color: '#8E8A83' }}>
-                    <span>Resend attempts remaining:</span>
-                    <span style={{ fontWeight: 700, color: fpResendCount >= 2 ? '#EF4444' : '#C07660' }}>
-                      {Math.max(0, 2 - fpResendCount)} / 2
+                    <span>Resend attempts:</span>
+                    <span style={{ fontWeight: 700, color: fpResendCount >= fpMaxResends ? '#EF4444' : '#C07660' }}>
+                      {fpResendCount} / {fpMaxResends} <span style={{ fontWeight: 500, fontSize: 10.5, color: '#8E8A83' }}>({Math.max(0, fpMaxResends - fpResendCount)} remaining)</span>
                     </span>
                   </div>
 
@@ -1101,7 +1109,7 @@ export default function Login() {
                     type="button"
                     className="wl-resend-btn"
                     style={{ width: '100%', marginBottom: 14 }}
-                    disabled={fpCountdown > 0 || fpResendCount >= 2 || fpLoading}
+                    disabled={fpCountdown > 0 || fpResendCount >= fpMaxResends || fpLoading}
                     onClick={() => handleResend('link')}
                   >
                     {fpCountdown > 0 ? `⏳ Resend Link in ${formatTimer(fpCountdown)}` : '🔗 Resend Reset Link'}
@@ -1315,9 +1323,9 @@ export default function Login() {
                   {!fpToken && (
                     <div style={{ marginTop: 18, borderTop: '1px solid rgba(192, 118, 96, 0.15)', paddingTop: 14 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 11.5, color: '#8E8A83' }}>
-                        <span>Resend attempts remaining:</span>
-                        <span style={{ fontWeight: 700, color: fpResendCount >= 2 ? '#EF4444' : '#C07660' }}>
-                          {Math.max(0, 2 - fpResendCount)} / 2
+                        <span>Resend attempts:</span>
+                        <span style={{ fontWeight: 700, color: fpResendCount >= fpMaxResends ? '#EF4444' : '#C07660' }}>
+                          {fpResendCount} / {fpMaxResends} <span style={{ fontWeight: 500, fontSize: 10.5, color: '#8E8A83' }}>({Math.max(0, fpMaxResends - fpResendCount)} remaining)</span>
                         </span>
                       </div>
 
@@ -1325,7 +1333,7 @@ export default function Login() {
                         type="button"
                         className="wl-resend-btn"
                         style={{ width: '100%', marginBottom: 12 }}
-                        disabled={fpCountdown > 0 || fpResendCount >= 2 || fpLoading}
+                        disabled={fpCountdown > 0 || fpResendCount >= fpMaxResends || fpLoading}
                         onClick={() => handleResend('otp')}
                       >
                         {fpCountdown > 0 ? `⏳ Resend OTP in ${formatTimer(fpCountdown)}` : '✉️ Resend OTP Code'}
