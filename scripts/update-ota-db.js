@@ -10,8 +10,8 @@ async function run() {
     config = await SystemConfig.create({ key: "default" });
   }
   
-  const targetVer = '1.2.2.85';
-  const checksum = '81e512f58375385e84e17a97e73527a497d9439bf0bc46bd680368d37d311a5e';
+  const targetVer = '1.2.2.86';
+  const checksum = '26f63c2d46fbecc6685017cc78d3b00a79e53650eb651dd8d090b2ea7132b411';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -24,11 +24,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.85: Left se upar rise, right se niche set celestial sun and moon theme transition';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.86: Centered celestial transition with frosted blur and gentle ambient tint';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.85: Left rise, right set celestial sun and moon transition';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.86: Centered celestial transition with frosted blur';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');

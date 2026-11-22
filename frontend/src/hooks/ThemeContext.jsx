@@ -34,11 +34,13 @@ export function ThemeProvider({ children }) {
   const transitionTimerRef = useRef(null);
   const flipTimerRef = useRef(null);
   const isTransitioningRef = useRef(false);
+  const appliedThemeRef = useRef(null);
 
   const triggerCelestialTransition = useCallback((nextTheme) => {
     // If user prefers reduced motion, switch instantly without animation
     if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       applyThemeClasses(nextTheme);
+      appliedThemeRef.current = nextTheme;
       setThemeState(nextTheme);
       try {
         localStorage.setItem('theme', nextTheme);
@@ -57,20 +59,21 @@ export function ThemeProvider({ children }) {
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
 
-    // Midpoint Flip (650ms): Flip classes underneath when celestial body is in center
+    // Midpoint Flip (500ms): Flip classes underneath when celestial body is in exact center behind blur
     flipTimerRef.current = setTimeout(() => {
       applyThemeClasses(nextTheme);
+      appliedThemeRef.current = nextTheme;
       setThemeState(nextTheme);
       try {
         localStorage.setItem('theme', nextTheme);
       } catch (e) {}
-    }, 650);
+    }, 500);
 
-    // Completion (1400ms): Reset celestial overlay
+    // Completion (1150ms): Reset celestial overlay smoothly
     transitionTimerRef.current = setTimeout(() => {
       setCelestialPhase(null);
       isTransitioningRef.current = false;
-    }, 1400);
+    }, 1150);
   }, []);
 
   const setTheme = useCallback((newTheme) => {
@@ -80,7 +83,10 @@ export function ThemeProvider({ children }) {
   }, [theme, triggerCelestialTransition]);
 
   useLayoutEffect(() => {
-    applyThemeClasses(theme);
+    if (appliedThemeRef.current !== theme) {
+      applyThemeClasses(theme);
+      appliedThemeRef.current = theme;
+    }
     try {
       localStorage.setItem('theme', theme);
     } catch (e) {
