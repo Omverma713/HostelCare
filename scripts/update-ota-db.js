@@ -10,8 +10,8 @@ async function run() {
     config = await SystemConfig.create({ key: "default" });
   }
   
-  const targetVer = '1.2.2.87';
-  const checksum = 'a5386cb562114930184f648c6aadbaa3d6202f11faa793b315b641af5081523f';
+  const targetVer = '1.2.2.88';
+  const checksum = 'ef011194a59a50f94769514e3f478a83ff02681b838bd100fb5b49d816707576';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -24,11 +24,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.87: Top-center vertical straight descent with concentric circular ripple waves';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.88: Full-screen circular wave theme blanket with 3D Sun and Moon';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.87: Top straight descent celestial drop with circular shockwave';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.88: Full-screen circular wave theme blanket';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');

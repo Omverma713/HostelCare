@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════════════════
    CELESTIAL THEME TRANSITION OVERLAY
-   - Vertical Straight Drop from Top-Center to Center
-   - Expanding Concentric Circular Ripple Waves (Solar / Lunar Shockwave)
-   - Luminous, Interactive-Feel Sun & Moon Vector Artwork
+   - Top-to-Center Straight Drop
+   - Full-Screen Circular Wave ("ek wave se poora screen ko cover karte hue")
+   - Highly Polished 3D Sun & Moon Vector Artwork
    - Pure 60 FPS Hardware-Accelerated Animation (Zero Stutter)
    ══════════════════════════════════════════════════════════════════════ */
 
@@ -17,62 +17,90 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Frosted Glass Backdrop Blur */
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  will-change: opacity, backdrop-filter;
 }
 
-/* ─── GENTLE AMBIENT TINT (Soft & Minimal) ─── */
-.celestial-overlay-root.phase-sunrise {
-  animation: dawnBackdropFade 1.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+/* ══════════════════════════════════════════════════════════════════════
+   1. FULL-SCREEN EXPANDING CIRCULAR WAVE
+   Pulsing outward from center to cover the entire viewport
+   ══════════════════════════════════════════════════════════════════════ */
+.celestial-fullscreen-wave {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin-top: -60px;
+  margin-left: -60px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: scale(0);
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
-.celestial-overlay-root.phase-sunset {
-  animation: duskBackdropFade 1.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+/* Sunrise: Golden Daylight Circular Wave */
+.phase-sunrise .celestial-fullscreen-wave {
+  border: 4px solid rgba(255, 215, 64, 0.95);
+  box-shadow: 
+    0 0 50px rgba(255, 179, 0, 0.9),
+    0 0 100px rgba(255, 143, 0, 0.5),
+    inset 0 0 80px rgba(255, 238, 140, 0.75);
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 252, 245, 0.98) 55%,
+    rgba(255, 244, 214, 0.94) 75%,
+    rgba(255, 193, 7, 0.88) 95%,
+    rgba(255, 143, 0, 0.95) 100%
+  );
+  animation: fullScreenWaveExpand 1.3s cubic-bezier(0.18, 0.89, 0.32, 1) 0.35s forwards;
 }
 
-@keyframes dawnBackdropFade {
+/* Sunset: Indigo Midnight Circular Wave */
+.phase-sunset .celestial-fullscreen-wave {
+  border: 4px solid rgba(165, 180, 252, 0.95);
+  box-shadow: 
+    0 0 50px rgba(99, 102, 241, 0.9),
+    0 0 100px rgba(79, 70, 229, 0.5),
+    inset 0 0 80px rgba(129, 140, 248, 0.7);
+  background: radial-gradient(
+    circle at center,
+    rgba(13, 17, 28, 0.98) 55%,
+    rgba(22, 28, 48, 0.94) 75%,
+    rgba(79, 70, 229, 0.85) 95%,
+    rgba(99, 102, 241, 0.95) 100%
+  );
+  animation: fullScreenWaveExpand 1.3s cubic-bezier(0.18, 0.89, 0.32, 1) 0.35s forwards;
+}
+
+@keyframes fullScreenWaveExpand {
   0% {
-    background-color: rgba(255, 248, 238, 0);
-    opacity: 0;
+    transform: scale(0.2);
+    opacity: 0.95;
   }
-  25% {
-    background-color: rgba(255, 247, 235, 0.48);
+  20% {
     opacity: 1;
+  }
+  50% {
+    /* Covers full screen completely by ~550-600ms */
+    transform: scale(28);
+    opacity: 0.98;
   }
   75% {
-    background-color: rgba(255, 247, 235, 0.58);
-    opacity: 1;
+    transform: scale(42);
+    opacity: 0.85;
   }
   100% {
-    background-color: rgba(255, 248, 238, 0);
+    transform: scale(52);
     opacity: 0;
   }
 }
 
-@keyframes duskBackdropFade {
-  0% {
-    background-color: rgba(13, 17, 28, 0);
-    opacity: 0;
-  }
-  25% {
-    background-color: rgba(13, 17, 28, 0.58);
-    opacity: 1;
-  }
-  75% {
-    background-color: rgba(13, 17, 28, 0.68);
-    opacity: 1;
-  }
-  100% {
-    background-color: rgba(13, 17, 28, 0);
-    opacity: 0;
-  }
-}
-
-/* ─── STAGE CONTAINER ─── */
+/* ══════════════════════════════════════════════════════════════════════
+   2. STAGE & VERTICAL DROP ANIMATION ("Straight from top to center")
+   ══════════════════════════════════════════════════════════════════════ */
 .celestial-center-stage {
   position: relative;
+  z-index: 10;
   width: 320px;
   height: 320px;
   display: flex;
@@ -88,110 +116,54 @@
   pointer-events: none;
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   1. VERTICAL DESCENT ANIMATION ("Sabse upar beech se straight niche")
-   ══════════════════════════════════════════════════════════════════════ */
 .celestial-vertical-carrier {
-  animation: straightDropToCenter 1.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: verticalDescentDrop 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: 0px 0px;
   will-change: transform, opacity;
 }
 
-@keyframes straightDropToCenter {
+@keyframes verticalDescentDrop {
   0% {
-    /* Starts off-screen straight above the center */
-    transform: translate3d(0, -170px, 0) scale(0.65);
+    /* Descending straight from the top of the screen */
+    transform: translate3d(0, -180px, 0) scale(0.6);
     opacity: 0;
   }
   20% {
     opacity: 1;
   }
-  38% {
-    /* Lands in exact center with gentle cushion */
-    transform: translate3d(0, 0px, 0) scale(1.06);
+  35% {
+    /* Impact at center: wave triggers here! */
+    transform: translate3d(0, 0px, 0) scale(1.1);
     opacity: 1;
   }
-  48% {
-    /* Settle at center */
-    transform: translate3d(0, -3px, 0) scale(1.0);
+  45% {
+    /* Slight cushion bounce */
+    transform: translate3d(0, -4px, 0) scale(1.0);
     opacity: 1;
   }
-  78% {
-    /* Stable hover while ripples radiate outwards */
+  75% {
+    /* Hovers proudly while the full wave sweeps the screen */
     transform: translate3d(0, 0px, 0) scale(1.0);
     opacity: 1;
   }
   100% {
-    /* Dissolves gracefully */
-    transform: translate3d(0, 6px, 0) scale(0.92);
+    /* Dissolves into the newly revealed sky */
+    transform: translate3d(0, 8px, 0) scale(0.9);
     opacity: 0;
   }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   2. CONCENTRIC CIRCULAR SHOCKWAVES ("Circular wave animated transition")
-   ══════════════════════════════════════════════════════════════════════ */
-.celestial-ripples-group {
-  transform-origin: 0px 0px;
-  pointer-events: none;
-}
-
-.phase-sunrise .celestial-ripple {
-  stroke: rgba(255, 179, 0, 0.85);
-  filter: drop-shadow(0 0 8px rgba(255, 183, 77, 0.6));
-}
-
-.phase-sunset .celestial-ripple {
-  stroke: rgba(165, 180, 252, 0.85);
-  filter: drop-shadow(0 0 8px rgba(129, 140, 248, 0.6));
-}
-
-.celestial-ripple.ripple-1 {
-  animation: shockwavePulse 1.25s cubic-bezier(0.2, 0.8, 0.4, 1) 0.32s forwards;
-  opacity: 0;
-  transform-origin: 0px 0px;
-  will-change: transform, opacity;
-}
-
-.celestial-ripple.ripple-2 {
-  animation: shockwavePulse 1.25s cubic-bezier(0.2, 0.8, 0.4, 1) 0.44s forwards;
-  opacity: 0;
-  transform-origin: 0px 0px;
-  will-change: transform, opacity;
-}
-
-.celestial-ripple.ripple-3 {
-  animation: shockwavePulse 1.25s cubic-bezier(0.2, 0.8, 0.4, 1) 0.56s forwards;
-  opacity: 0;
-  transform-origin: 0px 0px;
-  will-change: transform, opacity;
-}
-
-@keyframes shockwavePulse {
-  0% {
-    transform: scale(0.85);
-    opacity: 0.9;
-  }
-  50% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(5.8);
-    opacity: 0;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   3. ENHANCED CELESTIAL ARTISTRY (Interactive & High-End)
+   3. ARTISTIC CELESTIAL STYLING (Sun & Moon Masterpieces)
    ══════════════════════════════════════════════════════════════════════ */
 
-/* Rotating Sun Corona */
-.sun-corona-spin {
-  animation: coronaSlowSpin 6s linear infinite;
+/* Rotating Sun Corona Rays */
+.sun-rotating-rays {
+  animation: coronaSlowRotate 8s linear infinite;
   transform-origin: 0px 0px;
 }
 
-@keyframes coronaSlowSpin {
+@keyframes coronaSlowRotate {
   0% {
     transform: rotate(0deg);
   }
@@ -200,30 +172,34 @@
   }
 }
 
-/* Glowing Sun Dropshadow */
-.celestial-sun-body {
-  filter: drop-shadow(0 0 16px rgba(255, 180, 40, 0.85)) drop-shadow(0 0 32px rgba(255, 120, 20, 0.45));
+/* 3D Sun Atmosphere */
+.sun-art-group {
+  filter: 
+    drop-shadow(0 0 18px rgba(255, 179, 0, 0.9)) 
+    drop-shadow(0 0 38px rgba(255, 109, 0, 0.5));
 }
 
-/* Glowing Moon Dropshadow */
-.celestial-moon-body {
-  filter: drop-shadow(0 0 16px rgba(200, 220, 255, 0.9)) drop-shadow(0 0 30px rgba(129, 140, 248, 0.4));
+/* 3D Moon Atmosphere */
+.moon-art-group {
+  filter: 
+    drop-shadow(0 0 18px rgba(199, 210, 254, 0.95)) 
+    drop-shadow(0 0 35px rgba(99, 102, 241, 0.5));
 }
 
-/* Twinkling Companion Stars for Moon */
-.moon-star-companions {
-  animation: starPulseTwinkle 1.25s ease-in-out infinite alternate;
-  transform-origin: 0px 0px;
+/* Twinkling Companion Star */
+.moon-companion-star {
+  animation: starDiamondTwinkle 1.3s ease-in-out infinite alternate;
+  transform-origin: 26px -8px;
 }
 
-@keyframes starPulseTwinkle {
+@keyframes starDiamondTwinkle {
   0% {
+    transform: scale(0.85) rotate(0deg);
     opacity: 0.7;
-    transform: scale(0.92);
   }
   100% {
+    transform: scale(1.15) rotate(15deg);
     opacity: 1;
-    transform: scale(1.08);
   }
 }
 
