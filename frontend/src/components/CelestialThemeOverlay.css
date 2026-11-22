@@ -1,9 +1,10 @@
 /* ══════════════════════════════════════════════════════════════════════
    CELESTIAL THEME TRANSITION OVERLAY
-   - Perfectly Screen-Centered (Compact, Sleek & Minimalist)
-   - Sunrise in Center for Light Mode
-   - Sunset & Crescent Moon in Center for Dark Mode
-   - Soft Ambient Vignette • Zero Overflow • 60 FPS GPU-Accelerated
+   Choreography:
+   - "Left se upar aaya": Rising celestial body enters from bottom-left & arcs up
+   - "Right se niche aaye": Setting celestial body sinks down to bottom-right
+   - Compact refined size (~44px orbs) • Mountain-free pure sky
+   - 1.4s Cinematic Flow • 60 FPS GPU-Accelerated
    ══════════════════════════════════════════════════════════════════════ */
 
 .celestial-overlay-root {
@@ -19,50 +20,50 @@
   justify-content: center;
 }
 
-/* ─── SOFT AMBIENT VIGNETTE BACKDROPS (Centered) ─── */
+/* ─── SKY DOME BACKDROPS ─── */
 .celestial-overlay-root.phase-sunrise {
-  animation: bgSunriseCenter 1.4s cubic-bezier(0.25, 1, 0.4, 1) forwards;
+  animation: skyDawnArc 1.4s cubic-bezier(0.25, 1, 0.4, 1) forwards;
 }
 
 .celestial-overlay-root.phase-sunset {
-  animation: bgSunsetCenter 1.4s cubic-bezier(0.25, 1, 0.4, 1) forwards;
+  animation: skyDuskArc 1.4s cubic-bezier(0.25, 1, 0.4, 1) forwards;
 }
 
-@keyframes bgSunriseCenter {
+@keyframes skyDawnArc {
   0% {
-    background: radial-gradient(circle at 50% 50%, rgba(255, 180, 80, 0.3) 0%, rgba(20, 16, 30, 0.85) 60%, rgba(11, 14, 23, 0.95) 100%);
+    background: radial-gradient(circle at 25% 75%, rgba(255, 160, 60, 0.3) 0%, rgba(20, 16, 32, 0.9) 50%, #0B0E17 100%);
     opacity: 0;
   }
   20% {
     opacity: 1;
   }
   55% {
-    background: radial-gradient(circle at 50% 50%, rgba(255, 210, 120, 0.65) 0%, rgba(245, 175, 125, 0.5) 45%, rgba(246, 236, 226, 0.92) 80%, #FAF6F0 100%);
+    background: radial-gradient(circle at 40% 45%, rgba(255, 205, 110, 0.65) 0%, rgba(245, 170, 120, 0.45) 40%, rgba(246, 236, 226, 0.92) 75%, #FAF6F0 100%);
     opacity: 1;
   }
   85% {
-    background: radial-gradient(circle at 50% 50%, rgba(255, 240, 200, 0.7) 0%, #FAF6F0 70%, #F5EFEB 100%);
-    opacity: 0.9;
+    background: radial-gradient(circle at 45% 40%, rgba(255, 240, 200, 0.7) 0%, #FAF6F0 65%, #F5EFEB 100%);
+    opacity: 0.92;
   }
   100% {
     opacity: 0;
   }
 }
 
-@keyframes bgSunsetCenter {
+@keyframes skyDuskArc {
   0% {
-    background: radial-gradient(circle at 50% 50%, rgba(255, 190, 110, 0.4) 0%, rgba(245, 235, 225, 0.8) 55%, #F5EFEB 100%);
+    background: radial-gradient(circle at 60% 45%, rgba(255, 190, 100, 0.35) 0%, rgba(245, 235, 225, 0.8) 50%, #F5EFEB 100%);
     opacity: 0;
   }
   20% {
     opacity: 1;
   }
-  50% {
-    background: radial-gradient(circle at 50% 50%, rgba(255, 120, 70, 0.6) 0%, rgba(160, 50, 70, 0.65) 40%, rgba(22, 18, 36, 0.92) 80%, #0B0E17 100%);
+  55% {
+    background: radial-gradient(circle at 65% 65%, rgba(255, 115, 65, 0.6) 0%, rgba(165, 50, 75, 0.65) 35%, rgba(24, 18, 38, 0.92) 75%, #0B0E17 100%);
     opacity: 1;
   }
   85% {
-    background: radial-gradient(circle at 50% 50%, rgba(65, 80, 140, 0.5) 0%, rgba(16, 20, 36, 0.95) 65%, #0B0E17 100%);
+    background: radial-gradient(circle at 35% 45%, rgba(70, 85, 145, 0.45) 0%, rgba(16, 20, 36, 0.95) 60%, #0B0E17 100%);
     opacity: 0.95;
   }
   100% {
@@ -70,128 +71,165 @@
   }
 }
 
-/* ─── COMPACT CENTER STAGE (200px x 200px) ─── */
-.celestial-center-stage {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ─── FULLSCREEN RESPONSIVE SVG CONTAINER ─── */
+.celestial-stage-arc {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 
-/* ─── CENTERED SUNRISE ANIMATION ─── */
-/* Rises from slightly below center (translateY: 55px) to exact center (0,0) */
-.celestial-sun-center-rise {
-  animation: sunRiseInCenter 1.4s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+/* ══════════════════════════════════════════════════════════════════════
+   CHOREOGRAPHY 1: SUNRISE (Switch to Light Mode)
+   • Sun: Left se upar aaya (from bottom-left to upper-center)
+   • Moon: Right se niche gaya (from upper-right sinking to bottom-right)
+   ══════════════════════════════════════════════════════════════════════ */
+
+.sun-rise-from-left {
+  animation: sunRiseFromLeftAnim 1.4s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
   transform-origin: center center;
 }
 
-@keyframes sunRiseInCenter {
+@keyframes sunRiseFromLeftAnim {
   0% {
-    transform: translate3d(0, 60px, 0) scale(0.65);
+    /* Starts off bottom-left */
+    transform: translate3d(-120px, 140px, 0) scale(0.65);
     opacity: 0;
   }
   25% {
     opacity: 1;
-    filter: drop-shadow(0 0 18px rgba(255, 160, 40, 0.85));
+    filter: drop-shadow(0 0 16px rgba(255, 160, 40, 0.85));
   }
-  55% {
-    transform: translate3d(0, 0px, 0) scale(1);
+  60% {
+    /* Arcs up to upper-left center */
+    transform: translate3d(140px, -45px, 0) scale(1);
     opacity: 1;
-    filter: drop-shadow(0 0 32px rgba(255, 205, 80, 0.95)) drop-shadow(0 0 55px rgba(255, 160, 40, 0.6));
+    filter: drop-shadow(0 0 28px rgba(255, 205, 75, 0.95)) drop-shadow(0 0 45px rgba(255, 160, 40, 0.5));
   }
   85% {
-    transform: translate3d(0, -10px, 0) scale(1.1);
+    transform: translate3d(200px, -65px, 0) scale(1.08);
     opacity: 1;
-    filter: drop-shadow(0 0 50px rgba(255, 235, 140, 1));
+    filter: drop-shadow(0 0 45px rgba(255, 235, 130, 0.95));
   }
   100% {
-    transform: translate3d(0, -15px, 0) scale(1.18);
+    transform: translate3d(230px, -75px, 0) scale(1.15);
     opacity: 0;
-    filter: drop-shadow(0 0 70px rgba(255, 255, 255, 0.9));
+    filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.9));
   }
 }
 
-/* ─── CENTERED SUNSET ANIMATION ─── */
-/* Sun starts in center and smoothly sinks downward */
-.celestial-sun-center-set {
-  animation: sunSetInCenter 1.4s cubic-bezier(0.35, 0.1, 0.7, 0.6) forwards;
+.moon-set-to-right {
+  animation: moonSetToRightAnim 1.4s cubic-bezier(0.35, 0.1, 0.7, 0.6) forwards;
   transform-origin: center center;
 }
 
-@keyframes sunSetInCenter {
+@keyframes moonSetToRightAnim {
   0% {
-    transform: translate3d(0, 0px, 0) scale(1);
-    opacity: 1;
-    filter: drop-shadow(0 0 25px rgba(255, 180, 50, 0.9));
-  }
-  40% {
-    transform: translate3d(0, 35px, 0) scale(0.85);
+    /* Starts upper-right */
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
     opacity: 0.9;
-    filter: drop-shadow(0 0 20px rgba(240, 90, 45, 0.85));
+    filter: drop-shadow(0 0 16px rgba(210, 225, 255, 0.8));
+  }
+  35% {
+    transform: translate3d(45px, 40px, 0) scale(0.85) rotate(6deg);
+    opacity: 0.8;
   }
   70% {
-    transform: translate3d(0, 65px, 0) scale(0.65);
+    /* Sinks down to bottom-right */
+    transform: translate3d(110px, 110px, 0) scale(0.65) rotate(14deg);
+    opacity: 0.25;
+  }
+  100% {
+    transform: translate3d(150px, 150px, 0) scale(0.45) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CHOREOGRAPHY 2: SUNSET (Switch to Dark Mode)
+   • Sun: Right se niche gaya (from upper-center sinking to bottom-right)
+   • Moon: Left se upar aaya (from bottom-left rising to upper-left center)
+   ══════════════════════════════════════════════════════════════════════ */
+
+.sun-set-to-right {
+  animation: sunSetToRightAnim 1.4s cubic-bezier(0.35, 0.1, 0.7, 0.6) forwards;
+  transform-origin: center center;
+}
+
+@keyframes sunSetToRightAnim {
+  0% {
+    /* Starts upper-center */
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+    filter: drop-shadow(0 0 22px rgba(255, 180, 50, 0.9));
+  }
+  35% {
+    transform: translate3d(60px, 40px, 0) scale(0.85);
+    opacity: 0.9;
+    filter: drop-shadow(0 0 18px rgba(240, 90, 45, 0.85));
+  }
+  70% {
+    /* Sinks down to bottom-right */
+    transform: translate3d(130px, 110px, 0) scale(0.65);
     opacity: 0.3;
   }
   100% {
-    transform: translate3d(0, 85px, 0) scale(0.45);
+    transform: translate3d(170px, 150px, 0) scale(0.45);
     opacity: 0;
   }
 }
 
-/* ─── CENTERED MOONRISE ANIMATION ─── */
-/* Crescent Moon ascends into the exact center as the sun sinks */
-.celestial-moon-center-rise {
-  animation: moonRiseInCenter 1.4s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
+.moon-rise-from-left {
+  animation: moonRiseFromLeftAnim 1.4s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
   transform-origin: center center;
 }
 
-@keyframes moonRiseInCenter {
+@keyframes moonRiseFromLeftAnim {
   0% {
-    transform: translate3d(0, 45px, 0) scale(0.65) rotate(-10deg);
+    /* Starts bottom-left */
+    transform: translate3d(-120px, 140px, 0) scale(0.65) rotate(-15deg);
     opacity: 0;
   }
   30% {
-    opacity: 0;
+    opacity: 0.2;
   }
-  55% {
-    transform: translate3d(0, 5px, 0) scale(0.95) rotate(-4deg);
-    opacity: 0.8;
-    filter: drop-shadow(0 0 16px rgba(200, 220, 255, 0.8));
+  60% {
+    /* Arcs up to upper-left center */
+    transform: translate3d(140px, -45px, 0) scale(0.95) rotate(-4deg);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 18px rgba(210, 230, 255, 0.85));
   }
-  80% {
-    transform: translate3d(0, 0px, 0) scale(1) rotate(0deg);
+  85% {
+    transform: translate3d(200px, -65px, 0) scale(1.05) rotate(0deg);
     opacity: 1;
-    filter: drop-shadow(0 0 24px rgba(220, 235, 255, 0.95)) drop-shadow(0 0 45px rgba(150, 190, 255, 0.5));
+    filter: drop-shadow(0 0 26px rgba(220, 235, 255, 0.95)) drop-shadow(0 0 45px rgba(150, 190, 255, 0.5));
   }
   100% {
-    transform: translate3d(0, -6px, 0) scale(1.05) rotate(2deg);
+    transform: translate3d(230px, -75px, 0) scale(1.1) rotate(2deg);
     opacity: 0;
   }
 }
 
-/* ─── COMPACT TWINKLING STARS IN CENTER (Sunset Phase) ─── */
-.celestial-stars-centered {
-  animation: starsTwinkleCentered 1.4s ease-in-out forwards;
+/* ─── TWINKLING STARS IN SKY (Sunset Phase) ─── */
+.celestial-stars-arc {
+  animation: starsTwinkleArc 1.4s ease-in-out forwards;
 }
 
-@keyframes starsTwinkleCentered {
+@keyframes starsTwinkleArc {
   0% {
     opacity: 0;
-    transform: scale(0.8);
+    transform: translateY(10px);
   }
   40% {
-    opacity: 0.2;
+    opacity: 0.15;
   }
   65% {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
   85% {
-    opacity: 0.9;
+    opacity: 0.95;
   }
   100% {
     opacity: 0;
