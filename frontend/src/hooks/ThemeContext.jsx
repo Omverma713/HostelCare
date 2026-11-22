@@ -59,7 +59,7 @@ export function ThemeProvider({ children }) {
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
 
-    // Midpoint Flip (500ms): Flip classes underneath when celestial body is in exact center behind blur
+    // Midpoint Flip (480ms): Flip classes underneath right as orb lands & circular ripple wave expands
     flipTimerRef.current = setTimeout(() => {
       applyThemeClasses(nextTheme);
       appliedThemeRef.current = nextTheme;
@@ -67,13 +67,13 @@ export function ThemeProvider({ children }) {
       try {
         localStorage.setItem('theme', nextTheme);
       } catch (e) {}
-    }, 500);
+    }, 480);
 
-    // Completion (1150ms): Reset celestial overlay smoothly
+    // Completion (1250ms): Reset celestial overlay smoothly
     transitionTimerRef.current = setTimeout(() => {
       setCelestialPhase(null);
       isTransitioningRef.current = false;
-    }, 1150);
+    }, 1250);
   }, []);
 
   const setTheme = useCallback((newTheme) => {

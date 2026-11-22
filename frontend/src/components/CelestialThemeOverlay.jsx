@@ -4,12 +4,12 @@ import './CelestialThemeOverlay.css';
 /**
  * CelestialThemeOverlay
  * 
- * Centered, frosted-blur transition between Day and Night:
- * - Dead-center positioning (viewBox="-160 -100 320 200", center at (0, 0))
- * - Frosted backdrop blur with gentle, single-tint ambient wash (no multi-color flash)
- * - "Left se upar": rising body enters from lower-left to center
- * - "Right se niche": sinking body exits from center to lower-right
- * - Compact refined ~38-42px orbs, smooth 60 FPS single-pass trajectory (no stutter)
+ * Vertical Descent + Concentric Circular Shockwave Transition:
+ * - "Sabse upar beech se straight niche aayega": Orb drops straight down from top-center into exact center.
+ * - "Circular wave animated transition": Concentric ripple shockwaves radiate outward as it lands.
+ * - Richer, interactive-feel SVG art:
+ *   • Sun: Multi-layered golden-amber core, specular glass shine, rotating corona rays, and radiating solar shockwaves.
+ *   • Moon: Luminous pearlescent crescent, subtle lunar glow, twinkling companion stars, and ethereal indigo ripples.
  */
 function CelestialThemeOverlay({ phase }) {
   if (!phase) return null;
@@ -24,106 +24,154 @@ function CelestialThemeOverlay({ phase }) {
       <div className="celestial-center-stage">
         <svg
           className="celestial-svg"
-          viewBox="-160 -100 320 200"
+          viewBox="-160 -160 320 320"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Sun Core Radial */}
-            <radialGradient id="sunCoreGrad" cx="45%" cy="45%" r="55%">
-              <stop offset="0%" stopColor="#FFFDF5" />
-              <stop offset="35%" stopColor="#FFD152" />
-              <stop offset="70%" stopColor="#FF8F1C" />
-              <stop offset="100%" stopColor="#E84A27" />
+            {/* ─── SUN GRADIENTS ─── */}
+            <radialGradient id="sunCoreRich" cx="38%" cy="32%" r="65%">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="25%" stopColor="#FFF4D0" />
+              <stop offset="55%" stopColor="#FFBA38" />
+              <stop offset="85%" stopColor="#FF7714" />
+              <stop offset="100%" stopColor="#EB3B14" />
             </radialGradient>
 
-            {/* Sun Corona Glow */}
-            <radialGradient id="sunAuraGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#FFE082" stopOpacity="0.8" />
-              <stop offset="50%" stopColor="#FFA726" stopOpacity="0.25" />
+            <radialGradient id="sunAuraRich" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#FFE082" stopOpacity="0.9" />
+              <stop offset="40%" stopColor="#FFB300" stopOpacity="0.35" />
+              <stop offset="75%" stopColor="#FF7043" stopOpacity="0.1" />
               <stop offset="100%" stopColor="#FF7043" stopOpacity="0" />
             </radialGradient>
 
-            {/* Moon Core Linear */}
-            <linearGradient id="moonCoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            {/* ─── MOON GRADIENTS ─── */}
+            <linearGradient id="moonCoreRich" x1="15%" y1="10%" x2="85%" y2="90%">
               <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="50%" stopColor="#E2E8F0" />
+              <stop offset="35%" stopColor="#F1F5F9" />
+              <stop offset="70%" stopColor="#CBD5E1" />
               <stop offset="100%" stopColor="#94A3B8" />
             </linearGradient>
 
-            {/* Moon Glow */}
-            <radialGradient id="moonAuraGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#C7D2FE" stopOpacity="0.75" />
-              <stop offset="55%" stopColor="#818CF8" stopOpacity="0.2" />
+            <radialGradient id="moonAuraRich" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#E0E7FF" stopOpacity="0.85" />
+              <stop offset="45%" stopColor="#A5B4FC" stopOpacity="0.3" />
+              <stop offset="80%" stopColor="#6366F1" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
             </radialGradient>
+
+            {/* Filter: Subtle Glow for Celestial Elements */}
+            <filter id="celestialSoftGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
 
-          {/* ─── DELICATE TWINKLE STARS (During Sunset / Night) ─── */}
-          {!isSunrise && (
-            <g className="celestial-stars" fill="#FFFFFF">
-              <circle cx="-90" cy="-45" r="1.2" opacity="0.8" />
-              <circle cx="-50" cy="-65" r="1.5" opacity="0.9" />
-              <circle cx="60" cy="-55" r="1.3" opacity="0.85" />
-              <circle cx="100" cy="-35" r="1.4" opacity="0.75" />
-              <circle cx="-30" cy="50" r="1.1" opacity="0.7" />
-              <circle cx="75" cy="45" r="1.2" opacity="0.8" />
-              {/* Subtle 4-point Diamond Star */}
-              <path d="M-50,-68 L-48.5,-65 L-45.5,-64 L-48.5,-63 L-50,-60 L-51.5,-63 L-54.5,-64 L-51.5,-65 Z" fill="#E0E7FF" opacity="0.9" />
-            </g>
-          )}
+          {/* ─── EXPANDING CONCENTRIC CIRCULAR RIPPLES ("Circular Wave") ─── */}
+          <g className="celestial-ripples-group">
+            <circle
+              className="celestial-ripple ripple-1"
+              cx="0"
+              cy="0"
+              r="24"
+              fill="none"
+              strokeWidth="2.5"
+            />
+            <circle
+              className="celestial-ripple ripple-2"
+              cx="0"
+              cy="0"
+              r="24"
+              fill="none"
+              strokeWidth="2"
+            />
+            <circle
+              className="celestial-ripple ripple-3"
+              cx="0"
+              cy="0"
+              r="24"
+              fill="none"
+              strokeWidth="1.5"
+            />
+          </g>
 
-          {/* ─── SUNRISE CHOREOGRAPHY (Switching to Light Mode) ─── */}
-          {isSunrise ? (
-            <>
-              {/* 🌙 Moon sinks: starts center-right, slips down-right */}
-              <g className="moon-sink-flow">
-                <circle cx="0" cy="0" r="32" fill="url(#moonAuraGrad)" />
-                <path
-                  d="M-4,-14 C7,-14 16,-5 16,7 C16,19 7,28 -4,28 C2,22 6,14 6,7 C6,0 2,-8 -4,-14 Z"
-                  fill="url(#moonCoreGrad)"
-                />
-              </g>
+          {/* ─── VERTICAL DROP CARRIER (Straight from top-center into center) ─── */}
+          <g className="celestial-vertical-carrier">
+            {isSunrise ? (
+              /* ☀️ ─── ENHANCED SUN BODY ─── */
+              <g className="celestial-sun-body" filter="url(#celestialSoftGlow)">
+                {/* Outer Solar Aura */}
+                <circle cx="0" cy="0" r="48" fill="url(#sunAuraRich)" />
 
-              {/* ☀️ Sun rises: enters from lower-left into exact center */}
-              <g className="sun-rise-flow">
-                {/* Corona Glow */}
-                <circle cx="0" cy="0" r="42" fill="url(#sunAuraGrad)" />
-                {/* Soft Ray Spikes */}
-                <g stroke="#FFD54F" strokeWidth="1.8" strokeLinecap="round" opacity="0.6">
-                  <line x1="0" y1="-28" x2="0" y2="-22" />
-                  <line x1="0" y1="22" x2="0" y2="28" />
-                  <line x1="-28" y1="0" x2="-22" y2="0" />
-                  <line x1="22" y1="0" x2="28" y2="0" />
-                  <line x1="-20" y1="-20" x2="-15" y2="-15" />
-                  <line x1="15" y1="15" x2="20" y2="20" />
-                  <line x1="-20" y1="20" x2="-15" y2="15" />
-                  <line x1="15" y1="-15" x2="20" y2="-20" />
+                {/* Rotating Corona Rays */}
+                <g className="sun-corona-spin" stroke="#FFCA28" strokeLinecap="round">
+                  <line x1="0" y1="-32" x2="0" y2="-24" strokeWidth="2.5" />
+                  <line x1="0" y1="24" x2="0" y2="32" strokeWidth="2.5" />
+                  <line x1="-32" y1="0" x2="-24" y2="0" strokeWidth="2.5" />
+                  <line x1="24" y1="0" x2="32" y2="0" strokeWidth="2.5" />
+                  <line x1="-22" y1="-22" x2="-17" y2="-17" strokeWidth="2" />
+                  <line x1="17" y1="17" x2="22" y2="22" strokeWidth="2" />
+                  <line x1="-22" y1="22" x2="-17" y2="17" strokeWidth="2" />
+                  <line x1="17" y1="-17" x2="22" y2="-22" strokeWidth="2" />
                 </g>
-                {/* Compact Sun Orb (38px diameter) */}
-                <circle cx="0" cy="0" r="19" fill="url(#sunCoreGrad)" />
-              </g>
-            </>
-          ) : (
-            /* ─── SUNSET CHOREOGRAPHY (Switching to Dark Mode) ─── */
-            <>
-              {/* ☀️ Sun sinks: slips from center-left down-right */}
-              <g className="sun-sink-flow">
-                <circle cx="0" cy="0" r="36" fill="url(#sunAuraGrad)" />
-                <circle cx="0" cy="0" r="18" fill="url(#sunCoreGrad)" />
-              </g>
 
-              {/* 🌙 Moon rises: enters from lower-left into exact center */}
-              <g className="moon-rise-flow">
-                {/* Moon Glow */}
-                <circle cx="0" cy="0" r="36" fill="url(#moonAuraGrad)" />
-                {/* Crisp Crescent Moon (36px diameter) */}
+                {/* Main Sun Orb (~42px diameter) */}
+                <circle cx="0" cy="0" r="21" fill="url(#sunCoreRich)" />
+
+                {/* Top Glass Specular Arc */}
                 <path
-                  d="M-5,-16 C8,-16 18,-6 18,7 C18,20 8,30 -5,30 C2,23 6,15 6,7 C6,-1 2,-9 -5,-16 Z"
-                  fill="url(#moonCoreGrad)"
+                  d="M -13 -7 A 15 15 0 0 1 11 -8"
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  opacity="0.85"
                 />
               </g>
-            </>
-          )}
+            ) : (
+              /* 🌙 ─── ENHANCED MOON BODY ─── */
+              <g className="celestial-moon-body" filter="url(#celestialSoftGlow)">
+                {/* Outer Lunar Aura */}
+                <circle cx="0" cy="0" r="46" fill="url(#moonAuraRich)" />
+
+                {/* Twinkling Companion Little Stars */}
+                <g className="moon-star-companions" fill="#FFFFFF">
+                  {/* Primary 4-point Star near moon tip */}
+                  <path
+                    d="M 22 -18 L 24 -13 L 29 -11 L 24 -9 L 22 -4 L 20 -9 L 15 -11 L 20 -13 Z"
+                    fill="#F8FAFC"
+                    opacity="0.9"
+                  />
+                  <circle cx="-24" cy="-16" r="1.4" opacity="0.8" />
+                  <circle cx="26" cy="18" r="1.2" opacity="0.75" />
+                  <circle cx="-18" cy="22" r="1.5" opacity="0.85" />
+                </g>
+
+                {/* Elegant Luminous Crescent Geometry (~40px) */}
+                <path
+                  d="M -6 -18 C 8 -18 19 -7 19 8 C 19 23 8 34 -6 34 C 3 26 7 17 7 8 C 7 -1 3 -10 -6 -18 Z"
+                  fill="url(#moonCoreRich)"
+                />
+
+                {/* Crescent Inner Crater Accents */}
+                <circle cx="8" cy="5" r="2.2" fill="#94A3B8" opacity="0.4" />
+                <circle cx="12" cy="14" r="1.8" fill="#94A3B8" opacity="0.35" />
+                <circle cx="5" cy="19" r="1.4" fill="#94A3B8" opacity="0.3" />
+
+                {/* Specular Edge Arc */}
+                <path
+                  d="M -3 -15 C 8 -13 16 -4 16 8"
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  opacity="0.9"
+                />
+              </g>
+            )}
+          </g>
         </svg>
       </div>
     </aside>
