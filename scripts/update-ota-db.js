@@ -10,8 +10,8 @@ async function run() {
     config = await SystemConfig.create({ key: "default" });
   }
   
-  const targetVer = '1.2.2.91';
-  const checksum = 'cd215789260d11c939f4af33b8f19f9351b0004ee2c790db30c7234a2ae15ee4';
+  const targetVer = '1.2.2.92';
+  const checksum = 'd1896e908aba4c88d18a1a90004d55e823679172176a97328baab47f0fe626bb';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -24,18 +24,23 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.91: Comprehensive mobile layout optimization for User Directory & cards';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.92: Fix dropdown stacking, badges, user card actions, and targetAudience all devices';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.91: Comprehensive mobile layout optimization for User Directory & cards';
-  config.appVersion.forceUpdate = false;
+  config.appVersion.targetAudience = 'all';
+  config.appVersion.isSuspended = false;
+  config.appVersion.targetedRegistrationNumbers = [];
+  config.appVersion.targetedRoles = [];
+  config.appVersion.targetedHostels = [];
+  config.appVersion.forceUpdate = true;
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.92: Mobile UI optimization & stability patch';
 
   config.markModified('otaUpdates');
   config.markModified('appVersion');
   await config.save();
 
-  console.log(`MongoDB SystemConfig updated with target v${targetVer} bundle checksum: ${checksum}`);
+  console.log(`MongoDB SystemConfig updated with target v${targetVer} bundle checksum: ${checksum} (targetAudience: all)`);
   await mongoose.disconnect();
 }
 
