@@ -232,10 +232,9 @@ const studentCountCache = new Map();
 const COUNT_CACHE_TTL = 15000;
 
 const findingcomplaint = async (req, res) => {
-    if (req.destroyed) return;
     try {
         const { page, limit, skip } = getPagination(req.query);
-        const regNo = req.user.registrationNumber;
+        const regNo = req.user?.registrationNumber;
 
         const complaintsPromise = Complaint
             .find({ registrationNo: regNo })
@@ -258,8 +257,6 @@ const findingcomplaint = async (req, res) => {
 
         const [complaints, total] = await Promise.all([complaintsPromise, countPromise]);
 
-        if (req.destroyed) return;
-
         if (complaints.length === 0 && page === 1) {
             return res.status(404).json({
                 success: false,
@@ -273,7 +270,6 @@ const findingcomplaint = async (req, res) => {
             pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) }
         });
     } catch (error) {
-        if (req.destroyed) return;
         return res.status(500).json({
             success: false,
             message: "due to system failure"
@@ -284,9 +280,8 @@ const findingcomplaint = async (req, res) => {
 // ─── savingComplaint ──────────────────────────────────────────────────────────
 // POST /api/v1/users/complaints  (user route — has authMiddleware)
 const savingComplaint = async (req, res) => {
-    if (req.destroyed) return;
     try {
-        if (!req.body.department || !req.body.description) {
+        if (!req.body || !req.body.department || !req.body.description) {
             return res.status(400).json({
                 success: false,
                 message: "Department and description are required",
@@ -315,8 +310,8 @@ const savingComplaint = async (req, res) => {
         }
 
         const complaintData = {
-            studentName:    studentName || req.user.registrationNumber || "Student",
-            registrationNo: registrationNo || req.user.registrationNumber || "N/A",
+            studentName:    studentName || req.user?.registrationNumber || "Student",
+            registrationNo: registrationNo || req.user?.registrationNumber || "N/A",
             hostelNo:       hostelNo || "Hostel BH-1",
             roomNo:         roomNo || 302,
             department:     req.body.department,
@@ -324,6 +319,11 @@ const savingComplaint = async (req, res) => {
         };
 
         const newComplaint = await Complaint.create(complaintData);
+
+        // Invalidate student complaint count cache so list updates immediately
+        if (complaintData.registrationNo) {
+            studentCountCache.delete(complaintData.registrationNo);
+        }
 
         return res.status(201).json({
             success: true,
@@ -418,8 +418,7 @@ const allComplaintsId = async (req, res) => {
 // PUT   /api/v1/complaints/Allcomplaints/:complaintId
 // Roles: warden, caretaker, superintendent
 const updateComplaintbyid = async (req, res) => {
-    if (req.destroyed) return;
-    const { status, description } = req.body;
+    const { status, description } = req.body || {};
 
     // 1. Role check first — no DB calls yet
     if (

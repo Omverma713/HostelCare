@@ -398,6 +398,17 @@ html.dark-theme .sa-header-profile-action-btn {
   display: none;
 }
 
+.sa-delegations-desktop-table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.sa-delegations-mobile-cards {
+  display: none;
+}
+
 /* User Card on Mobile */
 .sa-user-card {
   background: var(--bg-secondary);
@@ -667,7 +678,7 @@ html:not(.dark-theme) .sa-delegation-card {
    ======================================================= */
 @media (max-width: 768px) {
   .sa-portal-container {
-    padding: 0.5rem 0.25rem;
+    padding: 0.5rem 0.25rem 100px 0.25rem !important;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -825,21 +836,54 @@ html:not(.dark-theme) .sa-delegation-card {
     width: 100%;
     margin-left: 0;
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
   .sa-filter-actions-row .sa-search-btn {
-    flex: 1;
+    flex: 1 1 70px;
     width: auto;
-    padding: 0.6rem;
+    padding: 0.6rem 0.75rem;
     font-size: 0.85rem;
   }
 
-  .sa-create-user-filter-btn {
-    flex: 1;
+  .sa-filter-actions-row .sa-filter-btn {
+    flex: 2 1 130px;
     width: auto;
-    padding: 0.6rem;
-    font-size: 0.85rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.82rem;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  .sa-create-user-filter-btn {
+    flex: 1 1 110px;
+    width: auto;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.82rem;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  .sa-user-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: stretch;
+    gap: 6px;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .sa-user-card-actions button {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.75rem;
+    padding: 6px 8px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
     justify-content: center;
   }
 
@@ -850,6 +894,16 @@ html:not(.dark-theme) .sa-delegation-card {
 
   .sa-mobile-cards {
     display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .sa-delegations-desktop-table {
+    display: none !important;
+  }
+
+  .sa-delegations-mobile-cards {
+    display: flex !important;
     flex-direction: column;
     gap: 0.75rem;
   }
@@ -2254,13 +2308,13 @@ body.login-dark-theme div[style*="background: #FFFFFF"] {
 .sa-header-banner {
   overflow: visible !important;
   position: relative !important;
-  z-index: 60 !important;
+  z-index: 100 !important;
 }
 
 .sa-nav-interactive-wrapper {
   position: relative;
   width: 100%;
-  z-index: 80;
+  z-index: 1000 !important;
   margin-top: 4px;
 }
 
@@ -2404,7 +2458,7 @@ body.login-dark-theme div[style*="background: #FFFFFF"] {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  z-index: 9999;
+  z-index: 99999 !important;
   background: #FFFFFF;
   border: 1.5px solid #E6E0D5;
   border-radius: 18px;

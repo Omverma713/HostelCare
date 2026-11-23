@@ -13363,8 +13363,9 @@ export default function SuperAdminPortal() {
                 </button>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
+              <>
+                <div className="sa-delegations-desktop-table" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                  <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                       <th style={{ padding: '0.75rem 0.5rem' }}>Sub-Admin User</th>
@@ -13584,7 +13585,218 @@ export default function SuperAdminPortal() {
                   </tbody>
                 </table>
               </div>
-            )}
+
+              {/* Mobile Responsive Roster Cards */}
+              <div className="sa-delegations-mobile-cards">
+                {delegationsList.map((d) => (
+                  <div
+                    key={d._id}
+                    style={{
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 14px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-primary)' }}>{d.userName}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {d.userRegistrationNumber} • <span style={{ textTransform: 'capitalize' }}>{d.originalRole}</span>
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          padding: '3px 8px',
+                          borderRadius: '12px',
+                          fontSize: '0.7rem',
+                          fontWeight: 750,
+                          flexShrink: 0,
+                          background:
+                            d.status === 'active' && !d.isExpired
+                              ? 'rgba(16, 185, 129, 0.15)'
+                              : d.status === 'revoked'
+                              ? 'rgba(239, 68, 68, 0.12)'
+                              : 'rgba(156, 163, 175, 0.15)',
+                          color:
+                            d.status === 'active' && !d.isExpired
+                              ? '#10b981'
+                              : d.status === 'revoked'
+                              ? '#ef4444'
+                              : 'var(--text-muted)',
+                          border: `1px solid ${
+                            d.status === 'active' && !d.isExpired
+                              ? 'rgba(16, 185, 129, 0.35)'
+                              : d.status === 'revoked'
+                              ? 'rgba(239, 68, 68, 0.3)'
+                              : 'var(--border-color)'
+                          }`,
+                        }}
+                      >
+                        {d.status === 'active' && !d.isExpired ? 'ACTIVE' : d.status === 'revoked' ? 'REVOKED' : 'EXPIRED'}
+                      </span>
+                    </div>
+
+                    <div style={{ background: 'var(--bg-primary)', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontWeight: 700, color: '#f59e0b', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                        <span>👑</span> {d.title}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {!d.scopes || d.scopes.includes('all') ? (
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '8px',
+                              background: 'rgba(16, 185, 129, 0.18)',
+                              color: '#10b981',
+                              border: '1px solid rgba(16, 185, 129, 0.4)',
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            🌟 All Features (Full Access)
+                          </span>
+                        ) : (
+                          d.scopes.map((s) => (
+                            <span
+                              key={s}
+                              style={{
+                                padding: '2px 6px',
+                                borderRadius: '6px',
+                                background: 'var(--bg-secondary)',
+                                color: 'var(--text-secondary)',
+                                border: '1px solid var(--border-color)',
+                                fontSize: '0.65rem',
+                                fontWeight: 650,
+                              }}
+                            >
+                              {DELEGATION_FEATURE_MODULES.find((m) => m.id === s)?.label.split(' ')[0] || ''} {s}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <div>
+                        <strong>Duration: </strong>
+                        {d.isIndefinite ? (
+                          <span style={{ color: '#f59e0b', fontWeight: 700 }}>♾️ Jab Super Admin Chahe (Until Revoked)</span>
+                        ) : d.expiresAt ? (
+                          <span>
+                            {new Date(d.expiresAt).toLocaleDateString()} {new Date(d.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {!d.isExpired && d.timeRemainingMinutes > 0 && (
+                              <span style={{ color: '#10b981', fontWeight: 700, marginLeft: '6px' }}>
+                                (~{Math.floor(d.timeRemainingMinutes / 60)}h {d.timeRemainingMinutes % 60}m left)
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          'N/A'
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        Granted by {d.delegatedByRegistrationNumber} on {new Date(d.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingTop: '6px', borderTop: '1px solid var(--border-color)' }}>
+                      {d.status === 'active' && !d.isExpired ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditingDelegationScopes({
+                                ...d,
+                                scopes: Array.isArray(d.scopes) && d.scopes.length > 0 ? [...d.scopes] : ['all'],
+                              })
+                            }
+                            style={{
+                              flex: '1 1 auto',
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(59, 130, 246, 0.4)',
+                              background: 'rgba(59, 130, 246, 0.12)',
+                              color: '#60a5fa',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            🛡️ Permissions
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateDelegationDuration(d._id, 'indefinite')}
+                            style={{
+                              flex: '1 1 auto',
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(245, 158, 11, 0.4)',
+                              background: 'rgba(245, 158, 11, 0.12)',
+                              color: '#f59e0b',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            ♾️ Make Indefinite
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRevokeDelegation(d._id, d.userName)}
+                            style={{
+                              flex: '1 1 auto',
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                              background: 'rgba(239, 68, 68, 0.12)',
+                              color: '#ef4444',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            ⛔ Revoke
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDelegationFormData({
+                              ...DEFAULT_DELEGATION_FORM,
+                              userId: d.userId,
+                              targetUserName: d.userName,
+                              targetUserRegNo: d.userRegistrationNumber,
+                              title: d.title || 'Acting Sub-Admin',
+                            });
+                            setIsCreateDelegationModalOpen(true);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-secondary)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.75rem',
+                            fontWeight: 650,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ↺ Re-Grant Privileges
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           </div>
         </div>
       )}
