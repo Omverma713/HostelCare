@@ -3802,7 +3802,6 @@ export default function SuperAdminPortal() {
               background: '#FFFFFF',
               borderRadius: '24px',
               border: '1px solid #E6E0D5',
-              padding: '24px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
               width: '100%',
               boxSizing: 'border-box'
@@ -3947,7 +3946,7 @@ export default function SuperAdminPortal() {
                 <button
                   type="button"
                   onClick={() => setShowResetsRadar(!showResetsRadar)}
-                  className="sa-filter-btn"
+                  className="sa-filter-btn sa-radar-btn"
                   style={{
                     background: resetsStats.totalBlocked > 0 ? 'rgba(239, 68, 68, 0.15)' : showResetsRadar ? 'rgba(192, 118, 96, 0.25)' : 'rgba(192, 118, 96, 0.12)',
                     borderColor: resetsStats.totalBlocked > 0 ? '#EF4444' : 'var(--accent-terracotta, #C07660)',
@@ -3955,13 +3954,14 @@ export default function SuperAdminPortal() {
                     fontWeight: 700,
                     display: 'inline-flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: 6,
                   }}
                   title="View students who requested password resets or have blocked limits"
                 >
                   <span>🔑</span>
-                  <span>
-                    Recovery Radar {resetsStats.totalBlocked > 0 ? `(${resetsStats.totalBlocked} Blocked)` : `(${passwordResetsList.length})`}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    Radar {resetsStats.totalBlocked > 0 ? `(${resetsStats.totalBlocked} Blocked)` : `(${passwordResetsList.length})`}
                   </span>
                 </button>
 
@@ -4465,8 +4465,9 @@ export default function SuperAdminPortal() {
                           <button
                             type="button"
                             onClick={(e) => handleUnlockUser(u._id, e)}
+                            className="sa-user-action-btn"
                             style={{
-                              padding: '0.4rem 0.75rem',
+                              padding: '0.4rem 0.65rem',
                               borderRadius: '6px',
                               border: '1px solid rgba(16, 185, 129, 0.5)',
                               background: 'rgba(16, 185, 129, 0.12)',
@@ -4476,6 +4477,7 @@ export default function SuperAdminPortal() {
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
+                              justifyContent: 'center',
                               gap: '4px',
                             }}
                           >
@@ -4484,8 +4486,9 @@ export default function SuperAdminPortal() {
                           <button
                             type="button"
                             onClick={(e) => handleAdjustUserLock(u._id, 15, e)}
+                            className="sa-user-action-btn"
                             style={{
-                              padding: '0.4rem 0.6rem',
+                              padding: '0.4rem 0.5rem',
                               borderRadius: '6px',
                               border: '1px solid var(--border-color)',
                               background: 'var(--bg-secondary)',
@@ -4493,6 +4496,7 @@ export default function SuperAdminPortal() {
                               fontSize: '0.75rem',
                               fontWeight: 700,
                               cursor: 'pointer',
+                              justifyContent: 'center',
                             }}
                             title="Extend lock by 15 mins"
                           >
@@ -4501,8 +4505,9 @@ export default function SuperAdminPortal() {
                           <button
                             type="button"
                             onClick={(e) => handleAdjustUserLock(u._id, -15, e)}
+                            className="sa-user-action-btn"
                             style={{
-                              padding: '0.4rem 0.6rem',
+                              padding: '0.4rem 0.5rem',
                               borderRadius: '6px',
                               border: '1px solid var(--border-color)',
                               background: 'var(--bg-secondary)',
@@ -4510,6 +4515,7 @@ export default function SuperAdminPortal() {
                               fontSize: '0.75rem',
                               fontWeight: 700,
                               cursor: 'pointer',
+                              justifyContent: 'center',
                             }}
                             title="Reduce lock by 15 mins"
                           >
@@ -4524,8 +4530,9 @@ export default function SuperAdminPortal() {
                             e.stopPropagation();
                             handleImpersonateUser(u);
                           }}
+                          className="sa-user-action-btn"
                           style={{
-                            padding: '0.4rem 0.75rem',
+                            padding: '0.4rem 0.65rem',
                             borderRadius: '6px',
                             border: '1px solid rgba(99, 102, 241, 0.4)',
                             background: 'rgba(99, 102, 241, 0.12)',
@@ -4535,6 +4542,7 @@ export default function SuperAdminPortal() {
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
+                            justifyContent: 'center',
                             gap: '4px',
                           }}
                         >
@@ -4544,8 +4552,9 @@ export default function SuperAdminPortal() {
                       <button
                         type="button"
                         onClick={(e) => handleTogglePilotTargetUser(u, e)}
+                        className="sa-user-action-btn"
                         style={{
-                          padding: '0.4rem 0.75rem',
+                          padding: '0.4rem 0.65rem',
                           borderRadius: '6px',
                           border: (appVersionConfig.targetedRegistrationNumbers || []).includes(u.registrationNumber?.toUpperCase())
                             ? '1px solid rgba(245, 158, 11, 0.6)'
@@ -4561,6 +4570,7 @@ export default function SuperAdminPortal() {
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
+                          justifyContent: 'center',
                           gap: '4px',
                         }}
                         title={
@@ -4579,8 +4589,9 @@ export default function SuperAdminPortal() {
                           e.stopPropagation();
                           handleSelectUser(u);
                         }}
+                        className="sa-user-action-btn"
                         style={{
-                          padding: '0.4rem 0.75rem',
+                          padding: '0.4rem 0.65rem',
                           borderRadius: '6px',
                           border: '1px solid var(--border-color)',
                           background: 'var(--bg-card)',
@@ -4588,6 +4599,9 @@ export default function SuperAdminPortal() {
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           cursor: 'pointer',
+                          justifyContent: 'center',
+                          display: 'inline-flex',
+                          alignItems: 'center',
                         }}
                       >
                         Manage Details →
@@ -5968,7 +5982,6 @@ export default function SuperAdminPortal() {
             background: '#FFFFFF',
             borderRadius: '24px',
             border: '1px solid #E6E0D5',
-            padding: '24px',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
             width: '100%',
             boxSizing: 'border-box'
@@ -10579,7 +10592,6 @@ export default function SuperAdminPortal() {
               background: '#FFFFFF',
               borderRadius: '24px',
               border: '1px solid #E6E0D5',
-              padding: '24px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
               width: '100%',
               boxSizing: 'border-box'
@@ -13017,7 +13029,6 @@ export default function SuperAdminPortal() {
             background: '#FFFFFF',
             borderRadius: '24px',
             border: '1px solid #E6E0D5',
-            padding: '24px',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
             width: '100%',
             boxSizing: 'border-box'

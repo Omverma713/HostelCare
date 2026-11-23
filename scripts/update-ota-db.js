@@ -10,8 +10,8 @@ async function run() {
     config = await SystemConfig.create({ key: "default" });
   }
   
-  const targetVer = '1.2.2.90';
-  const checksum = '5fa646aaf2b35d4ce0dd50a411ca0d2d83e635bd40a2e839ac737401bb7f1660';
+  const targetVer = '1.2.2.91';
+  const checksum = 'cd215789260d11c939f4af33b8f19f9351b0004ee2c790db30c7234a2ae15ee4';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -24,11 +24,11 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.90: Fix complaint generation API, SuperAdmin mobile layout & module switcher z-index';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.91: Comprehensive mobile layout optimization for User Directory & cards';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.90: Fix complaint generation API, SuperAdmin mobile layout & module switcher z-index';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.91: Comprehensive mobile layout optimization for User Directory & cards';
   config.appVersion.forceUpdate = false;
 
   config.markModified('otaUpdates');
