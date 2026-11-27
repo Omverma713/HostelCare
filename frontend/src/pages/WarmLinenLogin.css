@@ -1299,6 +1299,105 @@ body.login-dark-theme .wl-popped-pill-btn {
   animation-delay: calc(var(--cell-index, 0) * 45ms);
 }
 
+/* ==========================================================================
+   Real-Time OTP Verification States (Emerald Green Valid & Crimson Red Invalid)
+   ========================================================================== */
+
+/* Green Success State */
+.wl-otp-cell.valid {
+  border-color: #10B981 !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+  box-shadow: 0 0 0 2.5px rgba(16, 185, 129, 0.3), 0 4px 14px rgba(16, 185, 129, 0.22) !important;
+  transform: translateY(-2px);
+  animation: wlOtpValidPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: calc(var(--cell-index, 0) * 40ms);
+}
+
+.wl-otp-cell.valid .wl-otp-digit-anim {
+  color: #10B981 !important;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.5) !important;
+}
+
+@keyframes wlOtpValidPop {
+  0% { transform: scale(0.92) translateY(0); }
+  60% { transform: scale(1.08) translateY(-3px); }
+  100% { transform: scale(1) translateY(-1px); }
+}
+
+/* Red Error State */
+.wl-otp-cell.invalid {
+  border-color: #EF4444 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  box-shadow: 0 0 0 2.5px rgba(239, 68, 68, 0.3), 0 4px 14px rgba(239, 68, 68, 0.22) !important;
+}
+
+.wl-otp-cell.invalid .wl-otp-digit-anim {
+  color: #EF4444 !important;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.5) !important;
+}
+
+/* Horizontal Shake on Error */
+@keyframes wlOtpShake {
+  0%, 100% { transform: translateX(0); }
+  15%, 55% { transform: translateX(-7px); }
+  35%, 75% { transform: translateX(7px); }
+  90% { transform: translateX(-2px); }
+}
+
+.wl-otp-cells-row.shake-row {
+  animation: wlOtpShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Checking Pending State */
+.wl-otp-cell.checking {
+  border-color: #F59E0B !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.22) !important;
+}
+
+.wl-otp-cell.checking .wl-otp-digit-anim {
+  color: #F59E0B !important;
+}
+
+/* Status Feedback Row */
+.wl-otp-status-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 10px;
+  text-align: center;
+  animation: wlFadeIn 0.22s ease-out;
+}
+
+.wl-otp-status-feedback.valid {
+  color: #10B981;
+}
+
+.wl-otp-status-feedback.invalid {
+  color: #EF4444;
+}
+
+.wl-otp-status-feedback.checking {
+  color: #D97706;
+}
+
+@keyframes wlSpin {
+  to { transform: rotate(360deg); }
+}
+
+.wl-otp-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(217, 119, 6, 0.3);
+  border-top-color: #D97706;
+  border-radius: 50%;
+  display: inline-block;
+  animation: wlSpin 0.75s linear infinite;
+}
+
 /* Mobile responsive layout */
 @media (max-width: 380px) {
   .wl-otp-cells-row {
@@ -1416,6 +1515,32 @@ body.login-dark-theme .wl-otp-digit-anim {
 html.dark-theme .wl-otp-placeholder-dot,
 body.login-dark-theme .wl-otp-placeholder-dot {
   color: rgba(192, 118, 96, 0.25);
+}
+
+html.dark-theme .wl-otp-cell.valid,
+body.login-dark-theme .wl-otp-cell.valid {
+  border-color: #10B981 !important;
+  background: rgba(16, 185, 129, 0.18) !important;
+  box-shadow: 0 0 0 2.5px rgba(16, 185, 129, 0.4), 0 4px 16px rgba(16, 185, 129, 0.3) !important;
+}
+
+html.dark-theme .wl-otp-cell.valid .wl-otp-digit-anim,
+body.login-dark-theme .wl-otp-cell.valid .wl-otp-digit-anim {
+  color: #34D399 !important;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.6) !important;
+}
+
+html.dark-theme .wl-otp-cell.invalid,
+body.login-dark-theme .wl-otp-cell.invalid {
+  border-color: #EF4444 !important;
+  background: rgba(239, 68, 68, 0.18) !important;
+  box-shadow: 0 0 0 2.5px rgba(239, 68, 68, 0.4), 0 4px 16px rgba(239, 68, 68, 0.3) !important;
+}
+
+html.dark-theme .wl-otp-cell.invalid .wl-otp-digit-anim,
+body.login-dark-theme .wl-otp-cell.invalid .wl-otp-digit-anim {
+  color: #F87171 !important;
+  text-shadow: 0 0 12px rgba(248, 113, 113, 0.6) !important;
 }
 
 .wl-resend-btn {

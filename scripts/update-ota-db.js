@@ -10,8 +10,8 @@ async function run() {
     config = await SystemConfig.create({ key: "default" });
   }
   
-  const targetVer = '1.2.2.92';
-  const checksum = 'd1896e908aba4c88d18a1a90004d55e823679172176a97328baab47f0fe626bb';
+  const targetVer = '1.2.2.93';
+  const checksum = '2be7398c371fccbf6f0c2876ad6346508e875eeb4dafef3646fe09b217a53064';
   const newDeployId = 'dep_' + Date.now();
 
   config.otaUpdates = config.otaUpdates || {};
@@ -24,7 +24,7 @@ async function run() {
   config.otaUpdates.minNativeBuild = 28;
   config.otaUpdates.requiresNativeApk = false;
   config.otaUpdates.forceUpdate = true;
-  config.otaUpdates.notes = 'HostelCare v1.2.2.92: Fix dropdown stacking, badges, user card actions, and targetAudience all devices';
+  config.otaUpdates.notes = 'HostelCare v1.2.2.93: Interactive 6-digit OTP verification with Emerald Green success & Crimson Red shake feedback';
 
   config.appVersion = config.appVersion || {};
   config.appVersion.latestVersion = targetVer;
@@ -34,7 +34,7 @@ async function run() {
   config.appVersion.targetedRoles = [];
   config.appVersion.targetedHostels = [];
   config.appVersion.forceUpdate = true;
-  config.appVersion.updateMessage = 'HostelCare v1.2.2.92: Mobile UI optimization & stability patch';
+  config.appVersion.updateMessage = 'HostelCare v1.2.2.93: Interactive real-time OTP box verification & visual validation feedback';
 
   config.markModified('otaUpdates');
   config.markModified('appVersion');

@@ -69,7 +69,10 @@ export default function Login() {
   const [fpMaskedEmail, setFpMaskedEmail] = useState('');
   const [fpOtp, setFpOtp] = useState('');
   const [fpOtpFocused, setFpOtpFocused] = useState(false);
+  const [fpOtpStatus, setFpOtpStatus] = useState('idle'); // 'idle' | 'checking' | 'valid' | 'invalid'
+  const [fpOtpError, setFpOtpError] = useState('');
   const fpOtpInputRef = useRef(null);
+  const fpNewPasswordInputRef = useRef(null);
   const [fpToken, setFpToken] = useState('');
   const [fpResetAuthToken, setFpResetAuthToken] = useState('');
   const [fpNewPassword, setFpNewPassword] = useState('');
@@ -125,6 +128,48 @@ export default function Login() {
       return () => clearTimeout(timer);
     }
   }, [fpStep, fpToken]);
+
+  // Real-time OTP Auto-Verification on 6th digit entry
+  useEffect(() => {
+    if (fpStep === 'verifyAndReset' && !fpToken && fpOtp.length === 6) {
+      let isMounted = true;
+      const verifyCode = async () => {
+        setFpOtpStatus('checking');
+        setFpOtpError('');
+        const cleanReg = fpRegNum.trim().toUpperCase();
+        try {
+          const otpRes = await api.verifyResetOtp(cleanReg, fpOtp.trim());
+          if (!isMounted) return;
+          if (otpRes.success) {
+            setFpOtpStatus('valid');
+            setFpResetAuthToken(otpRes.resetAuthToken);
+            setFpOtpError('');
+            // Smoothly auto-focus New PIN input after small delight delay
+            setTimeout(() => {
+              fpNewPasswordInputRef.current?.focus();
+            }, 300);
+          } else {
+            setFpOtpStatus('invalid');
+            setFpOtpError(otpRes.message || 'Invalid OTP code. Please check and try again.');
+            setFpResetAuthToken('');
+          }
+        } catch (err) {
+          if (!isMounted) return;
+          setFpOtpStatus('invalid');
+          setFpOtpError(err.message || 'Failed to verify OTP code.');
+          setFpResetAuthToken('');
+        }
+      };
+      verifyCode();
+      return () => {
+        isMounted = false;
+      };
+    } else if (fpOtp.length < 6 && fpOtpStatus !== 'idle') {
+      setFpOtpStatus('idle');
+      setFpOtpError('');
+      setFpResetAuthToken('');
+    }
+  }, [fpOtp, fpStep, fpToken, fpRegNum]);
 
   // Handle Change Password (when current passcode is known)
   const handleChangePassword = async (e) => {
@@ -300,10 +345,13 @@ export default function Login() {
       if (!fpToken && !authToken && fpOtp.trim()) {
         const otpRes = await api.verifyResetOtp(cleanReg, fpOtp.trim());
         if (!otpRes.success) {
+          setFpOtpStatus('invalid');
+          setFpOtpError(otpRes.message || 'Invalid OTP code.');
           triggerToast('error', otpRes.message || 'Invalid OTP code.');
           setFpLoading(false);
           return;
         }
+        setFpOtpStatus('valid');
         authToken = otpRes.resetAuthToken;
         setFpResetAuthToken(authToken);
       }
@@ -1235,17 +1283,22 @@ export default function Login() {
                             required
                           />
 
-                          <div className="wl-otp-cells-row">
+                          <div className={`wl-otp-cells-row ${fpOtpStatus === 'invalid' ? 'shake-row' : ''}`}>
                             {[0, 1, 2, 3, 4, 5].map((index) => {
                               const digit = fpOtp[index];
                               const isFilled = digit !== undefined && digit !== '';
                               const isCurrent = fpOtp.length === index && fpOtpFocused;
                               const isAllFilled = fpOtp.length === 6;
 
+                              let cellStatus = '';
+                              if (fpOtpStatus === 'valid') cellStatus = 'valid';
+                              else if (fpOtpStatus === 'invalid') cellStatus = 'invalid';
+                              else if (fpOtpStatus === 'checking') cellStatus = 'checking';
+
                               return (
                                 <div
                                   key={index}
-                                  className={`wl-otp-cell ${isFilled ? 'filled' : ''} ${isCurrent ? 'active' : ''} ${isAllFilled ? 'all-filled' : ''}`}
+                                  className={`wl-otp-cell ${isFilled ? 'filled' : ''} ${isCurrent ? 'active' : ''} ${isAllFilled ? 'all-filled' : ''} ${cellStatus}`}
                                   style={{ '--cell-index': index }}
                                 >
                                   {isFilled ? (
@@ -1262,6 +1315,26 @@ export default function Login() {
                             })}
                           </div>
                         </div>
+
+                        {/* Real-time verification status banner */}
+                        {fpOtpStatus === 'checking' && (
+                          <div className="wl-otp-status-feedback checking">
+                            <span className="wl-otp-spinner" />
+                            <span>Verifying 6-digit code...</span>
+                          </div>
+                        )}
+                        {fpOtpStatus === 'valid' && (
+                          <div className="wl-otp-status-feedback valid">
+                            <span>✓</span>
+                            <span>Code verified! Please enter your new PIN below.</span>
+                          </div>
+                        )}
+                        {fpOtpStatus === 'invalid' && (
+                          <div className="wl-otp-status-feedback invalid">
+                            <span>✕</span>
+                            <span>{fpOtpError || 'Invalid OTP code. Please check and try again.'}</span>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -1270,6 +1343,7 @@ export default function Login() {
                     <label className="wl-form-label">New PIN</label>
                     <div className="wl-input-wrapper">
                       <input
+                        ref={fpNewPasswordInputRef}
                         type={fpShowNew ? 'text' : 'password'}
                         className="wl-text-input"
                         placeholder="At least 6 characters"
