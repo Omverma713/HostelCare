@@ -411,8 +411,8 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
   const isOtpMethod = resetMethod === "otp";
 
   const subject = isOtpMethod
-    ? `🔐 Your 6-Digit HostelCare Passcode OTP [${otp}]`
-    : `🔗 Reset Your HostelCare Passcode (1-Click Link)`;
+    ? `${otp} is your HostelCare verification code`
+    : `Reset Your HostelCare Passcode (1-Click Link)`;
 
   const html = `
 <!DOCTYPE html>
@@ -421,8 +421,33 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
+  ${isOtpMethod ? `
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EmailMessage",
+    "description": "Your HostelCare verification code is ${otp}",
+    "potentialAction": {
+      "@type": "ConfirmAction",
+      "name": "Copy code"
+    }
+  }
+  </script>
+  ` : ""}
 </head>
 <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc;">
+  ${isOtpMethod ? `
+  <!-- Invisible Preheader for Gmail Snippet & Smart OTP Extractor -->
+  <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all; font-size: 1px; line-height: 1px; color: #0f172a; opacity: 0;">
+    Your verification code is ${otp}. Use this code to reset your HostelCare passcode. Valid for 5 minutes.
+    &#847; &zwnj; &nbsp; &#8199; &shy; &#847; &zwnj; &nbsp; &#8199; &shy; &#847; &zwnj; &nbsp; &#8199; &shy;
+  </div>
+  ` : `
+  <!-- Invisible Preheader for 1-Click Link -->
+  <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all; font-size: 1px; line-height: 1px; color: #0f172a; opacity: 0;">
+    Reset your HostelCare passcode using this secure one-click link. Valid for 5 minutes.
+  </div>
+  `}
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0f172a; padding: 32px 16px;">
     <tr>
       <td align="center">
@@ -461,13 +486,16 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
               ${isOtpMethod ? `
               <!-- 6-Digit OTP Box ONLY -->
               <div style="background: rgba(192, 118, 96, 0.08); border: 2px dashed #C07660; border-radius: 14px; padding: 22px; text-align: center; margin: 0 0 28px 0;">
-                <div style="font-size: 12px; color: #e28870; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 10px;">
-                  YOUR 6-DIGIT VERIFICATION CODE
+                <div style="font-size: 12px; color: #e28870; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 6px;">
+                  SECURITY VERIFICATION CODE
                 </div>
-                <div style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #FAF7F2; background: #0f172a; display: inline-block; padding: 8px 24px; border-radius: 8px; border: 1px solid #334155;">
-                  ${otp}
+                <p style="margin: 0 0 12px 0; font-size: 13px; color: #94a3b8;">
+                  Your verification code is:
+                </p>
+                <div style="background: #0f172a; display: inline-block; padding: 10px 24px; border-radius: 10px; border: 1px solid #334155;">
+                  <code style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #FAF7F2; display: inline-block;">${otp}</code>
                 </div>
-                <div style="font-size: 12px; color: #94a3b8; margin-top: 10px;">
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 12px;">
                   ⏱️ Valid for <strong>5 minutes</strong> only. Never share this code with anyone.
                 </div>
               </div>
