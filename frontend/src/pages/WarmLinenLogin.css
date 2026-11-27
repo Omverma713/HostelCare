@@ -335,8 +335,9 @@
 
 /* INSIDE SUBMIT BUTTON (Before Pop) */
 .wl-inside-submit-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   border-radius: 12px;
   background: linear-gradient(135deg, #C07660 0%, #9C5B49 100%);
   color: #FFFFFF;
@@ -1707,4 +1708,16 @@ body.login-dark-theme .wl-choice-title {
 html.dark-theme .wl-choice-desc,
 body.login-dark-theme .wl-choice-desc {
   color: #A6A096;
+}
+
+
+/* Dark theme for inside submit button */
+html.dark-theme .wl-inside-submit-btn,
+body.login-dark-theme .wl-inside-submit-btn {
+  background: linear-gradient(135deg, #D88B74 0%, #B86752 100%);
+  box-shadow: 0 4px 14px rgba(216, 139, 116, 0.35);
+}
+html.dark-theme .wl-inside-submit-btn:hover,
+body.login-dark-theme .wl-inside-submit-btn:hover {
+  box-shadow: 0 6px 20px rgba(216, 139, 116, 0.5);
 }
