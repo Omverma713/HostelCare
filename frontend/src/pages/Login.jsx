@@ -719,7 +719,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Prominent Primary Submit Button ("Unlock Sanctuary ✨") */}
+            {/* Prominent Primary Submit Button ("Sign In" / "Signing In...") */}
             <div className="wl-submit-btn-wrap">
               <button
                 type="submit"
@@ -730,13 +730,10 @@ export default function Login() {
                 {loading ? (
                   <>
                     <span className="wl-spinner"></span>
-                    <span>Authenticating Sanctuary...</span>
+                    <span>Signing In...</span>
                   </>
                 ) : (
-                  <>
-                    <span>Unlock Sanctuary</span>
-                    <span>✨</span>
-                  </>
+                  <span>Sign In</span>
                 )}
               </button>
             </div>
