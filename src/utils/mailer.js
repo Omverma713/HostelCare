@@ -40,7 +40,7 @@ async function dispatchEmail({ toEmail, toName, senderEmail, senderName, replyTo
         htmlContent,
         sender: {
           name: senderName || "HostelCare Portal",
-          email: senderEmail || process.env.BREVO_SENDER_EMAIL || "omverma.dev@gmail.com",
+          email: senderEmail || process.env.BREVO_SENDER_EMAIL || "noreply@hostelcare.live",
         },
         to: [{ email: toEmail, name: toName || toEmail }],
       };
@@ -172,7 +172,7 @@ async function sendFeedbackNotificationToAdmin({
   const senderEmail =
     process.env.BREVO_SENDER_EMAIL ||
     process.env.EMAIL_USER ||
-    "omverma.dev@gmail.com";
+    "noreply@hostelcare.live";
 
   const stars = renderStars(rating);
 
@@ -295,7 +295,7 @@ async function sendFeedbackAcknowledgmentToVisitor({
   const senderEmail =
     process.env.BREVO_SENDER_EMAIL ||
     process.env.EMAIL_USER ||
-    "omverma.dev@gmail.com";
+    "noreply@hostelcare.live";
 
   const stars = renderStars(rating);
 
@@ -405,7 +405,7 @@ async function sendPasswordResetEmail({ toEmail, name, registrationNumber, otp, 
   const senderEmail =
     process.env.BREVO_SENDER_EMAIL ||
     process.env.EMAIL_USER ||
-    "omverma.dev@gmail.com";
+    "noreply@hostelcare.live";
 
   const cleanName = name || registrationNumber || "Resident";
   const isOtpMethod = resetMethod === "otp";
