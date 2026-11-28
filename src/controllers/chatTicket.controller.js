@@ -759,7 +759,7 @@ async function testChatPush(req, res) {
         body: "WhatsApp-style Chat Notification Test: Real-time alert active!",
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
-        tag: "chat_test_alert",
+        // Do NOT pass tag so each test notification stacks underneath, just like WhatsApp!
         data: {
           type: "chat_message",
           ticketId: ticketId || "TEST",

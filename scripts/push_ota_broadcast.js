@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 
 async function broadcastOtaPush() {
   await mongoose.connect(process.env.MONGODB_URI);
-  const Session = require('./src/models/session.model');
-  const DeviceRegistry = require('./src/models/deviceRegistry.model');
-  const SystemConfig = require('./src/models/systemConfig.model');
-  const { sendPushToSessions } = require('./src/services/pushService');
+  const Session = require('../src/models/session.model');
+  const DeviceRegistry = require('../src/models/deviceRegistry.model');
+  const SystemConfig = require('../src/models/systemConfig.model');
+  const { sendPushToSessions } = require('../src/services/pushService');
 
   const config = await SystemConfig.getEffectiveConfig();
-  const latestVersion = config?.appVersion?.latestVersion || '1.2.2.103';
-  const bundleUrl = config?.otaUpdates?.bundleUrl || 'https://hostelcare.live/ota-bundles/hostelcare-bundle-v1.2.2.103.zip';
+  const latestVersion = config?.appVersion?.latestVersion || '1.2.2.104';
+  const bundleUrl = config?.otaUpdates?.bundleUrl || 'https://hostelcare.live/ota-bundles/hostelcare-bundle-v1.2.2.104.zip';
 
   console.log(`[OTA-Push] Preparing OTA push broadcast for version ${latestVersion}...`);
 

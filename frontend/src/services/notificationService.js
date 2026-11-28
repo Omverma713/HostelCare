@@ -100,6 +100,7 @@ export async function initPushNotifications() {
                 channelId: 'hostelcare_custom_channel',
                 smallIcon: 'ic_stat_hostelcare',
                 iconColor: '#C07660',
+                group: 'hostelcare_chat_group',
                 extra: notification.data || {},
               },
             ],

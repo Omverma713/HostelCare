@@ -179,7 +179,8 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
         body: notifBody,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
-        tag: `chat_${ticket.ticketId}`,
+        // Do NOT pass a static tag so Android does NOT replace/overwrite previous notifications.
+        // Omission allows Android to stack each message neatly underneath one another, exactly like WhatsApp!
         data: {
           ticketId: ticket.ticketId,
           type: "chat_message",
