@@ -22,6 +22,7 @@ import {
   batchDecryptMessages,
   getDeviceIdentityKey,
 } from '../utils/e2eeCrypto';
+import WhatsAppBackButton from '../components/WhatsAppBackButton';
 import './DevChatPage.css';
 
 function formatBytes(bytes) {
@@ -201,10 +202,25 @@ export default function DevChatPage() {
       });
 
       if (res.success) {
-        setTickets(res.tickets || []);
+        const loadedTickets = res.tickets || [];
+        setTickets(loadedTickets);
+
+        // Check if URL has ?ticketId=... (from WhatsApp-style push notification)
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetTicketId = urlParams.get('ticketId');
+        if (targetTicketId && loadedTickets.length > 0) {
+          const matchedTicket = loadedTickets.find(
+            (t) => String(t.ticketId).toUpperCase() === String(targetTicketId).toUpperCase()
+          );
+          if (matchedTicket) {
+            selectTicket(matchedTicket);
+            return;
+          }
+        }
+
         // Auto-select first ticket on desktop if none selected
-        if (!activeTicket && res.tickets && res.tickets.length > 0 && window.innerWidth > 768) {
-          selectTicket(res.tickets[0]);
+        if (!activeTicket && loadedTickets.length > 0 && window.innerWidth > 768) {
+          selectTicket(loadedTickets[0]);
         }
       }
     } catch (err) {
@@ -674,6 +690,12 @@ export default function DevChatPage() {
         activeTicket.e2eeSalt
       );
 
+      const pushPreviewSnippet = isImageMessage
+        ? '📷 Photo'
+        : (typeof rawPayload === 'string' && rawPayload.length > 100
+            ? rawPayload.slice(0, 97) + '...'
+            : rawPayload);
+
       try {
         const ack = await sendChatMessage({
           ticketId: activeTicket.ticketId,
@@ -682,6 +704,7 @@ export default function DevChatPage() {
           authTag,
           contentType: isImageMessage ? 'image' : 'text',
           mediaSize: imageSize,
+          previewText: pushPreviewSnippet,
         });
         if (ack && ack.messageId) {
           setMessages((prev) =>
@@ -710,6 +733,7 @@ export default function DevChatPage() {
           authTag,
           contentType: isImageMessage ? 'image' : 'text',
           mediaSize: imageSize,
+          previewText: pushPreviewSnippet,
         });
         if (res.success && res.message) {
           const finalId = res.message._id || tempId;
@@ -867,7 +891,11 @@ export default function DevChatPage() {
       <div className="devchat-container">
         {/* Header Bar */}
         <header className={`devchat-header ${activeTicket ? 'mobile-hidden' : ''}`}>
-          <div className="devchat-title-group">
+          <div className="devchat-title-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <WhatsAppBackButton
+              onClick={() => navigate(user?.role === 'superadmin' ? '/superadmin' : '/student')}
+              title="Back to Dashboard"
+            />
             <div className="devchat-icon-badge">💬</div>
             <div>
               <h1 className="devchat-header-title">
@@ -996,14 +1024,11 @@ export default function DevChatPage() {
                 {/* Room Header */}
                 <div className="devchat-room-header">
                   <div className="room-identity-group">
-                    <button
-                      type="button"
-                      className="room-back-btn"
+                    <WhatsAppBackButton
                       onClick={() => setActiveTicket(null)}
                       title="Back to Tickets"
-                    >
-                      ←
-                    </button>
+                      className="room-back-btn-wa"
+                    />
                     <div>
                       <div className="room-participant-details">
                         <h3>

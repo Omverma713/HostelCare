@@ -421,7 +421,7 @@ async function rateTicket(req, res) {
 async function sendTicketMessage(req, res) {
   try {
     const { ticketId } = req.params;
-    const { encryptedContent, iv, contentType = "text" } = req.body;
+    const { encryptedContent, iv, contentType = "text", previewText = "" } = req.body;
     const user = req.user;
 
     if (!ticketId || !encryptedContent || !iv) {
@@ -469,7 +469,9 @@ async function sendTicketMessage(req, res) {
     });
 
     ticket.lastMessage = {
-      preview: "Encrypted Message",
+      preview: previewText && previewText.trim()
+        ? (contentType === "image" ? (previewText.startsWith("📷") ? previewText : `📷 ${previewText}`) : previewText.trim())
+        : (contentType === "image" ? "📷 Image" : "New message"),
       senderRole: user.role,
       senderName: user.name,
       at: new Date(),
@@ -513,6 +515,12 @@ async function sendTicketMessage(req, res) {
           lastMessage: ticket.lastMessage,
           unreadCount: isStudent ? ticket.unreadDeveloper : ticket.unreadStudent,
         });
+      }
+
+      // Trigger High-Priority Push Notification (FCM / WebPush)
+      const { dispatchDevChatPushNotification } = require("../sockets/chatSocket");
+      if (typeof dispatchDevChatPushNotification === "function") {
+        dispatchDevChatPushNotification(ticket, message, user, contentType, previewText);
       }
     } catch (broadcastErr) {
       console.warn("Socket broadcast error in sendTicketMessage:", broadcastErr.message);

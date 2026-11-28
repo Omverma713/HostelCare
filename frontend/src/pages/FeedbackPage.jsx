@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import WhatsAppBackButton from '../components/WhatsAppBackButton';
 import {
   Sparkles,
   Star,
@@ -303,6 +304,10 @@ export default function FeedbackPage() {
       {/* Header Banner */}
       <div style={{ marginBottom: '28px', position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+          <WhatsAppBackButton
+            onClick={() => navigate(-1)}
+            title="Back to Dashboard"
+          />
           <div className="feedback-badge-pill primary-pill">
             <Sparkles size={14} className="animate-pulse" />
             <span>Community Voice & Feedback Hub</span>

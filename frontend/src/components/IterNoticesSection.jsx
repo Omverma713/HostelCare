@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
 import { addChatListener } from "../services/chatSocketService";
+import WhatsAppBackButton from "./WhatsAppBackButton";
 import "./IterNoticesSection.css";
 
 const CATEGORIES = [
@@ -439,17 +440,11 @@ export default function IterNoticesSection({ apiBaseUrl }) {
         <div className="iter-fullscreen-viewer">
           {/* Minimal Sleek Floating Top Bar */}
           <div className="iter-fs-topbar">
-            <button
-              type="button"
-              className="iter-fs-back-btn"
+            <WhatsAppBackButton
               onClick={closeNoticeModal}
               title="Back to Notices"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-              <span>Back</span>
-            </button>
+              label="Back"
+            />
 
             {/* Quick In-App Zoom Controls (for image stack) */}
             {!activeNoticeModal.boxSharedName && (

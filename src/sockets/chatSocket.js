@@ -18,9 +18,11 @@ function isUserOnline(userId) {
 }
 
 /**
- * Dispatches Push Notifications (FCM / WebPush) if enabled in Super Admin settings
+ * Dispatches Push Notifications (FCM / WebPush) with WhatsApp-grade fidelity
+ * Title shows Sender Name, Body shows actual message preview or media type,
+ * and clicking routes directly to the active chat ticket.
  */
-async function dispatchDevChatPushNotification(ticket, msg, sender, contentType) {
+async function dispatchDevChatPushNotification(ticket, msg, sender, contentType, previewText) {
   try {
     const config = await SystemConfig.getEffectiveConfig();
     const chatNotifConfig = config.devChatNotifications || {
@@ -33,7 +35,8 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType)
       return; // Disabled by Super Admin
     }
 
-    const isStudentSender = String(ticket.student) === String(sender.id);
+    const senderIdStr = String(sender.id || sender._id);
+    const isStudentSender = String(ticket.student) === senderIdStr;
 
     if (isStudentSender && chatNotifConfig.notifySuperAdmin === false) {
       return;
@@ -42,31 +45,52 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType)
       return;
     }
 
-    // Determine target user IDs & notification wording requested by user
+    // Determine target user IDs
     let targetUserIds = [];
-    let notifBody = "";
-
     if (isStudentSender) {
-      // Student sent message -> Super Admin receives: "You got a message from <name>"
       const superAdmins = await User.find({ role: "superadmin" }, "_id").lean();
       targetUserIds = superAdmins.map((sa) => String(sa._id));
       if (ticket.developer && !targetUserIds.includes(String(ticket.developer))) {
         targetUserIds.push(String(ticket.developer));
       }
-      notifBody = `You got a message from ${sender.name || "Student"}`;
     } else {
-      // Super Admin sent message -> Student receives: "You got the reply from Super Admin"
       targetUserIds = [String(ticket.student)];
-      notifBody = "You got the reply from Super Admin";
     }
 
-    // 1. Real-time Socket Event (triggers instant in-app toast and local Android notification)
+    // WhatsApp-Style Dynamic Title & Body Construction
+    let notifTitle = "";
+    if (isStudentSender) {
+      // e.g. "Om Verma (BH-1 - 302)" or "Om Verma"
+      const locationTag = ticket.studentHostel
+        ? ` (${ticket.studentHostel}${ticket.studentRoom ? ` - ${ticket.studentRoom}` : ""})`
+        : "";
+      notifTitle = `${sender.name || "Student"}${locationTag}`;
+    } else {
+      // e.g. "Super Admin (HostelCare Support)"
+      notifTitle = sender.name ? `${sender.name} (Support)` : "HostelCare Support";
+    }
+
+    let notifBody = "";
+    if (contentType === "image") {
+      notifBody = previewText && previewText !== "📷 Image" && previewText !== "📷 Photo"
+        ? `📷 Photo: ${previewText}`
+        : "📷 Photo";
+    } else {
+      notifBody = previewText && typeof previewText === "string" && previewText.trim()
+        ? previewText.trim()
+        : (isStudentSender ? `New message from ${sender.name || "Student"}` : "New reply from Support");
+    }
+
+    const chatRoute = `/chat?ticketId=${ticket.ticketId}`;
+
+    // 1. Real-time Socket Event (triggers instant in-app toast for online users)
     if (ioInstance) {
       const socketPayload = {
-        title: "HostelCare Support",
+        title: notifTitle,
         body: notifBody,
         ticketId: ticket.ticketId,
         senderName: sender.name,
+        route: chatRoute,
         isStudentSender,
         createdAt: new Date().toISOString(),
       };
@@ -76,7 +100,7 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType)
       });
     }
 
-    // 2. Push Notification to registered mobile/desktop sessions (FCM & WebPush)
+    // 2. High-Priority Push Notification to registered mobile/desktop sessions (FCM & WebPush)
     const targetSessions = await Session.find({
       userId: { $in: targetUserIds },
       $or: [
@@ -87,13 +111,18 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType)
 
     if (targetSessions.length > 0) {
       sendPushToSessions(targetSessions, {
-        title: "HostelCare Support",
+        title: notifTitle,
         body: notifBody,
-        route: "/chat",
+        route: chatRoute,
+        channelId: "chat_messages",
+        tag: `chat_${ticket.ticketId}`,
         data: {
           ticketId: ticket.ticketId,
           type: "chat_message",
-          senderName: sender.name,
+          senderId: senderIdStr,
+          senderName: sender.name || "",
+          previewText: notifBody,
+          route: chatRoute,
         },
       }).catch((err) => console.warn("Chat push notification notice:", err.message));
     }
@@ -288,7 +317,7 @@ function initChatSocket(httpServer) {
      */
     socket.on("send_message", async (data, ack) => {
       try {
-        const { ticketId, encryptedContent, iv, authTag, contentType = "text", mediaSize = 0 } = data;
+        const { ticketId, encryptedContent, iv, authTag, contentType = "text", mediaSize = 0, previewText = "" } = data;
 
         if (!ticketId || !encryptedContent || !iv) {
           if (ack) ack({ success: false, error: "Missing required encrypted message payload" });
@@ -341,9 +370,11 @@ function initChatSocket(httpServer) {
           read: false,
         });
 
-        // Update ticket preview & unread counts
+        // Update ticket preview & unread counts with clean preview
         ticket.lastMessage = {
-          preview: contentType === "image" ? "📷 Image" : "Encrypted Message",
+          preview: previewText && previewText.trim()
+            ? (contentType === "image" ? (previewText.startsWith("📷") ? previewText : `📷 ${previewText}`) : previewText.trim())
+            : (contentType === "image" ? "📷 Image" : "New message"),
           senderRole: user.role,
           senderName: user.name,
           at: now,
@@ -395,8 +426,8 @@ function initChatSocket(httpServer) {
           unreadCount: isStudent ? ticket.unreadDeveloper : ticket.unreadStudent,
         });
 
-        // 4. Trigger Real-time Push Notification (FCM / WebPush)
-        dispatchDevChatPushNotification(ticket, msg, user, contentType);
+        // 4. Trigger Real-time Push Notification (FCM / WebPush) with WhatsApp fidelity
+        dispatchDevChatPushNotification(ticket, msg, user, contentType, previewText);
 
         if (ack) ack({ success: true, messageId: msg._id, message: broadcastPayload });
       } catch (err) {
@@ -643,4 +674,5 @@ function getChatIO() {
 module.exports = {
   initChatSocket,
   getChatIO,
+  dispatchDevChatPushNotification,
 };

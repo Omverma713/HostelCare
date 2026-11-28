@@ -8,6 +8,7 @@ import {
   initializeNotificationChannel,
 } from '../services/notificationService';
 import { triggerToast } from '../components/Toast';
+import WhatsAppBackButton from '../components/WhatsAppBackButton';
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
@@ -145,25 +146,10 @@ export default function NotificationsPage() {
             </div>
           </div>
 
-          <button
-            type="button"
+          <WhatsAppBackButton
             onClick={() => navigate(-1)}
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-secondary)',
-              color: 'var(--text-secondary)',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            ← Back
-          </button>
+            title="Back to Previous View"
+          />
         </div>
 
         {/* Platform & Permission Status Pill Banner */}

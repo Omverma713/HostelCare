@@ -93,9 +93,12 @@ export async function initPushNotifications() {
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-      const route = notification.notification?.data?.route;
-      if (route && window.location.pathname !== route) {
-        window.location.href = route;
+      const data = notification.notification?.data || {};
+      const targetRoute = data.route || (data.ticketId ? `/chat?ticketId=${data.ticketId}` : null);
+      if (targetRoute) {
+        if (window.location.pathname + window.location.search !== targetRoute) {
+          window.location.href = targetRoute;
+        }
       }
     });
 
@@ -117,13 +120,24 @@ export async function initializeNotificationChannel() {
   try {
     await LocalNotifications.createChannel({
       id: CHANNEL_ID,
-      name: 'HostelCare Notifications',
+      name: 'HostelCare General Notifications',
       description: 'HostelCare real-time Android system notifications',
       importance: 5, // High importance (heads-up shade notification)
       visibility: 1, // Public visibility on lockscreen & shade
       vibration: true,
       lights: true,
-      lightColor: '#4361EE',
+      lightColor: '#D27357',
+    });
+
+    await LocalNotifications.createChannel({
+      id: 'chat_messages',
+      name: 'HostelCare Chat Messages',
+      description: 'Real-time messages from Students & Support with heads-up alerts',
+      importance: 5, // High importance (heads-up pop-up alert & sound)
+      visibility: 1, // Public visibility on lockscreen
+      vibration: true,
+      lights: true,
+      lightColor: '#D27357',
     });
     channelInitialized = true;
   } catch (err) {

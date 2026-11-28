@@ -1,0 +1,132 @@
+/* ─────────────────────────────────────────────────────────────
+   WhatsApp-Style Native Back Arrow Button Styles
+   ───────────────────────────────────────────────────────────── */
+
+.wa-back-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary, #FAF7F2);
+  border-radius: 50%;
+  cursor: pointer;
+  outline: none;
+  overflow: visible;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.18s ease, transform 0.12s cubic-bezier(0.2, 0.9, 0.3, 1);
+  z-index: 10;
+}
+
+/* Light Theme overrides */
+html:not(.dark-theme) .wa-back-btn,
+.light-theme .wa-back-btn,
+body:not(.dark-theme) .wa-back-btn {
+  color: var(--text-primary, #2D2825);
+}
+
+/* Hover state on desktop */
+@media (hover: hover) {
+  .wa-back-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  html:not(.dark-theme) .wa-back-btn:hover,
+  .light-theme .wa-back-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* Pressed / Active state (Tactile Nudge like WhatsApp) */
+.wa-back-btn:active,
+.wa-back-btn.is-pressed {
+  background-color: rgba(255, 255, 255, 0.14);
+  transform: scale(0.92);
+}
+
+html:not(.dark-theme) .wa-back-btn:active,
+html:not(.dark-theme) .wa-back-btn.is-pressed,
+.light-theme .wa-back-btn:active,
+.light-theme .wa-back-btn.is-pressed {
+  background-color: rgba(0, 0, 0, 0.08);
+  transform: scale(0.92);
+}
+
+/* The Arrow SVG Icon */
+.wa-back-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.wa-back-btn:active .wa-back-icon,
+.wa-back-btn.is-pressed .wa-back-icon {
+  transform: translateX(-2.5px);
+  opacity: 0.85;
+}
+
+/* Ripple effect container */
+.wa-back-ripple-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.wa-back-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.28);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 1;
+  pointer-events: none;
+}
+
+html:not(.dark-theme) .wa-back-ripple,
+.light-theme .wa-back-ripple {
+  background-color: rgba(0, 0, 0, 0.18);
+}
+
+.wa-back-btn.is-pressed .wa-back-ripple {
+  animation: waBackRippleAnim 0.35s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes waBackRippleAnim {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.9;
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(4.8);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(5.4);
+    opacity: 0;
+  }
+}
+
+.wa-back-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: inherit;
+  margin-left: 2px;
+}

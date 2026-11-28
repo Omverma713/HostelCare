@@ -18,6 +18,7 @@ import {
   setMealRemindersEnabled,
   triggerTestMealNotification,
 } from '../services/messNotificationService';
+import WhatsAppBackButton from '../components/WhatsAppBackButton';
 import './MessMenuPage.css';
 
 // Staff roles authorized to manage mess timetable
@@ -296,14 +297,11 @@ export default function MessMenuPage() {
       <main className="mess-container">
         {/* Top Navigation */}
         <div className="mess-top-nav">
-          <button
-            type="button"
-            className="mess-back-btn"
+          <WhatsAppBackButton
             onClick={handleBack}
-            id="btn-mess-back"
-          >
-            ← {isAuthenticated ? 'Dashboard' : 'Sign In'}
-          </button>
+            title={isAuthenticated ? 'Back to Dashboard' : 'Back to Sign In'}
+            label={isAuthenticated ? 'Dashboard' : 'Sign In'}
+          />
 
           <div className="mess-top-actions">
             {/* View Mode Switcher */}

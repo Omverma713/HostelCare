@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useTheme } from "../hooks/ThemeContext";
 import IterNoticesSection from "./IterNoticesSection";
+import WhatsAppBackButton from "./WhatsAppBackButton";
 import "./AcademicsHub.css";
 
 const RAW_API_BASE =
@@ -932,12 +933,11 @@ export default function AcademicsHub({ userRole = "student", onBackToHome }) {
       <div className="acad-header-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           {onBackToHome && (
-            <button
+            <WhatsAppBackButton
               onClick={onBackToHome}
-              className="acad-back-pill-btn"
-            >
-              ← Sanctuary
-            </button>
+              title="Back to Sanctuary"
+              label="Sanctuary"
+            />
           )}
 
           <div className="acad-badge-row" style={{ margin: 0 }}>

@@ -8,6 +8,7 @@ import { triggerToast } from '../components/Toast';
 import { scheduleWeeklyMealReminders } from '../services/messNotificationService';
 import { DEFAULT_MESS_DATA, DAYS_ORDER, MEAL_SLOTS } from '../constants/messMenuData';
 import AcademicsHub from '../components/AcademicsHub';
+import WhatsAppBackButton from '../components/WhatsAppBackButton';
 import './SuperAdminPortal.css';
 
 export const DELEGATION_FEATURE_MODULES = [
@@ -3449,6 +3450,14 @@ export default function SuperAdminPortal() {
       {/* 1. Header Banner */}
       <div className="sa-header-banner">
         <div className="sa-header-info">
+          {activeTab !== 'overview' && (
+            <div style={{ display: 'flex', alignItems: 'center', marginRight: '6px' }}>
+              <WhatsAppBackButton
+                onClick={() => setActiveTab('overview')}
+                title="Back to System Overview"
+              />
+            </div>
+          )}
           <div className="sa-header-icon">
             🛡️
           </div>
@@ -4693,22 +4702,11 @@ export default function SuperAdminPortal() {
               >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button
-                    type="button"
+                  <WhatsAppBackButton
                     onClick={() => setSelectedUser(null)}
-                    style={{
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      padding: '4px 8px',
-                      borderRadius: '6px',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      color: 'var(--text-secondary)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    ← Back to List
-                  </button>
+                    title="Back to User List"
+                    label="Back"
+                  />
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                     User Details
                   </h3>

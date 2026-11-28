@@ -9,6 +9,7 @@ import { triggerToast } from '../components/Toast';
 import { appUpdateService } from '../services/appUpdateService';
 import { normalizeStatus, sortByDateDesc, isEmptyDataError } from '../utils/status';
 import AcademicsHub from '../components/AcademicsHub';
+import WhatsAppBackButton from '../components/WhatsAppBackButton';
 
 const DEPT_ICONS = {
   Electrical: '⚡',
@@ -794,12 +795,12 @@ const handleSendMessage = (e) => {
             return (
               <div className="detailed-view-container">
                 <div className="section-head" style={{ marginBottom: 16 }}>
-                  <button 
-                    onClick={() => setActiveTab('home')} 
-                    style={{ background: 'none', border: 'none', color: '#C07660', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                  >
-                    <span>←</span> Back to Sanctuary
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <WhatsAppBackButton
+                      onClick={() => setActiveTab('home')}
+                      title="Back to Home"
+                    />
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                     <div>
                       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, margin: '0 0 6px', color: 'var(--text-primary)' }}>Weekly Dining Schedule</h2>
@@ -1202,12 +1203,12 @@ const handleSendMessage = (e) => {
           {activeTab === 'room' && (
             <div className="detailed-view-container">
               <div className="section-head">
-                <button 
-                  onClick={() => setActiveTab('home')} 
-                  style={{ background: 'none', border: 'none', color: '#C07660', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
-                >
-                  ← Back to Sanctuary
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <WhatsAppBackButton
+                    onClick={() => setActiveTab('home')}
+                    title="Back to Home"
+                  />
+                </div>
                 <h2>My Living Space</h2>
                 <p>Room allocation, roommate registry and hostel digital clearance pass.</p>
               </div>
@@ -1340,12 +1341,12 @@ const handleSendMessage = (e) => {
           {activeTab === 'complaints' && (
             <div className="detailed-view-container">
               <div className="section-head">
-                <button 
-                  onClick={() => setActiveTab('home')} 
-                  style={{ background: 'none', border: 'none', color: '#C07660', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
-                >
-                  ← Back to Sanctuary
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <WhatsAppBackButton
+                    onClick={() => setActiveTab('home')}
+                    title="Back to Home"
+                  />
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <div>
                     <h2>Maintenance Pipeline</h2>
@@ -1483,12 +1484,12 @@ const handleSendMessage = (e) => {
           {activeTab === 'chat' && (
             <div className="detailed-view-container">
               <div className="section-head">
-                <button 
-                  onClick={() => setActiveTab('home')} 
-                  style={{ background: 'none', border: 'none', color: '#C07660', cursor: 'pointer', padding: 0, marginBottom: 12, fontSize: 14, fontWeight: 600 }}
-                >
-                  ← Back to Sanctuary
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <WhatsAppBackButton
+                    onClick={() => setActiveTab('home')}
+                    title="Back to Home"
+                  />
+                </div>
                 <h2>HostelCare Encrypted Chat</h2>
                 <p>Real-time end-to-end encrypted messaging with Hostel Warden, Super Admin & Caretaker.</p>
               </div>
@@ -1558,17 +1559,24 @@ const handleSendMessage = (e) => {
                   <p style={{ color: 'var(--text-secondary)', maxWidth: 480, margin: '0 auto 24px', fontSize: 14, lineHeight: 1.5 }}>
                     Students do not have access to this section. Hardware device registries, audit logs, and push broadcast systems are strictly restricted to Wardens & Super Admins.
                   </p>
-                  <button 
-                    onClick={() => setActiveTab('home')} 
-                    style={{ background: '#C07660', color: 'white', border: 'none', padding: '10px 24px', borderRadius: 9999, fontWeight: 600, cursor: 'pointer', fontSize: 13.5 }}
-                  >
-                    ← Return to Student Sanctuary
-                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+                    <WhatsAppBackButton
+                      onClick={() => setActiveTab('home')}
+                      title="Return to Student Home"
+                      label="Return to Home"
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="detailed-view-container">
                 <div className="section-head" style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <WhatsAppBackButton
+                      onClick={() => setActiveTab('home')}
+                      title="Back to Home"
+                    />
+                  </div>
                   
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                     <div>
