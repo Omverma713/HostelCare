@@ -75,8 +75,8 @@ jobs:
           # Determine target host with intelligent fallback
           TARGET_HOST="$EC2_HOST"
           if [ -z "$TARGET_HOST" ] || ! nc -z -w 5 "$TARGET_HOST" 22 2>/dev/null; then
-            echo "Notice: EC2_HOST ($TARGET_HOST) not responding on port 22, falling back to hostelcare-api.duckdns.org"
-            TARGET_HOST="hostelcare-api.duckdns.org"
+            echo "Notice: EC2_HOST ($TARGET_HOST) not responding on port 22, falling back to api.hostelcare.live"
+            TARGET_HOST="api.hostelcare.live"
           fi
           echo ">>> Connecting to: $TARGET_HOST as $EC2_USER..."
 
@@ -97,6 +97,8 @@ jobs:
           echo ">>> 2. Pulling latest code..."
           git fetch origin main
           git reset --hard origin/main
+          sudo mkdir -p /var/www/hostelcare-web/ota-bundles
+          sudo cp -u /home/ubuntu/hostelcare/public/ota-bundles/*.zip /var/www/hostelcare-web/ota-bundles/ 2>/dev/null || true
           echo ">>> 3. Stopping existing container..."
           sudo docker compose down --remove-orphans || true
           echo ">>> 4. Pruning unused docker resources and build cache..."
