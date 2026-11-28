@@ -2,9 +2,17 @@ import os
 import zipfile
 import hashlib
 import sys
+import json
+
+def get_frontend_version():
+    pkg_path = os.path.abspath('frontend/package.json')
+    with open(pkg_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        return data.get('version', '1.2.2.101')
 
 def create_bundle(dist_dir, output_zip):
     print(f"Creating OTA bundle from {dist_dir} -> {output_zip}")
+    os.makedirs(os.path.dirname(output_zip), exist_ok=True)
     with zipfile.ZipFile(output_zip, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         for root, dirs, files in os.walk(dist_dir):
             for file in files:
@@ -25,11 +33,22 @@ def create_bundle(dist_dir, output_zip):
     checksum = sha256.hexdigest().lower()
     size = os.path.getsize(output_zip)
     print(f"\nBundle created successfully!")
+    print(f"File: {output_zip}")
     print(f"Size: {size} bytes")
     print(f"SHA-256: {checksum}")
-    return checksum
+    return checksum, size
 
 if __name__ == '__main__':
+    version = sys.argv[1] if len(sys.argv) > 1 else get_frontend_version()
     dist_dir = os.path.abspath('frontend/dist')
-    output_zip = os.path.abspath('public/ota-bundles/hostelcare-bundle-v1.2.2.100.zip')
-    create_bundle(dist_dir, output_zip)
+    version_zip = os.path.abspath(f'public/ota-bundles/hostelcare-bundle-v{version}.zip')
+    checksum, size = create_bundle(dist_dir, version_zip)
+    
+    # Also update generic web-bundle.zip
+    generic_zip = os.path.abspath('public/ota-bundles/hostelcare-web-bundle.zip')
+    create_bundle(dist_dir, generic_zip)
+    
+    print(f"\n--- BUNDLE INFO FOR VERSION {version} ---")
+    print(f"VERSION: {version}")
+    print(f"SHA256: {checksum}")
+    print(f"SIZE: {size}")

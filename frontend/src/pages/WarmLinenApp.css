@@ -75,6 +75,137 @@ body {
   letter-spacing: 0.02em;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   WhatsApp-Style Interactive Top Navbar Sub-Screen Header
+   ───────────────────────────────────────────────────────────── */
+.wa-navbar-header-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 65%;
+  flex: 1;
+}
+
+.navbar-wa-back-btn {
+  margin-left: -6px !important;
+  flex-shrink: 0 !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+}
+
+.wa-navbar-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  min-width: 0;
+  padding: 3px 6px;
+  border-radius: 12px;
+  transition: background 0.15s ease, transform 0.12s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wa-navbar-title-wrap:active {
+  transform: scale(0.97);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.dark-theme .wa-navbar-title-wrap:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.wa-navbar-avatar {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(192, 118, 96, 0.18) 0%, rgba(156, 91, 73, 0.28) 100%);
+  border: 1px solid rgba(192, 118, 96, 0.35);
+  color: var(--primary-matcha, #9C5B49);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+html.dark-theme .wa-navbar-avatar {
+  background: linear-gradient(135deg, rgba(192, 118, 96, 0.3) 0%, rgba(156, 91, 73, 0.45) 100%);
+  border-color: rgba(244, 211, 201, 0.25);
+  color: #F4D3C9;
+}
+
+.wa-navbar-text-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  justify-content: center;
+}
+
+.wa-navbar-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary, #2D2825);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+html.dark-theme .wa-navbar-title {
+  color: #FAF7F2;
+}
+
+.wa-navbar-subtitle {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text-muted, #8C827A);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.dark-theme .wa-navbar-subtitle {
+  color: #B8ADA2;
+}
+
+@media (max-width: 768px) {
+  .wa-navbar-header-group {
+    max-width: 60%;
+    gap: 2px;
+  }
+  .navbar-wa-back-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    margin-left: -8px !important;
+  }
+  .wa-navbar-title-wrap {
+    gap: 8px;
+    padding: 2px 4px;
+  }
+  .wa-navbar-avatar {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+  }
+  .wa-navbar-title {
+    font-size: 13.5px;
+  }
+  .wa-navbar-subtitle {
+    font-size: 10px;
+  }
+}
+
 
 /* Theme Toggle Button in Top Navbar */
 .theme-toggle-warm-btn {

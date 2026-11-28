@@ -23,6 +23,7 @@ import { initMessAutoNotifications } from './services/messNotificationService';
 import Login from './pages/Login';
 import GlobalNoticePopup from './components/GlobalNoticePopup';
 import BootSplashScreen from './components/BootSplashScreen';
+import WhatsAppBackButton from './components/WhatsAppBackButton';
 
 // Lazy Loaded Routes for Instant Startup and Smooth Transitions
 const WarmLinenApp = lazy(() => import('./pages/WarmLinenApp'));
@@ -142,8 +143,9 @@ function DashboardLayout() {
   const isSuperintendent = role === 'superintendent';
   const isStudent = role === 'student';
 
-  const isChat = p === '/chat' || p === '/feedback';
+  const isChat = p === '/chat' || p === '/feedback' || tabParam === 'chat';
   const isMess = p.startsWith('/mess') || tabParam === 'mess';
+  const isAcademics = tabParam === 'academics';
 
   // Role-specific Active States
   let isHome = false;
@@ -165,27 +167,184 @@ function DashboardLayout() {
   } else if (isSuperintendent) {
     isHome = p === '/superintendent';
   } else {
-    isHome = (p === '/student' || p === '/') && (!tabParam || tabParam === 'home') && !isMess && !isChat;
+    isHome = (p === '/student' || p === '/') && (!tabParam || tabParam === 'home') && !isMess && !isChat && !isAcademics;
     isRoom = tabParam === 'room';
     isComplaints = tabParam === 'complaints';
+  }
+
+  const handleNavbarBack = () => {
+    if (tabParam) {
+      if (isSuperAdmin) {
+        navigate('/superadmin?tab=overview');
+      } else {
+        navigate('/student');
+      }
+    } else if (p !== '/student' && p !== '/superadmin' && p !== '/') {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate(isSuperAdmin ? '/superadmin?tab=overview' : '/student');
+      }
+    } else {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate('/student');
+      }
+    }
+  };
+
+  // WhatsApp-style Top App Bar Metadata
+  let headerTitle = 'HostelCare';
+  let headerSubtitle = 'Tap to return';
+  let headerAvatarContent = null;
+
+  if (isRoom) {
+    headerTitle = 'My Living Space';
+    headerSubtitle = `Room ${user?.roomNumber || '205'} • ${user?.hostel || 'BH-8'}`;
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    );
+  } else if (isMess) {
+    headerTitle = 'Campus Dining';
+    headerSubtitle = 'Weekly Timetable & Nutrition';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    );
+  } else if (isComplaints) {
+    headerTitle = isSuperAdmin ? 'Maintenance Oversight' : 'Maintenance Pipeline';
+    headerSubtitle = isSuperAdmin ? 'Campus Repair Tickets' : 'Repairs & Caretaker Line';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    );
+  } else if (isChat) {
+    headerTitle = 'Support Chat';
+    headerSubtitle = 'Online • AES-256 Encrypted';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    );
+  } else if (isAcademics) {
+    headerTitle = 'Academics & Schedule';
+    headerSubtitle = 'ITER Radar & Class Routine';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      </svg>
+    );
+  } else if (isUsers) {
+    headerTitle = 'User Management';
+    headerSubtitle = 'RBAC & Resident Directory';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+      </svg>
+    );
+  } else if (isSessions) {
+    headerTitle = 'Hardware Sessions';
+    headerSubtitle = 'Device & Token Registry';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
+        <line x1="12" y1="18" x2="12" y2="18.01" />
+      </svg>
+    );
+  } else if (p === '/notifications') {
+    headerTitle = 'Push Broadcasts';
+    headerSubtitle = 'System Notices Archive';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+    );
+  } else if (isCaretaker) {
+    headerTitle = 'Caretaker Desk';
+    headerSubtitle = 'Living Maintenance';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    );
+  } else if (isWarden) {
+    headerTitle = 'Warden Command';
+    headerSubtitle = 'Living Clearance';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+    );
+  } else if (isSuperintendent) {
+    headerTitle = 'Superintendent Office';
+    headerSubtitle = 'Campus Operations';
+    headerAvatarContent = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    );
+  } else {
+    headerTitle = 'HostelCare';
+    headerSubtitle = 'Living Sanctuary';
+    headerAvatarContent = (
+      <img src="/hostelcare-logo.svg" alt="HostelCare" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+    );
   }
 
   return (
     <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* 1. TOP NAVBAR */}
       <header className="top-navbar">
-        <div 
-          className="brand-title"
-          onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=overview' : '/student')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}
-        >
-          <img 
-            src="/hostelcare-logo.svg" 
-            alt="HostelCare" 
-            style={{ width: '28px', height: '28px', borderRadius: '8px', objectFit: 'contain', flexShrink: 0 }} 
-          />
-          <span className="brand-name">HostelCare</span>
-        </div>
+        {isHome ? (
+          <div 
+            className="brand-title"
+            onClick={() => navigate(isSuperAdmin ? '/superadmin?tab=overview' : '/student')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}
+          >
+            <img 
+              src="/hostelcare-logo.svg" 
+              alt="HostelCare" 
+              style={{ width: '28px', height: '28px', borderRadius: '8px', objectFit: 'contain', flexShrink: 0 }} 
+            />
+            <span className="brand-name">HostelCare</span>
+          </div>
+        ) : (
+          <div className="wa-navbar-header-group">
+            <WhatsAppBackButton
+              onClick={handleNavbarBack}
+              title="Back to Home"
+              className="navbar-wa-back-btn"
+            />
+            <div 
+              className="wa-navbar-title-wrap" 
+              onClick={handleNavbarBack}
+              role="button"
+              tabIndex={0}
+              title="Tap to return"
+            >
+              <div className="wa-navbar-avatar">
+                {headerAvatarContent}
+              </div>
+              <div className="wa-navbar-text-col">
+                <span className="wa-navbar-title">{headerTitle}</span>
+                <span className="wa-navbar-subtitle">{headerSubtitle}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="navbar-right-group">
           <div 

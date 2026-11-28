@@ -46,9 +46,19 @@ export function useMobileBackHandler() {
 
           // 3. Root routes where back button should minimize/exit app
           const rootRoutes = ['/login', '/student', '/caretaker', '/warden', '/superintendent', '/superadmin', '/'];
-          const isRoot = rootRoutes.includes(location.pathname) || location.pathname.startsWith('/superadmin');
+          const searchParams = new URLSearchParams(location.search);
+          const currentTab = searchParams.get('tab');
+          const hasInnerTab = currentTab && currentTab !== 'home' && currentTab !== 'overview';
 
-          if (!isRoot && (canGoBack || window.history.length > 1)) {
+          const isRoot = !hasInnerTab && (rootRoutes.includes(location.pathname) || (location.pathname === '/superadmin' && !hasInnerTab));
+
+          if (hasInnerTab) {
+            if (location.pathname.startsWith('/superadmin')) {
+              navigate('/superadmin?tab=overview');
+            } else {
+              navigate('/student');
+            }
+          } else if (!isRoot && (canGoBack || window.history.length > 1)) {
             navigate(-1);
           } else if (isRoot) {
             AppPlugin.exitApp?.();
