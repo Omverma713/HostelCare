@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════════════════
    CELESTIAL THEME TRANSITION (Choreographed View Transitions API)
-   1. Sun & Moon descents straight down from top to center (0 - 0.35s)
-   2. On touchdown (0.35s), circular wave expands outward (0.35s - 1.45s)
-   3. The exact instant wave hits the corners (1.45s), Sun/Moon vanishes (zero delay)
+   1. Sun & Moon descents straight down from top to center (0 - 0.18s)
+   2. On touchdown (0.18s), circular wave expands fluidly outward (0.18s - 0.76s)
+   3. The exact instant wave clears the corners (0.76s), Sun/Moon gently dissolves
    ══════════════════════════════════════════════════════════════════════ */
 
 /* ─── 1. VIEW TRANSITIONS API: CIRCULAR WAVE REVEAL ─── */
@@ -15,13 +15,18 @@
 /* Old Theme (Outside the wave) stays anchored underneath */
 ::view-transition-old(root) {
   z-index: 1;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-/* New Theme (Inside the wave): Starts expanding at 0.35s when orb touches center */
+/* New Theme (Inside the wave): Starts expanding at 0.18s when orb touches center */
 ::view-transition-new(root) {
   z-index: 9999;
-  /* 0.35s delay so the descent is clearly seen, then 1.1s expansion to 58vmax */
-  animation: circularWaveReveal 1.1s cubic-bezier(0.2, 0.9, 0.3, 1) 0.35s both;
+  /* 0.18s descent delay, then buttery 0.58s expansion (total 0.76s) */
+  animation: circularWaveReveal 0.58s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+  will-change: clip-path;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes circularWaveReveal {
@@ -29,8 +34,8 @@
     clip-path: circle(0px at 50% 50%);
   }
   100% {
-    /* 58vmax is the exact diagonal from center to corner on both desktop & mobile */
-    clip-path: circle(58vmax at 50% 50%);
+    /* 62vmax ensures seamless edge-to-edge coverage across all tall aspect ratios */
+    clip-path: circle(62vmax at 50% 50%);
   }
 }
 
@@ -78,104 +83,88 @@
   pointer-events: none;
 }
 
-/* ─── ☀️ 3D Sun: Descends straight from top, stays during wave, exits at 1.45s ─── */
+/* ─── ☀️ Warm Linen Sun: Descends straight from top, stays during wave, exits at 0.76s ─── */
 .sun-burst-art {
-  animation: sunStraightDescentAndHold 1.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: sunStraightDescentAndHold 0.76s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: 0px 0px;
   will-change: transform, opacity;
   filter: 
-    drop-shadow(0 0 16px rgba(255, 179, 0, 0.95)) 
-    drop-shadow(0 0 32px rgba(255, 109, 0, 0.45));
+    drop-shadow(0 4px 18px rgba(210, 115, 87, 0.38)) 
+    drop-shadow(0 0 10px rgba(245, 184, 149, 0.25));
 }
 
 @keyframes sunStraightDescentAndHold {
   0% {
     /* Straight down from above the top edge */
-    transform: translate3d(0, -180px, 0) scale(0.65);
+    transform: translate3d(0, -130px, 0) scale(0.65);
     opacity: 0;
   }
-  15% {
-    opacity: 1;
-  }
   24% {
-    /* Lands in center at 0.35s right as wave begins */
-    transform: translate3d(0, 0px, 0) scale(1.06);
+    /* Lands in center at ~0.18s right as wave begins */
+    transform: translate3d(0, 0px, 0) scale(1.04);
     opacity: 1;
   }
   32% {
     /* Subtle cushion settle */
-    transform: translate3d(0, -2px, 0) scale(1.0);
+    transform: translate3d(0, -1px, 0) scale(1.0);
     opacity: 1;
   }
-  84% {
+  80% {
     /* Stays solid while wave sweeps the screen */
     transform: translate3d(0, 0px, 0) scale(1.0);
     opacity: 1;
   }
   100% {
     /* Disappears the exact moment wave hits the corners */
-    transform: translate3d(0, 6px, 0) scale(0.85);
+    transform: translate3d(0, 4px, 0) scale(0.9);
     opacity: 0;
   }
 }
 
-.sun-rotating-rays {
-  animation: coronaSlowSpin 6s linear infinite;
+.sun-elegant-rays {
   transform-origin: 0px 0px;
 }
 
-@keyframes coronaSlowSpin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* ─── 🌙 3D Pure Moon: Descends straight from top, stays during wave, exits at 1.45s ─── */
+/* ─── 🌙 3D Pure Moon: Descends straight from top, stays during wave, exits at 0.76s ─── */
 .moon-glow-art {
-  animation: moonStraightDescentAndHold 1.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: moonStraightDescentAndHold 0.76s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: 0px 0px;
   will-change: transform, opacity;
   filter: 
-    drop-shadow(0 0 16px rgba(199, 210, 254, 0.95)) 
-    drop-shadow(0 0 30px rgba(99, 102, 241, 0.45));
+    drop-shadow(0 4px 18px rgba(165, 180, 252, 0.38)) 
+    drop-shadow(0 0 10px rgba(99, 102, 241, 0.22));
 }
 
 @keyframes moonStraightDescentAndHold {
   0% {
     /* Straight down from above the top edge */
-    transform: translate3d(0, -180px, 0) scale(0.65);
+    transform: translate3d(0, -130px, 0) scale(0.65);
     opacity: 0;
   }
-  15% {
-    opacity: 1;
-  }
   24% {
-    /* Lands in center at 0.35s right as wave begins */
-    transform: translate3d(0, 0px, 0) scale(1.06);
+    /* Lands in center at ~0.18s right as wave begins */
+    transform: translate3d(0, 0px, 0) scale(1.04);
     opacity: 1;
   }
   32% {
     /* Subtle cushion settle */
-    transform: translate3d(0, -2px, 0) scale(1.0);
+    transform: translate3d(0, -1px, 0) scale(1.0);
     opacity: 1;
   }
-  84% {
+  80% {
     /* Stays solid while wave sweeps the screen */
     transform: translate3d(0, 0px, 0) scale(1.0);
     opacity: 1;
   }
   100% {
     /* Disappears the exact moment wave hits the corners */
-    transform: translate3d(0, 6px, 0) scale(0.85);
+    transform: translate3d(0, 4px, 0) scale(0.9);
     opacity: 0;
   }
 }
 
 .moon-companion-star {
-  animation: starTwinkleSlow 1.45s ease-in-out infinite alternate;
+  animation: starTwinkleSlow 0.76s ease-in-out infinite alternate;
   transform-origin: 25px -5px;
 }
 

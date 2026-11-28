@@ -82,12 +82,12 @@ export function ThemeProvider({ children }) {
         try {
           localStorage.setItem('theme', nextTheme);
         } catch (e) {}
-      }, 650);
+      }, 240);
 
       transitionTimerRef.current = setTimeout(() => {
         setCelestialPhase(null);
         isTransitioningRef.current = false;
-      }, 1450);
+      }, 760);
     }
   }, []);
 
