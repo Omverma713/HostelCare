@@ -3,9 +3,9 @@ const SystemConfig = require('../src/models/systemConfig.model');
 
 async function update() {
   await mongoose.connect(process.env.MONGODB_URI);
-  const version = '1.2.2.104';
-  const bundleUrl = 'https://hostelcare.live/ota-bundles/hostelcare-bundle-v1.2.2.104.zip';
-  const checksum = 'b68eb04e85951bef8fcc28dd671ff360367619fc64586a22a68a89241c68e636';
+  const version = '1.2.2.105';
+  const bundleUrl = 'https://hostelcare.live/ota-bundles/hostelcare-bundle-v1.2.2.105.zip';
+  const checksum = 'f8ee97eb55bf3f6bc6969c9f916e0ca0ed6064a73cd2b0a48fea03262754dfa4';
 
   const doc = await SystemConfig.findOneAndUpdate(
     { key: 'default' },

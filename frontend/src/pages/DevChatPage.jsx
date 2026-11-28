@@ -23,6 +23,7 @@ import {
   getDeviceIdentityKey,
 } from '../utils/e2eeCrypto';
 import WhatsAppBackButton from '../components/WhatsAppBackButton';
+import { dismissChatNotifications } from '../services/notificationService';
 import './DevChatPage.css';
 
 function formatBytes(bytes) {
@@ -257,6 +258,7 @@ export default function DevChatPage() {
     setActiveTicket(ticket);
     joinTicketRoom(ticket.ticketId);
     markTicketMessagesRead(ticket.ticketId);
+    dismissChatNotifications(ticket.ticketId);
 
     // Only set loading if we don't have messages for this ticket yet
     if (!messages || messages.length === 0 || activeTicket?.ticketId !== ticket.ticketId) {

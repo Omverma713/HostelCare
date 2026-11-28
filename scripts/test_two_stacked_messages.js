@@ -6,31 +6,55 @@ async function testStackedMessages() {
   const User = require('../src/models/user.model');
   const { dispatchDevChatPushNotification } = require('../src/sockets/chatSocket');
 
-  const ticket = await ChatTicket.findOne({ ticketId: 'TKT-085BBF' }).lean();
+  const ticket = await ChatTicket.findOne({ ticketId: 'TKT-085BBF' });
   const superAdmin = await User.findOne({ role: 'superadmin' }).lean();
 
-  console.log('--- Sending Message 1 ---');
+  // Reset previews for test run
+  ticket.unreadPreviews = [];
+  await ticket.save();
+
+  console.log('--- Sending Message 1: Hojaygaaaa ---');
+  ticket.unreadPreviews.push('Hojaygaaaa');
+  await ticket.save();
   await dispatchDevChatPushNotification(
     ticket,
     { id: 'msg_1_' + Date.now() },
     superAdmin,
     'text',
-    'Message 1: Hello Om! First message arrived.'
+    'Hojaygaaaa'
   );
 
-  console.log('Waiting 1.5 seconds...');
-  await new Promise((r) => setTimeout(r, 1500));
+  console.log('Waiting 2 seconds...');
+  await new Promise((r) => setTimeout(r, 2000));
 
-  console.log('--- Sending Message 2 ---');
+  console.log('--- Sending Message 2: Ywrrrr (Appends to same card!) ---');
+  ticket.unreadPreviews.push('Ywrrrr');
+  await ticket.save();
   await dispatchDevChatPushNotification(
     ticket,
     { id: 'msg_2_' + Date.now() },
     superAdmin,
     'text',
-    'Message 2: Second message arrived and stacks underneath!'
+    'Ywrrrr'
   );
 
-  console.log('Both messages dispatched without static tag replacement!');
+  console.log('Waiting 2 seconds...');
+  await new Promise((r) => setTimeout(r, 2000));
+
+  console.log('--- Sending Message 3: Dw / Chill rhooo / 😉 ☝️ (Appends to same card!) ---');
+  ticket.unreadPreviews.push('Dw');
+  ticket.unreadPreviews.push('Chill rhooo');
+  ticket.unreadPreviews.push('😉 ☝️');
+  await ticket.save();
+  await dispatchDevChatPushNotification(
+    ticket,
+    { id: 'msg_3_' + Date.now() },
+    superAdmin,
+    'text',
+    '😉 ☝️'
+  );
+
+  console.log('All progressive messages dispatched to ONE single WhatsApp-style notification card!');
   await mongoose.disconnect();
 }
 

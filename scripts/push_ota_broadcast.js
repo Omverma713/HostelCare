@@ -8,8 +8,8 @@ async function broadcastOtaPush() {
   const { sendPushToSessions } = require('../src/services/pushService');
 
   const config = await SystemConfig.getEffectiveConfig();
-  const latestVersion = config?.appVersion?.latestVersion || '1.2.2.104';
-  const bundleUrl = config?.otaUpdates?.bundleUrl || 'https://hostelcare.live/ota-bundles/hostelcare-bundle-v1.2.2.104.zip';
+  const latestVersion = config?.appVersion?.latestVersion || '1.2.2.105';
+  const bundleUrl = config?.otaUpdates?.bundleUrl || 'https://hostelcare.live/ota-bundles/hostelcare-bundle-v1.2.2.105.zip';
 
   console.log(`[OTA-Push] Preparing OTA push broadcast for version ${latestVersion}...`);
 

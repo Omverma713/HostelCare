@@ -97,6 +97,10 @@ const chatTicketSchema = new mongoose.Schema(
       type: Number,
       default: 1,
     },
+    unreadPreviews: {
+      type: [String],
+      default: [],
+    },
     resolvedAt: {
       type: Date,
       default: null,

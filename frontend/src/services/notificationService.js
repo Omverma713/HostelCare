@@ -88,19 +88,33 @@ export async function initPushNotifications() {
       }
 
       // 2. On Android native, when app is in foreground, FCM does NOT post to the notification shade.
-      // Schedule a local notification so the user gets the heads-up alert banner with sound and vibration!
+      // Schedule a single dynamic InboxStyle notification that updates in place per chat ticket!
       if (Capacitor.isNativePlatform()) {
         try {
+          const ticketIdStr = notification.data?.ticketId || '';
+          let notifId = 888888;
+          if (ticketIdStr) {
+            let hash = 0;
+            for (let i = 0; i < ticketIdStr.length; i++) {
+              hash = ((hash << 5) - hash) + ticketIdStr.charCodeAt(i);
+              hash |= 0;
+            }
+            notifId = Math.abs(hash) % 1000000000;
+          }
+
+          const lines = body ? body.split('\n') : [];
+
           await LocalNotifications.schedule({
             notifications: [
               {
-                id: Math.floor(Date.now() % 1000000000),
+                id: notifId,
                 title: title,
                 body: body,
                 channelId: 'hostelcare_custom_channel',
                 smallIcon: 'ic_stat_hostelcare',
                 iconColor: '#C07660',
                 group: 'hostelcare_chat_group',
+                inboxList: lines.length > 1 ? lines : undefined,
                 extra: notification.data || {},
               },
             ],
@@ -326,4 +340,23 @@ export async function sendCustomNotification(message, options = {}) {
   }
 
   throw new Error('Notifications are not supported in this browser environment. Test inside the HostelCare Android APK.');
+}
+
+/**
+ * Dismisses delivered chat notifications when the user opens the active chat ticket room
+ */
+export async function dismissChatNotifications(ticketId) {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    if (ticketId) {
+      let hash = 0;
+      for (let i = 0; i < ticketId.length; i++) {
+        hash = ((hash << 5) - hash) + ticketId.charCodeAt(i);
+        hash |= 0;
+      }
+      const notifId = Math.abs(hash) % 1000000000;
+      await LocalNotifications.cancel({ notifications: [{ id: notifId }] }).catch(() => {});
+    }
+    await PushNotifications.removeAllDeliveredNotifications().catch(() => {});
+  } catch (_) {}
 }

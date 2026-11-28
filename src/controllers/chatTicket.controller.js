@@ -222,9 +222,10 @@ async function getTicketMessages(req, res) {
       .sort({ createdAt: 1 })
       .lean();
 
-    // Reset unread counters on ticket
+    // Reset unread counters and stacked notification previews on ticket
     if (isStudent && ticket.unreadStudent > 0) {
       ticket.unreadStudent = 0;
+      ticket.unreadPreviews = [];
       await ticket.save();
       await ChatMessage.updateMany(
         { ticketId, senderRole: { $ne: "student" }, read: false },
@@ -232,6 +233,7 @@ async function getTicketMessages(req, res) {
       );
     } else if (isDeveloper && ticket.unreadDeveloper > 0) {
       ticket.unreadDeveloper = 0;
+      ticket.unreadPreviews = [];
       await ticket.save();
       await ChatMessage.updateMany(
         { ticketId, senderRole: "student", read: false },
@@ -468,14 +470,26 @@ async function sendTicketMessage(req, res) {
       delivered: false,
     });
 
+    const currentPreview = previewText && previewText.trim()
+      ? (contentType === "image" ? (previewText.startsWith("📷") ? previewText : `📷 ${previewText}`) : previewText.trim())
+      : (contentType === "image" ? "📷 Image" : "New message");
+
     ticket.lastMessage = {
-      preview: previewText && previewText.trim()
-        ? (contentType === "image" ? (previewText.startsWith("📷") ? previewText : `📷 ${previewText}`) : previewText.trim())
-        : (contentType === "image" ? "📷 Image" : "New message"),
+      preview: currentPreview,
       senderRole: user.role,
       senderName: user.name,
       at: new Date(),
     };
+
+    const prevUnread = isStudent ? ticket.unreadDeveloper : ticket.unreadStudent;
+    if (!prevUnread || prevUnread <= 0 || !Array.isArray(ticket.unreadPreviews) || ticket.unreadPreviews.length === 0) {
+      ticket.unreadPreviews = [currentPreview];
+    } else {
+      ticket.unreadPreviews.push(currentPreview);
+      if (ticket.unreadPreviews.length > 7) {
+        ticket.unreadPreviews = ticket.unreadPreviews.slice(-7);
+      }
+    }
 
     if (isStudent) {
       ticket.unreadDeveloper = (ticket.unreadDeveloper || 0) + 1;
@@ -748,6 +762,39 @@ async function testChatPush(req, res) {
     }
 
     const chatRoute = ticketId ? `/chat?ticketId=${ticketId}` : "/chat";
+
+    // Progressive WhatsApp Multi-line Demonstration Sequence (matches Gayatri screenshot)
+    const sampleSequence = [
+      "Hojaygaaaa",
+      "Ywrrrr",
+      "Dw",
+      "Chill rhooo",
+      "😉 ☝️",
+    ];
+
+    const ChatTicket = require("../models/chatTicket.model");
+    let ticketDoc = ticketId ? await ChatTicket.findOne({ ticketId }) : null;
+    let stackLines = [];
+
+    if (ticketDoc) {
+      if (!Array.isArray(ticketDoc.unreadPreviews) || ticketDoc.unreadPreviews.length === 0) {
+        ticketDoc.unreadPreviews = [sampleSequence[0]];
+      } else {
+        const nextIdx = ticketDoc.unreadPreviews.length % sampleSequence.length;
+        ticketDoc.unreadPreviews.push(sampleSequence[nextIdx]);
+        if (ticketDoc.unreadPreviews.length > 7) {
+          ticketDoc.unreadPreviews = ticketDoc.unreadPreviews.slice(-7);
+        }
+      }
+      stackLines = ticketDoc.unreadPreviews;
+      await ticketDoc.save();
+    } else {
+      stackLines = sampleSequence.slice(0, 3);
+    }
+
+    const notifBody = stackLines.join("\n");
+    const stableTag = `chat_${ticketId || "test_alert"}`;
+
     const report = await sendPushToSessions(
       devices.map((d) => ({
         _id: d.deviceId || d._id,
@@ -755,17 +802,19 @@ async function testChatPush(req, res) {
         pushProvider: d.pushProvider || "fcm",
       })),
       {
-        title: "💬 HostelCare Support (Developer Line)",
-        body: "WhatsApp-style Chat Notification Test: Real-time alert active!",
+        title: "💬 Gayatri · HostelCare Support",
+        body: notifBody,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
-        // Do NOT pass tag so each test notification stacks underneath, just like WhatsApp!
+        tag: stableTag,
         data: {
           type: "chat_message",
           ticketId: ticketId || "TEST",
-          senderName: "HostelCare Support",
+          senderName: "Gayatri",
           route: chatRoute,
-          previewText: "WhatsApp-style Chat Notification Test: Real-time alert active!",
+          previewText: notifBody,
+          lines: JSON.stringify(stackLines),
+          messageCount: String(stackLines.length),
         },
       }
     );

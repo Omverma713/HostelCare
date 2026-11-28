@@ -59,7 +59,7 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
       targetUserIds = [String(ticket.student)];
     }
 
-    // WhatsApp-Style Dynamic Title & Body Construction
+    // WhatsApp-Style Dynamic Title & Multi-Line Body Construction (InboxStyle)
     let notifTitle = "";
     if (isStudentSender) {
       // e.g. "Om Verma (BH-1 - 302)" or "Om Verma"
@@ -72,16 +72,23 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
       notifTitle = sender.name ? `${sender.name} (Support)` : "HostelCare Support";
     }
 
-    let notifBody = "";
+    let currentPreview = "";
     if (contentType === "image") {
-      notifBody = previewText && previewText !== "📷 Image" && previewText !== "📷 Photo"
+      currentPreview = previewText && previewText !== "📷 Image" && previewText !== "📷 Photo"
         ? `📷 Photo: ${previewText}`
         : "📷 Photo";
     } else {
-      notifBody = previewText && typeof previewText === "string" && previewText.trim()
+      currentPreview = previewText && typeof previewText === "string" && previewText.trim()
         ? previewText.trim()
         : (isStudentSender ? `New message from ${sender.name || "Student"}` : "New reply from Support");
     }
+
+    // Dynamic InboxStyle stacking: combine recent unread previews (up to 7 lines)
+    const lines = Array.isArray(ticket.unreadPreviews) && ticket.unreadPreviews.length > 0
+      ? ticket.unreadPreviews
+      : [currentPreview];
+
+    const notifBody = lines.join("\n");
 
     const chatRoute = `/chat?ticketId=${ticket.ticketId}`;
 
@@ -179,14 +186,16 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
         body: notifBody,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
-        // Do NOT pass a static tag so Android does NOT replace/overwrite previous notifications.
-        // Omission allows Android to stack each message neatly underneath one another, exactly like WhatsApp!
+        // Using chat tag updates this conversation in place as ONE dynamic card, matching WhatsApp InboxStyle
+        tag: `chat_${ticket.ticketId}`,
         data: {
           ticketId: ticket.ticketId,
           type: "chat_message",
           senderId: senderIdStr,
           senderName: sender.name || "",
           previewText: notifBody,
+          lines: JSON.stringify(lines),
+          messageCount: String(lines.length),
           route: chatRoute,
         },
       }).catch((err) => console.warn("Chat push notification notice:", err.message));
@@ -436,14 +445,26 @@ function initChatSocket(httpServer) {
         });
 
         // Update ticket preview & unread counts with clean preview
+        const currentPreview = previewText && previewText.trim()
+          ? (contentType === "image" ? (previewText.startsWith("📷") ? previewText : `📷 ${previewText}`) : previewText.trim())
+          : (contentType === "image" ? "📷 Image" : "New message");
+
         ticket.lastMessage = {
-          preview: previewText && previewText.trim()
-            ? (contentType === "image" ? (previewText.startsWith("📷") ? previewText : `📷 ${previewText}`) : previewText.trim())
-            : (contentType === "image" ? "📷 Image" : "New message"),
+          preview: currentPreview,
           senderRole: user.role,
           senderName: user.name,
           at: now,
         };
+
+        const prevUnread = isStudent ? ticket.unreadDeveloper : ticket.unreadStudent;
+        if (!prevUnread || prevUnread <= 0 || !Array.isArray(ticket.unreadPreviews) || ticket.unreadPreviews.length === 0) {
+          ticket.unreadPreviews = [currentPreview];
+        } else {
+          ticket.unreadPreviews.push(currentPreview);
+          if (ticket.unreadPreviews.length > 7) {
+            ticket.unreadPreviews = ticket.unreadPreviews.slice(-7);
+          }
+        }
 
         if (isStudent) {
           ticket.unreadDeveloper = (ticket.unreadDeveloper || 0) + 1;
@@ -695,11 +716,20 @@ function initChatSocket(httpServer) {
 
         socket.to(`ticket_${ticketId}`).emit("messages_read", readPayload);
 
-        // Also notify partner user room
+        // Also notify partner user room and reset ticket unread previews
         try {
-          const ticket = await ChatTicket.findOne({ ticketId }).select("student developer").lean();
+          const ticket = await ChatTicket.findOne({ ticketId });
           if (ticket) {
-            const partnerId = String(ticket.student) === String(user.id) ? String(ticket.developer) : String(ticket.student);
+            const isStudent = String(ticket.student) === String(user.id);
+            if (isStudent) {
+              ticket.unreadStudent = 0;
+            } else {
+              ticket.unreadDeveloper = 0;
+            }
+            ticket.unreadPreviews = [];
+            await ticket.save();
+
+            const partnerId = isStudent ? String(ticket.developer) : String(ticket.student);
             io.to(`user_${partnerId}`).emit("messages_read", readPayload);
           }
         } catch (e) {
