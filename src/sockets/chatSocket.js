@@ -89,18 +89,21 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
       : [currentPreview];
 
     const notifBody = lines.join("\n");
+    const titleWithCount = lines.length > 1 ? `${notifTitle} (${lines.length})` : notifTitle;
 
     const chatRoute = `/chat?ticketId=${ticket.ticketId}`;
 
     // 1. Real-time Socket Event (triggers instant in-app toast for online users)
     if (ioInstance) {
       const socketPayload = {
-        title: notifTitle,
-        body: notifBody,
+        title: titleWithCount,
+        body: currentPreview,
         ticketId: ticket.ticketId,
         senderName: sender.name,
         route: chatRoute,
         isStudentSender,
+        unreadCount: lines.length,
+        lines,
         createdAt: new Date().toISOString(),
       };
 
@@ -182,9 +185,9 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
 
     if (pushTargets.length > 0) {
       sendPushToSessions(pushTargets, {
-        title: notifTitle,
-        // Stack all unread messages downwards line-by-line in the notification card
-        body: notifBody,
+        title: titleWithCount,
+        // Collapsed mode shows ONLY the latest message smoothly replacing the previous line, never stringing horizontally
+        body: currentPreview,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
         // Using chat tag updates this conversation in place as ONE dynamic card, matching WhatsApp InboxStyle
@@ -195,7 +198,7 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
           type: "chat_message",
           senderId: senderIdStr,
           senderName: sender.name || "",
-          previewText: notifBody,
+          previewText: currentPreview,
           latestMessage: currentPreview,
           stackedBody: notifBody,
           lines: JSON.stringify(lines),

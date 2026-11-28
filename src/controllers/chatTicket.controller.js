@@ -795,6 +795,9 @@ async function testChatPush(req, res) {
     const notifBody = stackLines.join("\n");
     const latestMessage = stackLines[stackLines.length - 1] || "New message";
     const stableTag = `chat_${ticketId || "test_alert"}`;
+    const titleWithCount = stackLines.length > 1
+      ? `💬 Gayatri · Support (${stackLines.length})`
+      : "💬 Gayatri · Support";
 
     const report = await sendPushToSessions(
       devices.map((d) => ({
@@ -803,9 +806,9 @@ async function testChatPush(req, res) {
         pushProvider: d.pushProvider || "fcm",
       })),
       {
-        title: "💬 Gayatri · HostelCare Support",
-        // Stack all unread messages downwards line-by-line in the notification card
-        body: notifBody,
+        title: titleWithCount,
+        // Collapsed mode shows ONLY the latest message smoothly replacing the previous line
+        body: latestMessage,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
         tag: stableTag,
@@ -815,7 +818,7 @@ async function testChatPush(req, res) {
           ticketId: ticketId || "TEST",
           senderName: "Gayatri",
           route: chatRoute,
-          previewText: notifBody,
+          previewText: latestMessage,
           latestMessage: latestMessage,
           stackedBody: notifBody,
           lines: JSON.stringify(stackLines),

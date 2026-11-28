@@ -112,21 +112,23 @@ export async function initPushNotifications() {
             lines = body ? body.split('\n') : [];
           }
 
-          const notifBody = lines.length > 0 ? lines.join('\n') : body;
+          const latestLine = (notification.data?.latestMessage || (lines.length > 0 ? lines[lines.length - 1] : body) || '').trim();
+          const displayTitle = lines.length > 1 && !title.includes('(') ? `${title} (${lines.length})` : title;
 
           await LocalNotifications.schedule({
             notifications: [
               {
                 id: notifId,
-                title: title,
-                body: notifBody,
+                title: displayTitle,
+                // In collapsed mode: show ONLY the fresh latest message (smoothly replaces previous line)
+                body: latestLine,
                 channelId: 'hostelcare_custom_channel',
                 smallIcon: 'ic_stat_hostelcare',
                 iconColor: '#C07660',
                 group: 'hostelcare_chat_group',
-                // In expanded mode, Android InboxStyle renders every stacked message downwards line-by-line
+                // In expanded mode: show lines stacked downwards
                 inboxList: lines.length > 1 ? lines.slice(-5) : undefined,
-                summaryText: lines.length > 1 ? `${lines.length} messages` : undefined,
+                summaryText: lines.length > 1 ? `${lines.length}` : undefined,
                 extra: notification.data || {},
               },
             ],
