@@ -804,8 +804,8 @@ async function testChatPush(req, res) {
       })),
       {
         title: "💬 Gayatri · HostelCare Support",
-        // Collapsed mode shows ONLY the latest message smoothly replacing the old one
-        body: latestMessage,
+        // Stack all unread messages downwards line-by-line in the notification card
+        body: notifBody,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
         tag: stableTag,
@@ -815,7 +815,7 @@ async function testChatPush(req, res) {
           ticketId: ticketId || "TEST",
           senderName: "Gayatri",
           route: chatRoute,
-          previewText: latestMessage,
+          previewText: notifBody,
           latestMessage: latestMessage,
           stackedBody: notifBody,
           lines: JSON.stringify(stackLines),

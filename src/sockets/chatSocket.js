@@ -183,8 +183,8 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
     if (pushTargets.length > 0) {
       sendPushToSessions(pushTargets, {
         title: notifTitle,
-        // Collapsed view shows ONLY the latest message smoothly replacing the previous line, never stringing horizontally
-        body: currentPreview,
+        // Stack all unread messages downwards line-by-line in the notification card
+        body: notifBody,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
         // Using chat tag updates this conversation in place as ONE dynamic card, matching WhatsApp InboxStyle
@@ -195,7 +195,7 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
           type: "chat_message",
           senderId: senderIdStr,
           senderName: sender.name || "",
-          previewText: currentPreview,
+          previewText: notifBody,
           latestMessage: currentPreview,
           stackedBody: notifBody,
           lines: JSON.stringify(lines),
