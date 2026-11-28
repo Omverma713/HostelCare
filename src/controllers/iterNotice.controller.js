@@ -263,7 +263,7 @@ const renderMobileNoticeView = async (req, res) => {
 
     const filename = `HostelCare-SOA-ITER-${slugify(notice.title)}.pdf`;
     const downloadUrl = `/api/v1/academics/iter-notices/${notice.noticeId}/download`;
-    const shareText = encodeURIComponent(`Official ITER Notice: ${notice.title}\nView & Download (${totalPages} Pages):\nhttps://hostelcare-api.duckdns.org/api/v1/academics/iter-notices/${notice.noticeId}/view`);
+    const shareText = encodeURIComponent(`Official ITER Notice: ${notice.title}\nView & Download (${totalPages} Pages):\nhttps://api.hostelcare.live/api/v1/academics/iter-notices/${notice.noticeId}/view`);
     const whatsappUrl = `https://api.whatsapp.com/send?text=${shareText}`;
 
     let pagesHtml = "";

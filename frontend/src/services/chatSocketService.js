@@ -16,7 +16,7 @@ function getSocketUrl() {
   );
 
   if (isNative) {
-    return "https://hostelcare-api.duckdns.org";
+    return "https://api.hostelcare.live";
   }
 
   const currentHost = typeof window !== "undefined" ? window.location.hostname : "";
@@ -27,7 +27,7 @@ function getSocketUrl() {
   }
 
   // Production web or remote server
-  return "https://hostelcare-api.duckdns.org";
+  return "https://api.hostelcare.live";
 }
 
 /**

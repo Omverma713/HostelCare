@@ -506,7 +506,11 @@ function MessMealAlarmScheduler() {
 }
 
 export default function App() {
-  const [showBootSplash, setShowBootSplash] = useState(true);
+  // On web/desktop browsers, load immediately without blocking splash animation.
+  // Splash animation is reserved for native Android/iOS app containers.
+  const [showBootSplash, setShowBootSplash] = useState(() => {
+    return Capacitor.isNativePlatform();
+  });
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {

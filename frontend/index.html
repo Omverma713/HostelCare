@@ -304,6 +304,19 @@
           <div class="hc-boot-progress-bar"></div>
         </div>
       </div>
+      <script>
+        // Failsafe auto-dismiss: Ensures splash screen never blocks web user
+        setTimeout(function() {
+          var splash = document.getElementById('hc-initial-boot-splash');
+          if (splash) {
+            splash.style.transition = 'opacity 0.3s ease';
+            splash.style.opacity = '0';
+            setTimeout(function() {
+              if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+            }, 300);
+          }
+        }, 1200);
+      </script>
     </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -32,8 +32,8 @@ function getAbsoluteDownloadUrl(endpointBase, noticeId) {
       window.location.protocol === "capacitor:" ||
       window.location.protocol === "file:");
   const origin = isLocalOrCapacitor
-    ? "https://hostelcare-api.duckdns.org"
-    : (window.location.origin || "https://hostelcare-api.duckdns.org");
+    ? "https://api.hostelcare.live"
+    : (window.location.origin || "https://api.hostelcare.live");
   return `${origin}/api/v1/academics/iter-notices/${noticeId}/download`;
 }
 
@@ -47,8 +47,8 @@ function getAbsoluteReaderUrl(endpointBase, noticeId) {
       window.location.protocol === "capacitor:" ||
       window.location.protocol === "file:");
   const origin = isLocalOrCapacitor
-    ? "https://hostelcare-api.duckdns.org"
-    : (window.location.origin || "https://hostelcare-api.duckdns.org");
+    ? "https://api.hostelcare.live"
+    : (window.location.origin || "https://api.hostelcare.live");
   return `${origin}/api/v1/academics/iter-notices/${noticeId}/view`;
 }
 

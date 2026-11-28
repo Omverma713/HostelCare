@@ -7,7 +7,7 @@ import "./AcademicsHub.css";
 const RAW_API_BASE =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "https://hostelcare-api.duckdns.org/api/v1" : "/api/v1");
+  (import.meta.env.PROD ? "https://api.hostelcare.live/api/v1" : "/api/v1");
 const API_BASE = `${RAW_API_BASE.replace(/\/+$/, "")}/academics`;
 
 // Bundled Fallbacks in case offline or API is starting

@@ -75,20 +75,5 @@ export function initSecurityShield() {
       bannerText
     );
   } catch (_) {}
-
-  // 4. Debugger Pause Trap if DevTools is Docked/Opened
-  try {
-    let checkTrap = () => {
-      const threshold = 160;
-      const widthExceeded = window.outerWidth - window.innerWidth > threshold;
-      const heightExceeded = window.outerHeight - window.innerHeight > threshold;
-      if (widthExceeded || heightExceeded) {
-        (function () {
-          Function('debugger')();
-        })();
-      }
-    };
-    setInterval(checkTrap, 1200);
-  } catch (_) {}
 }
 

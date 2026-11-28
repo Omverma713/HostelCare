@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { SplashScreen } from '@capacitor/splash-screen';
 import './BootSplashScreen.css';
 
 /**
  * Theme-Aware Animated Brand Boot Splash Screen
- * 
- * Automatically detects whether the mobile device / app is in Dark mode or Light mode:
- * - Dark Mode: Deep espresso (#141312) background, warm dark squircle (#201A17), 
- *   pure white/ivory "H" (#FAF7F2), terracotta "C" (#E28771), and gold/terracotta sparkle star (#F5B895).
- * - Light Mode: Warm linen cream (#FAF7F2) background, crisp squircle (#FFF9F5), 
- *   black serif "H" (#1C1B1A), terracotta "C" (#C07660), and terracotta sparkle star (#C07660).
  */
 export default function BootSplashScreen({ onComplete }) {
   const [animStage, setAnimStage] = useState('entering'); // 'entering' -> 'merging' -> 'sparkle' -> 'reveal' -> 'fading'
   const [visible, setVisible] = useState(true);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  const dismissImmediately = () => {
+    setVisible(false);
+    if (onCompleteRef.current) onCompleteRef.current();
+  };
 
   // Detect whether device / environment is in dark mode
   const [isDark, setIsDark] = useState(() => {
@@ -70,17 +71,15 @@ export default function BootSplashScreen({ onComplete }) {
   }, []);
 
   useEffect(() => {
-    // 4. Timeline sequence
-    const t1 = setTimeout(() => setAnimStage('merging'), 100);
-    const t2 = setTimeout(() => setAnimStage('sparkle'), 1050);
-    const t3 = setTimeout(() => setAnimStage('reveal'), 1450);
-    const t4 = setTimeout(() => setAnimStage('fading'), 2500);
+    // Timeline sequence (snappy & responsive)
+    const t1 = setTimeout(() => setAnimStage('merging'), 60);
+    const t2 = setTimeout(() => setAnimStage('sparkle'), 500);
+    const t3 = setTimeout(() => setAnimStage('reveal'), 800);
+    const t4 = setTimeout(() => setAnimStage('fading'), 1400);
     const t5 = setTimeout(() => {
       setVisible(false);
-      try {
-        } catch (e) {}
-      if (onComplete) onComplete();
-    }, 2950);
+      if (onCompleteRef.current) onCompleteRef.current();
+    }, 1800);
 
     return () => {
       clearTimeout(t1);
@@ -89,7 +88,7 @@ export default function BootSplashScreen({ onComplete }) {
       clearTimeout(t4);
       clearTimeout(t5);
     };
-  }, [onComplete]);
+  }, []);
 
   if (!visible) return null;
 
@@ -99,7 +98,11 @@ export default function BootSplashScreen({ onComplete }) {
   const isRevealed = animStage === 'reveal' || animStage === 'fading';
 
   return (
-    <div className={`hc-boot-overlay ${isDark ? 'hc-dark-mode' : 'hc-light-mode'} ${isFading ? 'hc-boot-fading' : ''}`}>
+    <div 
+      className={`hc-boot-overlay ${isDark ? 'hc-dark-mode' : 'hc-light-mode'} ${isFading ? 'hc-boot-fading' : ''}`}
+      onClick={dismissImmediately}
+      role="presentation"
+    >
       <div className="hc-boot-center">
         {/* Emblem Squircle Card with Glowing Aura */}
         <div className="hc-emblem-card">

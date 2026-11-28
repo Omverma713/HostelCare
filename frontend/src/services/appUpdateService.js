@@ -8,7 +8,7 @@ const ApkInstaller = registerPlugin('ApkInstallerPlugin');
 const API_BASE =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? 'https://hostelcare-api.duckdns.org/api/v1' : '/api/v1');
+  (import.meta.env.PROD ? 'https://api.hostelcare.live/api/v1' : '/api/v1');
 
 const DISMISSED_SESSION_KEY = 'hostelcare_update_dismissed_session';
 
@@ -571,6 +571,10 @@ class AppUpdateService {
       let targetUrl = this.updateState.otaBundleUrl;
       if (targetUrl.startsWith('/')) {
         targetUrl = `${API_BASE.replace(/\/api\/v1\/?$/, '')}${targetUrl}`;
+      }
+      // Upgrade any legacy duckdns domain to official api.hostelcare.live
+      if (typeof targetUrl === 'string' && targetUrl.includes('duckdns.org')) {
+        targetUrl = targetUrl.replace(/https?:\/\/hostelcare-api\.duckdns\.org/g, 'https://api.hostelcare.live');
       }
 
       this.updateState.otaProgress = 40;

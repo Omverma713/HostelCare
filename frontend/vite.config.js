@@ -26,7 +26,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_TARGET || 'https://hostelcare-api.duckdns.org',
+        target: process.env.VITE_BACKEND_TARGET || 'https://api.hostelcare.live',
         changeOrigin: true,
         secure: false,
       }

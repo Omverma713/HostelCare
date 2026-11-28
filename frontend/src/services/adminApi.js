@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://hostelcare-api.duckdns.org/api/v1' : '/api/v1');
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://api.hostelcare.live/api/v1' : '/api/v1');
 
 async function adminRequest(endpoint, options = {}, retries = 1) {
   const token = localStorage.getItem('token');
