@@ -891,46 +891,33 @@ export default function DevChatPage() {
       <div className="devchat-container">
         {/* Header Bar */}
         <header className={`devchat-header ${activeTicket ? 'mobile-hidden' : ''}`}>
-          <div className="devchat-title-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <WhatsAppBackButton
-              onClick={() => navigate(user?.role === 'superadmin' ? '/superadmin' : '/student')}
-              title="Back to Dashboard"
-            />
+          <div className="devchat-title-group">
             <div className="devchat-icon-badge">💬</div>
-            <div>
-              <h1 className="devchat-header-title">
-                HostelCare Developer Support Chat
-                <span className="e2ee-shield-pill">🔒 End-to-end encrypted</span>
-              </h1>
-              <p className="devchat-header-subtitle">
-                <span>Real-time direct chat between Students & Developers</span>
-                <span style={{ opacity: 0.5 }}>•</span>
-                <span style={{ color: socketConnected ? '#9C5B49' : '#C9826D', fontWeight: 600 }}>
-                  {socketConnected ? '● Socket Live' : '○ Connecting...'}
+            <div className="devchat-title-content">
+              <div className="devchat-title-row">
+                <h1 className="devchat-header-title">Developer Support</h1>
+                <span className="e2ee-shield-pill">🔒 E2EE Active</span>
+              </div>
+              <div className="devchat-header-subtitle">
+                <span className="devchat-socket-indicator">
+                  <span className={`pulse-dot ${socketConnected ? 'live' : 'offline'}`} />
+                  <span>{socketConnected ? 'Socket Live' : 'Connecting...'}</span>
                 </span>
-                <span style={{ opacity: 0.5 }}>•</span>
-                <span style={{ color: '#9C5B49', fontSize: '0.72rem', background: '#F9EBE6', padding: '2px 8px', borderRadius: 9999, border: '1px solid #F4D3C9', fontWeight: 600 }}>v1.2.2.15 Pre-Release</span>
-              </p>
+                <span className="devchat-subtitle-sep">•</span>
+                <span className="devchat-subtitle-text">Direct line with Developers & Admins</span>
+              </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button
-              type="button"
-              className="btn-theme-toggle-chat"
-              onClick={toggleTheme}
-              title={isDark ? 'Switch to Warm Linen Light' : 'Switch to Espresso Luxury Dark'}
-              aria-label="Toggle Theme"
-            >
-              {isDark ? '☀️ Light' : '🌙 Dark'}
-            </button>
+          <div className="devchat-header-actions">
             <button
               type="button"
               className="btn-new-ticket"
               onClick={() => setIsNewTicketModalOpen(true)}
               id="btn-open-new-ticket-modal"
             >
-              ➕ New Support Ticket
+              <span className="btn-new-ticket-plus">＋</span>
+              <span>New Ticket</span>
             </button>
           </div>
         </header>

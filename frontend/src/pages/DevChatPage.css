@@ -136,12 +136,11 @@ html:not(.dark-theme) .devchat-root:not(.dark-theme) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.65rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   margin-bottom: 0;
   border-bottom: 1px solid var(--wa-border);
   background: var(--wa-bg-header);
   gap: 12px;
-  flex-wrap: wrap;
   flex-shrink: 0;
   z-index: 5;
 }
@@ -150,39 +149,85 @@ html:not(.dark-theme) .devchat-root:not(.dark-theme) {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.devchat-title-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+
+.devchat-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .devchat-icon-badge {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
   border-radius: 50%;
   background: var(--wa-green-action);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 168, 132, 0.3);
+  box-shadow: 0 2px 8px rgba(192, 118, 96, 0.25);
   flex-shrink: 0;
 }
 
 .devchat-header-title {
   margin: 0;
-  font-size: 1.12rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--wa-text-primary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .devchat-header-subtitle {
-  margin: 2px 0 0 0;
-  font-size: 0.76rem;
+  margin: 0;
+  font-size: 0.75rem;
   color: var(--wa-text-secondary);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+  line-height: 1.3;
+}
+
+.devchat-socket-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: var(--wa-green-action);
+}
+
+.devchat-socket-indicator .pulse-dot.live {
+  background: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.devchat-socket-indicator .pulse-dot.offline {
+  background: #EF4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+.devchat-subtitle-sep {
+  opacity: 0.45;
+}
+
+.devchat-subtitle-text {
+  opacity: 0.85;
 }
 
 .e2ee-shield-pill {
@@ -191,11 +236,47 @@ html:not(.dark-theme) .devchat-root:not(.dark-theme) {
   gap: 4px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(0, 168, 132, 0.12);
-  border: 1px solid rgba(0, 168, 132, 0.35);
+  background: rgba(192, 118, 96, 0.12);
+  border: 1px solid rgba(192, 118, 96, 0.3);
   color: var(--wa-green-action);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.devchat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .devchat-header {
+    padding: 0.65rem 0.85rem;
+    gap: 8px;
+  }
+  .devchat-icon-badge {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 1rem;
+  }
+  .devchat-header-title {
+    font-size: 0.95rem;
+  }
+  .devchat-subtitle-text {
+    display: none;
+  }
+  .devchat-subtitle-sep {
+    display: none;
+  }
+  .btn-new-ticket {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.74rem;
+  }
 }
 
 /* ─── 4. Main Split View ─────────────────────────────────────────────────── */
@@ -241,21 +322,29 @@ html:not(.dark-theme) .devchat-root:not(.dark-theme) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0.45rem 0.9rem;
-  border-radius: 8px;
-  background: var(--wa-green-action);
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  background: var(--wa-green-action, #C07660);
   color: #ffffff;
   border: none;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 168, 132, 0.3);
+  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(192, 118, 96, 0.28);
+  white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-new-ticket:hover {
-  background: #008f6f;
+  background: #A85D48;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(192, 118, 96, 0.35);
+}
+
+.btn-new-ticket:active {
+  transform: scale(0.96);
 }
 
 .tickets-filter-tabs {
