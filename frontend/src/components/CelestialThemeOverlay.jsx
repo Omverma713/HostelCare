@@ -38,9 +38,9 @@ function CelestialThemeOverlay({ phase }) {
             </radialGradient>
 
             <radialGradient id="sunAuraGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#FCD9B8" stopOpacity="0.42" />
-              <stop offset="40%" stopColor="#E89574" stopOpacity="0.16" />
-              <stop offset="75%" stopColor="#D27357" stopOpacity="0.03" />
+              <stop offset="0%" stopColor="#FCD9B8" stopOpacity="0.55" />
+              <stop offset="35%" stopColor="#E89574" stopOpacity="0.22" />
+              <stop offset="70%" stopColor="#D27357" stopOpacity="0.06" />
               <stop offset="100%" stopColor="#D27357" stopOpacity="0" />
             </radialGradient>
 
@@ -59,9 +59,9 @@ function CelestialThemeOverlay({ phase }) {
             </linearGradient>
 
             <radialGradient id="moonAuraGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#E0E7FF" stopOpacity="0.9" />
-              <stop offset="40%" stopColor="#A5B4FC" stopOpacity="0.3" />
-              <stop offset="75%" stopColor="#6366F1" stopOpacity="0.05" />
+              <stop offset="0%" stopColor="#E0E7FF" stopOpacity="0.75" />
+              <stop offset="36%" stopColor="#A5B4FC" stopOpacity="0.25" />
+              <stop offset="72%" stopColor="#6366F1" stopOpacity="0.05" />
               <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
             </radialGradient>
           </defs>

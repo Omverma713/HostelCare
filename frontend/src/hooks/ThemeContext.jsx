@@ -69,6 +69,9 @@ export function ThemeProvider({ children }) {
       transition.finished.finally(() => {
         setCelestialPhase(null);
         isTransitioningRef.current = false;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('theme-switching-end'));
+        }
       });
     } else {
       // Graceful fallback for browsers without View Transitions API
@@ -82,12 +85,15 @@ export function ThemeProvider({ children }) {
         try {
           localStorage.setItem('theme', nextTheme);
         } catch (e) {}
-      }, 240);
+      }, 200);
 
       transitionTimerRef.current = setTimeout(() => {
         setCelestialPhase(null);
         isTransitioningRef.current = false;
-      }, 760);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('theme-switching-end'));
+        }
+      }, 680);
     }
   }, []);
 

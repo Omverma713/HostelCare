@@ -74,9 +74,14 @@ export default function Canvas3DBackground({ role = null, theme = 'dark', concep
       if (themeSwitchTimer) clearTimeout(themeSwitchTimer);
       themeSwitchTimer = setTimeout(() => {
         isSwitchingTheme = false;
-      }, 250);
+      }, 800);
+    };
+    const handleThemeSwitchEnd = () => {
+      isSwitchingTheme = false;
+      if (themeSwitchTimer) clearTimeout(themeSwitchTimer);
     };
     window.addEventListener('theme-switching-start', handleThemeSwitchStart);
+    window.addEventListener('theme-switching-end', handleThemeSwitchEnd);
 
     const getColors = (currentRole, currentTheme, currentConcept) => {
       if (currentRole === 'admin') {
@@ -195,8 +200,8 @@ export default function Canvas3DBackground({ role = null, theme = 'dark', concep
         return;
       }
 
-      // On mobile devices, pause canvas drawing completely during active scroll to eliminate any hitching/jank
-      if (isMobile && isScrolling) {
+      // Pause canvas drawing completely during active scroll or theme switching to eliminate any hitching/jank on 4GB budget phones
+      if ((isMobile && isScrolling) || isSwitchingTheme) {
         animationFrameId = requestAnimationFrame(render);
         return;
       }
@@ -244,6 +249,7 @@ export default function Canvas3DBackground({ role = null, theme = 'dark', concep
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('theme-switching-start', handleThemeSwitchStart);
+      window.removeEventListener('theme-switching-end', handleThemeSwitchEnd);
       if (scrollTimer) clearTimeout(scrollTimer);
       if (themeSwitchTimer) clearTimeout(themeSwitchTimer);
       cancelAnimationFrame(animationFrameId);
