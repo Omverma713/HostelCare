@@ -14,11 +14,13 @@ const {
   getChatNotificationConfig,
   updateChatNotificationConfig,
   flushChatTicket,
+  testChatPush,
 } = require("../controllers/chatTicket.controller");
 
 // All chat ticket operations require authenticated user sessions
 router.use(authMiddleware);
 
+router.post("/test-push", testChatPush);
 router.post("/tickets", createTicket);
 router.get("/tickets", getTickets);
 router.get("/tickets/:ticketId", getTicketById);

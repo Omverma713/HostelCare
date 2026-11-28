@@ -73,7 +73,7 @@ export async function initPushNotifications() {
       const body = notification.body || notification.data?.body || '';
       const img = notification.data?.imageUrl || notification.data?.image || notification.data?.picture || notification.data?.bigPicture || notification.imageUrl || '';
 
-      // Dispatch in-app rich toast with image support
+      // 1. Dispatch in-app rich toast with image support
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('app-toast', {
@@ -87,9 +87,27 @@ export async function initPushNotifications() {
         );
       }
 
-      // If app is in foreground, we show the clean in-app toast.
-      // We do NOT call LocalNotifications.schedule here because FCM OS service
-      // already handles or has displayed the system notification, preventing duplicate alerts in notification tray.
+      // 2. On Android native, when app is in foreground, FCM does NOT post to the notification shade.
+      // Schedule a local notification so the user gets the heads-up alert banner with sound and vibration!
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                id: Math.floor(Date.now() % 1000000000),
+                title: title,
+                body: body,
+                channelId: 'hostelcare_custom_channel',
+                smallIcon: 'ic_stat_hostelcare',
+                iconColor: '#C07660',
+                extra: notification.data || {},
+              },
+            ],
+          });
+        } catch (localErr) {
+          console.warn('Foreground LocalNotification fallback error:', localErr);
+        }
+      }
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {

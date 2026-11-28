@@ -1,10 +1,12 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const User = require("../models/user.model");
 const ChatTicket = require("../models/chatTicket.model");
 const ChatMessage = require("../models/chatMessage.model");
 const SystemConfig = require("../models/systemConfig.model");
 const Session = require("../models/session.model");
+const DeviceRegistry = require("../models/deviceRegistry.model");
 const { sendPushToSessions } = require("../services/pushService");
 
 let ioInstance = null;
@@ -100,21 +102,83 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
       });
     }
 
-    // 2. High-Priority Push Notification to registered mobile/desktop sessions (FCM & WebPush)
+    // 2. High-Priority Push Notification to registered mobile/desktop devices (FCM & WebPush)
+    // Query both DeviceRegistry (permanent hardware push vault) AND Session (active web/app sessions)
+    const targetObjectIds = targetUserIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    let activeDevices = await DeviceRegistry.find({
+      $or: [
+        { userId: { $in: targetUserIds } },
+        { userId: { $in: targetObjectIds } },
+      ],
+      isActive: true,
+      pushToken: { $ne: null },
+    }).lean();
+
+    // If target is superadmin and no device is registered under that admin ID, check if Om Verma or admins have registered devices
+    if (activeDevices.length === 0 && isStudentSender) {
+      activeDevices = await DeviceRegistry.find({
+        $or: [
+          { studentName: { $regex: /om verma/i } },
+          { userRole: "superadmin" },
+        ],
+        isActive: true,
+        pushToken: { $ne: null },
+      }).lean();
+    }
+
     const targetSessions = await Session.find({
-      userId: { $in: targetUserIds },
+      $or: [
+        { userId: { $in: targetUserIds } },
+        { userId: { $in: targetObjectIds } },
+      ],
       $or: [
         { pushToken: { $ne: null } },
         { webPushSubscription: { $ne: null } },
       ],
     }).lean();
 
-    if (targetSessions.length > 0) {
-      sendPushToSessions(targetSessions, {
+    // Deduplicate push targets across DeviceRegistry and Session
+    const pushTargets = [];
+    const seenTokens = new Set();
+
+    for (const dev of activeDevices) {
+      if (dev.pushToken && !seenTokens.has(dev.pushToken)) {
+        seenTokens.add(dev.pushToken);
+        pushTargets.push({
+          _id: dev.deviceId || dev._id,
+          pushToken: dev.pushToken,
+          pushProvider: dev.pushProvider || "fcm",
+        });
+      }
+    }
+
+    for (const sess of (targetSessions || [])) {
+      if (sess.pushToken && !seenTokens.has(sess.pushToken)) {
+        seenTokens.add(sess.pushToken);
+        pushTargets.push({
+          _id: sess._id,
+          pushToken: sess.pushToken,
+          pushProvider: sess.pushProvider || "fcm",
+        });
+      }
+      if (sess.webPushSubscription) {
+        pushTargets.push({
+          _id: sess._id,
+          webPushSubscription: sess.webPushSubscription,
+          pushProvider: "webpush",
+        });
+      }
+    }
+
+    if (pushTargets.length > 0) {
+      sendPushToSessions(pushTargets, {
         title: notifTitle,
         body: notifBody,
         route: chatRoute,
-        channelId: "chat_messages",
+        channelId: "hostelcare_custom_channel",
         tag: `chat_${ticket.ticketId}`,
         data: {
           ticketId: ticket.ticketId,

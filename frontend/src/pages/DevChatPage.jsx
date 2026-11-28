@@ -884,6 +884,25 @@ export default function DevChatPage() {
     }
   };
 
+  // 9. Instant WhatsApp-Grade Test Push Notification Trigger
+  const [sendingTestPush, setSendingTestPush] = useState(false);
+  const handleTriggerTestPush = async () => {
+    if (sendingTestPush) return;
+    try {
+      setSendingTestPush(true);
+      const res = await api.testChatPush(activeTicket?.ticketId || 'TKT-TEST');
+      if (res.success) {
+        triggerToast('success', 'WhatsApp-grade push notification dispatched to your phone!', 'Push Dispatched');
+      } else {
+        triggerToast('error', res.message || 'Failed to dispatch test push', 'Push Error');
+      }
+    } catch (err) {
+      triggerToast('error', err.message || 'Push test trigger failed', 'Error');
+    } finally {
+      setSendingTestPush(false);
+    }
+  };
+
   return (
     <div className={`devchat-root ${isDark ? "dark-theme" : "light-theme"}`}>
       <div className="devchat-ambient-glow" />
@@ -909,7 +928,25 @@ export default function DevChatPage() {
             </div>
           </div>
 
-          <div className="devchat-header-actions">
+          <div className="devchat-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              className="btn-resolve-ticket"
+              onClick={handleTriggerTestPush}
+              disabled={sendingTestPush}
+              style={{
+                background: 'rgba(210, 115, 87, 0.15)',
+                borderColor: 'rgba(210, 115, 87, 0.35)',
+                color: 'var(--wa-accent, #D27357)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+              }}
+              title="Test WhatsApp push notification on your phone"
+            >
+              {sendingTestPush ? '🔔 Alerting...' : '🔔 Test Alert'}
+            </button>
             <button
               type="button"
               className="btn-new-ticket"
@@ -1038,6 +1075,20 @@ export default function DevChatPage() {
                   </div>
 
                   <div className="room-actions">
+                    <button
+                      type="button"
+                      onClick={handleTriggerTestPush}
+                      disabled={sendingTestPush}
+                      className="btn-resolve-ticket"
+                      style={{
+                        background: 'rgba(210, 115, 87, 0.15)',
+                        borderColor: 'rgba(210, 115, 87, 0.35)',
+                        color: 'var(--wa-accent, #D27357)',
+                      }}
+                      title="Send instant WhatsApp-grade push notification test to your device"
+                    >
+                      {sendingTestPush ? '🔔 Alerting...' : '🔔 Test Alert'}
+                    </button>
                     {isDeveloper && (
                       <button
                         type="button"

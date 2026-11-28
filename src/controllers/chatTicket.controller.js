@@ -706,6 +706,85 @@ async function updateChatNotificationConfig(req, res) {
   }
 }
 
+/**
+ * POST /api/v1/chat/test-push
+ * Direct WhatsApp-Grade FCM notification trigger for immediate mobile testing
+ */
+async function testChatPush(req, res) {
+  try {
+    const user = req.user;
+    const { ticketId } = req.body || {};
+    const DeviceRegistry = require("../models/deviceRegistry.model");
+    const { sendPushToSessions } = require("../services/pushService");
+    const mongoose = require("mongoose");
+
+    const effectiveUserId = user.id || user._id;
+    const objectId = mongoose.Types.ObjectId.isValid(effectiveUserId)
+      ? new mongoose.Types.ObjectId(effectiveUserId)
+      : null;
+
+    let devices = await DeviceRegistry.find({
+      $or: [
+        { userId: effectiveUserId },
+        ...(objectId ? [{ userId: objectId }] : []),
+        ...(user.name ? [{ studentName: { $regex: new RegExp(user.name, "i") } }] : []),
+      ],
+      isActive: true,
+      pushToken: { $ne: null },
+    }).lean();
+
+    if (!devices || devices.length === 0) {
+      devices = await DeviceRegistry.find({
+        isActive: true,
+        pushToken: { $ne: null },
+      }).sort({ updatedAt: -1 }).limit(3).lean();
+    }
+
+    if (!devices || devices.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No active push-registered devices found in DeviceRegistry.",
+      });
+    }
+
+    const chatRoute = ticketId ? `/chat?ticketId=${ticketId}` : "/chat";
+    const report = await sendPushToSessions(
+      devices.map((d) => ({
+        _id: d.deviceId || d._id,
+        pushToken: d.pushToken,
+        pushProvider: d.pushProvider || "fcm",
+      })),
+      {
+        title: "💬 HostelCare Support (Developer Line)",
+        body: "WhatsApp-style Chat Notification Test: Real-time alert active!",
+        route: chatRoute,
+        channelId: "hostelcare_custom_channel",
+        tag: "chat_test_alert",
+        data: {
+          type: "chat_message",
+          ticketId: ticketId || "TEST",
+          senderName: "HostelCare Support",
+          route: chatRoute,
+          previewText: "WhatsApp-style Chat Notification Test: Real-time alert active!",
+        },
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Test push sent successfully",
+      report,
+    });
+  } catch (error) {
+    console.error("testChatPush error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send test push",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   createTicket,
   getTickets,
@@ -719,4 +798,5 @@ module.exports = {
   getChatNotificationConfig,
   updateChatNotificationConfig,
   flushChatTicket,
+  testChatPush,
 };

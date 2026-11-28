@@ -400,6 +400,13 @@ export const api = {
     });
   },
 
+  testChatPush(ticketId) {
+    return request('/chat/test-push', {
+      method: 'POST',
+      body: JSON.stringify({ ticketId }),
+    });
+  },
+
   getActiveNotice() {
     return request('/users/active-notice');
   },
