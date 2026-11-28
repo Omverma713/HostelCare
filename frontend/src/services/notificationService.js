@@ -102,23 +102,32 @@ export async function initPushNotifications() {
             notifId = Math.abs(hash) % 1000000000;
           }
 
-          const lines = body ? body.split('\n') : [];
-          const latestLine = lines.length > 0 ? lines[lines.length - 1] : body;
+          let lines = [];
+          if (notification.data?.lines) {
+            try {
+              lines = JSON.parse(notification.data.lines);
+            } catch (_) {}
+          }
+          if (!Array.isArray(lines) || lines.length === 0) {
+            lines = body ? body.split('\n') : [];
+          }
+
+          const latestLine = (notification.data?.latestMessage || (lines.length > 0 ? lines[lines.length - 1] : body) || '').trim();
 
           await LocalNotifications.schedule({
             notifications: [
               {
                 id: notifId,
                 title: title,
-                // In compact/collapsed 1-line view, show only the latest line to prevent horizontal overflow to the right
+                // In collapsed mode, show ONLY the fresh latest message (smoothly replaces previous line, zero horizontal clutter)
                 body: latestLine,
                 channelId: 'hostelcare_custom_channel',
                 smallIcon: 'ic_stat_hostelcare',
                 iconColor: '#C07660',
                 group: 'hostelcare_chat_group',
-                // In expanded multi-line view, Android InboxStyle renders every message stacked neatly downwards!
-                inboxList: lines.length > 1 ? lines : undefined,
-                summaryText: lines.length > 1 ? `${lines.length} messages` : undefined,
+                // In expanded mode, Android InboxStyle renders every stacked message downwards line-by-line
+                inboxList: lines.length > 1 ? lines.slice(-5) : undefined,
+                summaryText: lines.length > 1 ? `${lines.length}` : undefined,
                 extra: notification.data || {},
               },
             ],

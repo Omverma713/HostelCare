@@ -793,6 +793,7 @@ async function testChatPush(req, res) {
     }
 
     const notifBody = stackLines.join("\n");
+    const latestMessage = stackLines[stackLines.length - 1] || "New message";
     const stableTag = `chat_${ticketId || "test_alert"}`;
 
     const report = await sendPushToSessions(
@@ -803,18 +804,23 @@ async function testChatPush(req, res) {
       })),
       {
         title: "💬 Gayatri · HostelCare Support",
-        body: notifBody,
+        // Collapsed mode shows ONLY the latest message smoothly replacing the old one
+        body: latestMessage,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
         tag: stableTag,
+        notificationCount: stackLines.length > 1 ? stackLines.length : undefined,
         data: {
           type: "chat_message",
           ticketId: ticketId || "TEST",
           senderName: "Gayatri",
           route: chatRoute,
-          previewText: notifBody,
+          previewText: latestMessage,
+          latestMessage: latestMessage,
+          stackedBody: notifBody,
           lines: JSON.stringify(stackLines),
           messageCount: String(stackLines.length),
+          unreadCount: String(stackLines.length),
         },
       }
     );

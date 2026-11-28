@@ -183,19 +183,24 @@ async function dispatchDevChatPushNotification(ticket, msg, sender, contentType,
     if (pushTargets.length > 0) {
       sendPushToSessions(pushTargets, {
         title: notifTitle,
-        body: notifBody,
+        // Collapsed view shows ONLY the latest message smoothly replacing the previous line, never stringing horizontally
+        body: currentPreview,
         route: chatRoute,
         channelId: "hostelcare_custom_channel",
         // Using chat tag updates this conversation in place as ONE dynamic card, matching WhatsApp InboxStyle
         tag: `chat_${ticket.ticketId}`,
+        notificationCount: lines.length > 1 ? lines.length : undefined,
         data: {
           ticketId: ticket.ticketId,
           type: "chat_message",
           senderId: senderIdStr,
           senderName: sender.name || "",
-          previewText: notifBody,
+          previewText: currentPreview,
+          latestMessage: currentPreview,
+          stackedBody: notifBody,
           lines: JSON.stringify(lines),
           messageCount: String(lines.length),
+          unreadCount: String(lines.length),
           route: chatRoute,
         },
       }).catch((err) => console.warn("Chat push notification notice:", err.message));

@@ -190,6 +190,9 @@ async function sendPushToSessions(sessions, payload) {
             notificationPriority: "PRIORITY_MAX",
             visibility: "PUBLIC",
             tag: payload.tag || (payload.data?.slotKey ? "hostelcare_meal_" + payload.data.slotKey : undefined),
+            notificationCount: typeof payload.notificationCount === "number"
+              ? payload.notificationCount
+              : (payload.data?.unreadCount && !isNaN(Number(payload.data.unreadCount)) ? Number(payload.data.unreadCount) : undefined),
             ...(validImg ? { imageUrl: validImg } : {}),
           },
         },
